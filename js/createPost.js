@@ -191,47 +191,42 @@ export async function submitTestimony({
         console.warn("Evidence pack generation encountered an issue, proceeding without pack:", packErr);
     }
 
-    // 4. Assemble Firestore Payload – MUST satisfy the create rules
-    const payload = {
-        content: cleanedContent || '',
-        hashtags: hashtags || [],
-        mentions: mentions || [],
-        channel: channel,
+// 4. Assemble Firestore Payload – client-safe fields ONLY
+const payload = {
+    content: cleanedContent || '',
+    hashtags: hashtags || [],
+    mentions: mentions || [],
+    channel,
 
-        // ===== Field Note fields =====
-        postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
-        fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
-        fieldNoteOrg:  postingStyle === 'field-note' ? (fieldNoteOrg  || null) : null,
+    // ===== Field Note fields =====
+    postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
+    fieldNoteRole: postingStyle === 'field-note' ? fieldNoteRole || null : null,
+    fieldNoteOrg: postingStyle === 'field-note' ? fieldNoteOrg || null : null,
 
-        authorId: user.uid,
-        isAnonymous: !!isAnonymous,
-        author: isAnonymous ? "Anonymous Witness" : (user.displayName || "Citizen Witness"),
-        authorTier: authorTier,
-        reputation: reputation,
-        forensicHash: forensicHash,
-        zkVerified: !!isZkVerified,
-        imageUrl: mediaType === 'image' ? mediaUrl : null,
-        videoUrl: mediaType === 'video' ? mediaUrl : null,
-        audioUrl: mediaType === 'audio' ? mediaUrl : null,
-        reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
-        commentsCount: 0,
-        isPinned: false,
-        isDeleted: false,
-        profileMode: state.profileMode || 'ANONYMOUS',
+    authorId: user.uid,
+    isAnonymous: !!isAnonymous,
+    // Display name is UI-only; do not treat as proof of identity
+    author: isAnonymous ? 'Anonymous Witness' : user.displayName || 'Citizen Witness',
 
-        // Evidence Pack Cryptographic References
-        evidencePack: firestorePack,
-        packCoreHash: packCoreHash,
+    // Integrity (must match uploaded bytes)
+    forensicHash,
+    imageUrl: mediaType === 'image' ? mediaUrl : null,
+    videoUrl: mediaType === 'video' ? mediaUrl : null,
+    audioUrl: mediaType === 'audio' ? mediaUrl : null,
 
-        // Moderation fields
-        moderationStatus: moderationResult.status,
-        moderationFlags: moderationResult.flags,
-        aiCategory: moderationResult.category,
-        feedVisibility: moderationResult.status === 'pending_review' ? 'review_queue' : channel,
+    // Evidence Pack Cryptographic References
+    evidencePack: firestorePack,
+    packCoreHash: packCoreHash,
 
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-    };
+    // Defaults only — server/rules should ignore client trust claims
+    reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
+    commentsCount: 0,
+    isPinned: false,
+    isDeleted: false,
+
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+};
 
     // 5. Commit to Firestore
     const docRef = await addDoc(collection(db, "testimonies"), payload);
