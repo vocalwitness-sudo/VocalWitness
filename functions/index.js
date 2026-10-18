@@ -23,6 +23,7 @@ import corsPackage from "cors";
 import { buildPoseidon } from "circomlibjs";
 import { AccessToken } from "livekit-server-sdk";
 import { fileURLToPath } from "url";
+import { onObjectFinalized } from "firebase-functions/v2/storage";
 
 // ESM __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -552,7 +553,7 @@ export const unbanUser = onCall(
 // MODERATED DELETE & TOXICITY HELPERS
 // ======================================================
 
-export.moderatedDelete = onCall(
+export const moderatedDelete = onCall(
   { cors: allowedOrigins },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
@@ -657,7 +658,7 @@ function gentleModerationCheck(content = "") {
   };
 }
 
-export.analyzeToxicity = onRequest(
+export const analyzeToxicity = onRequest(
   { secrets: [perspectiveApiKey] },
   (req, res) => {
     corsHandler(req, res, async () => {
@@ -674,7 +675,7 @@ export.analyzeToxicity = onRequest(
 );
 
 // 1. Post Content Moderation
-export.moderatePostContent = onCall(
+export const moderatePostContent = onCall(
   {
     cors: allowedOrigins,
     secrets: [geminiApiKey]
@@ -746,7 +747,7 @@ export.moderatePostContent = onCall(
 );
 
 // 2. Multi-Language Feed Translation
-export.translateTestimony = onCall(
+export const translateTestimony = onCall(
   { cors: allowedOrigins, secrets: [geminiApiKey] },
   async (request) => {
     const { text, targetLanguage } = request.data || {};
@@ -767,7 +768,7 @@ export.translateTestimony = onCall(
 );
 
 // 3. Audio-to-Text Witness Transcriptions (Base64 Audio Input)
-export.transcribeAudioWitness = onCall(
+export const transcribeAudioWitness = onCall(
   { cors: allowedOrigins, secrets: [geminiApiKey] },
   async (request) => {
     const { audioBase64, mimeType } = request.data || {};
@@ -796,7 +797,7 @@ export.transcribeAudioWitness = onCall(
 );
 
 // 4. Compact Report Summarization
-export.summarizeReport = onCall(
+export const summarizeReport = onCall(
   { cors: allowedOrigins, secrets: [geminiApiKey] },
   async (request) => {
     const { text } = request.data || {};
@@ -824,7 +825,7 @@ const vKey = JSON.parse(
   fs.readFileSync(path.join(__dirname, "verification_key.json"), "utf8")
 );
 
-export.verifyAndElevateZKProof = onCall(
+export const verifyAndElevateZKProof = onCall(
   { cors: allowedOrigins },
   async (request) => {
     if (!request.auth) {
@@ -881,7 +882,7 @@ export.verifyAndElevateZKProof = onCall(
   }
 );
 
-export.detectSyntheticMedia = onCall(
+export const detectSyntheticMedia = onCall(
   {
     cors: allowedOrigins,
     secrets: [geminiApiKey],
@@ -955,7 +956,7 @@ export.detectSyntheticMedia = onCall(
   }
 );
 
-export.checkContentConsistency = onCall(
+export const checkContentConsistency = onCall(
   {
     cors: allowedOrigins,
     secrets: [geminiApiKey]
@@ -1018,7 +1019,7 @@ export.checkContentConsistency = onCall(
   }
 );
 
-export.suggestCorroborations = onCall(
+export const suggestCorroborations = onCall(
   {
     cors: allowedOrigins
   },
@@ -1046,7 +1047,7 @@ export.suggestCorroborations = onCall(
  * Toxicity scoring specifically for comments / replies
  * (Keep primary reports under the existing moderatePostContent + Perspective flow)
  */
-export.scoreToxicity = onCall(
+export const scoreToxicity = onCall(
   {
     cors: allowedOrigins,
     secrets: [perspectiveApiKey]
@@ -1081,7 +1082,7 @@ export.scoreToxicity = onCall(
 // ======================================================
 // 6. PAYSTACK
 // ======================================================
-export.initializePaystack = onCall(
+export const initializePaystack = onCall(
   {
     cors: allowedOrigins,
     secrets: [paystackSecretKey]
@@ -1117,7 +1118,7 @@ export.initializePaystack = onCall(
   }
 );
 
-export.paystackWebhook = onRequest(
+export const paystackWebhook = onRequest(
   { cors: allowedOrigins, secrets: [paystackSecretKey] },
   async (req, res) => {
     if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
@@ -1180,7 +1181,7 @@ export.paystackWebhook = onRequest(
 //// ======================================================
 // 10. EVIDENCE PACK — PLATFORM TIMESTAMP
 // ======================================================
-export.requestTimestamp = onCall(
+export const requestTimestamp = onCall(
   { cors: allowedOrigins },
   async (request) => {
     if (!request.auth) {
@@ -1461,7 +1462,7 @@ async function getPathForLeaf(leafIndex, commitment) {
 /**
  * Step 1: Poseidon commitment + Merkle leaf insert
  */
-export.registerZKCommitment = onCall(
+export const registerZKCommitment = onCall(
   { cors: allowedOrigins, timeoutSeconds: 60, memory: "512MiB" },
   async (request) => {
     if (!request.auth) {
@@ -1525,186 +1526,7 @@ export.registerZKCommitment = onCall(
   }
 );
 
-/**
- * Step 2: Real Groth16 prove + verify, then elevate
- */
-export.generateZKProof = onCall(
-  {
-    cors: allowedOrigins,
-    timeoutSeconds: 180,
-    memory: "2GiB",
-    consumeAppCheckToken: true
-  },
-  async (request) => {
-    if (!request.app) {
-      throw new HttpsError(
-        "unauthenticated",
-        "Unauthorized: Missing or invalid App Check token."
-      );
-    }
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Sign in required.");
-    }
 
-    const uid = request.auth.uid;
-    const userRef = db.collection("users").doc(uid);
-    const commitRef = db.collection("zk_commitments").doc(uid);
-
-    try {
-      if (
-        !fs.existsSync(WASM_PATH) ||
-        !fs.existsSync(ZKEY_PATH) ||
-        !fs.existsSync(VKEY_PATH)
-      ) {
-        throw new HttpsError(
-          "failed-precondition",
-          "ZK circuit artifacts missing. Put wasm/zkey/vkey in functions/zk/"
-        );
-      }
-
-      const [commitSnap, userSnap] = await Promise.all([
-        commitRef.get(),
-        userRef.get()
-      ]);
-
-      if (!commitSnap.exists || !commitSnap.data()?.commitment) {
-        throw new HttpsError(
-          "failed-precondition",
-          "No commitment registered. Call registerZKCommitment first."
-        );
-      }
-
-      const commitData = commitSnap.data();
-      if (commitData.hashAlgo !== "poseidon") {
-        throw new HttpsError(
-          "failed-precondition",
-          "Legacy commitment. Call registerZKCommitment again for Poseidon."
-        );
-      }
-
-      const secret = commitData.secretEnc;
-      const nullifier = commitData.nullifierEnc;
-      const commitment = commitData.commitment;
-      const leafIndex = commitData.leafIndex;
-
-      const user = userSnap.exists ? userSnap.data() : {};
-      const trustScore = String(
-        Math.max(0, Number(user.reputationScore || user.trustScore || 0))
-      );
-      const postCount = String(
-        Math.max(0, Number(user.testimoniesCount || user.postCount || 0))
-      );
-
-      const { pathElements, pathIndices, root: merkleRoot } =
-        await getPathForLeaf(leafIndex, commitment);
-
-      const nullifierHash = await poseidonHash([nullifier]);
-
-      const nullifierRef = db.collection("zk_nullifiers").doc(nullifierHash);
-      const nullifierDoc = await nullifierRef.get();
-      if (nullifierDoc.exists && nullifierDoc.data()?.uid !== uid) {
-        throw new HttpsError("already-exists", "Nullifier already spent.");
-      }
-
-      const input = {
-        secret,
-        nullifier,
-        trustScore,
-        postCount,
-        pathElements,
-        pathIndices,
-        merkleRoot,
-        minTrustScore: MIN_TRUST_SCORE,
-        minPosts: MIN_POSTS
-      };
-
-      const { proof, publicSignals } = await snarkjs.groth16.fullProve(
-        input,
-        WASM_PATH,
-        ZKEY_PATH
-      );
-
-      const vKey = JSON.parse(fs.readFileSync(VKEY_PATH, "utf8"));
-      const ok = await snarkjs.groth16.verify(vKey, publicSignals, proof);
-      if (!ok) {
-        throw new HttpsError("internal", "Generated ZK proof failed verification.");
-      }
-
-      await userRef.set(
-        {
-          zkVerified: true,
-          tier: "witness_circle",
-          lastZkProofType: "SNARK_GROTH16_SERVER",
-          lastZkIsFallback: false,
-          zkElevatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        },
-        { merge: true }
-      );
-
-      await commitRef.set(
-        {
-          status: "elevated",
-          elevatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          lastMerkleRoot: merkleRoot,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        },
-        { merge: true }
-      );
-
-      await nullifierRef.set(
-        {
-          uid,
-          commitment,
-          createdAt: admin.firestore.FieldValue.serverTimestamp()
-        },
-        { merge: true }
-      );
-
-      try {
-        const userRecord = await admin.auth().getUser(uid);
-        const claims = userRecord.customClaims || {};
-        await admin.auth().setCustomUserClaims(uid, {
-          ...claims,
-          zkVerified: true,
-          tier: "witness_circle"
-        });
-      } catch (claimErr) {
-        console.warn("Custom claims update failed (non-fatal):", claimErr.message);
-      }
-
-      await writeAuditLog({
-        action: "zk_elevation",
-        performedBy: uid,
-        targetId: uid,
-        targetType: "user",
-        details: {
-          commitment,
-          nullifierHash,
-          merkleRoot,
-          proofType: "SNARK_GROTH16_SERVER",
-          realSnark: true
-        },
-        severity: "info"
-      });
-
-      return {
-        success: true,
-        proof,
-        publicSignals,
-        merkleRoot,
-        proofType: "SNARK_GROTH16_SERVER"
-      };
-    } catch (error) {
-      console.error("generateZKProof error:", error);
-      if (error instanceof HttpsError) throw error;
-      throw new HttpsError(
-        "internal",
-        error.message || "Failed to generate ZK proof."
-      );
-    }
-  }
-);
 // ======================================================
 // DAO QUADRATIC VOTE (server-authoritative)
 // ======================================================
@@ -1884,7 +1706,7 @@ export const castDaoVote = onCall(
  * Until then: server verifies registered commitment + auth, then writes zkVerified.
  * Client elevateWithZKProof expects success + proofType SNARK_GROTH16_SERVER.
  */
-export.generateZKProof = onCall(
+export const generateZKProof = onCall(
   {
     cors: allowedOrigins,
     timeoutSeconds: 120,
@@ -2003,12 +1825,6 @@ export.generateZKProof = onCall(
   }
 );
 
-
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
-
 // Initialize S3 client for Cloudflare R2
 const s3 = new S3Client({
   region: "auto",
@@ -2073,17 +1889,6 @@ export.getPresignedUrl = onCall(
   }
 );
 
-
-const { onObjectFinalized } = require("firebase-functions/v2/storage");
-const admin = require("firebase-admin");
-const crypto = require("crypto");
-const axios = require("axios");
-
-// Ensure admin is initialized if not already done in your file
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-const db = admin.firestore();
 
 export.verifyAndTimestampMedia = onObjectFinalized(
   {
