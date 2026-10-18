@@ -52,6 +52,12 @@ function getR2Client() {
 }
 
 export const dailyAnchor = onSchedule("0 0 * * *", async (event) => {
-  // Your daily anchoring logic here
   logger.info("Running daily anchor...", { structuredData: true });
+  // Place your daily Merkle tree and OpenTimestamps logic here
+});
+
+export const triggerAnchorNow = onCall({ secrets: [r2AccessKeyId, r2SecretAccessKey] }, async (request) => {
+  logger.info("Triggering manual anchor...", { structuredData: true });
+  // Place your manual anchor logic here
+  return { success: true, message: "Anchor triggered successfully." };
 });
