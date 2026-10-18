@@ -50,3 +50,8 @@ function getR2Client() {
     },
   });
 }
+
+export const dailyAnchor = onSchedule("0 0 * * *", async (event) => {
+  // Your daily anchoring logic here
+  logger.info("Running daily anchor...", { structuredData: true });
+});
