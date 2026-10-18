@@ -5,7 +5,7 @@
 import { onRequest, onCall, HttpsError } from "firebase-functions/v2/https";
 import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/firestore";
 import { beforeUserCreated } from "firebase-functions/v2/identity";
-import { logger } from "firebase-functions/logger";
+import * as logger from "firebase-functions/logger";
 import { setGlobalOptions } from "firebase-functions/v2";
 import { defineSecret } from "firebase-functions/params";
 import { GoogleGenAI, Type } from "@google/genai";
@@ -23,9 +23,7 @@ import corsPackage from "cors";
 import { buildPoseidon } from "circomlibjs";
 import { AccessToken } from "livekit-server-sdk";
 import { fileURLToPath } from "url";
-import { onObjectFinalized } from "firebase-functions/v2/storage"
-
-
+import { onObjectFinalized } from "firebase-functions/v2/storage";
 
 // ESM __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
