@@ -1252,16 +1252,6 @@ export const requestTimestamp = onCall(
 );
 
 // ======================================================
-// ZK CRYPTOGRAPHY UTILS (POSEIDON)
-// ======================================================
-async function getPoseidon() {
-  if (!poseidonInstance) {
-    poseidonInstance = await buildPoseidon();
-  }
-  return poseidonInstance;
-}
-
-// ======================================================
 // 11. LIVEKIT TOKEN FOR LIVE ARENA
 // ======================================================
 const livekitApiKey = defineSecret("LIVEKIT_API_KEY");
