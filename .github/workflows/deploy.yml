@@ -20,33 +20,27 @@ jobs:
           node-version: 22
           cache: 'npm'
 
-      # Install root dependencies (for Tailwind / frontend)
       - name: Install root dependencies
         run: npm install
 
-      # Install Functions dependencies (this was the missing step)
       - name: Install Functions dependencies
         working-directory: functions
         run: npm install
 
-      # Build production CSS
       - name: Install Tailwind CLI
         run: npm install -D tailwindcss @tailwindcss/cli
 
       - name: Build production CSS
         run: npx @tailwindcss/cli -i ./input.css -o ./style.css --minify
 
-      # Authenticate with Google Cloud
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
-      # Install Firebase CLI
       - name: Install Firebase Tools
         run: npm install -g firebase-tools@15.33.0
 
-      # Deploy Firestore + Storage + Functions
       - name: Deploy Firestore + Storage + Functions
         run: |
           firebase deploy \
@@ -54,7 +48,6 @@ jobs:
             --project vocalwitness-3affa \
             --non-interactive
 
-      # Deploy Hosting (Live channel)
       - name: Deploy to Firebase Hosting (Live)
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
