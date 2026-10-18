@@ -12,7 +12,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { CloudTasksClient } from "@google-cloud/tasks";
 import admin from "firebase-admin";
 import paystackApi from "paystack-api";
-import snarkjs from "snarkjs";
+import * as snarkjs from "snarkjs";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
