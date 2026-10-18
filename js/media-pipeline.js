@@ -200,17 +200,32 @@ export async function prepareMediaForUpload(file, options = {}) {
 
 /**
  * Complete Pipeline → prepare + upload
+ * @returns {Promise<{ publicUrl: string, hash: string, mimeType?: string, size?: number }>}
  */
-export async function processAndUploadMedia(file, folderPath = 'evidence', onProgress = null, options = {}) {
+export async function processAndUploadMedia(
+  file,
+  folderPath = 'evidence',
+  onProgress = null,
+  options = {}
+) {
   if (!file) throw new Error('No media file provided for upload pipeline.');
 
-  try {
-    const { file: preparedFile, hash } = await prepareMediaForUpload(file, options);
-    const publicUrl = await uploadMedia(preparedFile, folderPath, onProgress);
+  const prepared = await prepareMediaForUpload(file, options);
+  // prepared = { file, hash, mimeType, size }  — hash is of PROCESSED bytes
 
-    return { publicUrl, hash };
-  } catch (error) {
-    console.error('[MediaPipeline] Processing and upload sequence failed:', error);
-    throw error;
+  const publicUrl = await uploadMedia(prepared.file, folderPath, onProgress);
+
+  if (!publicUrl || typeof publicUrl !== 'string') {
+    throw new Error('Upload did not return a public URL.');
   }
+  if (!prepared.hash || typeof prepared.hash !== 'string') {
+    throw new Error('Processed media hash missing.');
+  }
+
+  return {
+    publicUrl,
+    hash: prepared.hash,
+    mimeType: prepared.mimeType,
+    size: prepared.size,
+  };
 }
