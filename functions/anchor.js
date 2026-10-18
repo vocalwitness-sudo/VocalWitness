@@ -6,7 +6,7 @@
  */
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { logger } from "firebase-functions/logger";
+import * as logger from "firebase-functions/logger";
 import admin from "firebase-admin";
 import OpenTimestamps from "opentimestamps";
 import { MerkleTree } from "merkletreejs";
