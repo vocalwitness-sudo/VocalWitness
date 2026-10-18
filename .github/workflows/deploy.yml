@@ -4,12 +4,12 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:          # Still allows manual runs if you want
+  workflow_dispatch:
 
 jobs:
   deploy-live:
     runs-on: ubuntu-latest
-    # NO "environment: production"  ← this removes the approval gate
+    environment: production   # Restores approval gate for safety
 
     steps:
       - name: Checkout Code
@@ -35,10 +35,16 @@ jobs:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
       - name: Install Firebase Tools
-        run: npm install -g firebase-tools@15.33.0
+        run: npm install -g firebase-tools@latest
 
-      - name: Deploy Firestore Rules
+      - name: Deploy Firestore Rules + Indexes
         run: firebase deploy --only firestore --project vocalwitness-3affa --non-interactive
+
+      - name: Deploy Storage Rules
+        run: firebase deploy --only storage --project vocalwitness-3affa --non-interactive
+
+      - name: Deploy Cloud Functions
+        run: firebase deploy --only functions --project vocalwitness-3affa --non-interactive
 
       - name: Deploy to Firebase Hosting (Live)
         uses: FirebaseExtended/action-hosting-deploy@v0
@@ -48,4 +54,4 @@ jobs:
           projectId: vocalwitness-3affa
           channelId: live
           entryPoint: .
-          firebaseToolsVersion: 15.33.0
+          firebaseToolsVersion: latest
