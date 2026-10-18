@@ -2,9 +2,9 @@
  * Cloud Functions for Firebase / Cloudflare R2 Integration
  * Stack: Firebase Functions v2 • AWS SDK v3 • SnarkJS • Paystack • Cloud Tasks • Gemini API
  */
-import functions from "firebase-functions";
 import { onRequest, onCall, HttpsError } from "firebase-functions/v2/https";
 import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/firestore";
+import { beforeUserCreated } from "firebase-functions/v2/identity";
 import { logger } from "firebase-functions/logger";
 import { setGlobalOptions } from "firebase-functions/v2";
 import { defineSecret } from "firebase-functions/params";
@@ -213,7 +213,8 @@ export const getUploadUrl = onRequest(
 // ======================================================
 // 2. USER INITIALIZATION & PHONE VERIFICATION
 // ======================================================
-export const initializeCitizenProfile = functions.auth.user().onCreate(async (user) => {
+export const initializeCitizenProfile = beforeUserCreated(async (event) => {
+  const user = event.data;
   const userId = user.uid;
   const defaultUsername = `citizen_${Math.floor(1000 + Math.random() * 9000)}`;
 
@@ -272,6 +273,7 @@ export const initializeCitizenProfile = functions.auth.user().onCreate(async (us
     console.error(`Error creating profile for ${userId}:`, error);
   }
 });
+
 
 export const confirmPhoneVerification = onCall(
   { cors: allowedOrigins },
