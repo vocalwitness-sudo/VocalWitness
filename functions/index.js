@@ -23,7 +23,9 @@ import corsPackage from "cors";
 import { buildPoseidon } from "circomlibjs";
 import { AccessToken } from "livekit-server-sdk";
 import { fileURLToPath } from "url";
-import { onObjectFinalized } from "firebase-functions/v2/storage";
+import { onObjectFinalized } from "firebase-functions/v2/storage"
+
+
 
 // ESM __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -1364,6 +1366,15 @@ async function getZeroHashes() {
   return ZERO_HASHES;
 }
 
+function hashToFieldDecimal(prefix, value) {
+  const h = crypto
+    .createHash("sha256")
+    .update(String(prefix) + ":" + String(value))
+    .digest("hex");
+  // Use first 31 bytes → decimal string (safe for field elements / Firestore doc IDs)
+  return BigInt("0x" + h.slice(0, 62)).toString();
+}
+
 function zkNodeRef(level, index) {
   return db.collection("zk_tree").doc(TREE_ID).collection("nodes").doc(`${level}_${index}`);
 }
@@ -1689,7 +1700,6 @@ export const castDaoVote = onCall(
   }
 );
 
-
 /**
  * Step 2: Prove membership and elevate tier.
  * Full Groth16 can be plugged in when circuit assets are on the function.
@@ -1825,7 +1835,7 @@ const s3 = new S3Client({
   },
 });
 
-export.getPresignedUrl = onCall(
+export const getPresignedUrl = onCall(
   {
     cors: ["https://vocalwitness.com", "https://vocalwitness-3affa.web.app"],
     consumeAppCheckToken: true, // Enforces Firebase App Check automatically
@@ -1841,7 +1851,6 @@ export.getPresignedUrl = onCall(
     }
 
     const uid = request.auth.uid;
-    const db = admin.firestore();
     const rateLimitRef = db.collection("rateLimits").doc(uid);
     const now = Date.now();
     const throttleMs = 10000; // 10-second throttle per user
@@ -1879,8 +1888,7 @@ export.getPresignedUrl = onCall(
   }
 );
 
-
-export.verifyAndTimestampMedia = onObjectFinalized(
+export const verifyAndTimestampMedia = onObjectFinalized(
   {
     memory: "512MiB",
     timeoutSeconds: 120
@@ -1923,10 +1931,6 @@ export.verifyAndTimestampMedia = onObjectFinalized(
 
       // 2. Optional: Request RFC3161 timestamp from Free TSA (or alternative provider)
       try {
-        // FreeTSA typically expects an ASN.1 Time Stamp Request (TSR). 
-        // For simple implementations or raw hash anchoring, you can post the hash buffer or 
-        // handle standard timestamp queries. If FreeTSA requires precise ASN.1 framing, 
-        // ensure compatibility or wrap in a try/catch so it doesn't fail the entire pipeline.
         const hashBuffer = Buffer.from(serverHash, "hex");
         const tsaResponse = await axios.post("https://freetsa.org/tsr", hashBuffer, {
           headers: { "Content-Type": "application/timestamp-query" },
@@ -1940,7 +1944,6 @@ export.verifyAndTimestampMedia = onObjectFinalized(
       }
 
       // 3. Save verification metadata back to Firestore
-      // Match the file to a testimony or media document (querying by storage path or creating record)
       const timestampData = {
         mediaPath: filePath,
         sha256Hash: serverHash,
@@ -1950,7 +1953,6 @@ export.verifyAndTimestampMedia = onObjectFinalized(
         status: "verified"
       };
 
-      // Query testimonies collection for a document referencing this media path or create an audit record
       const testimoniesQuery = await db
         .collection("testimonies")
         .where("mediaUrl", "==", `https://media.vocalwitness.com/${filePath}`)
@@ -1967,7 +1969,6 @@ export.verifyAndTimestampMedia = onObjectFinalized(
         );
         console.log(`Updated testimony document ${testimonyDoc.id} with integrity hash.`);
       } else {
-        // Fallback: store under a dedicated media_hashes collection linked to the user
         await db.collection("media_verifications").add({
           uid,
           ...timestampData,
@@ -1985,17 +1986,15 @@ export.verifyAndTimestampMedia = onObjectFinalized(
 
 export const heavyProcessingTask = onRequest(
   { 
-    concurrency: 80, // Limit simultaneous execution slots per container instance
+    concurrency: 80,
     memory: "512MiB",
     timeoutSeconds: 60 
   }, 
   (req, res) => {
-    // Process request safely within cost guardrails
     res.status(200).send({ status: "processed" });
   }
 );
 
-// functions/index.js  (add this export)
 export const ogPost = onRequest(
   { cors: true },
   async (req, res) => {
@@ -2016,15 +2015,12 @@ export const ogPost = onRequest(
       const description = (post.content || 'Sealed testimony on VocalWitness')
         .slice(0, 200);
 
-      // Prefer image → video poster/thumbnail → audio waveform placeholder → logo
       let image = post.imageUrl 
         || post.thumbnailUrl 
         || 'https://vocalwitness.com/logo.png';
 
-      // Optional: for video you can later generate a real poster; for now use image or logo
       if (post.videoUrl && !post.imageUrl) {
-        // image stays logo or a static “video evidence” card you host
-        image = 'https://vocalwitness.com/og-video-fallback.png'; // optional asset
+        image = 'https://vocalwitness.com/og-video-fallback.png';
       }
 
       const pageUrl = `https://vocalwitness.com/verify.html?id=${id}`;
@@ -2061,7 +2057,7 @@ export const ogPost = onRequest(
 </body>
 </html>`;
 
-      res.set('Cache-Control', 'public, max-age=300'); // 5 min cache is fine
+      res.set('Cache-Control', 'public, max-age=300');
       res.status(200).send(html);
     } catch (err) {
       console.error(err);
