@@ -25,5 +25,9 @@
     "opentimestamps": "^0.4.9",
     "paystack-api": "^2.0.6",
     "snarkjs": "^0.7.6"
-  }
+  },
+  "allowScripts": [
+    "protobufjs",
+    "re2"
+  ]
 }
