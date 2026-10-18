@@ -13,10 +13,13 @@ import { MerkleTree } from "merkletreejs";
 import crypto from "crypto";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { defineSecret } from "firebase-functions/params";
+if (!admin.apps.length) {
+  admin.initializeApp();
 
 // Re-use the same secrets already defined in the project
 const r2AccessKeyId = defineSecret("R2_ACCESS_KEY_ID");
 const r2SecretAccessKey = defineSecret("R2_SECRET_ACCESS_KEY");
+  const db = admin.firestore();
 
 const db = admin.firestore();
 
