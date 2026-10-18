@@ -24,6 +24,7 @@ import { buildPoseidon } from "circomlibjs";
 import { AccessToken } from "livekit-server-sdk";
 import { fileURLToPath } from "url";
 import { onObjectFinalized } from "firebase-functions/v2/storage";
+import { dailyAnchor, triggerAnchorNow } from "./anchor.js";
 
 // ESM __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -2072,4 +2073,5 @@ function escape(s) {
     .replace(/"/g, '&quot;');
 }
 
-export { dailyAnchor, triggerAnchorNow } from "./anchor.js";
+export { dailyAnchor, triggerAnchorNow };
+
