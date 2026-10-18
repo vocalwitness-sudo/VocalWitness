@@ -12,7 +12,6 @@ permissions:
 jobs:
   deploy-live:
     runs-on: ubuntu-latest
-    # environment: production   # uncomment when you want protection rules
 
     steps:
       - name: Checkout
