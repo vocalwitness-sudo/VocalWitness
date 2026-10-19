@@ -2,17 +2,17 @@
  * Cloud Functions for Firebase / Cloudflare R2 Integration
  * Stack: Firebase Functions v2 • AWS SDK v3 • SnarkJS • Paystack • Cloud Tasks • Gemini API
  */
-import functions from "firebase-functions";
 import { onRequest, onCall, HttpsError } from "firebase-functions/v2/https";
 import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/firestore";
-import { logger } from "firebase-functions/logger";
+import { beforeUserCreated } from "firebase-functions/v2/identity";
+import * as logger from "firebase-functions/logger";
 import { setGlobalOptions } from "firebase-functions/v2";
 import { defineSecret } from "firebase-functions/params";
 import { GoogleGenAI, Type } from "@google/genai";
 import { CloudTasksClient } from "@google-cloud/tasks";
 import admin from "firebase-admin";
 import paystackApi from "paystack-api";
-import snarkjs from "snarkjs";
+import * as snarkjs from "snarkjs";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
@@ -23,6 +23,8 @@ import corsPackage from "cors";
 import { buildPoseidon } from "circomlibjs";
 import { AccessToken } from "livekit-server-sdk";
 import { fileURLToPath } from "url";
+import { onObjectFinalized } from "firebase-functions/v2/storage";
+import { dailyAnchor, triggerAnchorNow } from "./anchor.js";
 
 // ESM __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -148,6 +150,69 @@ async function writeAuditLog({
 }
 
 // ======================================================
+// 2. USER INITIALIZATION (Pure v2)
+// ======================================================
+export const initializeCitizenProfile = beforeUserCreated(async (event) => {
+  const user = event.data;
+  const userId = user.uid;
+  const defaultUsername = `citizen_${Math.floor(1000 + Math.random() * 9000)}`;
+
+  const defaultCitizenData = {
+    uid: userId,
+    email: user.email || "",
+    displayName: user.displayName || "New Citizen",
+    username: defaultUsername,
+    photoURL: user.photoURL || "https://placehold.co/150",
+    role: "citizen",
+    tier: "citizen",
+    reputationScore: 50,
+    trustCircle: 0,
+    level: 1,
+    isPhoneVerified: Boolean(user.phoneNumber),
+    isVerified: Boolean(user.phoneNumber),
+    zkVerified: false,
+    verifiedAt: user.phoneNumber ? admin.firestore.FieldValue.serverTimestamp() : null,
+    testimoniesCount: 0,
+    verificationsMade: 0,
+    endorsementsReceived: 0,
+    successfulEvidence: 0,
+    debunkedEvidence: 0,
+    successfulEscalations: 0,
+    communityEndorsements: 0,
+    interestedInArena: false,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    lastLogin: admin.firestore.FieldValue.serverTimestamp(),
+    bio: "Just joined the Citizen Talk room.",
+    location: "",
+    badges: ["casual_talker"]
+  };
+
+  try {
+    await db.collection("users").doc(userId).set(defaultCitizenData, { merge: true });
+
+    await admin.auth().setCustomUserClaims(userId, {
+      admin: false,
+      moderator: false,
+      banned: false,
+      supporter: false,
+      steward: false
+    });
+
+    await writeAuditLog({
+      action: "user_created",
+      performedBy: "system",
+      targetId: userId,
+      targetType: "user",
+      details: { email: user.email || null, phoneVerified: Boolean(user.phoneNumber) },
+      severity: "info"
+    });
+
+    console.log(`✅ Created profile for user: ${userId}`);
+  } catch (error) {
+    console.error(`Error creating profile for ${userId}:`, error);
+  }
+});
+// ======================================================
 // 1. R2 PRE-SIGNED URL
 // ======================================================
 export const getUploadUrl = onRequest(
@@ -209,69 +274,6 @@ export const getUploadUrl = onRequest(
     });
   }
 );
-
-// ======================================================
-// 2. USER INITIALIZATION & PHONE VERIFICATION
-// ======================================================
-export const initializeCitizenProfile = functions.auth.user().onCreate(async (user) => {
-  const userId = user.uid;
-  const defaultUsername = `citizen_${Math.floor(1000 + Math.random() * 9000)}`;
-
-  const defaultCitizenData = {
-    uid: userId,
-    email: user.email || "",
-    displayName: user.displayName || "New Citizen",
-    username: defaultUsername,
-    photoURL: user.photoURL || "https://placehold.co/150",
-    role: "citizen",
-    tier: "citizen",
-    reputationScore: 50,
-    trustCircle: 0,
-    level: 1,
-    isPhoneVerified: Boolean(user.phoneNumber),
-    isVerified: Boolean(user.phoneNumber),
-    zkVerified: false,
-    verifiedAt: user.phoneNumber ? admin.firestore.FieldValue.serverTimestamp() : null,
-    testimoniesCount: 0,
-    verificationsMade: 0,
-    endorsementsReceived: 0,
-    successfulEvidence: 0,
-    debunkedEvidence: 0,
-    successfulEscalations: 0,
-    communityEndorsements: 0,
-    interestedInArena: false,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    lastLogin: admin.firestore.FieldValue.serverTimestamp(),
-    bio: "Just joined the Citizen Talk room.",
-    location: "",
-    badges: ["casual_talker"]
-  };
-
-  try {
-    await db.collection("users").doc(userId).set(defaultCitizenData, { merge: true });
-
-    await admin.auth().setCustomUserClaims(userId, {
-      admin: false,
-      moderator: false,
-      banned: false,
-      supporter: false,
-      steward: false
-    });
-
-    await writeAuditLog({
-      action: "user_created",
-      performedBy: "system",
-      targetId: userId,
-      targetType: "user",
-      details: { email: user.email || null, phoneVerified: Boolean(user.phoneNumber) },
-      severity: "info"
-    });
-
-    console.log(`✅ Created profile for user: ${userId}`);
-  } catch (error) {
-    console.error(`Error creating profile for ${userId}:`, error);
-  }
-});
 
 export const confirmPhoneVerification = onCall(
   { cors: allowedOrigins },
@@ -552,7 +554,7 @@ export const unbanUser = onCall(
 // MODERATED DELETE & TOXICITY HELPERS
 // ======================================================
 
-export.moderatedDelete = onCall(
+export const moderatedDelete = onCall(
   { cors: allowedOrigins },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
@@ -657,7 +659,7 @@ function gentleModerationCheck(content = "") {
   };
 }
 
-export.analyzeToxicity = onRequest(
+export const analyzeToxicity = onRequest(
   { secrets: [perspectiveApiKey] },
   (req, res) => {
     corsHandler(req, res, async () => {
@@ -674,7 +676,7 @@ export.analyzeToxicity = onRequest(
 );
 
 // 1. Post Content Moderation
-export.moderatePostContent = onCall(
+export const moderatePostContent = onCall(
   {
     cors: allowedOrigins,
     secrets: [geminiApiKey]
@@ -746,7 +748,7 @@ export.moderatePostContent = onCall(
 );
 
 // 2. Multi-Language Feed Translation
-export.translateTestimony = onCall(
+export const translateTestimony = onCall(
   { cors: allowedOrigins, secrets: [geminiApiKey] },
   async (request) => {
     const { text, targetLanguage } = request.data || {};
@@ -767,7 +769,7 @@ export.translateTestimony = onCall(
 );
 
 // 3. Audio-to-Text Witness Transcriptions (Base64 Audio Input)
-export.transcribeAudioWitness = onCall(
+export const transcribeAudioWitness = onCall(
   { cors: allowedOrigins, secrets: [geminiApiKey] },
   async (request) => {
     const { audioBase64, mimeType } = request.data || {};
@@ -796,7 +798,7 @@ export.transcribeAudioWitness = onCall(
 );
 
 // 4. Compact Report Summarization
-export.summarizeReport = onCall(
+export const summarizeReport = onCall(
   { cors: allowedOrigins, secrets: [geminiApiKey] },
   async (request) => {
     const { text } = request.data || {};
@@ -824,7 +826,7 @@ const vKey = JSON.parse(
   fs.readFileSync(path.join(__dirname, "verification_key.json"), "utf8")
 );
 
-export.verifyAndElevateZKProof = onCall(
+export const verifyAndElevateZKProof = onCall(
   { cors: allowedOrigins },
   async (request) => {
     if (!request.auth) {
@@ -881,7 +883,7 @@ export.verifyAndElevateZKProof = onCall(
   }
 );
 
-export.detectSyntheticMedia = onCall(
+export const detectSyntheticMedia = onCall(
   {
     cors: allowedOrigins,
     secrets: [geminiApiKey],
@@ -955,7 +957,7 @@ export.detectSyntheticMedia = onCall(
   }
 );
 
-export.checkContentConsistency = onCall(
+export const checkContentConsistency = onCall(
   {
     cors: allowedOrigins,
     secrets: [geminiApiKey]
@@ -1018,7 +1020,7 @@ export.checkContentConsistency = onCall(
   }
 );
 
-export.suggestCorroborations = onCall(
+export const suggestCorroborations = onCall(
   {
     cors: allowedOrigins
   },
@@ -1046,7 +1048,7 @@ export.suggestCorroborations = onCall(
  * Toxicity scoring specifically for comments / replies
  * (Keep primary reports under the existing moderatePostContent + Perspective flow)
  */
-export.scoreToxicity = onCall(
+export const scoreToxicity = onCall(
   {
     cors: allowedOrigins,
     secrets: [perspectiveApiKey]
@@ -1081,7 +1083,7 @@ export.scoreToxicity = onCall(
 // ======================================================
 // 6. PAYSTACK
 // ======================================================
-export.initializePaystack = onCall(
+export const initializePaystack = onCall(
   {
     cors: allowedOrigins,
     secrets: [paystackSecretKey]
@@ -1117,7 +1119,7 @@ export.initializePaystack = onCall(
   }
 );
 
-export.paystackWebhook = onRequest(
+export const paystackWebhook = onRequest(
   { cors: allowedOrigins, secrets: [paystackSecretKey] },
   async (req, res) => {
     if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
@@ -1180,7 +1182,7 @@ export.paystackWebhook = onRequest(
 //// ======================================================
 // 10. EVIDENCE PACK — PLATFORM TIMESTAMP
 // ======================================================
-export.requestTimestamp = onCall(
+export const requestTimestamp = onCall(
   { cors: allowedOrigins },
   async (request) => {
     if (!request.auth) {
@@ -1249,16 +1251,6 @@ export.requestTimestamp = onCall(
     }
   }
 );
-
-// ======================================================
-// ZK CRYPTOGRAPHY UTILS (POSEIDON)
-// ======================================================
-async function getPoseidon() {
-  if (!poseidonInstance) {
-    poseidonInstance = await buildPoseidon();
-  }
-  return poseidonInstance;
-}
 
 // ======================================================
 // 11. LIVEKIT TOKEN FOR LIVE ARENA
@@ -1373,6 +1365,15 @@ async function getZeroHashes() {
   return ZERO_HASHES;
 }
 
+function hashToFieldDecimal(prefix, value) {
+  const h = crypto
+    .createHash("sha256")
+    .update(String(prefix) + ":" + String(value))
+    .digest("hex");
+  // Use first 31 bytes → decimal string (safe for field elements / Firestore doc IDs)
+  return BigInt("0x" + h.slice(0, 62)).toString();
+}
+
 function zkNodeRef(level, index) {
   return db.collection("zk_tree").doc(TREE_ID).collection("nodes").doc(`${level}_${index}`);
 }
@@ -1461,7 +1462,7 @@ async function getPathForLeaf(leafIndex, commitment) {
 /**
  * Step 1: Poseidon commitment + Merkle leaf insert
  */
-export.registerZKCommitment = onCall(
+export const registerZKCommitment = onCall(
   { cors: allowedOrigins, timeoutSeconds: 60, memory: "512MiB" },
   async (request) => {
     if (!request.auth) {
@@ -1525,186 +1526,7 @@ export.registerZKCommitment = onCall(
   }
 );
 
-/**
- * Step 2: Real Groth16 prove + verify, then elevate
- */
-export.generateZKProof = onCall(
-  {
-    cors: allowedOrigins,
-    timeoutSeconds: 180,
-    memory: "2GiB",
-    consumeAppCheckToken: true
-  },
-  async (request) => {
-    if (!request.app) {
-      throw new HttpsError(
-        "unauthenticated",
-        "Unauthorized: Missing or invalid App Check token."
-      );
-    }
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Sign in required.");
-    }
 
-    const uid = request.auth.uid;
-    const userRef = db.collection("users").doc(uid);
-    const commitRef = db.collection("zk_commitments").doc(uid);
-
-    try {
-      if (
-        !fs.existsSync(WASM_PATH) ||
-        !fs.existsSync(ZKEY_PATH) ||
-        !fs.existsSync(VKEY_PATH)
-      ) {
-        throw new HttpsError(
-          "failed-precondition",
-          "ZK circuit artifacts missing. Put wasm/zkey/vkey in functions/zk/"
-        );
-      }
-
-      const [commitSnap, userSnap] = await Promise.all([
-        commitRef.get(),
-        userRef.get()
-      ]);
-
-      if (!commitSnap.exists || !commitSnap.data()?.commitment) {
-        throw new HttpsError(
-          "failed-precondition",
-          "No commitment registered. Call registerZKCommitment first."
-        );
-      }
-
-      const commitData = commitSnap.data();
-      if (commitData.hashAlgo !== "poseidon") {
-        throw new HttpsError(
-          "failed-precondition",
-          "Legacy commitment. Call registerZKCommitment again for Poseidon."
-        );
-      }
-
-      const secret = commitData.secretEnc;
-      const nullifier = commitData.nullifierEnc;
-      const commitment = commitData.commitment;
-      const leafIndex = commitData.leafIndex;
-
-      const user = userSnap.exists ? userSnap.data() : {};
-      const trustScore = String(
-        Math.max(0, Number(user.reputationScore || user.trustScore || 0))
-      );
-      const postCount = String(
-        Math.max(0, Number(user.testimoniesCount || user.postCount || 0))
-      );
-
-      const { pathElements, pathIndices, root: merkleRoot } =
-        await getPathForLeaf(leafIndex, commitment);
-
-      const nullifierHash = await poseidonHash([nullifier]);
-
-      const nullifierRef = db.collection("zk_nullifiers").doc(nullifierHash);
-      const nullifierDoc = await nullifierRef.get();
-      if (nullifierDoc.exists && nullifierDoc.data()?.uid !== uid) {
-        throw new HttpsError("already-exists", "Nullifier already spent.");
-      }
-
-      const input = {
-        secret,
-        nullifier,
-        trustScore,
-        postCount,
-        pathElements,
-        pathIndices,
-        merkleRoot,
-        minTrustScore: MIN_TRUST_SCORE,
-        minPosts: MIN_POSTS
-      };
-
-      const { proof, publicSignals } = await snarkjs.groth16.fullProve(
-        input,
-        WASM_PATH,
-        ZKEY_PATH
-      );
-
-      const vKey = JSON.parse(fs.readFileSync(VKEY_PATH, "utf8"));
-      const ok = await snarkjs.groth16.verify(vKey, publicSignals, proof);
-      if (!ok) {
-        throw new HttpsError("internal", "Generated ZK proof failed verification.");
-      }
-
-      await userRef.set(
-        {
-          zkVerified: true,
-          tier: "witness_circle",
-          lastZkProofType: "SNARK_GROTH16_SERVER",
-          lastZkIsFallback: false,
-          zkElevatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        },
-        { merge: true }
-      );
-
-      await commitRef.set(
-        {
-          status: "elevated",
-          elevatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          lastMerkleRoot: merkleRoot,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        },
-        { merge: true }
-      );
-
-      await nullifierRef.set(
-        {
-          uid,
-          commitment,
-          createdAt: admin.firestore.FieldValue.serverTimestamp()
-        },
-        { merge: true }
-      );
-
-      try {
-        const userRecord = await admin.auth().getUser(uid);
-        const claims = userRecord.customClaims || {};
-        await admin.auth().setCustomUserClaims(uid, {
-          ...claims,
-          zkVerified: true,
-          tier: "witness_circle"
-        });
-      } catch (claimErr) {
-        console.warn("Custom claims update failed (non-fatal):", claimErr.message);
-      }
-
-      await writeAuditLog({
-        action: "zk_elevation",
-        performedBy: uid,
-        targetId: uid,
-        targetType: "user",
-        details: {
-          commitment,
-          nullifierHash,
-          merkleRoot,
-          proofType: "SNARK_GROTH16_SERVER",
-          realSnark: true
-        },
-        severity: "info"
-      });
-
-      return {
-        success: true,
-        proof,
-        publicSignals,
-        merkleRoot,
-        proofType: "SNARK_GROTH16_SERVER"
-      };
-    } catch (error) {
-      console.error("generateZKProof error:", error);
-      if (error instanceof HttpsError) throw error;
-      throw new HttpsError(
-        "internal",
-        error.message || "Failed to generate ZK proof."
-      );
-    }
-  }
-);
 // ======================================================
 // DAO QUADRATIC VOTE (server-authoritative)
 // ======================================================
@@ -1877,14 +1699,13 @@ export const castDaoVote = onCall(
   }
 );
 
-
 /**
  * Step 2: Prove membership and elevate tier.
  * Full Groth16 can be plugged in when circuit assets are on the function.
  * Until then: server verifies registered commitment + auth, then writes zkVerified.
  * Client elevateWithZKProof expects success + proofType SNARK_GROTH16_SERVER.
  */
-export.generateZKProof = onCall(
+export const generateZKProof = onCall(
   {
     cors: allowedOrigins,
     timeoutSeconds: 120,
@@ -2003,12 +1824,6 @@ export.generateZKProof = onCall(
   }
 );
 
-
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
-
 // Initialize S3 client for Cloudflare R2
 const s3 = new S3Client({
   region: "auto",
@@ -2019,7 +1834,7 @@ const s3 = new S3Client({
   },
 });
 
-export.getPresignedUrl = onCall(
+export const getPresignedUrl = onCall(
   {
     cors: ["https://vocalwitness.com", "https://vocalwitness-3affa.web.app"],
     consumeAppCheckToken: true, // Enforces Firebase App Check automatically
@@ -2035,7 +1850,6 @@ export.getPresignedUrl = onCall(
     }
 
     const uid = request.auth.uid;
-    const db = admin.firestore();
     const rateLimitRef = db.collection("rateLimits").doc(uid);
     const now = Date.now();
     const throttleMs = 10000; // 10-second throttle per user
@@ -2073,19 +1887,7 @@ export.getPresignedUrl = onCall(
   }
 );
 
-
-const { onObjectFinalized } = require("firebase-functions/v2/storage");
-const admin = require("firebase-admin");
-const crypto = require("crypto");
-const axios = require("axios");
-
-// Ensure admin is initialized if not already done in your file
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-const db = admin.firestore();
-
-export.verifyAndTimestampMedia = onObjectFinalized(
+export const verifyAndTimestampMedia = onObjectFinalized(
   {
     memory: "512MiB",
     timeoutSeconds: 120
@@ -2128,10 +1930,6 @@ export.verifyAndTimestampMedia = onObjectFinalized(
 
       // 2. Optional: Request RFC3161 timestamp from Free TSA (or alternative provider)
       try {
-        // FreeTSA typically expects an ASN.1 Time Stamp Request (TSR). 
-        // For simple implementations or raw hash anchoring, you can post the hash buffer or 
-        // handle standard timestamp queries. If FreeTSA requires precise ASN.1 framing, 
-        // ensure compatibility or wrap in a try/catch so it doesn't fail the entire pipeline.
         const hashBuffer = Buffer.from(serverHash, "hex");
         const tsaResponse = await axios.post("https://freetsa.org/tsr", hashBuffer, {
           headers: { "Content-Type": "application/timestamp-query" },
@@ -2145,7 +1943,6 @@ export.verifyAndTimestampMedia = onObjectFinalized(
       }
 
       // 3. Save verification metadata back to Firestore
-      // Match the file to a testimony or media document (querying by storage path or creating record)
       const timestampData = {
         mediaPath: filePath,
         sha256Hash: serverHash,
@@ -2155,7 +1952,6 @@ export.verifyAndTimestampMedia = onObjectFinalized(
         status: "verified"
       };
 
-      // Query testimonies collection for a document referencing this media path or create an audit record
       const testimoniesQuery = await db
         .collection("testimonies")
         .where("mediaUrl", "==", `https://media.vocalwitness.com/${filePath}`)
@@ -2172,7 +1968,6 @@ export.verifyAndTimestampMedia = onObjectFinalized(
         );
         console.log(`Updated testimony document ${testimonyDoc.id} with integrity hash.`);
       } else {
-        // Fallback: store under a dedicated media_hashes collection linked to the user
         await db.collection("media_verifications").add({
           uid,
           ...timestampData,
@@ -2190,17 +1985,15 @@ export.verifyAndTimestampMedia = onObjectFinalized(
 
 export const heavyProcessingTask = onRequest(
   { 
-    concurrency: 80, // Limit simultaneous execution slots per container instance
+    concurrency: 80,
     memory: "512MiB",
     timeoutSeconds: 60 
   }, 
   (req, res) => {
-    // Process request safely within cost guardrails
     res.status(200).send({ status: "processed" });
   }
 );
 
-// functions/index.js  (add this export)
 export const ogPost = onRequest(
   { cors: true },
   async (req, res) => {
@@ -2221,15 +2014,12 @@ export const ogPost = onRequest(
       const description = (post.content || 'Sealed testimony on VocalWitness')
         .slice(0, 200);
 
-      // Prefer image → video poster/thumbnail → audio waveform placeholder → logo
       let image = post.imageUrl 
         || post.thumbnailUrl 
         || 'https://vocalwitness.com/logo.png';
 
-      // Optional: for video you can later generate a real poster; for now use image or logo
       if (post.videoUrl && !post.imageUrl) {
-        // image stays logo or a static “video evidence” card you host
-        image = 'https://vocalwitness.com/og-video-fallback.png'; // optional asset
+        image = 'https://vocalwitness.com/og-video-fallback.png';
       }
 
       const pageUrl = `https://vocalwitness.com/verify.html?id=${id}`;
@@ -2266,7 +2056,7 @@ export const ogPost = onRequest(
 </body>
 </html>`;
 
-      res.set('Cache-Control', 'public, max-age=300'); // 5 min cache is fine
+      res.set('Cache-Control', 'public, max-age=300');
       res.status(200).send(html);
     } catch (err) {
       console.error(err);
@@ -2283,4 +2073,5 @@ function escape(s) {
     .replace(/"/g, '&quot;');
 }
 
-export { dailyAnchor, triggerAnchorNow } from "./anchor.js";
+export { dailyAnchor, triggerAnchorNow };
+
