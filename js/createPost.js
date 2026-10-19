@@ -3,7 +3,6 @@ import { getFunctions, httpsCallable } from
   "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
-import { getUserTier } from './tier.js';
 import { analyzeReportContent } from './moderation.js';
 import { processAndUploadMedia } from './media-pipeline.js';
 import { parsePostMetadata } from './utils/parser.js';
@@ -140,22 +139,10 @@ export async function submitTestimony({
         forensicHash = await computeSHA256(content.trim());
     }
 
-    // 2. Resolve User Tier & Reputation
-    let authorTier = 'citizen';
-    let reputation = 0;
-
-    try {
-        const tierData = await getUserTier(user.uid);
-        authorTier = tierData.tier || 'citizen';
-        reputation = tierData.reputation || 0;
-    } catch (err) {
-        console.warn("Could not fetch tier, defaulting to citizen:", err);
-    }
-
-    // 3. Parse hashtags and mentions from content text
+    // 3. Parse hashtags and mentions
     const { hashtags, mentions, cleanedContent } = parsePostMetadata(content);
 
-    // 3.5. Build Evidence Pack Cryptographic Manifest
+    // 3.5 Evidence pack
     let firestorePack = null;
     let packCoreHash = null;
     try {
@@ -177,68 +164,48 @@ export async function submitTestimony({
             },
             channel,
             forensicHash,
-            testimonyId: null, // Populated after addDoc if needed
+            testimonyId: null,
         });
         firestorePack = packResult.firestorePack;
         packCoreHash = packResult.packCoreHash;
     } catch (packErr) {
-        console.warn("Evidence pack generation encountered an issue, proceeding without pack:", packErr);
+        console.warn("Evidence pack generation issue, proceeding without pack:", packErr);
     }
 
-// 4. Assemble Firestore Payload – client-safe fields ONLY
-const payload = {
-    content: cleanedContent || '',
-    hashtags: hashtags || [],
-    mentions: mentions || [],
-    channel,
+    // 4–5. Secure server write (Admin SDK sets tier / moderation / counters)
+    showToast("Sealing on server...", "info");
 
-    // ===== Field Note fields =====
-    postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
-    fieldNoteRole: postingStyle === 'field-note' ? fieldNoteRole || null : null,
-    fieldNoteOrg: postingStyle === 'field-note' ? fieldNoteOrg || null : null,
+    const functions = getFunctions();
+    const submitSecure = httpsCallable(functions, "submitTestimonySecure");
 
-    authorId: user.uid,
-    isAnonymous: !!isAnonymous,
-    // Display name is UI-only; do not treat as proof of identity
-    author: isAnonymous ? 'Anonymous Witness' : user.displayName || 'Citizen Witness',
+    const result = await submitSecure({
+        content: cleanedContent || '',
+        channel,
+        isAnonymous: !!isAnonymous,
+        authorDisplayName: isAnonymous ? null : (user.displayName || null),
+        forensicHash,
+        imageUrl: mediaType === 'image' ? mediaUrl : null,
+        videoUrl: mediaType === 'video' ? mediaUrl : null,
+        audioUrl: mediaType === 'audio' ? mediaUrl : null,
+        hashtags: hashtags || [],
+        mentions: mentions || [],
+        postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
+        fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
+        fieldNoteOrg: postingStyle === 'field-note' ? (fieldNoteOrg || null) : null,
+        evidencePack: firestorePack,
+        packCoreHash,
+    });
 
-    // Integrity (must match uploaded bytes)
-    forensicHash,
-    imageUrl: mediaType === 'image' ? mediaUrl : null,
-    videoUrl: mediaType === 'video' ? mediaUrl : null,
-    audioUrl: mediaType === 'audio' ? mediaUrl : null,
-
-    // Evidence Pack Cryptographic References
-    evidencePack: firestorePack,
-    packCoreHash: packCoreHash,
-
-    // Defaults only — server/rules should ignore client trust claims
-    reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
-    commentsCount: 0,
-    isPinned: false,
-    isDeleted: false,
-
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-};
-
-    // 5. Commit to Firestore
-    const docRef = await addDoc(collection(db, "testimonies"), payload);
-
-    // 6. Update throttle timestamp (required by isNotThrottled())
-    try {
-        await updateDoc(doc(db, "users", user.uid), {
-            lastTestimonyAt: serverTimestamp()
-        });
-    } catch (err) {
-        console.warn("Could not update lastTestimonyAt:", err);
+    const id = result?.data?.id;
+    if (!id) {
+        throw new Error("Secure submit returned no document id.");
     }
-  
+
     if (moderationResult.status === 'pending_review') {
-        showToast("⚠️ Testimony submitted and queued for community review.", "warning");
+        showToast("⚠️ Testimony submitted (server sealed).", "warning");
     } else {
         showToast("🛡️ Testimony cryptographically sealed and published!", "success");
     }
 
-    return docRef.id;
+    return id;
 }
