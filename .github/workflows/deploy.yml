@@ -48,6 +48,7 @@ jobs:
           firebase deploy \
             --only firestore,storage,functions \
             --project vocalwitness-3affa \
+            --force \
             --non-interactive
 
       - name: Deploy to Firebase Hosting (Live)
