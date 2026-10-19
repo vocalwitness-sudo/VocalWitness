@@ -50,6 +50,17 @@ jobs:
             --project vocalwitness-3affa \
             --non-interactive
 
+            - name: Deploy Firestore + Storage + Functions
+        env:
+          NODE_OPTIONS: "--experimental-vm-modules"
+        run: |
+          firebase deploy \
+            --only firestore,storage,functions \
+            --project vocalwitness-3affa \
+            --force \
+            --non-interactive
+            
+
       - name: Deploy to Firebase Hosting (Live)
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
