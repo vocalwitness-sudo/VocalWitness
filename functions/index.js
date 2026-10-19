@@ -1834,6 +1834,197 @@ const s3 = new S3Client({
   },
 });
 
+// ======================================================
+// BATCH 2.1 — SECURE TESTIMONY SUBMIT
+// Clients must NOT write authorTier / moderation / counters.
+// ======================================================
+export const submitTestimonySecure = onCall(
+  { cors: allowedOrigins },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "Sign in required.");
+    }
+
+    const uid = request.auth.uid;
+    const data = request.data || {};
+
+    const content = String(data.content || "").trim();
+    const channel = String(data.channel || "citizen-talk");
+    const isAnonymous = Boolean(data.isAnonymous);
+    const authorDisplayName = data.authorDisplayName
+      ? String(data.authorDisplayName).slice(0, 80)
+      : null;
+    const forensicHash = data.forensicHash || null;
+    const imageUrl = data.imageUrl || null;
+    const videoUrl = data.videoUrl || null;
+    const audioUrl = data.audioUrl || null;
+    const hashtags = Array.isArray(data.hashtags) ? data.hashtags.slice(0, 30) : [];
+    const mentions = Array.isArray(data.mentions) ? data.mentions.slice(0, 30) : [];
+    const postingStyle = data.postingStyle === "field-note" ? "field-note" : "citizen";
+    const fieldNoteRole =
+      postingStyle === "field-note" && data.fieldNoteRole
+        ? String(data.fieldNoteRole).slice(0, 80)
+        : null;
+    const fieldNoteOrg =
+      postingStyle === "field-note" && data.fieldNoteOrg
+        ? String(data.fieldNoteOrg).slice(0, 120)
+        : null;
+    const evidencePack = data.evidencePack || null;
+    const packCoreHash = data.packCoreHash || null;
+
+    if (!content && !imageUrl && !videoUrl && !audioUrl) {
+      throw new HttpsError("invalid-argument", "Empty testimony.");
+    }
+    if (content.length > 4000) {
+      throw new HttpsError("invalid-argument", "Content too long (max 4000).");
+    }
+
+    const citizenChannels = ["citizen-talk", "citizen_talk", "citizen-circle"];
+    const witnessChannels = ["witness-voice", "witness_voice", "witness-circle"];
+    const allChannels = [...citizenChannels, ...witnessChannels];
+
+    if (!allChannels.includes(channel)) {
+      throw new HttpsError("invalid-argument", "Invalid channel.");
+    }
+
+    function isValidMediaUrl(u) {
+      if (u == null || u === "") return true;
+      if (typeof u !== "string") return false;
+      return (
+        /^https:\/\/media\.vocalwitness\.com\//.test(u) ||
+        /^https:\/\/firebasestorage\.googleapis\.com\//.test(u) ||
+        /^https:\/\/.*\.r2\.cloudflarestorage\.com\//.test(u) ||
+        /^https:\/\/lh[0-9]+\.googleusercontent\.com\//.test(u)
+      );
+    }
+
+    if (!isValidMediaUrl(imageUrl) || !isValidMediaUrl(videoUrl) || !isValidMediaUrl(audioUrl)) {
+      throw new HttpsError("invalid-argument", "Invalid media URL.");
+    }
+
+    if (
+      forensicHash != null &&
+      (typeof forensicHash !== "string" || !/^[a-f0-9]{64}$/i.test(forensicHash))
+    ) {
+      throw new HttpsError("invalid-argument", "Invalid forensic hash (expect 64 hex chars).");
+    }
+
+    if (
+      packCoreHash != null &&
+      (typeof packCoreHash !== "string" || packCoreHash.length > 128)
+    ) {
+      throw new HttpsError("invalid-argument", "Invalid packCoreHash.");
+    }
+
+    // --- Load user: ban + tier + throttle ---
+    const userRef = db.collection("users").doc(uid);
+    const userSnap = await userRef.get();
+    const user = userSnap.exists ? userSnap.data() : {};
+
+    if (user.isBanned === true) {
+      throw new HttpsError("permission-denied", "Account is banned.");
+    }
+
+    const lastRaw = user.lastTestimonyAt;
+    const lastDate =
+      lastRaw && typeof lastRaw.toDate === "function"
+        ? lastRaw.toDate()
+        : lastRaw instanceof Date
+          ? lastRaw
+          : null;
+
+    if (lastDate && Date.now() - lastDate.getTime() < 30_000) {
+      throw new HttpsError("resource-exhausted", "Please wait 30 seconds between posts.");
+    }
+
+    const tier = user.tier || "citizen";
+    const zkVerified = user.zkVerified === true;
+    const token = request.auth.token || {};
+    const isWitness =
+      tier === "witness_circle" ||
+      zkVerified ||
+      token.tier === "witness_circle" ||
+      token.zkVerified === true;
+
+    if (witnessChannels.includes(channel) && !isWitness) {
+      throw new HttpsError(
+        "permission-denied",
+        "Witness Circle required for this channel."
+      );
+    }
+
+    const reputation =
+      typeof user.reputationScore === "number"
+        ? user.reputationScore
+        : typeof user.reputation === "number"
+          ? user.reputation
+          : 0;
+
+    // Server-owned document (Admin SDK bypasses client rules)
+    const payload = {
+      content,
+      hashtags,
+      mentions,
+      channel,
+      postingStyle,
+      fieldNoteRole,
+      fieldNoteOrg,
+      authorId: uid,
+      isAnonymous,
+      author: isAnonymous
+        ? "Anonymous Witness"
+        : authorDisplayName || user.displayName || "Citizen Witness",
+
+      // SERVER ONLY — never trust client for these
+      authorTier: tier,
+      reputation,
+      zkVerified: !!zkVerified,
+      moderationStatus: "approved",
+      moderationFlags: [],
+      aiCategory: "general",
+      feedVisibility: channel,
+
+      forensicHash: forensicHash || null,
+      imageUrl: imageUrl || null,
+      videoUrl: videoUrl || null,
+      audioUrl: audioUrl || null,
+      evidencePack,
+      packCoreHash: packCoreHash || null,
+
+      reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
+      commentsCount: 0,
+      corroborationCount: 0,
+      isPinned: false,
+      isDeleted: false,
+
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    const docRef = await db.collection("testimonies").add(payload);
+
+    await userRef.set(
+      { lastTestimonyAt: admin.firestore.FieldValue.serverTimestamp() },
+      { merge: true }
+    );
+
+    try {
+      await writeAuditLog({
+        action: "testimony_created_secure",
+        performedBy: uid,
+        targetId: docRef.id,
+        targetType: "testimony",
+        details: { channel, hasMedia: !!(imageUrl || videoUrl || audioUrl) },
+        severity: "info",
+      });
+    } catch (_) {
+      // non-fatal
+    }
+
+    return { success: true, id: docRef.id };
+  }
+);
+
 export const getPresignedUrl = onCall(
   {
     cors: ["https://vocalwitness.com", "https://vocalwitness-3affa.web.app"],
