@@ -1,12 +1,6 @@
 // js/createPost.js - Testimony Submission Engine with Client-Side Hashing & AI Moderation
-import { 
-    collection, 
-    addDoc, 
-    serverTimestamp,
-    doc,
-    updateDoc
-} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-
+import { getFunctions, httpsCallable } from
+  "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { getUserTier } from './tier.js';
