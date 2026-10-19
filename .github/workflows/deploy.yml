@@ -21,11 +21,11 @@ jobs:
           cache: 'npm'
 
       - name: Install root dependencies
-        run: npm install
+        run: npm ci || npm install
 
       - name: Install Functions dependencies
         working-directory: functions
-        run: npm install
+        run: npm ci || npm install
 
       - name: Install Tailwind CLI
         run: npm install -D tailwindcss @tailwindcss/cli
@@ -39,9 +39,11 @@ jobs:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
       - name: Install Firebase Tools
-        run: npm install -g firebase-tools@15.33.0
+        run: npm install -g firebase-tools@latest
 
       - name: Deploy Firestore + Storage + Functions
+        env:
+          NODE_OPTIONS: "--experimental-vm-modules"
         run: |
           firebase deploy \
             --only firestore,storage,functions \
@@ -56,4 +58,4 @@ jobs:
           projectId: vocalwitness-3affa
           channelId: live
           entryPoint: .
-          firebaseToolsVersion: 15.33.0
+          firebaseToolsVersion: latest
