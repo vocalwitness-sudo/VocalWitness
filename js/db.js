@@ -186,6 +186,7 @@ export async function publishTestimonyOrQueue(prepared) {
 
 /**
  * Write public testimony + optional private tier contribution with full metadata persistence.
+ * Payload is restricted to fields allowed by isSafeTestimonyCreate() in firestore.rules.
  */
 export async function publishTestimonyNow(publicData, privateData = null) {
   const targetFeed = normalizeFeedTarget(publicData.targetFeed);
@@ -197,73 +198,77 @@ export async function publishTestimonyNow(publicData, privateData = null) {
   const isAnonymous = Boolean(publicData.isAnonymous);
   const user = auth?.currentUser;
 
-  // Canonical title/headline resolution
-  const headingText = publicData.title || publicData.headline || null;
-
-  let authorTier = 'citizen';
-  let authorWitnessLevel = null;
-  if (user && !isAnonymous) {
-    try {
-      authorTier = (await getCurrentUserTier()) || 'citizen';
-      const wl = await getCurrentWitnessLevel();
-      authorWitnessLevel = wl?.name || null;
-    } catch (_) {}
+  // Must be signed in for non-anonymous posts (rules require authorId == request.auth.uid)
+  if (!isAnonymous && !user) {
+    throw new Error('Authentication required to publish identified testimony');
   }
 
-  // 🛡️ Sanitize forensicHash: Must be null or exactly 64 chars (never an empty string)
-  const rawHash = publicData.forensicHash || publicData.imageHash || publicData.audioHash || null;
+  // 🛡️ Sanitize forensicHash: Must be null or exactly 64 chars (never empty string)
+  const rawHash = publicData.forensicHash || publicData.imageHash || publicData.audioHash || publicData.videoHash || null;
   const forensicHash = (typeof rawHash === 'string' && rawHash.trim().length === 64) ? rawHash.trim() : null;
 
-  // Extract persistence values securely with safe defaults
-  const mediaOriginClaim = publicData.mediaOriginClaim || 'none';
-  const syntheticScore = typeof publicData.syntheticScore === 'number' ? publicData.syntheticScore : 0;
-  const syntheticAdvisory = publicData.syntheticAdvisory || 'LOW_SYNTHETIC_PROBABILITY';
-  const syntheticRequiresReview = Boolean(publicData.syntheticRequiresReview);
-  const provenance = publicData.mediaMetadata?.provenance || publicData.provenance || 'unverified';
-  const mediaMetadata = publicData.mediaMetadata || null;
+  // Channel must be one of the values accepted by the rules
+  const channel = isWitnessVoice || targetFeed === 'witness_voice' || targetFeed === 'witness-voice'
+    ? 'witness-voice'
+    : 'citizen-talk';
 
-  // Ensure channel format aligns with rules: ['citizen-talk', 'witness-voice', etc.]
-  const channel = targetFeed === 'witness_voice' ? 'witness-voice' : 'citizen-talk';
+  // Field-note style (allowed by rules)
+  const postingStyle = publicData.postingStyle === 'field-note' ? 'field-note' : 'citizen';
+  const fieldNoteRole = postingStyle === 'field-note' ? (publicData.fieldNoteRole || null) : null;
+  const fieldNoteOrg  = postingStyle === 'field-note' ? (publicData.fieldNoteOrg  || null) : null;
 
+  // ============================================================
+  // CLIENT-SAFE PAYLOAD ONLY — must satisfy isSafeTestimonyCreate()
+  // Forbidden / unknown keys cause permission-denied:
+  //   title, headline, visibility, timestamp, authorTier,
+  //   imageHash/audioHash/videoHash, hasForensic, syntheticScore,
+  //   mediaOriginClaim, provenance, mediaMetadata, status, etc.
+  // ============================================================
   const testimonyPayload = {
-    title: headingText,
-    headline: headingText,
-    content: publicData.content || '',
-    targetFeed,
-    channel, // Matches rule validation array
-    isWitnessVoice,
-    visibility: publicData.visibility === 'trusted_circle' ? 'trusted_circle' : 'public',
-    imageUrl: publicData.imageUrl || null,
-    audioUrl: publicData.audioUrl || null,
-    forensicHash, // Guaranteed null or 64-char string
-    imageHash: publicData.imageHash || null,
-    audioHash: publicData.audioHash || null,
-    
-    // Authenticity & synthetic metadata properties
-    mediaOriginClaim,
-    syntheticScore,
-    syntheticAdvisory,
-    syntheticRequiresReview,
-    provenance,
-    mediaMetadata,
-
-    authorId: isAnonymous ? null : publicData.authorId || user?.uid || null,
+    content: (publicData.content || '').trim(),
+    channel,
+    authorId: isAnonymous ? null : (publicData.authorId || user?.uid || null),
     author: isAnonymous
       ? 'Anonymous Witness'
-      : user?.displayName || publicData.author || 'Witness',
+      : (user?.displayName || publicData.author || 'Witness'),
     isAnonymous,
-    publicNullifier: isAnonymous ? publicData.publicNullifier || null : null,
-    authorTier: isAnonymous ? null : authorTier,
-    authorWitnessLevel: isAnonymous ? null : authorWitnessLevel,
-    createdAt: serverTimestamp(), // Satisfies rules keys().hasAll(['content', 'createdAt'])
-    hasForensic: Boolean(forensicHash),
-    syncedFromOffline: Boolean(publicData.syncedFromOffline),
-    originalOfflineTimestamp: publicData.originalOfflineTimestamp || null,
-    status: 'published',
+
+    postingStyle,
+    fieldNoteRole,
+    fieldNoteOrg,
+
+    forensicHash,
+
+    imageUrl: publicData.imageUrl || null,
+    videoUrl: publicData.videoUrl || null,
+    audioUrl: publicData.audioUrl || null,
+
+    evidencePack: publicData.evidencePack || null,
+    packCoreHash: publicData.packCoreHash || null,
+
+    reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
+    commentsCount: 0,
+    isPinned: false,
+    isDeleted: false,
+
+    feedVisibility: channel,
+    createdAt: serverTimestamp(),
   };
+
+  // Rules require authorId == request.auth.uid for non-anonymous creates.
+  // If anonymous path is ever enabled client-side, rules must also allow it.
+  if (!isAnonymous && testimonyPayload.authorId !== user.uid) {
+    testimonyPayload.authorId = user.uid;
+  }
+
+  // Content is required by rules (size > 0)
+  if (!testimonyPayload.content) {
+    throw new Error('Testimony content is required');
+  }
 
   const testimonyRef = await addDoc(collection(db, 'testimonies'), testimonyPayload);
 
+  // Optional private tier contribution (separate collection — already rule-safe)
   if (privateData?.countsTowardTier && user) {
     try {
       await addDoc(collection(db, 'userContributions'), {
@@ -284,15 +289,12 @@ export async function publishTestimonyNow(publicData, privateData = null) {
       targetFeed,
       isAnonymous,
       offline: Boolean(publicData.syncedFromOffline),
-      syntheticScore,
-      provenance,
     });
   } catch (_) {}
 
   window.dispatchEvent(new CustomEvent('vocalWitness:posted'));
   return { id: testimonyRef.id, queued: false };
 }
-
 // ==================== USER PROFILE ====================
 export const updateUserProfile = async (userId, updates) => {
   const userRef = doc(db, 'users', userId);
