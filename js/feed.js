@@ -270,10 +270,28 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
             const action = btn.getAttribute('data-action');
             const id = btn.getAttribute('data-id');
 
-            // Quick toggle for UI expansion panels
+                      // Quick toggle for UI expansion panels
             if (action === 'toggle-translate') {
                 const box = document.getElementById(`translate-box-${id}`);
                 if (box) box.classList.toggle('hidden');
+                return;
+            }
+
+            if (action === 'toggle-more') {
+                const textEl = document.getElementById(`post-text-${id}`);
+                if (!textEl) return;
+                const expanded = textEl.getAttribute('data-expanded') === 'true';
+                const full = textEl.getAttribute('data-full') || '';
+                const preview = textEl.getAttribute('data-preview') || '';
+                if (expanded) {
+                    textEl.textContent = preview;
+                    textEl.setAttribute('data-expanded', 'false');
+                    btn.textContent = 'More';
+                } else {
+                    textEl.textContent = full;
+                    textEl.setAttribute('data-expanded', 'true');
+                    btn.textContent = 'Less';
+                }
                 return;
             }
 
@@ -815,17 +833,38 @@ if (isOwner) {
     </div>
   ` : ''}
 
-  <!-- Title -->
+   <!-- Title -->
   <h3 class="mt-4 text-lg font-bold text-white leading-snug">
     ${escapeHTML(headline)}
   </h3>
 
-  <!-- Content -->
-  ${data.content ? `
-    <p id="post-text-${id}" class="mt-2 text-sm text-zinc-300 leading-relaxed whitespace-pre-line">
-      ${escapeHTML(data.content)}
-    </p>
-  ` : ''}
+  <!-- Content (collapsed on home feed; More expands) -->
+  ${data.content ? (() => {
+    const full = String(data.content);
+    const LIMIT = 280;
+    const needsMore = full.length > LIMIT;
+    const preview = needsMore
+      ? full.slice(0, LIMIT).replace(/\s+\S*$/, '') + '…'
+      : full;
+    return `
+    <div class="mt-2">
+      <p id="post-text-${id}"
+         class="text-sm text-zinc-300 leading-relaxed whitespace-pre-line"
+         data-full="${escapeHTML(full).replace(/"/g, '&quot;')}"
+         data-preview="${escapeHTML(preview).replace(/"/g, '&quot;')}"
+         data-expanded="false">
+        ${escapeHTML(preview)}
+      </p>
+      ${needsMore ? `
+        <button type="button"
+                data-action="toggle-more"
+                data-id="${id}"
+                class="mt-1.5 text-xs font-medium text-emerald-400 hover:text-emerald-300 transition">
+          More
+        </button>
+      ` : ''}
+    </div>`;
+  })() : ''}
 
   <!-- Media -->
   ${mediaHTML}
