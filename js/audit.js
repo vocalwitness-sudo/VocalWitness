@@ -72,15 +72,21 @@ async function getLastLogHash() {
 
 /**
  * Records a cryptographically chained security audit log entry into Firestore.
- * 
- * @param {string} actionType 
- * @param {string} targetId 
- * @param {Object} details 
+ *
+ * @param {string} actionType
+ * @param {string} targetId
+ * @param {Object} details
  * @returns {Promise<string>} Forensic hash of the log block
  */
 export async function logSecurityAudit(actionType, targetId, details = {}) {
     try {
-        const userId = auth?.currentUser ? auth.currentUser.uid : 'anonymous';
+        const currentUid = auth?.currentUser ? auth.currentUser.uid : null;
+        // Rules require an authenticated uid — skip write if anonymous
+        if (!currentUid) {
+            console.warn(`🛡️ Audit log skipped [${actionType}]: no authenticated user`);
+            return memoryLastHash || "CLIENT_LOCAL_HASH";
+        }
+
         const timestamp = Date.now();
         const previousHash = memoryLastHash || await getLastLogHash();
 
@@ -90,21 +96,23 @@ export async function logSecurityAudit(actionType, targetId, details = {}) {
             previousHash,
             targetId,
             timestamp,
-            userId
+            uid: currentUid
         });
 
         const forensicHash = await generateForensicHash(canonicalPayload);
 
+        // Payload MUST satisfy firestore.rules audit_logs create rule:
+        // hasAll(['actionType', 'clientTimestamp', 'uid']) && uid == request.auth.uid
         await addDoc(collection(db, "audit_logs"), {
-            userId,
+            uid: currentUid,                    // REQUIRED by rules (was userId)
+            actionType: String(actionType || 'UNKNOWN').slice(0, 64),
+            clientTimestamp: timestamp,         // REQUIRED by rules (number)
             action: actionType,
-            actionType,
             testimonyId: targetId || 'N/A',
             targetId: targetId || 'N/A',
-            details,
+            details: details || {},
             previousHash,
             forensicHash,
-            clientTimestamp: timestamp,
             timestamp: serverTimestamp(),
             createdAt: serverTimestamp()
         });
