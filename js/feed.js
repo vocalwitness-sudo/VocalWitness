@@ -967,8 +967,8 @@ async function handleTranslateAction(postId, btn) {
     if (!langSelect || !resultBox || !textEl) return;
 
     const targetLanguage = langSelect.value;
-    const textToTranslate = textEl.textContent;
-
+       const textToTranslate =
+      textEl.getAttribute('data-full') || textEl.textContent;
     if (!textToTranslate || textToTranslate.trim() === '') {
         showToast("No text content available to translate", "warning");
         return;
