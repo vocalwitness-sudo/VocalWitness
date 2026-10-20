@@ -594,6 +594,21 @@ window.publishTestimony = async () => {
       }, { merge: true });
     }
 
+    // Channel from index.html #targetFeedSelect
+    const targetFeedEl = document.getElementById('targetFeedSelect');
+    let channel = targetFeedEl?.value === 'witness-voice' ? 'witness-voice' : 'citizen-talk';
+
+    // Witness Voice only if user is Witness Circle (matches firestore.rules isWitnessCircle)
+    if (channel === 'witness-voice') {
+      const ud = userSnap.exists() ? userSnap.data() : {};
+      const isWitness = ud.tier === 'witness_circle' || ud.zkVerified === true;
+      if (!isWitness) {
+        console.warn('[publish] Witness Voice selected but not Witness Circle — using citizen-talk');
+        showToast('Witness Voice needs Witness Circle. Publishing to Citizen Talk instead.', 'warning');
+        channel = 'citizen-talk';
+      }
+    }
+
     const audioInfo = typeof getAudioForPublish === 'function' ? getAudioForPublish() : null;
 
     let mediaData = {
@@ -668,7 +683,8 @@ window.publishTestimony = async () => {
       console.warn('[publish] Could not compute bodyHash:', hashErr);
     }
 
-    // ZK is optional / non-blocking. Do NOT write zk* fields to Firestore (rules forbid them).
+    // ZK only when Witness Voice. Optional / non-blocking.
+    // Do NOT write zk* fields to Firestore (rules forbid them).
     let zkResult = {
       isFallback: true,
       proofType: 'NONE',
@@ -676,21 +692,24 @@ window.publishTestimony = async () => {
       publicSignals: []
     };
 
-    try {
-      const { generateZKProofAsync } = await import('./zk-client.js');
-      const contentHash = mediaData.bodyHash || await generateSha256Hash(new Blob([content]));
-      const authorHash  = await generateSha256Hash(currentUser.uid);
+    if (channel === 'witness-voice') {
+      try {
+        const { generateZKProofAsync } = await import('./zk-client.js');
+        const contentHash = mediaData.bodyHash || await generateSha256Hash(new Blob([content]));
+        const authorHash  = await generateSha256Hash(currentUser.uid);
 
-      zkResult = await generateZKProofAsync({
-        contentHash,
-        authorHash,
-        timestamp: Date.now().toString(),
-        mediaHash: mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash || '0'
-      });
+        zkResult = await generateZKProofAsync({
+          contentHash,
+          authorHash,
+          timestamp: Date.now().toString(),
+          mediaHash: mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash || '0'
+        });
 
-      console.log('[publish] ZK result:', zkResult.proofType, zkResult.isFallback ? '(fallback)' : '(real proof)');
-    } catch (zkErr) {
-      console.warn('[publish] ZK generation failed, continuing without proof:', zkErr);
+        console.log('[publish] ZK result:', zkResult.proofType, zkResult.isFallback ? '(fallback)' : '(real proof)');
+      } catch (zkErr) {
+        console.warn('[publish] ZK failed, continuing without proof:', zkErr);
+        showToast('ZK unavailable. Publishing without higher-trust proof.', 'warning');
+      }
     }
 
     const primaryForensicHash =
@@ -720,7 +739,7 @@ window.publishTestimony = async () => {
           authorId: currentUser.uid,
           displayName: currentUser.displayName || 'Registered Witness',
         },
-        channel: 'citizen-talk',
+        channel,
         clientCaptureMs: Date.now(),
         testimonyId: null,
         forensicHash: primaryForensicHash,
@@ -731,47 +750,55 @@ window.publishTestimony = async () => {
       console.warn('[publish] Evidence Pack creation failed (non-blocking):', packErr);
     }
 
-    // ============================================================
-    // CLIENT-SAFE PAYLOAD ONLY — must satisfy isSafeTestimonyCreate()
-    // Do NOT send: title, visibility, timestamp, imageHash/videoHash/
-    // audioHash/bodyHash/hash, hasForensic, forensicVerified,
-    // hasEvidencePack, zkProof, zkPublicSignals, proofType, isZkVerified
-    // ============================================================
+    const hasAnyHash = !!(
+      mediaData.imageHash ||
+      mediaData.videoHash ||
+      mediaData.audioHash ||
+      mediaData.bodyHash ||
+      evidencePackResult?.packCoreHash
+    );
+
+    // Only fields allowed by firestore.rules (no title, no zk* keys)
     const testimonyData = {
       content,
-      channel: 'citizen-talk',
+      channel,
       authorId: currentUser.uid,
       author: currentUser.displayName || 'Registered Witness',
       isAnonymous: false,
-
       postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
       fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
       fieldNoteOrg:  postingStyle === 'field-note' ? (fieldNoteOrg  || null) : null,
-
       forensicHash: (typeof primaryForensicHash === 'string' && primaryForensicHash.length === 64)
         ? primaryForensicHash
         : null,
-
       imageUrl: mediaData.imageUrl || null,
       videoUrl: mediaData.videoUrl || null,
       audioUrl: mediaData.audioUrl || null,
-
+      imageHash: mediaData.imageHash || null,
+      videoHash: mediaData.videoHash || null,
+      audioHash: mediaData.audioHash || null,
+      bodyHash: mediaData.bodyHash || null,
       evidencePack: evidencePackResult?.firestorePack || null,
       packCoreHash: evidencePackResult?.packCoreHash || null,
-
+      hasEvidencePack: !!evidencePackResult,
+      hasForensic: hasAnyHash,
+      forensicVerified: hasAnyHash,
+      hash: primaryForensicHash || evidencePackResult?.packCoreHash || null,
       reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
       commentsCount: 0,
       isPinned: false,
       isDeleted: false,
-
-      feedVisibility: 'citizen-talk',
+      feedVisibility: channel,
+      visibility: document.getElementById('postToTrustedCircleOnly')?.checked
+        ? 'trusted_circle'
+        : 'public',
+      timestamp: Date.now(),
       createdAt: serverTimestamp(),
     };
 
     const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
-    console.log('[publish] SUCCESS →', docRef.id);
+    console.log('[publish] SUCCESS →', docRef.id, '| channel:', channel);
 
-    // Finalize evidence pack with the real testimony ID (allowed fields only)
     if (evidencePackResult && docRef.id) {
       try {
         const { createEvidencePack } = await import('./evidence-pack.js');
@@ -791,10 +818,10 @@ window.publishTestimony = async () => {
             authorId: currentUser.uid,
             displayName: currentUser.displayName || 'Registered Witness',
           },
-          channel: 'citizen-talk',
+          channel,
           clientCaptureMs: Date.now(),
           testimonyId: docRef.id,
-          forensicHash: primaryForensicHash,
+          forensicHash: testimonyData.hash,
         });
 
         await setDoc(docRef, {
@@ -814,19 +841,12 @@ window.publishTestimony = async () => {
     }
     window.dispatchEvent(new CustomEvent('vocalWitness:posted'));
 
-    // Throttle timestamp (allowed on users via isSafeUserUpdate)
-    try {
-      await setDoc(userRef, {
-        lastTestimonyAt: serverTimestamp()
-      }, { merge: true });
-    } catch (throttleErr) {
-      console.warn('[publish] Could not update lastTestimonyAt:', throttleErr);
-    }
+    await setDoc(userRef, {
+      lastTestimonyAt: serverTimestamp()
+    }, { merge: true });
 
-    const hadRealZk = Boolean(
-      zkResult.proofType === 'SNARK_GROTH16_SERVER' && !zkResult.isFallback
-    );
-    if (hadRealZk) {
+    const isZkOk = Boolean(zkResult.proofType === 'SNARK_GROTH16_SERVER' && !zkResult.isFallback);
+    if (isZkOk) {
       showToast("🛡️ Report sealed with Zero-Knowledge proof", "success");
     } else {
       showToast("🛡️ Report sealed and published", "success");
@@ -904,7 +924,7 @@ window.publishTestimony = async () => {
     }
 
     if (typeof initFeed === 'function') {
-      initFeed(db, 'citizen-talk');
+      initFeed(db, channel);
     }
 
   } catch (err) {
@@ -923,7 +943,6 @@ window.publishTestimony = async () => {
     }
   }
 };
-
 
 /* ====================== EVIDENCE LEDGER ====================== */
 async function loadEvidenceLedger() {
