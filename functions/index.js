@@ -2025,6 +2025,81 @@ export const submitTestimonySecure = onCall(
   }
 );
 
+// ======================================================
+// BATCH 2.3 — REACTION COUNTERS (server-owned)
+// Path: testimonies/{testimonyId}/reactions/{uid}
+// ======================================================
+const REACTION_TYPES = ["respect", "truth", "solidarity", "impact"];
+
+export const onTestimonyReactionWrite = onDocumentWritten(
+  {
+    document: "testimonies/{testimonyId}/reactions/{uid}",
+    region: "us-central1",
+  },
+  async (event) => {
+    const testimonyId = event.params.testimonyId;
+    if (!testimonyId) return;
+
+    const before = event.data?.before?.exists ? event.data.before.data() : null;
+    const after = event.data?.after?.exists ? event.data.after.data() : null;
+
+    const deltas = {
+      respect: 0,
+      truth: 0,
+      solidarity: 0,
+      impact: 0,
+    };
+
+    if (before?.type && REACTION_TYPES.includes(before.type)) {
+      deltas[before.type] -= 1;
+    }
+    if (after?.type && REACTION_TYPES.includes(after.type)) {
+      deltas[after.type] += 1;
+    }
+
+    const changed = REACTION_TYPES.some((t) => deltas[t] !== 0);
+    if (!changed) return;
+
+    const ref = db.collection("testimonies").doc(testimonyId);
+
+    // Ensure parent exists; avoid crashing on deleted testimony
+    const parent = await ref.get();
+    if (!parent.exists) {
+      logger.warn("Reaction on missing testimony", { testimonyId });
+      return;
+    }
+
+    const updates = {
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    for (const t of REACTION_TYPES) {
+      if (deltas[t] !== 0) {
+        updates[`reactions.${t}`] = admin.firestore.FieldValue.increment(deltas[t]);
+      }
+    }
+
+    try {
+      await ref.update(updates);
+    } catch (err) {
+      // If reactions map missing, seed then retry once
+      logger.error("Reaction counter update failed, seeding map", err);
+      const seed = parent.data()?.reactions || {};
+      await ref.set(
+        {
+          reactions: {
+            respect: Number(seed.respect) || 0,
+            truth: Number(seed.truth) || 0,
+            solidarity: Number(seed.solidarity) || 0,
+            impact: Number(seed.impact) || 0,
+          },
+        },
+        { merge: true }
+      );
+      await ref.update(updates);
+    }
+  }
+);
 export const getPresignedUrl = onCall(
   {
     cors: ["https://vocalwitness.com", "https://vocalwitness-3affa.web.app"],
