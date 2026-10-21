@@ -30,7 +30,12 @@ import { dailyAnchor, triggerAnchorNow } from "./anchor.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-setGlobalOptions({ region: "us-central1" });
+setGlobalOptions({
+  region: "us-central1",
+  cpu: 0.5,           // was effectively 1
+  memory: "256MiB",   // raise only on heavy functions
+  maxInstances: 20,
+});
 
 // ======================================================
 // SECRETS
