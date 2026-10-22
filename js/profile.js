@@ -869,6 +869,9 @@ export function closeEditProfile() {
     document.body.style.overflow = '';
 }
 
+// ====================== EDIT PROFILE FORM & MODALS ======================
+let isProfileSaving = false;
+
 export function openEditProfile() {
     const modal = document.getElementById('editProfileModal');
     if (!modal) {
@@ -910,9 +913,11 @@ export function openEditProfile() {
     }
     modal.classList.remove('hidden');
     modal.classList.add('flex');
+    modal.style.display = ''; // Clear conflicting inline overrides
     modal.setAttribute('aria-hidden', 'false');
     closeProfile();
 }
+window.openEditProfile = openEditProfile;
 
 export function openSettings() {
     closeProfile();
@@ -921,6 +926,7 @@ export function openSettings() {
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         modal.style.zIndex = '10000';
+        modal.style.display = '';
         modal.setAttribute('aria-hidden', 'false');
     } else {
         showToast("Settings panel coming soon!", "info");
@@ -939,55 +945,19 @@ export function closeSettings() {
 
 // ====================== EDIT PROFILE FORM ======================
 export function populateEditProfileForm() {
-    const modal = document.getElementById('editProfileModal');
-    if (!modal) return;
-    pendingAvatarBase64 = null;
-    if (currentUserData) {
-        const firstNameInput   = document.getElementById('editFirstName');
-        const lastNameInput    = document.getElementById('editLastName');
-        const displayNameInput = document.getElementById('editDisplayName');
-        const usernameInput    = document.getElementById('editUsername');
-        const regionInput      = document.getElementById('editRegion');
-        const bioInput         = document.getElementById('editBio');
-        const hidePublicToggle = document.getElementById('toggleHidePublicInfo');
-        const imgPreview       = document.getElementById('avatarPreview');
-        const avatarFallback   = document.getElementById('avatarFallback');
-
-        if (firstNameInput)   firstNameInput.value   = currentUserData.firstName || '';
-        if (lastNameInput)    lastNameInput.value    = currentUserData.lastName || '';
-        if (displayNameInput) displayNameInput.value = currentUserData.displayName || '';
-        if (usernameInput)    usernameInput.value    = currentUserData.username || '';
-        if (regionInput)      regionInput.value      = currentUserData.region || '';
-        if (bioInput)         bioInput.value         = currentUserData.bio || '';
-        if (hidePublicToggle) hidePublicToggle.checked = isPrivacyPrivate(currentUserData);
-
-        if (currentUserData.photoURL && imgPreview) {
-            imgPreview.src = currentUserData.photoURL;
-            imgPreview.classList.remove('hidden');
-            if (avatarFallback) avatarFallback.classList.add('hidden');
-        } else {
-            if (imgPreview) imgPreview.classList.add('hidden');
-            if (avatarFallback) avatarFallback.classList.remove('hidden');
-        }
-    }
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    modal.style.display = 'flex';
-    modal.setAttribute('aria-hidden', 'false');
-    if (typeof closeProfile === 'function') {
-        closeProfile();
-    }
+    openEditProfile();
 }
 window.populateEditProfileForm = populateEditProfileForm;
 
 export function handleSaveProfile(event) {
     if (event) event.preventDefault();
-    saveProfileChanges();
+    saveProfileChanges(event);
 }
 
 export async function saveProfileChanges(event) {
     if (event) event.preventDefault();
     if (!auth.currentUser) return showToast("You must be logged in", "error");
+    if (isProfileSaving) return; // CRITICAL: Prevents mobile double-tap write race conditions
 
     const firstNameEl   = document.getElementById('editFirstName');
     const lastNameEl    = document.getElementById('editLastName');
@@ -1011,6 +981,8 @@ export async function saveProfileChanges(event) {
     }
     if (!displayName) return showToast("Display name is required", "error");
 
+    isProfileSaving = true;
+
     try {
         showToast("Saving changes...", "info");
         const userRef = doc(db, "users", auth.currentUser.uid);
@@ -1033,9 +1005,13 @@ export async function saveProfileChanges(event) {
         if (typeof refreshTierAndUI === 'function') refreshTierAndUI();
     } catch (error) {
         console.error("Save profile error:", error);
-        showToast("Failed to save profile", "error");
+        showToast("Failed to save profile. Please try again.", "error");
+    } finally {
+        isProfileSaving = false;
     }
 }
+window.saveProfileChanges = saveProfileChanges;
+window.handleSaveProfile = handleSaveProfile;
 
 export async function triggerPasswordReset() {
     const user = auth.currentUser;
@@ -1352,7 +1328,7 @@ export function initProfileModals() {
         }
     });
 
-    // 2FA / MFA toggle
+  // 2FA / MFA toggle
     const toggle2FAEl = document.getElementById('toggle2FA');
     if (toggle2FAEl) {
         try {
@@ -1373,24 +1349,19 @@ export function initProfileModals() {
                 try {
                     const { totpSecret, qrCodeUrl, secretKey } = await enrollTotpMfa();
                     window.__pendingTotpSecret = totpSecret;
-                    if (typeof window.openMfaEnrollmentModal === 'function') {
-                        window.openMfaEnrollmentModal({ qrCodeUrl, secretKey, totpSecret });
-                    } else {
-                        const mfaModal = document.getElementById('mfaModal');
-                        if (mfaModal) {
-                            const qrImg = document.getElementById('mfaQrImage');
-                            const secretEl = document.getElementById('mfaSecretKey');
-                            if (qrImg) {
-                                qrImg.src =
-                                    'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' +
-                                    encodeURIComponent(qrCodeUrl);
-                            }
-                            if (secretEl) secretEl.textContent = secretKey;
-                            mfaModal.classList.remove('hidden');
-                            mfaModal.classList.add('flex');
-                        } else {
-                            showToast('Add this key in your authenticator app: ' + secretKey, 'info');
+                    const mfaModal = document.getElementById('mfaModal');
+                    if (mfaModal) {
+                        const qrImg = document.getElementById('mfaQrImage');
+                        const secretEl = document.getElementById('mfaSecretKey');
+                        if (qrImg) {
+                            qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(qrCodeUrl);
                         }
+                        if (secretEl) secretEl.textContent = secretKey;
+                        mfaModal.classList.remove('hidden');
+                        mfaModal.classList.add('flex');
+                        mfaModal.setAttribute('aria-hidden', 'false');
+                    } else {
+                        showToast('Add this key in your authenticator app: ' + secretKey, 'info');
                     }
                 } catch (err) {
                     console.error(err);
@@ -1398,19 +1369,16 @@ export function initProfileModals() {
                 }
             } else {
                 try {
-                    const factors = getEnrolledFactors();
-                    if (factors && factors[0]) {
-                        await unenrollMfa(factors[0].uid);
-                    }
+                    await unenrollMfa();
+                    showToast('2FA disabled', 'success');
                 } catch (err) {
                     console.error(err);
-                    showToast(err.message || 'Failed to disable 2FA', 'error');
                     e.target.checked = true;
+                    showToast('Could not disable 2FA', 'error');
                 }
             }
         });
     }
-
     document.getElementById('closeProfileModalBtn')?.addEventListener('click', closeProfile);
     document.getElementById('closeEditProfileBtn')?.addEventListener('click', closeEditProfile);
     document.getElementById('btn-close-edit-profile')?.addEventListener('click', closeEditProfile);
