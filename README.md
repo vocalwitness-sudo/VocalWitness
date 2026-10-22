@@ -42,4 +42,4 @@ Commercial use, redistribution, and derivative works require explicit written pe
 
 ## Contact / support
 
-[Add your email, X, or support form]
+admin@vocalwitness.com
