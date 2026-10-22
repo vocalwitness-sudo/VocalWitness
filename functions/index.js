@@ -2255,11 +2255,12 @@ export const verifyAndTimestampMedia = onObjectFinalized(
 );
 
 export const heavyProcessingTask = onRequest(
-  { 
+  {
     concurrency: 80,
+    cpu: 1,              // required when concurrency > 1
     memory: "512MiB",
-    timeoutSeconds: 60 
-  }, 
+    timeoutSeconds: 60
+  },
   (req, res) => {
     res.status(200).send({ status: "processed" });
   }
