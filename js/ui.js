@@ -30,118 +30,103 @@ function setupButtonIndicators() {
    BATCH 1: DUAL UI & LANGUAGE ENGINE FUNCTIONS
    ========================================================================== */
 
+/* ==========================================================================
+   BATCH 1: DUAL UI — Language + Data Saver (IDs match index.html)
+   ========================================================================== */
+
 /**
  * 1. Synchronize Desktop and Mobile Language Selectors
+ *    Real IDs: languageSelect / languageSelectMobile
  */
 function initLanguageSync() {
-    const desktopSelect = document.getElementById('languageSelector-desktop');
-    const mobileSelect = document.getElementById('languageSelector-mobile');
+  const desktopSelect = document.getElementById('languageSelect');
+  const mobileSelect  = document.getElementById('languageSelectMobile');
 
-    // Retrieve initial language or default to 'en'
-    const savedLang = localStorage.getItem('vw_lang') || 'en';
+  const savedLang = localStorage.getItem('vw_lang') || 'en';
 
-    // Apply saved language to both DOM nodes
-    if (desktopSelect) desktopSelect.value = savedLang;
-    if (mobileSelect) mobileSelect.value = savedLang;
+  if (desktopSelect) desktopSelect.value = savedLang;
+  if (mobileSelect)  mobileSelect.value  = savedLang;
 
-    // Helper to update both dropdowns and trigger translations
-    function handleLangChange(newLang) {
-        localStorage.setItem('vw_lang', newLang);
+  function handleLangChange(newLang) {
+    localStorage.setItem('vw_lang', newLang);
+    if (desktopSelect) desktopSelect.value = newLang;
+    if (mobileSelect)  mobileSelect.value  = newLang;
 
-        if (desktopSelect) desktopSelect.value = newLang;
-        if (mobileSelect) mobileSelect.value = newLang;
-
-        // Trigger i18n engine update if window.changeLanguage or custom event exists
-        if (typeof window.changeLanguage === 'function') {
-            window.changeLanguage(newLang);
-        } else {
-            window.dispatchEvent(new CustomEvent('vw:languageChange', { detail: { lang: newLang } }));
-        }
+    if (typeof window.changeLanguage === 'function') {
+      window.changeLanguage(newLang);
+    } else {
+      window.dispatchEvent(new CustomEvent('vw:languageChange', {
+        detail: { lang: newLang }
+      }));
     }
+  }
 
-    // Attach listeners
-    if (desktopSelect) {
-        desktopSelect.addEventListener('change', (e) => handleLangChange(e.target.value));
-    }
-    if (mobileSelect) {
-        mobileSelect.addEventListener('change', (e) => handleLangChange(e.target.value));
-    }
+  if (desktopSelect) {
+    desktopSelect.addEventListener('change', (e) => handleLangChange(e.target.value));
+  }
+  if (mobileSelect) {
+    mobileSelect.addEventListener('change', (e) => handleLangChange(e.target.value));
+  }
 }
 
 /**
- * 2. Synchronize Desktop and Mobile Drawer Data Saver Toggles
+ * 2. Synchronize Desktop and Mobile Data Saver
+ *    Real IDs: data-saver-btn / data-saver-btn-mobile
+ *              data-saver-status / data-saver-status-mobile
+ *
+ * Prefer letting main.js own Data Saver if it already wires both buttons.
+ * Keep this only if ui.js is the single source of truth.
  */
 function initDataSaverSync() {
-    const desktopBtn = document.getElementById('data-saver-btn');
-    const drawerBtn = document.getElementById('data-saver-btn-drawer');
-    const desktopStatus = document.getElementById('data-saver-status');
-    const drawerStatus = document.getElementById('data-saver-status-drawer');
+  const desktopBtn    = document.getElementById('data-saver-btn');
+  const mobileBtn     = document.getElementById('data-saver-btn-mobile');
+  const desktopStatus = document.getElementById('data-saver-status');
+  const mobileStatus  = document.getElementById('data-saver-status-mobile');
 
-    // Read initial state
-    let isDataSaver = localStorage.getItem('vw_datasaver') === 'true';
+  // If main.js already owns Data Saver, skip to avoid double-toggles
+  if (typeof window.toggleDataSaver === 'function') {
+    console.log('[ui.js] Data Saver owned by main.js — skipping local wiring');
+    return;
+  }
 
-    function updateDataSaverUI(enabled) {
-        const text = enabled ? 'On' : 'Off';
-        const color = enabled ? '#10b981' : '#34d399'; // Emerald highlights
+  let isDataSaver = localStorage.getItem('vw_datasaver') === 'true';
 
-        if (desktopStatus) {
-            desktopStatus.textContent = text;
-            desktopStatus.style.color = color;
-        }
-        if (drawerStatus) {
-            drawerStatus.textContent = text;
-            drawerStatus.style.color = color;
-        }
+  function updateDataSaverUI(enabled) {
+    const text = enabled ? 'On' : 'Off';
 
-        // Apply global body class for media compression / data saver triggers
-        document.body.classList.toggle('data-saver-active', enabled);
-    }
+    if (desktopStatus) desktopStatus.textContent = text;
+    if (mobileStatus)  mobileStatus.textContent  = text;
 
-    // Apply initial state to UI
+    [desktopBtn, mobileBtn].forEach((btn) => {
+      if (!btn) return;
+      btn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+      btn.dataset.active = enabled ? 'true' : 'false';
+    });
+
+    document.body.classList.toggle('data-saver-active', enabled);
+  }
+
+  updateDataSaverUI(isDataSaver);
+
+  function toggleDataSaver() {
+    isDataSaver = !isDataSaver;
+    localStorage.setItem('vw_datasaver', String(isDataSaver));
     updateDataSaverUI(isDataSaver);
+    window.dispatchEvent(new CustomEvent('data-saver-changed', {
+      detail: { enabled: isDataSaver }
+    }));
+  }
 
-    function toggleDataSaver() {
-        isDataSaver = !isDataSaver;
-        localStorage.setItem('vw_datasaver', isDataSaver.toString());
-        updateDataSaverUI(isDataSaver);
-
-        window.dispatchEvent(new CustomEvent('vw:dataSaverToggle', { detail: { enabled: isDataSaver } }));
-    }
-
-    if (desktopBtn) desktopBtn.addEventListener('click', toggleDataSaver);
-    if (drawerBtn) drawerBtn.addEventListener('click', toggleDataSaver);
+  if (desktopBtn) desktopBtn.addEventListener('click', toggleDataSaver);
+  if (mobileBtn)  mobileBtn.addEventListener('click', toggleDataSaver);
 }
 
 /**
- * 3. Mobile Overlay Drawer Management (☰)
+ * 3. Mobile drawer — current index.html has no drawer.
+ *    Keep a no-op so older call sites don’t break.
  */
 function initMobileDrawer() {
-    const drawer = document.getElementById('mobile-drawer');
-    const toggleBtn = document.getElementById('mobile-menu-toggle-btn');
-
-    if (!drawer) return;
-
-    // Toggle drawer visibility
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            drawer.classList.toggle('hidden');
-        });
-    }
-
-    // Close when clicking backdrop area
-    drawer.addEventListener('click', (e) => {
-        if (e.target === drawer) {
-            drawer.classList.add('hidden');
-        }
-    });
-
-    // Close on Escape key press
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !drawer.classList.contains('hidden')) {
-            drawer.classList.add('hidden');
-        }
-    });
+  // No #mobile-drawer in current index.html — dual header is used instead.
 }
 
 /**
