@@ -527,40 +527,38 @@
         </div>
       </div>
 
-      <!-- Bottom Row -->
-      <div class="flex items-center justify-between gap-2 border-t border-zinc-800/60 pt-2">
-        
-        <!-- Mobile Language Selector -->
-<div class="flex items-center gap-1.5">
-  <select id="languageSelectMobile" 
-          aria-label="Select language"
-          class="h-8 max-w-[110px] rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-[11px] font-medium text-zinc-300">
-    <option value="en" selected>🇬🇧 English</option>
-    <option value="pcm">🇳🇬 Pidgin</option>
-    <option value="ha">🇳🇬 Hausa</option>
-    <option value="yo">🇳🇬 Yorùbá</option>
-    <option value="ig">🇳🇬 Igbo</option>
-    <option value="sw">🇹🇿 Kiswahili</option>
-    <option value="ar">🇸🇦 العربية</option>
-    <option value="es">🇪🇸 Español</option>
-    <option value="fr">🇫🇷 Français</option>
-    <option value="pt">🇵🇹 Português</option>
-    <option value="de">🇩🇪 Deutsch</option>
-    <option value="zh-CN">🇨🇳 中文</option>
-    <option value="ma">🇪🇹 አማርኛ</option>
-    <option value="hi">🇮🇳 हिन्दी</option>
-    <option value="id">🇮🇩 Bahasa</option>
-  </select>
-</div>
+    <!-- Bottom Row -->
+<div class="flex items-center justify-between gap-2 border-t border-zinc-800/60 pt-2">
 
-          <button id="openSupportModalBtnMobile" type="button"
-                  class="h-8 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-2.5 text-[11px] font-semibold text-emerald-400 transition-all
-                         hover:bg-emerald-500 hover:text-zinc-950 active:scale-95"
-                  data-i18n="supportBtn">
-            Support
-          </button>
-        </div>
+  <!-- Left: Language + Support -->
+  <div class="flex items-center gap-1.5 min-w-0">
+    <select id="languageSelectMobile"
+            aria-label="Select language"
+            class="h-8 max-w-[110px] shrink rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-[11px] font-medium text-zinc-300">
+      <option value="en" selected>🇬🇧 English</option>
+      <option value="pcm">🇳🇬 Pidgin</option>
+      <option value="ha">🇳🇬 Hausa</option>
+      <option value="yo">🇳🇬 Yorùbá</option>
+      <option value="ig">🇳🇬 Igbo</option>
+      <option value="sw">🇹🇿 Kiswahili</option>
+      <option value="ar">🇸🇦 العربية</option>
+      <option value="es">🇪🇸 Español</option>
+      <option value="fr">🇫🇷 Français</option>
+      <option value="pt">🇵🇹 Português</option>
+      <option value="de">🇩🇪 Deutsch</option>
+      <option value="zh-CN">🇨🇳 中文</option>
+      <option value="ma">🇪🇹 አማርኛ</option>
+      <option value="hi">🇮🇳 हिन्दी</option>
+      <option value="id">🇮🇩 Bahasa</option>
+    </select>
 
+    <button id="openSupportModalBtnMobile" type="button"
+            class="h-8 shrink-0 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-2.5 text-[11px] font-semibold text-emerald-400 transition-all
+                   hover:bg-emerald-500 hover:text-zinc-950 active:scale-95"
+            data-i18n="supportBtn">
+      Support
+    </button>
+  </div>
         <!-- Right Group -->
         <div class="flex items-center gap-1.5">
           <button id="data-saver-btn-mobile" type="button"
