@@ -1297,12 +1297,43 @@ export function initProfileModals() {
     if (window.__vwProfileModalsWired) return;
     window.__vwProfileModalsWired = true;
 
+    // Modal Open Triggers
+    document.getElementById('btnOpenEditProfile')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        openEditProfile();
+    });
+    document.getElementById('btnOpenSettings')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        openSettings();
+    });
+
+    // Modal Close Triggers
+    document.getElementById('closeProfileModalBtn')?.addEventListener('click', closeProfile);
+    document.getElementById('closeEditProfileBtn')?.addEventListener('click', closeEditProfile);
+    document.getElementById('btn-close-edit-profile')?.addEventListener('click', closeEditProfile);
     document.getElementById('cancelEditProfileBtn')?.addEventListener('click', closeEditProfile);
-    document.getElementById('btn-cancel-edit')?.addEventListener('click', closeEditProfile);
-    document.getElementById('avatarInput')?.addEventListener('change', handleImagePreview);
-    document.getElementById('editProfileForm')?.addEventListener('submit', handleSaveProfile);
     document.getElementById('closeSettingsBtn')?.addEventListener('click', closeSettings);
+
+    // Universal Backdrop Click Handler for All Modals
+    ['profileModal', 'editProfileModal', 'settingsModal', 'credentialChoiceModal', 'mfaModal'].forEach(id => {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    modal.style.display = 'none';
+                    modal.setAttribute('aria-hidden', 'true');
+                }
+            });
+        }
+    });
+
+    // Form Submissions & Inputs
+    document.getElementById('editProfileForm')?.addEventListener('submit', saveProfileChanges);
+    document.getElementById('avatarInput')?.addEventListener('change', handleImagePreview);
     document.getElementById('triggerPasswordResetBtn')?.addEventListener('click', triggerPasswordReset);
+    document.getElementById('settingsSignOutBtn')?.addEventListener('click', handleSignOut);
 
     // PDF / Credential download buttons
     document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', () => {
@@ -1311,8 +1342,6 @@ export function initProfileModals() {
     document.getElementById('downloadLedgerPdfBtn')?.addEventListener('click', () => {
         openCredentialChoiceModal(window.currentUserData);
     });
-
-    document.getElementById('settingsSignOutBtn')?.addEventListener('click', handleSignOut);
 
     document.getElementById('panicClearBtn')?.addEventListener('click', async () => {
         const confirmed = confirm(
@@ -1328,7 +1357,7 @@ export function initProfileModals() {
         }
     });
 
-  // 2FA / MFA toggle
+    // ====================== 2FA / MFA TOGGLE ======================
     const toggle2FAEl = document.getElementById('toggle2FA');
     if (toggle2FAEl) {
         try {
@@ -1365,16 +1394,29 @@ export function initProfileModals() {
                     }
                 } catch (err) {
                     console.error(err);
-                    showToast(err.message || 'Could not start 2FA setup', 'error');
+                    if (err.code === 'auth/requires-recent-login') {
+                        showToast('For security, please sign out and sign back in before enabling 2FA.', 'error');
+                    } else {
+                        showToast(err.message || 'Could not start 2FA setup', 'error');
+                    }
                 }
             } else {
                 try {
-                    await unenrollMfa();
+                    const enrolledFactors = user?.multiFactor?.enrolledFactors;
+                    if (!enrolledFactors || enrolledFactors.length === 0) {
+                        showToast('No active 2FA factors found to remove', 'info');
+                        return;
+                    }
+                    await unenrollMfa(enrolledFactors[0]);
                     showToast('2FA disabled', 'success');
                 } catch (err) {
                     console.error(err);
                     e.target.checked = true;
-                    showToast('Could not disable 2FA', 'error');
+                    if (err.code === 'auth/requires-recent-login') {
+                        showToast('For security, please sign out and sign back in before modifying 2FA.', 'error');
+                    } else {
+                        showToast('Could not disable 2FA', 'error');
+                    }
                 }
             }
         });
