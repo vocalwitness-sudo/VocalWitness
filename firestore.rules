@@ -81,7 +81,6 @@ service cloud.firestore {
         url.matches('^https://lh[0-9]+\\.googleusercontent\\.com/.*') ||
         url.matches('^https://firebasestorage\\.googleapis\\.com/.*') ||
         url.matches('^https://.*\\.r2\\.cloudflarestorage\\.com/.*')
-        // svg data: removed — XSS risk
       );
     }
 
@@ -109,8 +108,6 @@ service cloud.firestore {
         'reputation', 'credibilityScore', 'weeklyPoints',
         'phoneNumber', 'phone', 'phoneHash', 'humanityScore'
       ];
-      // lastTestimonyAt is server-preferred; clients may still set it for throttle UX
-      // but do not treat it as a security boundary alone
       let allowed = [
         'email', 'displayName', 'photoURL', 'bio',
         'location', 'website', 'region', 'username',
@@ -155,19 +152,77 @@ service cloud.firestore {
            );
     }
 
+    // Author: soft-hide anytime; text fix only within 30 min of createdAt.
+    // Media, hashes, channel, authorId never change from client.
     function isSafeAuthorTestimonyUpdate() {
       let changed = request.resource.data.diff(resource.data).affectedKeys();
-      return !changed.hasAny([
+
+      let withinCorrectionWindow =
+          resource.data.createdAt is timestamp
+          && request.time < resource.data.createdAt + duration.value(30, 'm');
+
+      let immutableCore = [
+        'forensicHash', 'packCoreHash', 'evidencePack',
+        'imageUrl', 'videoUrl', 'audioUrl', 'mediaUrl', 'mediaUrls',
+        'authorId', 'author', 'isAnonymous',
+        'channel', 'postingStyle', 'fieldNoteRole', 'fieldNoteOrg',
+        'createdAt',
+        'authorTier', 'reputation', 'zkVerified',
         'moderationStatus', 'toxicityScore', 'autoFlaggedReasons',
-        'isSynthetic', 'syntheticScore', 'authorTier', 'reputation',
-        'zkVerified', 'moderationFlags', 'aiCategory',
+        'isSynthetic', 'syntheticScore', 'moderationFlags', 'aiCategory',
         'reviewedBy', 'reviewedAt', 'reviewNotes',
         'c2paStatus', 'c2paManifest',
-        'authorId', 'forensicHash', 'packCoreHash',
         'reactions', 'corroborationCount', 'corroborationScore',
         'commentsCount', 'isPinned', 'pinnedAt', 'pinnedBy',
-        'feedVisibility', 'channel'
-      ]);
+        'feedVisibility'
+      ];
+
+      let hideFields = [
+        'visibility', 'isDeleted', 'hiddenAt', 'hiddenBy', 'hiddenReason', 'updatedAt'
+      ];
+
+      if (changed.hasAny(immutableCore)) {
+        return false;
+      }
+
+      if ('visibility' in request.resource.data
+          && request.resource.data.visibility == 'moderator_hidden') {
+        return false;
+      }
+
+      let onlyHide =
+          changed.hasOnly(hideFields)
+          && (
+               !('visibility' in request.resource.data)
+               || request.resource.data.visibility in ['public', 'author_hidden']
+             )
+          && (
+               !('isDeleted' in request.resource.data)
+               || request.resource.data.isDeleted is bool
+             );
+
+      if (onlyHide) {
+        return true;
+      }
+
+      let textOrHide = hideFields.concat(['content', 'hashtags', 'mentions']);
+      let textEditAllowed =
+          withinCorrectionWindow
+          && changed.hasOnly(textOrHide)
+          && (
+               !('content' in request.resource.data)
+               || (
+                    request.resource.data.content is string
+                    && request.resource.data.content.size() > 0
+                    && request.resource.data.content.size() <= 4000
+                  )
+             )
+          && (
+               !('visibility' in request.resource.data)
+               || request.resource.data.visibility in ['public', 'author_hidden']
+             );
+
+      return textEditAllowed;
     }
 
     function isSafeAuthorPostUpdate() {
@@ -208,7 +263,6 @@ service cloud.firestore {
       return isSteward() || isModerator() || isAdmin() || isPhoneVerifiedUser();
     }
 
-    // Client-safe testimony create: no forged tier / moderation / counters
     function isSafeTestimonyCreate() {
       let d = request.resource.data;
 
@@ -221,7 +275,8 @@ service cloud.firestore {
         'evidencePack', 'packCoreHash',
         'reactions', 'commentsCount', 'isPinned', 'isDeleted',
         'createdAt', 'updatedAt',
-        'feedVisibility', 'profileMode'
+        'feedVisibility', 'profileMode',
+        'visibility', 'hiddenAt', 'hiddenBy', 'hiddenReason'
       ];
 
       let citizenChannels = [
@@ -263,6 +318,7 @@ service cloud.firestore {
         && (!('commentsCount' in d) || d.commentsCount == 0)
         && (!('isPinned' in d) || d.isPinned == false)
         && (!('isDeleted' in d) || d.isDeleted == false)
+        && (!('visibility' in d) || d.visibility == 'public')
         && (!('hashtags' in d) || d.hashtags is list)
         && (!('mentions' in d) || d.mentions is list)
         && (!('isAnonymous' in d) || d.isAnonymous is bool)
@@ -280,16 +336,10 @@ service cloud.firestore {
            ]);
     }
 
-    // ==========================================
-    // INTERNAL
-    // ==========================================
     match /rateLimits/{rateLimitId} {
       allow read, write: if false;
     }
 
-    // ==========================================
-    // USERS
-    // ==========================================
     match /users/{userId} {
       allow read: if isOwner(userId) || isModerator() || isAdmin();
       allow create: if isOwner(userId) && isSafeUserCreation();
@@ -321,9 +371,6 @@ service cloud.firestore {
       }
     }
 
-    // ==========================================
-    // USER CONTRIBUTIONS
-    // ==========================================
     match /userContributions/{contribId} {
       allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
       allow create: if isAuthenticated()
@@ -333,9 +380,6 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // ==========================================
-    // LEGACY COLLECTIONS
-    // ==========================================
     match /witness_voice/{postId} {
       allow read: if true;
       allow create: if isNotBanned()
@@ -367,9 +411,6 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ==========================================
-    // MAIN TESTIMONIES
-    // ==========================================
     match /testimonies/{testimonyId} {
       allow read: if true;
 
@@ -377,10 +418,6 @@ service cloud.firestore {
         && isNotThrottled()
         && isSafeTestimonyCreate();
 
-      // Authors: content-safe fields only
-      // Moderators: full (Admin SDK preferred for moderation fields)
-      // Pin: limited keys only
-      // NO client-side reaction / corroboration counter writes
       allow update: if isModerator()
         || (
              isNotBanned()
@@ -406,15 +443,20 @@ service cloud.firestore {
           && request.resource.data.content.size() > 0
           && request.resource.data.content.size() <= 1200
           && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time);
-        allow update: if isNotBanned() && isAuthenticated() && (
-          (resource.data.authorId == request.auth.uid
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content', 'updatedAt']))
-        );
+        allow update: if isNotBanned()
+          && isAuthenticated()
+          && resource.data.authorId == request.auth.uid
+          && (!('visibility' in resource.data) || resource.data.visibility == 'public')
+          && (!('isDeleted' in resource.data) || resource.data.isDeleted == false)
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['content', 'updatedAt'])
+          && request.resource.data.content is string
+          && request.resource.data.content.size() > 0
+          && request.resource.data.content.size() <= 1200;
         allow delete: if isAuthenticated()
           && (resource.data.authorId == request.auth.uid || isModerator());
       }
 
-      // One reaction doc per user — counters updated by Cloud Functions only
       match /reactions/{uid} {
         allow read: if true;
         allow create: if isNotBanned()
@@ -431,7 +473,6 @@ service cloud.firestore {
         allow delete: if isNotBanned() && request.auth.uid == uid;
       }
 
-      // One corroboration per user under testimony
       match /corroborations/{uid} {
         allow read: if true;
         allow create: if isNotBanned()
@@ -448,10 +489,6 @@ service cloud.firestore {
         allow update, delete: if false;
       }
     }
-
-    // ==========================================
-    // GROUPS
-    // ==========================================
     match /groups/{groupId} {
       allow read: if true;
       allow create: if isNotBanned()
@@ -487,7 +524,6 @@ service cloud.firestore {
         && resource.data.creatorId == request.auth.uid;
     }
 
-    // Group Attestation Wall
     match /group_attestations/{docId} {
       allow read: if request.auth != null;
       allow create: if isNotBanned() && request.auth != null
@@ -498,7 +534,6 @@ service cloud.firestore {
             || resource.data.creatorId == request.auth.uid);
     }
 
-    // Group Forensic Timeline
     match /group_timeline/{docId} {
       allow read: if request.auth != null;
       allow create: if isNotBanned() && request.auth != null
@@ -509,9 +544,6 @@ service cloud.firestore {
             || resource.data.creatorId == request.auth.uid);
     }
 
-    // ==========================================
-    // WITNESS CYCLES
-    // ==========================================
     match /witnessCycles/{cycleId} {
       allow read: if isAuthenticated();
       allow create: if isNotBanned()
@@ -528,9 +560,6 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ==========================================
-    // GROUP EVIDENCE LOCKER (single definition — immutable)
-    // ==========================================
     match /group_evidence/{evidenceId} {
       allow read: if true;
       allow create: if isAuthenticated()
@@ -542,10 +571,6 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // ==========================================
-    // CORROBORATIONS (top-level legacy) & FORENSIC LEDGER
-    // Prefer testimonies/{id}/corroborations/{uid} going forward
-    // ==========================================
     match /corroborations/{corrId} {
       allow read: if true;
       allow create: if isNotBanned()
@@ -572,9 +597,6 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // ==========================================
-    // EXTERNAL IMMUTABLE ANCHORS
-    // ==========================================
     match /ledger_anchors/{date} {
       allow read: if true;
       allow create: if false;
@@ -582,9 +604,6 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ==========================================
-    // PRESS CREDENTIALS
-    // ==========================================
     match /verifiable_docs/{docId} {
       allow get: if true;
       allow list: if false;
@@ -598,9 +617,6 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // ==========================================
-    // DAO COMMENTS
-    // ==========================================
     match /dao_comments/{commentId} {
       allow read: if true;
       allow create: if isNotBanned()
@@ -613,9 +629,6 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // ==========================================
-    // POSTS
-    // ==========================================
     match /posts/{postId} {
       allow read: if resource.data.visibilityDoor == 'public_square' ||
                     (resource.data.visibilityDoor == 'citizen_circle' && isAuthenticated()) ||
@@ -652,9 +665,6 @@ service cloud.firestore {
       }
     }
 
-    // ==========================================
-    // REPORTS & AUDIT
-    // ==========================================
     match /reports/{reportId} {
       allow read: if isModerator();
       allow create: if isNotBanned()
@@ -676,9 +686,6 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // ==========================================
-    // SUPPORT / REPUTATION LOG
-    // ==========================================
     match /support_log/{logId} {
       allow read: if isAuthenticated() &&
         (resource.data.giverId == request.auth.uid ||
@@ -700,9 +707,6 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // ==========================================
-    // DAO PROPOSALS
-    // ==========================================
     match /dao_proposals/{proposalId} {
       allow read: if true;
       allow create: if isNotBanned()
@@ -729,9 +733,6 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ==========================================
-    // DISPUTES
-    // ==========================================
     match /disputes/{disputeId} {
       allow read: if true;
       allow create: if isNotBanned()
@@ -761,9 +762,6 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ==========================================
-    // PUBLIC PROFILES
-    // ==========================================
     match /publicProfiles/{uid} {
       allow read: if true;
       allow create, update: if isOwner(uid)
@@ -775,9 +773,6 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ==========================================
-    // LIVE ARENA ROOMS
-    // ==========================================
     match /liveRooms/{roomId} {
       allow read: if true;
 
