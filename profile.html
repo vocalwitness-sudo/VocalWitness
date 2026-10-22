@@ -396,7 +396,7 @@
     </p>
   </div>
 </div>
-    <!-- Script Module -->
+   <!-- Script Module -->
     <script type="module">
     import { initLanguage } from './js/i18n.js';
     import { initDarkMode } from './js/utils.js';
@@ -415,6 +415,7 @@
         // Modal Open / Close wiring for Settings & Edit Profile
         const editModal = document.getElementById('editProfileModal');
         const settingsModal = document.getElementById('settingsModal');
+        const editForm = document.getElementById('editProfileForm');
 
         const openEditBtn = document.getElementById('btn-open-edit-profile');
         const closeEditBtn = document.getElementById('btn-close-edit-profile');
@@ -423,25 +424,44 @@
         const openSettingsBtn = document.getElementById('btn-open-settings');
         const closeSettingsBtn = document.getElementById('closeSettingsBtn');
 
+        // Safe Edit Modal Open/Close with Flex toggling
         if (openEditBtn && editModal) {
-            openEditBtn.addEventListener('click', () => editModal.classList.remove('hidden'));
+            openEditBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                editModal.classList.remove('hidden');
+                editModal.classList.add('flex');
+            });
         }
-        if (closeEditBtn && editModal) {
-            closeEditBtn.addEventListener('click', () => editModal.classList.add('hidden'));
-        }
-        if (cancelEditBtn && editModal) {
-            cancelEditBtn.addEventListener('click', () => editModal.classList.add('hidden'));
+        
+        const closeEditModal = () => {
+            if (editModal) {
+                editModal.classList.add('hidden');
+                editModal.classList.remove('flex');
+            }
+        };
+
+        if (closeEditBtn) closeEditBtn.addEventListener('click', (e) => { e.preventDefault(); closeEditModal(); });
+        if (cancelEditBtn) cancelEditBtn.addEventListener('click', (e) => { e.preventDefault(); closeEditModal(); });
+
+        // CRITICAL: Prevent native form reload that kills mobile sessionStorage
+        if (editForm) {
+            editForm.addEventListener('submit', (e) => {
+                e.preventDefault(); 
+                // Let your profile.js handle the actual async Firestore save logic
+            });
         }
 
         if (openSettingsBtn && settingsModal) {
-            openSettingsBtn.addEventListener('click', () => {
+            openSettingsBtn.addEventListener('click', (e) => {
+                e.preventDefault();
                 settingsModal.classList.remove('hidden');
                 settingsModal.classList.add('flex');
                 settingsModal.setAttribute('aria-hidden', 'false');
             });
         }
         if (closeSettingsBtn && settingsModal) {
-            closeSettingsBtn.addEventListener('click', () => {
+            closeSettingsBtn.addEventListener('click', (e) => {
+                e.preventDefault();
                 settingsModal.classList.add('hidden');
                 settingsModal.classList.remove('flex');
                 settingsModal.setAttribute('aria-hidden', 'true');
@@ -545,7 +565,10 @@
         const verifyMfaBtn = document.getElementById('verifyMfaBtn');
 
         const closeMfaModal = () => {
-            if (mfaModal) mfaModal.classList.add('hidden');
+            if (mfaModal) {
+                mfaModal.classList.add('hidden');
+                mfaModal.classList.remove('flex');
+            }
         };
 
         if (toggle2FA && mfaModal) {
@@ -553,6 +576,7 @@
                 if (e.target.checked) {
                     e.target.checked = false;
                     mfaModal.classList.remove('hidden');
+                    mfaModal.classList.add('flex');
                 }
             });
         }
@@ -573,8 +597,7 @@
             });
         }
 
-        
-        // ========== PDF DOWNLOAD (Press Credential – Proper Choice Modal) ==========
+        // ========== PDF DOWNLOAD ==========
         document.getElementById('downloadLedgerPdfBtn')?.addEventListener('click', () => {
             const data = window.currentUserData;
             if (!data) {
@@ -588,15 +611,10 @@
 
             const modal = document.getElementById('credentialChoiceModal');
             if (!modal) {
-                if (typeof window.showToast === 'function') {
-                    window.showToast('Credential choice modal not found', 'error');
-                } else {
-                    alert('Credential choice modal not found');
-                }
+                alert('Credential choice modal not found');
                 return;
             }
 
-            // Show the modal
             modal.classList.remove('hidden');
             modal.classList.add('flex');
 
@@ -609,7 +627,6 @@
                 modal.classList.remove('flex');
             };
 
-            // Clean previous listeners by cloning
             const newPremium = btnPremium.cloneNode(true);
             const newStandard = btnStandard.cloneNode(true);
             const newCancel = btnCancel.cloneNode(true);
@@ -620,87 +637,33 @@
             newPremium.addEventListener('click', async () => {
                 closeModal();
                 try {
-                    if (typeof window.showToast === 'function') {
-                        window.showToast("Generating Official (Premium) Credential...", "info");
-                    }
+                    if (typeof window.showToast === 'function') window.showToast("Generating Official (Premium) Credential...", "info");
                     await generateAndDownloadPDF(data, db, 'premium');
                 } catch (err) {
                     console.error(err);
-                    if (typeof window.showToast === 'function') {
-                        window.showToast("Failed to generate credential", "error");
-                    } else {
-                        alert("Failed to generate credential");
-                    }
+                    alert("Failed to generate credential");
                 }
             });
 
             newStandard.addEventListener('click', async () => {
                 closeModal();
                 try {
-                    if (typeof window.showToast === 'function') {
-                        window.showToast("Generating Standard Credential...", "info");
-                    }
+                    if (typeof window.showToast === 'function') window.showToast("Generating Standard Credential...", "info");
                     await generateAndDownloadPDF(data, db, 'standard');
                 } catch (err) {
                     console.error(err);
-                    if (typeof window.showToast === 'function') {
-                        window.showToast("Failed to generate credential", "error");
-                    } else {
-                        alert("Failed to generate credential");
-                    }
+                    alert("Failed to generate credential");
                 }
             });
 
             newCancel.addEventListener('click', closeModal);
-
-            // Close when clicking outside the modal
-            modal.onclick = (e) => {
-                if (e.target === modal) closeModal();
-            };
-        });
-
-        // ========== JSON DOWNLOAD (safe backup) ==========
-        document.getElementById('downloadProfileJsonBtn')?.addEventListener('click', () => {
-            const data = window.currentUserData;
-            if (!data) {
-                if (typeof window.showToast === 'function') {
-                    window.showToast('Profile data not loaded yet', 'error');
-                } else {
-                    alert('Profile data not loaded yet');
-                }
-                return;
-            }
-            try {
-                const exportData = { ...data };
-                if (exportData.photoURL && exportData.photoURL.startsWith('data:')) {
-                    exportData.photoURL = '[base64 image omitted – use live profile photo]';
-                }
-                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `vocalwitness-profile-${(data.username || data.uid || 'user').toString().slice(0, 24)}.json`;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                URL.revokeObjectURL(url);
-                if (typeof window.showToast === 'function') {
-                    window.showToast('Profile JSON downloaded', 'success');
-                }
-            } catch (err) {
-                console.error('JSON export failed:', err);
-                if (typeof window.showToast === 'function') {
-                    window.showToast('Failed to download JSON', 'error');
-                } else {
-                    alert('Failed to download JSON');
-                }
-            }
+            modal.onclick = (e) => { if (e.target === modal) closeModal(); };
         });
 
         // Escape Key Handler
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                if (editModal) editModal.classList.add('hidden');
+                closeEditModal();
                 if (settingsModal) {
                     settingsModal.classList.add('hidden');
                     settingsModal.classList.remove('flex');
@@ -708,8 +671,7 @@
                 closeMfaModal();
             }
         });
-
-    });   
+    });    
     </script>
 </body>
 </html>
