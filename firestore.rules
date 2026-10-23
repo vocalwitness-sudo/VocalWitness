@@ -284,7 +284,7 @@ service cloud.firestore {
         && d.authorId == request.auth.uid
         && d.content is string
         && d.content.size() > 0
-        && d.content.size() <= 4000
+       && d.content.size() <= 3000
         && d.channel is string
         && d.channel in allChannels
         && (
@@ -380,7 +380,7 @@ service cloud.firestore {
         && request.resource.data.authorId == request.auth.uid
         && request.resource.data.content is string
         && request.resource.data.content.size() > 0
-        && request.resource.data.content.size() <= 4000
+        && request.resource.data.content.size() <= 3000
         && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time);
       allow update: if isModerator() || (
         isNotBanned() && resource.data.authorId == request.auth.uid && isSafeAuthorTestimonyUpdate()
