@@ -165,32 +165,39 @@ export function updateVerificationUI(isVerified = false) {
 }
 
 export function savePendingDraft() {
-  const mainInput = document.getElementById('mainInput') ||
-                    document.getElementById('squareSearchInput') ||
-                    document.getElementById('testimonyInput');
+  const mainInput =
+    document.getElementById('mainInput') ||
+    document.getElementById('squareSearchInput') ||
+    document.getElementById('testimonyInput');
 
   if (mainInput?.value.trim()) {
-    sessionStorage.setItem('vocal_pending_draft', mainInput.value);
-    showToast("Draft saved. We'll restore it after sign-in.", "info");
+    try {
+      localStorage.setItem('vocal_pending_draft', mainInput.value);
+      showToast("Draft saved. We'll restore it after sign-in.", "info");
+    } catch (_) {}
   }
 }
 
 export function restorePendingDraft() {
-  const draft = sessionStorage.getItem('vocal_pending_draft');
+  let draft = null;
+  try {
+    draft = localStorage.getItem('vocal_pending_draft');
+  } catch (_) {}
   if (!draft) return;
 
   let attempts = 0;
   const interval = setInterval(() => {
-    const mainInput = document.getElementById('mainInput') ||
-                      document.getElementById('squareSearchInput') ||
-                      document.getElementById('testimonyInput');
+    const mainInput =
+      document.getElementById('mainInput') ||
+      document.getElementById('squareSearchInput') ||
+      document.getElementById('testimonyInput');
 
     if (mainInput) {
       mainInput.value = draft;
       showToast("✅ Your testimony draft has been restored!", "success");
-      sessionStorage.removeItem('vocal_pending_draft');
+      try { localStorage.removeItem('vocal_pending_draft'); } catch (_) {}
       clearInterval(interval);
-    } else if (++attempts > 20) {
+    } else if (++attempts > 25) {
       clearInterval(interval);
     }
   }, 200);
