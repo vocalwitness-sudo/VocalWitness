@@ -532,7 +532,15 @@ function applySearchAndFilter(container) {
     const filterType = activeFilterBtn ? activeFilterBtn.getAttribute('data-filter') : 'all';
 
     const filtered = allPostsCache.filter(post => {
-       if (post.moderationStatus === "removed" || post.isDeleted || post.isHidden || post.isPermanentlyHidden) return false;
+       if (
+         post.moderationStatus === "removed" ||
+         post.isDeleted === true ||
+         post.isHidden === true ||
+         post.isPermanentlyHidden === true ||
+         post.visibility === 'author_hidden' ||
+         post.visibility === 'moderator_hidden'
+       ) return false;
+        
         const matchesSearch = !queryText || 
             (post.headline && post.headline.toLowerCase().includes(queryText)) ||
             (post.title && post.title.toLowerCase().includes(queryText)) ||
@@ -1169,16 +1177,14 @@ async function handleHidePost(postId, permanent = false) {
   }
 
   try {
-    const updateData = {
-      isHidden: true,
+       const updateData = {
+      visibility: 'author_hidden',
+      isDeleted: true,
       hiddenAt: serverTimestamp(),
       hiddenBy: currentUser.uid,
+      hiddenReason: permanent ? 'author_permanent_hide' : 'author_hide',
       updatedAt: serverTimestamp()
     };
-
-    if (permanent) {
-      updateData.isPermanentlyHidden = true;
-    }
 
     await updateDoc(doc(db, 'testimonies', postId), updateData);
 
