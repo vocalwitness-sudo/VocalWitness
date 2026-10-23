@@ -903,13 +903,16 @@
              class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-white 
                     placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition">
 
-      <!-- Main text -->
-      <textarea id="mainInput" rows="3" maxlength="2000"
+          <!-- Main text -->
+      <textarea id="mainInput" rows="3" maxlength="3000"
           placeholder="What did you see or experience? Speak clearly and stick to the facts..."
           class="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-900 p-4 text-sm text-white 
                  placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition"></textarea>
-      <div class="flex justify-end -mt-2">
-        <span id="char-count" class="text-xs text-zinc-500">0 / 2000</span>
+      <p class="text-[11px] text-zinc-500 mt-1">
+        After publish: text editable for 30 minutes. Media and seal cannot be changed. You can hide a report later; it is not hard-deleted.
+      </p>
+      <div class="flex justify-end -mt-1">
+        <span id="char-count" class="text-xs text-zinc-500">0 / 3000</span>
       </div>
       <!-- Media action row -->
       <div class="flex flex-wrap items-center gap-2">
@@ -1125,8 +1128,11 @@
       <div>
         <p class="font-medium text-emerald-400" data-i18n="ledger_info_title">Your reports stay safe</p>
         <p class="mt-1 text-sm text-zinc-400 leading-relaxed" data-i18n="ledger_info_desc">
-          Every report is cryptographically sealed and linked to the ledger. Once published, the original cannot be edited or deleted by anyone.
-        </p>
+  Every report is cryptographically sealed and linked to the ledger.
+  Media and hashes cannot be changed after publish.
+  Text may be corrected for 30 minutes; after that only soft-hide is allowed.
+  Hard delete is not available so the sealed record stays verifiable.
+</p>
       </div>
     </div>
 
