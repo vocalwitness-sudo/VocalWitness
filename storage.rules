@@ -21,7 +21,7 @@ service firebase.storage {
     }
 
     function isValidImage() {
-      // Removed svg+xml for security (XSS risk). Keep only safe raster formats.
+      // No svg+xml (XSS risk). Raster only.
       return request.resource.contentType.matches('image/(jpeg|png|webp|gif)');
     }
 
@@ -47,40 +47,41 @@ service firebase.storage {
     // PATH MATCHERS
     // ==========================================
 
-    // Profile Avatars
+    // Profile avatars — owner may replace/delete
     match /avatars/{userId}/{allPaths=**} {
       allow read: if true;
       allow create, update: if isOwner(userId) && isValidImage() && isValidPayload(5);
       allow delete: if isOwner(userId) || isModerator();
     }
 
-    // User directory (legacy / profile images)
+    // User directory (legacy / profile images) — owner may delete
     match /users/{userId}/{filename} {
       allow read: if true;
       allow create, update: if isOwner(userId) && isValidImage() && isValidPayload(5);
       allow delete: if isOwner(userId) || isModerator();
     }
 
-    // Single Evidence Path (from createPost.js / media-pipeline)
-    // Changed: require authentication. No more anonymous metadata bypass.
+    // ---- SEALED EVIDENCE (no owner delete) ----
+
+    // Flat evidence path
     match /evidence/{filename} {
       allow read: if true;
       allow create: if isSignedIn()
                     && isValidMedia()
                     && isValidPayload(25);
-      allow update: if false;          // Immutable once uploaded
+      allow update: if false;
       allow delete: if isModerator();
     }
 
-    // Nested User Evidence Directory
+    // Nested user evidence — sealed once uploaded
     match /evidence/{userId}/{allPaths=**} {
       allow read: if true;
       allow create: if isOwner(userId) && isValidMedia() && isValidPayload(25);
-      allow update: if false;          // Prevent overwriting sealed evidence
-      allow delete: if isOwner(userId) || isModerator();
+      allow update: if false;
+      allow delete: if isModerator();
     }
 
-    // Witness Evidence Path (higher trust)
+    // Witness evidence — sealed
     match /witness_evidence/{fileId} {
       allow read: if true;
       allow create: if isSignedIn()
@@ -90,15 +91,16 @@ service firebase.storage {
       allow delete: if isModerator();
     }
 
-    // Audio Recordings
+    // Audio used as evidence — sealed (no owner delete)
     match /audio/{userId}/{allPaths=**} {
       allow read: if true;
       allow create: if isOwner(userId) && isValidAudio() && isValidPayload(25);
       allow update: if false;
-      allow delete: if isOwner(userId) || isModerator();
+      allow delete: if isModerator();
     }
 
-    // General Uploads (smaller limit)
+    // General uploads — still owner-deletable (drafts / non-sealed)
+    // If you store sealed testimony media only under evidence/, keep this.
     match /uploads/{userId}/{allPaths=**} {
       allow read: if true;
       allow create: if isOwner(userId) && isValidMedia() && isValidPayload(15);
@@ -106,7 +108,7 @@ service firebase.storage {
       allow delete: if isOwner(userId) || isModerator();
     }
 
-    // Fallback – deny everything else
+    // Fallback — deny everything else
     match /{allPaths=**} {
       allow read, write: if false;
     }
