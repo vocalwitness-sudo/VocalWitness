@@ -954,64 +954,150 @@ export function handleSaveProfile(event) {
     saveProfileChanges(event);
 }
 
+
 export async function saveProfileChanges(event) {
-    if (event) event.preventDefault();
-    if (!auth.currentUser) return showToast("You must be logged in", "error");
-    if (isProfileSaving) return; // CRITICAL: Prevents mobile double-tap write race conditions
+  if (event) event.preventDefault();
+  if (!auth.currentUser) {
+    showToast("You must be logged in", "error");
+    return;
+  }
 
-    const firstNameEl   = document.getElementById('editFirstName');
-    const lastNameEl    = document.getElementById('editLastName');
-    const displayNameEl = document.getElementById('editDisplayName');
-    const usernameEl    = document.getElementById('editUsername');
-    const regionEl      = document.getElementById('editRegion');
-    const bioEl         = document.getElementById('editBio');
-    const hidePublicEl  = document.getElementById('toggleHidePublicInfo');
+  const firstNameEl   = document.getElementById('editFirstName');
+  const lastNameEl    = document.getElementById('editLastName');
+  const displayNameEl = document.getElementById('editDisplayName');
+  const usernameEl    = document.getElementById('editUsername');
+  const regionEl      = document.getElementById('editRegion');
+  const bioEl         = document.getElementById('editBio');
+  const hidePublicEl  = document.getElementById('toggleHidePublicInfo');
 
-    const firstName      = firstNameEl?.value?.trim() || "";
-    const lastName       = lastNameEl?.value?.trim() || "";
-    const displayName    = displayNameEl?.value?.trim();
-    const username       = usernameEl?.value?.trim();
-    const region         = regionEl?.value?.trim();
-    const bio            = bioEl?.value?.trim();
-    const hidePublicInfo = hidePublicEl ? hidePublicEl.checked : true;
+  const firstName   = (firstNameEl?.value || "").trim().slice(0, 60);
+  const lastName    = (lastNameEl?.value || "").trim().slice(0, 60);
+  const displayName = (displayNameEl?.value || "").trim().slice(0, 80);
+  const username    = (usernameEl?.value || "").trim().slice(0, 40) || null;
+  const region      = (regionEl?.value || "").trim().slice(0, 80) || null;
+  const bio         = (bioEl?.value || "").trim().slice(0, 500) || null;
+  const hidePublicInfo = hidePublicEl ? !!hidePublicEl.checked : true;
 
-    if (!displayNameEl) {
-        showToast("Edit form not ready", "error");
-        return;
+  if (!displayNameEl) {
+    showToast("Edit form not ready", "error");
+    return;
+  }
+  if (!displayName) {
+    showToast("Display name is required", "error");
+    return;
+  }
+
+  // Only keys allowed by isSafeUserUpdate()
+  const updatePayload = {
+    firstName: firstName || "",
+    lastName: lastName || "",
+    displayName,
+    username,
+    region,
+    bio,
+    hidePublicInfo,
+    updatedAt: serverTimestamp()
+  };
+
+  // NEVER write data: base64 into photoURL (rules reject it)
+  if (pendingAvatarBase64) {
+    if (typeof pendingAvatarBase64 === 'string' &&
+        pendingAvatarBase64.startsWith('https://')) {
+      updatePayload.photoURL = pendingAvatarBase64;
+    } else {
+      showToast(
+        "Avatar must be uploaded first (HTTPS URL only). Photo skipped this save.",
+        "warning"
+      );
+      // Do not put base64 in payload
     }
-    if (!displayName) return showToast("Display name is required", "error");
+  }
 
-    isProfileSaving = true;
+  try {
+    showToast("Saving changes...", "info");
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    await updateDoc(userRef, updatePayload);
 
-    try {
-        showToast("Saving changes...", "info");
-        const userRef = doc(db, "users", auth.currentUser.uid);
-        const updatePayload = {
-            firstName,
-            lastName,
-            displayName,
-            username: username || null,
-            region: region || null,
-            bio: bio || null,
-            hidePublicInfo,
-            updatedAt: serverTimestamp()
-        };
-        if (pendingAvatarBase64) {
-            updatePayload.photoURL = pendingAvatarBase64;
-        }
-        await updateDoc(userRef, updatePayload);
-        showToast("✅ Profile updated successfully!", "success");
-        closeEditProfile();
-        if (typeof refreshTierAndUI === 'function') refreshTierAndUI();
-    } catch (error) {
-        console.error("Save profile error:", error);
-        showToast("Failed to save profile. Please try again.", "error");
-    } finally {
-        isProfileSaving = false;
+    // Keep local cache in sync
+    if (currentUserData) {
+      Object.assign(currentUserData, updatePayload);
+      window.currentUserData = currentUserData;
+      try {
+        await syncPublicProfile(auth.currentUser.uid, currentUserData);
+      } catch (_) {}
+      renderProfileUI(currentUserData);
     }
+
+    pendingAvatarBase64 = null;
+    showToast("✅ Profile updated successfully!", "success");
+    if (typeof closeEditProfile === 'function') closeEditProfile();
+    if (typeof refreshTierAndUI === 'function') refreshTierAndUI();
+  } catch (error) {
+    console.error("Save profile error:", error);
+    const code = error?.code || "";
+    const msg =
+      code === "permission-denied"
+        ? "Save blocked by security rules. Check fields or photo URL."
+        : (error?.message || "Failed to save profile");
+    showToast(msg, "error");
+  }
 }
-window.saveProfileChanges = saveProfileChanges;
-window.handleSaveProfile = handleSaveProfile;
+B. Password reset — prevent double toast
+Replace triggerPasswordReset with:
+
+js
+let _passwordResetInFlight = false;
+
+export async function triggerPasswordReset() {
+  if (_passwordResetInFlight) return;
+  _passwordResetInFlight = true;
+
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      showToast('Sign in required', 'error');
+      return;
+    }
+
+    const providers = (user.providerData || []).map(p => p.providerId);
+    const hasPassword = providers.includes('password');
+
+    if (!hasPassword) {
+      showToast(
+        'This account uses Google/Twitter/GitHub sign-in. There is no password to reset. Sign in with that provider instead.',
+        'info'
+      );
+      return;
+    }
+
+    if (!user.email) {
+      showToast('No email on this account', 'error');
+      return;
+    }
+
+    await sendPasswordResetEmail(auth, user.email, {
+      url: 'https://vocalwitness.com/',
+      handleCodeInApp: false
+    });
+    showToast(
+      `Reset link sent to ${user.email}. Check inbox and spam.`,
+      'success'
+    );
+  } catch (error) {
+    console.error('Password reset error:', error);
+    const msg =
+      error.code === 'auth/too-many-requests'
+        ? 'Too many attempts. Try again later.'
+        : error.code === 'auth/user-not-found'
+          ? 'No password account for this email.'
+          : 'Could not send reset email.';
+    showToast(msg, 'error');
+  } finally {
+    setTimeout(() => { _passwordResetInFlight = false; }, 1500);
+  }
+}
+window.handlePasswordReset = triggerPasswordReset;
+window.triggerPasswordReset = triggerPasswordReset;
 
 export async function triggerPasswordReset() {
     const user = auth.currentUser;
