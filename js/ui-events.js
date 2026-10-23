@@ -103,10 +103,9 @@ export function wireIndexPage() {
   const charCount = document.getElementById('char-count');
   if (mainInput && charCount) {
     on(mainInput, 'input', () => {
-      charCount.textContent = `${mainInput.value.length} / 2000`;
+      charCount.textContent = `${mainInput.value.length} / 3000`;
     });
   }
-
   on(document.getElementById('btn-photo'), 'click', () => document.getElementById('photoInput')?.click());
   on(document.getElementById('btn-video'), 'click', () => document.getElementById('videoInput')?.click());
   on(document.getElementById('btn-voice'), 'click', () => {
