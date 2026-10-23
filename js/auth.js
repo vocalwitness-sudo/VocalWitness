@@ -248,33 +248,26 @@ async function socialLogin(provider, providerName, event) {
     btn.classList.add('opacity-50', 'cursor-not-allowed');
   }
 
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
-                   window.matchMedia('(display-mode: standalone)').matches;
+  const isMobile =
+    /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+    window.matchMedia('(display-mode: standalone)').matches;
 
   try {
     savePendingDraft();
 
-    const remember = document.getElementById('rememberMe')?.checked ?? true;
-    await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+    // Always local persistence on mobile (sessionStorage breaks redirect recovery)
+    await setPersistence(auth, browserLocalPersistence);
 
-    // ===== MOBILE → always use redirect =====
-    if (isMobile) {
-      if (btn) {
-        btn.innerHTML = 'Redirecting…';
-      }
-      await signInWithRedirect(auth, provider);
-      // Page will navigate away – no need to restore button
-      return;
-    }
-
-    // ===== DESKTOP → try popup first =====
+    // ===== TRY POPUP FIRST (desktop + mobile) =====
     try {
+      if (btn) btn.innerHTML = 'Signing in…';
       const result = await signInWithPopup(auth, provider);
       if (result?.user) {
         showToast(`✅ Signed in with ${providerName}!`, "success");
         closeLoginModal();
         restorePendingDraft();
       }
+      return;
     } catch (popupError) {
       if (popupError.code === "auth/multi-factor-auth-required") {
         const resolver = getMultiFactorResolver(auth, popupError);
@@ -283,11 +276,17 @@ async function socialLogin(provider, providerName, event) {
         return;
       }
 
-      if (['auth/popup-blocked', 'auth/popup-closed-by-user'].includes(popupError.code)) {
-        showToast("Popup blocked. Switching to redirect...", "info");
+      // Popup blocked / closed / mobile quirks → fall back to redirect
+      const shouldRedirect =
+        isMobile ||
+        ['auth/popup-blocked', 'auth/popup-closed-by-user', 'auth/cancelled-popup-request']
+          .includes(popupError.code);
+
+      if (shouldRedirect) {
+        showToast("Opening secure sign-in…", "info");
         if (btn) btn.innerHTML = 'Redirecting…';
         await signInWithRedirect(auth, provider);
-        return;
+        return; // page navigates away
       }
 
       throw popupError;
@@ -299,25 +298,22 @@ async function socialLogin(provider, providerName, event) {
       openMfaChallengeModal(resolver);
       return;
     }
-
     if (['auth/popup-closed-by-user', 'auth/cancelled-popup-request'].includes(error.code)) {
       return;
     }
-
     console.error(`${providerName} login error:`, error);
     const msg = handleAuthError(error);
     if (msg) showToast(msg, "error");
   } finally {
     authActionInProgress = false;
-
-    // Only restore the button if we did NOT redirect
-    if (btn && originalBtnContent && !isMobile) {
+    if (btn && originalBtnContent) {
       btn.disabled = false;
       btn.classList.remove('opacity-50', 'cursor-not-allowed');
       btn.innerHTML = originalBtnContent;
     }
   }
 }
+
 
 export async function googleLogin(event) {
   return socialLogin(googleProvider, "Google", event);
