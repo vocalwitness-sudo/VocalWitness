@@ -277,7 +277,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                 return;
             }
 
-            if (action === 'toggle-more') {
+                       if (action === 'toggle-more') {
                 const textEl = document.getElementById(`post-text-${id}`);
                 if (!textEl) return;
                 const expanded = textEl.getAttribute('data-expanded') === 'true';
@@ -286,15 +286,14 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                 if (expanded) {
                     textEl.textContent = preview;
                     textEl.setAttribute('data-expanded', 'false');
-                    btn.textContent = 'More';
+                    btn.textContent = 'Read more';
                 } else {
                     textEl.textContent = full;
                     textEl.setAttribute('data-expanded', 'true');
-                    btn.textContent = 'Less';
+                    btn.textContent = 'Show less';
                 }
                 return;
             }
-
             btn.disabled = true;
             btn.classList.add('opacity-50', 'cursor-not-allowed');
 
@@ -838,10 +837,10 @@ if (isOwner) {
     ${escapeHTML(headline)}
   </h3>
 
-  <!-- Content (collapsed on home feed; More expands) -->
+  <!-- Content (collapsed on home feed; Read more expands) -->
   ${data.content ? (() => {
     const full = String(data.content);
-    const LIMIT = 280;
+    const LIMIT = 180;
     const needsMore = full.length > LIMIT;
     const preview = needsMore
       ? full.slice(0, LIMIT).replace(/\s+\S*$/, '') + '…'
@@ -860,7 +859,7 @@ if (isOwner) {
                 data-action="toggle-more"
                 data-id="${id}"
                 class="mt-1.5 text-xs font-medium text-emerald-400 hover:text-emerald-300 transition">
-          More
+          Read more
         </button>
       ` : ''}
     </div>`;
@@ -1046,6 +1045,20 @@ async function handleEditPost(postId) {
     return;
   }
 
+  // 30-minute correction window (matches firestore.rules)
+  const createdMs = post.createdAt?.toMillis
+    ? post.createdAt.toMillis()
+    : (post.createdAt ? new Date(post.createdAt).getTime() : 0);
+  const withinWindow = createdMs && (Date.now() - createdMs) < 30 * 60 * 1000;
+
+  if (!withinWindow) {
+    showToast(
+      'Text edits are locked after 30 minutes. You can still hide this report from the Square.',
+      'info'
+    );
+    return;
+  }
+
   const existing = document.getElementById('edit-post-modal');
   if (existing) existing.remove();
 
@@ -1064,11 +1077,11 @@ async function handleEditPost(postId) {
              placeholder="Title (optional)"
              class="mb-3 w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none">
 
-      <textarea id="edit-content" rows="5" maxlength="2000"
-                class="mb-4 w-full resize-none rounded-xl border border-zinc-700 bg-zinc-800 p-4 text-sm text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none">${escapeHTML(post.content || '')}</textarea>
+       <textarea id="edit-content" rows="5" maxlength="3000"
+                 class="mb-4 w-full resize-none rounded-xl border border-zinc-700 bg-zinc-800 p-4 text-sm text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none">${escapeHTML(post.content || '')}</textarea>
 
-      <p class="mb-5 text-xs text-zinc-500">
-        Media cannot be changed after sealing. Only text can be edited.
+            <p class="mb-5 text-xs text-zinc-500">
+        Text can be edited only within 30 minutes of publishing. Media and seal cannot be changed.
       </p>
 
       <div class="flex justify-end gap-3">
@@ -1103,13 +1116,11 @@ async function handleEditPost(postId) {
     saveBtn.textContent = 'Saving…';
 
     try {
-      await updateDoc(doc(db, 'testimonies', postId), {
-        headline: newTitle || null,
-        title: newTitle || null,
+           await updateDoc(doc(db, 'testimonies', postId), {
         content: newContent,
-        editedAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
+        
       showToast('Report updated', 'success');
       close();
     } catch (err) {
