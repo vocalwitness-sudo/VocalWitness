@@ -108,15 +108,16 @@ service cloud.firestore {
         'reputation', 'credibilityScore', 'weeklyPoints',
         'phoneNumber', 'phone', 'phoneHash', 'humanityScore'
       ];
-      let allowed = [
-        'email', 'displayName', 'photoURL', 'bio',
-        'location', 'website', 'region', 'username',
-        'updatedAt', 'lastLoginAt', 'lastLogin', 'lastActive', 'lastUpdated',
-        'theme', 'language', 'interestedInArena', 'arenaNotifyAt', 'lastNameChange',
-        'lastTestimonyAt', 'following', 'trusted', 'followers',
-        'privacyMode', 'hidePublicInfo',
-        'activeWitnessCycle', 'lastCycleStart'
-      ];
+     let allowed = [
+  'email', 'displayName', 'photoURL', 'bio',
+  'location', 'website', 'region', 'username',
+  'firstName', 'lastName',
+  'updatedAt', 'lastLoginAt', 'lastLogin', 'lastActive', 'lastUpdated',
+  'theme', 'language', 'interestedInArena', 'arenaNotifyAt', 'lastNameChange',
+  'lastTestimonyAt', 'following', 'trusted', 'followers',
+  'privacyMode', 'hidePublicInfo',
+  'activeWitnessCycle', 'lastCycleStart'
+];
       let changed = request.resource.data.diff(resource.data).affectedKeys();
       return !changed.hasAny(forbidden)
           && changed.hasOnly(allowed)
