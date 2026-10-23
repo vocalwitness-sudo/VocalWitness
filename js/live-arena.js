@@ -50,21 +50,27 @@ export function initLiveArena() {
   console.log('[LiveArena] World-class engine starting…');
 
   // Soft progress toward mega-stages
-  listenToVerifiedCount((count) => {
+   listenToVerifiedCount((count) => {
+    const n = typeof count === 'number' && count >= 0 ? count : 0;
     const countEl = document.getElementById('verifiedCount');
     const progressBar = document.getElementById('verifiedProgress');
     const progressText = document.getElementById('progressText');
 
-    if (countEl) countEl.textContent = count.toLocaleString();
+    if (countEl) countEl.textContent = n.toLocaleString();
+
     if (progressBar) {
-      const pct = Math.min((count / GOAL) * 100, 100);
+      const pct = Math.min((n / GOAL) * 100, 100);
       progressBar.style.width = `${pct}%`;
-      progressBar.setAttribute('aria-valuenow', String(count));
+      progressBar.setAttribute('aria-valuenow', String(n));
     }
+
     if (progressText) {
-      progressText.textContent = count >= GOAL
-        ? "🎉 Full global stages unlocked!"
-        : `${(GOAL - count).toLocaleString()} more citizens needed for mega-stages`;
+      progressText.textContent =
+        n >= GOAL
+          ? "🎉 Full global stages unlocked!"
+          : n === 0
+            ? "0 verified · be among the first 500"
+            : `${(GOAL - n).toLocaleString()} more citizens needed for mega-stages`;
     }
   });
 
