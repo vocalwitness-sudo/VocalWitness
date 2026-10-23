@@ -71,44 +71,55 @@ async function createOrUpdateUser(user) {
     const safeDisplayName = (user.displayName || (user.isAnonymous ? "Anonymous Citizen" : "Citizen Witness")).trim();
     const safePhotoURL = user.photoURL && user.photoURL.trim() ? user.photoURL.trim() : null;
 
-    if (!snap.exists()) {
-      const newUserData = {
-        uid: user.uid,
-        email: safeEmail,
-        displayName: safeDisplayName,
-        photoURL: safePhotoURL,
-        isAnonymous: !!user.isAnonymous,
-        tier: DEFAULT_TIER,         
-        isVerified: false,            
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
+if (!snap.exists()) {
+  // Define essential fields guaranteed to pass baseline rules
+  const minimal = {
+    uid: user.uid,
+    email: safeEmail,
+    displayName: safeDisplayName,
+    createdAt: serverTimestamp()
+  };
 
-      try {
-        await setDoc(userRef, newUserData);
-        console.log("[auth] Created user document for", user.uid);
-      } catch (createErr) {
-        console.warn("[auth] Full create failed, trying minimal payload:", createErr);
-        await setDoc(userRef, {
-          uid: user.uid,
-          email: safeEmail,
-          displayName: safeDisplayName,
-          createdAt: serverTimestamp()
-        });
-        console.log("[auth] Created minimal user document for", user.uid);
-      }
+  try {
+    // Attempt writing complete profile payload
+    await setDoc(userRef, {
+      ...minimal,
+      photoURL: safePhotoURL,
+      isAnonymous: !!user.isAnonymous,
+      tier: DEFAULT_TIER,
+      isVerified: false,
+      updatedAt: serverTimestamp()
+    });
+    console.log("[auth] Full user document created for:", user.uid);
+  } catch (createErr) {
+    console.warn("[auth] Full create failed, falling back to minimal payload:", createErr);
+    // Fallback write to ensure account existence
+    await setDoc(userRef, minimal);
+    console.log("[auth] Minimal user document created for:", user.uid);
+  }
 
-      updateVerificationUI(false);
-      if (!user.isAnonymous) {
-        showToast("🎉 Account created! Welcome to the Public Square.", "success");
-      }
-    } else {
-      const existing = snap.data() || {};
-      const changes = {
-        lastLoginAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
+  // UI updates post-creation
+  updateVerificationUI(false);
+  if (!user.isAnonymous) {
+    showToast("🎉 Account created! Welcome to the Public Square.", "success");
+  }
+} else {
+  // Existing user logic
+  const existing = snap.data() || {};
+  const changes = {
+    lastLoginAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+  
+  try {
+    await updateDoc(userRef, changes);
+    console.log("[auth] Updated login timestamps for:", user.uid);
+  } catch (updateErr) {
+    console.warn("[auth] Timestamp update failed:", updateErr);
+  }
 
+  updateVerificationUI(!!existing.isVerified);
+}
       if (safeDisplayName && safeDisplayName !== existing.displayName) {
         changes.displayName = safeDisplayName;
       }
@@ -629,19 +640,22 @@ export function initAuth() {
           restorePendingDraft();
         }
       })
-      .catch((error) => {
-        if (error?.code === 'auth/multi-factor-auth-required') {
-          const resolver = getMultiFactorResolver(auth, error);
-          closeLoginModal();
-          openMfaChallengeModal(resolver);
-          return;
-        }
-        if (error?.code !== 'auth/missing-initial-state') {
-          console.error("Redirect auth error:", error);
-          const msg = handleAuthError(error);
-          if (msg) showToast(msg, "error");
-        }
-      });
+.catch((error) => {
+  if (error?.code === 'auth/multi-factor-auth-required') {
+    const resolver = getMultiFactorResolver(auth, error);
+    closeLoginModal();
+    openMfaChallengeModal(resolver);
+    return;
+  }
+  if (error?.code === 'auth/missing-initial-state') {
+    console.warn('[auth] Redirect state lost (common on mobile). User can retry.');
+    showToast('Sign-in was interrupted. Please try again.', 'warning');
+    return;
+  }
+  console.error("Redirect auth error:", error);
+  const msg = handleAuthError(error);
+  if (msg) showToast(msg, "error");
+});
 
     onAuthStateChanged(auth, async (user) => {
       try {
