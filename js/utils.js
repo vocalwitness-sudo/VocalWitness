@@ -244,45 +244,60 @@ export function listenToVoteCount(postId, callback) {
 }
 
 /**
- * Real-time listener for the number of verified citizens.
- * Safe fallback added for slow network/aggregation queries.
- */
-/**
- * Real-time listener for the number of verified citizens.
- * Uses publicProfiles (publicly readable) instead of private users collection.
+ * Real-time count of verified citizens (publicProfiles).
+ * Always calls callback at least once (0 on error / empty).
  */
 export function listenToVerifiedCount(callback) {
-    if (typeof callback !== 'function') return () => {};
+  if (typeof callback !== 'function') return () => {};
 
-    // Prefer isVerified; fall back to isPhoneVerified if that is what you store on publicProfiles
-    const q = query(
-        collection(db, "publicProfiles"),
-        where("isVerified", "==", true)
-    );
+  let settled = false;
+  const safeCallback = (n) => {
+    settled = true;
+    try {
+      callback(typeof n === 'number' && n >= 0 ? n : 0);
+    } catch (e) {
+      console.warn('[utils] verified count callback error:', e);
+    }
+  };
 
-    getCountFromServer(q)
-        .then((snapshot) => {
-            if (snapshot && snapshot.data) {
-                callback(snapshot.data().count);
-            }
-        })
-        .catch((err) => {
-            console.warn("Server count query skipped due to connection delay:", err);
-            callback(0);
-        });
+  // Fail-safe: never leave UI on "Loading…" longer than 4s
+  const failSafe = setTimeout(() => {
+    if (!settled) safeCallback(0);
+  }, 4000);
 
-    const unsubscribe = onSnapshot(
-        q,
-        (snapshot) => {
-            callback(snapshot.size);
-        },
-        (error) => {
-            console.warn("Verified count listener operating offline/limited:", error);
-            callback(0);
-        }
-    );
+  // Prefer isVerified; if query fails (missing index / field), fall back to 0
+  const q = query(
+    collection(db, "publicProfiles"),
+    where("isVerified", "==", true)
+  );
 
-    return createSafeUnsubscribe(unsubscribe);   // was returning a no-op () => {}
+  getCountFromServer(q)
+    .then((snapshot) => {
+      clearTimeout(failSafe);
+      safeCallback(snapshot?.data?.()?.count ?? 0);
+    })
+    .catch((err) => {
+      console.warn("Server count query skipped:", err);
+      // still wait for onSnapshot; failSafe covers total silence
+    });
+
+  const unsubscribe = onSnapshot(
+    q,
+    (snapshot) => {
+      clearTimeout(failSafe);
+      safeCallback(snapshot.size);
+    },
+    (error) => {
+      console.warn("Verified count listener limited:", error);
+      clearTimeout(failSafe);
+      safeCallback(0);
+    }
+  );
+
+  return createSafeUnsubscribe(() => {
+    clearTimeout(failSafe);
+    unsubscribe();
+  });
 }
 
 /**
