@@ -1042,10 +1042,7 @@ export async function saveProfileChanges(event) {
     showToast(msg, "error");
   }
 }
-B. Password reset — prevent double toast
-Replace triggerPasswordReset with:
 
-js
 let _passwordResetInFlight = false;
 
 export async function triggerPasswordReset() {
