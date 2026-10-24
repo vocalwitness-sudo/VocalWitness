@@ -24,6 +24,7 @@
     "merkletreejs": "^0.4.0",
     "opentimestamps": "^0.4.9",
     "paystack-api": "^2.0.6",
+    "rss-parser": "^3.13.0",
     "snarkjs": "^0.7.6"
   },
   "allowScripts": [
