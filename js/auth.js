@@ -68,58 +68,54 @@ async function createOrUpdateUser(user) {
     const snap = await getDoc(userRef);
 
     const safeEmail = (user.email || "").trim();
-    const safeDisplayName = (user.displayName || (user.isAnonymous ? "Anonymous Citizen" : "Citizen Witness")).trim();
-    const safePhotoURL = user.photoURL && user.photoURL.trim() ? user.photoURL.trim() : null;
+    const safeDisplayName = (
+      user.displayName ||
+      (user.isAnonymous ? "Anonymous Citizen" : "Citizen Witness")
+    ).trim();
+    const safePhotoURL =
+      user.photoURL && user.photoURL.trim() ? user.photoURL.trim() : null;
 
-if (!snap.exists()) {
-  // Define essential fields guaranteed to pass baseline rules
-  const minimal = {
-    uid: user.uid,
-    email: safeEmail,
-    displayName: safeDisplayName,
-    createdAt: serverTimestamp()
-  };
+    if (!snap.exists()) {
+      // ── New user ──────────────────────────────────────
+      const minimal = {
+        uid: user.uid,
+        email: safeEmail,
+        displayName: safeDisplayName,
+        createdAt: serverTimestamp(),
+      };
 
-  try {
-    // Attempt writing complete profile payload
-    await setDoc(userRef, {
-      ...minimal,
-      photoURL: safePhotoURL,
-      isAnonymous: !!user.isAnonymous,
-      tier: DEFAULT_TIER,
-      isVerified: false,
-      updatedAt: serverTimestamp()
-    });
-    console.log("[auth] Full user document created for:", user.uid);
-  } catch (createErr) {
-    console.warn("[auth] Full create failed, falling back to minimal payload:", createErr);
-    // Fallback write to ensure account existence
-    await setDoc(userRef, minimal);
-    console.log("[auth] Minimal user document created for:", user.uid);
-  }
+      try {
+        // Prefer the full payload
+        await setDoc(userRef, {
+          ...minimal,
+          photoURL: safePhotoURL,
+          isAnonymous: !!user.isAnonymous,
+          tier: DEFAULT_TIER,
+          isVerified: false,
+          updatedAt: serverTimestamp(),
+        });
+        console.log("[auth] Full user document created for:", user.uid);
+      } catch (createErr) {
+        console.warn(
+          "[auth] Full create failed, falling back to minimal payload:",
+          createErr
+        );
+        await setDoc(userRef, minimal);
+        console.log("[auth] Minimal user document created for:", user.uid);
+      }
 
-  // UI updates post-creation
-  updateVerificationUI(false);
-  if (!user.isAnonymous) {
-    showToast("🎉 Account created! Welcome to the Public Square.", "success");
-  }
-} else {
-  // Existing user logic
-  const existing = snap.data() || {};
-  const changes = {
-    lastLoginAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  };
-  
-  try {
-    await updateDoc(userRef, changes);
-    console.log("[auth] Updated login timestamps for:", user.uid);
-  } catch (updateErr) {
-    console.warn("[auth] Timestamp update failed:", updateErr);
-  }
+      updateVerificationUI(false);
+      if (!user.isAnonymous) {
+        showToast("🎉 Account created! Welcome to the Public Square.", "success");
+      }
+    } else {
+      // ── Existing user ─────────────────────────────────
+      const existing = snap.data() || {};
+      const changes = {
+        lastLoginAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
 
-  updateVerificationUI(!!existing.isVerified);
-}
       if (safeDisplayName && safeDisplayName !== existing.displayName) {
         changes.displayName = safeDisplayName;
       }
@@ -130,12 +126,17 @@ if (!snap.exists()) {
         changes.email = safeEmail;
       }
 
-      await updateDoc(userRef, changes);
+      try {
+        await updateDoc(userRef, changes);
+        console.log("[auth] Updated user document for:", user.uid);
+      } catch (updateErr) {
+        console.warn("[auth] Timestamp / profile update failed:", updateErr);
+      }
 
       const isVerified = Boolean(
         existing.isVerified === true ||
-        existing.isPhoneVerified === true ||
-        existing.hasVerifiedPhone === true
+          existing.isPhoneVerified === true ||
+          existing.hasVerifiedPhone === true
       );
       updateVerificationUI(isVerified);
     }
@@ -152,7 +153,6 @@ if (!snap.exists()) {
 
 export { createOrUpdateUser };
 window.createOrUpdateUser = createOrUpdateUser;
-
 export function updateVerificationUI(isVerified = false) {
   const statusEl = document.getElementById('verification-status');
   const verifyBtn = document.getElementById('request-verification-btn');
