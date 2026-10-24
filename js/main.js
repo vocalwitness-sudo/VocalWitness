@@ -1310,57 +1310,14 @@ async function fetchCuratedNews() {
     // France 24
     { url: 'https://www.france24.com/en/rss', weight: 2 },
   ];
-  try {
-    const results = await Promise.allSettled(
-      feeds.map(async (feed) => {
-        try {
-          const res = await fetch(
-            `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`,
-            { signal: AbortSignal.timeout(6000) }
-          );
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const data = await res.json();
-          if (data.status !== 'ok' || !Array.isArray(data.items)) {
-            throw new Error('Invalid response');
-          }
-          return data.items
-            .slice(0, 5)
-            .filter((item) => item.title && item.title.trim().length > 16)
-            .map((item) => ({ title: item.title.trim(), weight: feed.weight }));
-        } catch (err) {
-          // Expected proxy failures — stay quiet
-          const msg = err?.message || String(err);
-          if (!/HTTP 4\d\d|HTTP 5\d\d|timeout|AbortError|Failed to fetch/i.test(msg)) {
-  console.warn(`[Ticker] Failed ${feed.url}:`, msg);
-}
-          return [];
-        }
-      })
+ try {
+    const res = await fetch(
+      "https://us-central1-vocalwitness-3affa.cloudfunctions.net/tickerHeadlines",
+      { signal: AbortSignal.timeout(12000) }
     );
-
-    let allHeadlines = [];
-    results.forEach((r) => {
-      if (r.status === 'fulfilled' && Array.isArray(r.value)) {
-        allHeadlines.push(...r.value);
-      }
-    });
-
-    allHeadlines.sort((a, b) => {
-      if (b.weight !== a.weight) return b.weight - a.weight;
-      return Math.random() - 0.5;
-    });
-
-    const uniqueTitles = [];
-    const seen = new Set();
-    for (const item of allHeadlines) {
-      const key = item.title.toLowerCase().slice(0, 50);
-      if (!seen.has(key)) {
-        seen.add(key);
-        uniqueTitles.push(item.title);
-      }
-    }
-
-    const finalHeadlines = uniqueTitles.slice(0, 14);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const finalHeadlines = Array.isArray(data.items) ? data.items : [];
 
     if (finalHeadlines.length >= 3) {
       try {
@@ -1373,16 +1330,15 @@ async function fetchCuratedNews() {
     } else if (!usedCache) {
       applyTicker(fallbackItems);
     }
-    // else: keep showing cache already painted
   } catch (err) {
-    console.warn('[Ticker] Network path failed, keeping current strip:', err?.message || err);
+    console.warn("[Ticker] Network path failed, keeping current strip:", err?.message || err);
     if (!tickerEl.innerHTML || tickerEl.innerHTML.length < 40) {
       applyTicker(fallbackItems);
     } else {
       restartTickerAnimation();
     }
   } finally {
-    tickerEl.dataset.loading = '0';
+    tickerEl.dataset.loading = "0";
   }
 }
 
