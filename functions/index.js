@@ -25,6 +25,8 @@ import { AccessToken } from "livekit-server-sdk";
 import { fileURLToPath } from "url";
 import { onObjectFinalized } from "firebase-functions/v2/storage";
 import { dailyAnchor, triggerAnchorNow } from "./anchor.js";
+import Parser from "rss-parser";
+
 
 // ESM __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -2348,27 +2350,151 @@ function escape(s) {
 // ======================================================
 // BREAKING TICKER HEADLINES (server-side RSS — no rss2json)
 // ======================================================
-const TICKER_FEEDS = [
-  { url: "https://feeds.bbci.co.uk/news/world/africa/rss.xml", weight: 3 },
-  { url: "https://feeds.bbci.co.uk/news/world/rss.xml", weight: 3 },
-  { url: "https://www.theguardian.com/world/africa/rss", weight: 2 },
-  { url: "https://feeds.npr.org/1004/rss.xml", weight: 2 },
-  { url: "https://www.aljazeera.com/xml/rss/all.xml", weight: 2 },
+const newsParser = new Parser({
+  timeout: 8000,
+  headers: {
+    "User-Agent": "VocalWitness/1.0 (+https://vocalwitness.com; news-ticker)"
+  }
+});
+
+// Curated feeds
+const NEWS_FEEDS = [
+  { name: "BBC", url: "https://feeds.bbci.co.uk/news/rss.xml", weight: 5 },
+  { name: "BBC World", url: "https://feeds.bbci.co.uk/news/world/rss.xml", weight: 5 },
+  { name: "BBC Africa", url: "https://feeds.bbci.co.uk/news/world/africa/rss.xml", weight: 6 },
+  { name: "Guardian World", url: "https://www.theguardian.com/world/rss", weight: 4 },
+  { name: "Guardian Africa", url: "https://www.theguardian.com/world/africa/rss", weight: 5 },
+  { name: "DW", url: "https://rss.dw.com/rdf/rss-en-all", weight: 3 },
+  { name: "DW Africa", url: "https://rss.dw.com/rdf/rss-en-africa", weight: 4 },
+  { name: "NPR World", url: "https://feeds.npr.org/1004/rss.xml", weight: 3 },
+  { name: "NPR News", url: "https://feeds.npr.org/1001/rss.xml", weight: 3 },
+  { name: "Al Jazeera", url: "https://www.aljazeera.com/xml/rss/all.xml", weight: 4 },
+  { name: "France24", url: "https://www.france24.com/en/rss", weight: 3 },
+  { name: "NYT World", url: "https://rss.nytimes.com/services/xml/rss/nyt/World.xml", weight: 3 },
+  { name: "NYT Africa", url: "https://rss.nytimes.com/services/xml/rss/nyt/Africa.xml", weight: 4 }
 ];
 
-function extractRssTitles(xml) {
-  const titles = [];
-  if (!xml || typeof xml !== "string") return titles;
-  const itemBlocks = xml.match(/<item[\s\S]*?<\/item>/gi) || [];
-  for (const block of itemBlocks) {
-    const m = block.match(/<title[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/i);
-    if (!m) continue;
-    const title = m[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
-    if (title.length > 16) titles.push(title);
+const NEWS_CACHE_DOC = "cache/curatedNews";
+const NEWS_CACHE_TTL_MS = 18 * 60 * 1000; // 18 minutes
+
+async function fetchOneFeed(feed) {
+  try {
+    const parsed = await newsParser.parseURL(feed.url);
+    const items = (parsed.items || [])
+      .slice(0, 6)
+      .filter((item) => item.title && String(item.title).trim().length > 16)
+      .map((item) => ({
+        title: String(item.title).trim(),
+        weight: feed.weight,
+        source: feed.name
+      }));
+    return items;
+  } catch (err) {
+    logger.warn(`News feed failed: ${feed.name}`, { message: err?.message });
+    return [];
   }
-  return titles;
 }
 
+async function buildHeadlines() {
+  const results = await Promise.all(NEWS_FEEDS.map(fetchOneFeed));
+  const all = results.flat();
+
+  all.sort((a, b) => {
+    if (b.weight !== a.weight) return b.weight - a.weight;
+    return Math.random() - 0.5;
+  });
+
+  const unique = [];
+  const seen = new Set();
+  for (const item of all) {
+    const key = item.title.toLowerCase().slice(0, 55);
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(item.title);
+    }
+  }
+  return unique.slice(0, 16);
+}
+
+/**
+ * Public, cacheable news ticker endpoint.
+ * GET → { ok: true, headlines: string[], cached: boolean, updatedAt: string }
+ */
+export const getCuratedNews = onRequest(
+  {
+    cors: allowedOrigins,
+    memory: "512MiB",
+    timeoutSeconds: 60,
+    maxInstances: 5
+  },
+  async (req, res) => {
+    if (req.method === "OPTIONS") {
+      return res.status(204).send("");
+    }
+    if (req.method !== "GET") {
+      return res.status(405).json({ error: "Method Not Allowed" });
+    }
+
+    try {
+      const cacheRef = db.doc(NEWS_CACHE_DOC);
+      const snap = await cacheRef.get();
+      const now = Date.now();
+
+      if (snap.exists) {
+        const data = snap.data();
+        const age = now - (data.updatedAtMs || 0);
+        if (Array.isArray(data.headlines) && data.headlines.length >= 3 && age < NEWS_CACHE_TTL_MS) {
+          res.set("Cache-Control", "public, max-age=300, s-maxage=600");
+          return res.status(200).json({
+            ok: true,
+            headlines: data.headlines,
+            cached: true,
+            updatedAt: data.updatedAtIso || null
+          });
+        }
+      }
+
+      const headlines = await buildHeadlines();
+
+      if (headlines.length >= 3) {
+        const payload = {
+          headlines,
+          updatedAtMs: now,
+          updatedAtIso: new Date(now).toISOString()
+        };
+        await cacheRef.set(payload, { merge: true });
+
+        res.set("Cache-Control", "public, max-age=300, s-maxage=600");
+        return res.status(200).json({
+          ok: true,
+          headlines,
+          cached: false,
+          updatedAt: payload.updatedAtIso
+        });
+      }
+
+      // Soft failure: return stale cache if any
+      if (snap.exists && Array.isArray(snap.data().headlines)) {
+        return res.status(200).json({
+          ok: true,
+          headlines: snap.data().headlines,
+          cached: true,
+          stale: true,
+          updatedAt: snap.data().updatedAtIso || null
+        });
+      }
+
+      return res.status(503).json({
+        ok: false,
+        error: "No headlines available",
+        headlines: []
+      });
+    } catch (error) {
+      logger.error("getCuratedNews failed", error);
+      return res.status(500).json({ ok: false, error: "Internal error", headlines: [] });
+    }
+  }
+);
 export const tickerHeadlines = onRequest(
   {
     cors: allowedOrigins,
