@@ -2345,5 +2345,93 @@ function escape(s) {
     .replace(/"/g, '&quot;');
 }
 
+// ======================================================
+// BREAKING TICKER HEADLINES (server-side RSS — no rss2json)
+// ======================================================
+const TICKER_FEEDS = [
+  { url: "https://feeds.bbci.co.uk/news/world/africa/rss.xml", weight: 3 },
+  { url: "https://feeds.bbci.co.uk/news/world/rss.xml", weight: 3 },
+  { url: "https://www.theguardian.com/world/africa/rss", weight: 2 },
+  { url: "https://feeds.npr.org/1004/rss.xml", weight: 2 },
+  { url: "https://www.aljazeera.com/xml/rss/all.xml", weight: 2 },
+];
+
+function extractRssTitles(xml) {
+  const titles = [];
+  if (!xml || typeof xml !== "string") return titles;
+  const itemBlocks = xml.match(/<item[\s\S]*?<\/item>/gi) || [];
+  for (const block of itemBlocks) {
+    const m = block.match(/<title[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/i);
+    if (!m) continue;
+    const title = m[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+    if (title.length > 16) titles.push(title);
+  }
+  return titles;
+}
+
+export const tickerHeadlines = onRequest(
+  {
+    cors: allowedOrigins,
+    memory: "256MiB",
+    timeoutSeconds: 60,
+  },
+  async (req, res) => {
+    if (req.method === "OPTIONS") {
+      return res.status(204).send("");
+    }
+    if (req.method !== "GET") {
+      return res.status(405).json({ error: "Method Not Allowed" });
+    }
+
+    res.set("Cache-Control", "public, max-age=600, s-maxage=600");
+
+    try {
+      const settled = await Promise.allSettled(
+        TICKER_FEEDS.map(async (feed) => {
+          const response = await axios.get(feed.url, {
+            timeout: 8000,
+            responseType: "text",
+            headers: {
+              "User-Agent": "VocalWitnessTicker/1.0 (+https://vocalwitness.com)",
+              Accept: "application/rss+xml, application/xml, text/xml, */*",
+            },
+            validateStatus: (s) => s >= 200 && s < 400,
+          });
+          return extractRssTitles(response.data)
+            .slice(0, 5)
+            .map((title) => ({ title, weight: feed.weight }));
+        })
+      );
+
+      const all = [];
+      for (const r of settled) {
+        if (r.status === "fulfilled" && Array.isArray(r.value)) {
+          all.push(...r.value);
+        }
+      }
+
+      all.sort((a, b) => {
+        if (b.weight !== a.weight) return b.weight - a.weight;
+        return Math.random() - 0.5;
+      });
+
+      const seen = new Set();
+      const items = [];
+      for (const { title } of all) {
+        const key = title.toLowerCase().slice(0, 50);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        items.push(title);
+        if (items.length >= 14) break;
+      }
+
+      return res.status(200).json({ items, ts: Date.now() });
+    } catch (err) {
+      logger.error("tickerHeadlines failed", err);
+      return res.status(500).json({ items: [], error: "ticker_failed" });
+    }
+  }
+);
+
 export { dailyAnchor, triggerAnchorNow };
 
