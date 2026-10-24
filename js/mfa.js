@@ -4,7 +4,9 @@ import {
   TotpMultiFactorGenerator,
   getMultiFactorResolver,
   reauthenticateWithPopup,
-  GoogleAuthProvider
+  GoogleAuthProvider,
+  EmailAuthProvider,
+  reauthenticateWithCredential
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { auth } from "./firebase-config.js";
 import { showToast } from "./utils.js";
@@ -12,14 +14,69 @@ import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebas
 import { db } from "./firebase-config.js";
 
 /**
+ * Ensure the user has a recent login before sensitive MFA operations.
+ * Fixes: auth/requires-recent-login
+ */
+async function ensureRecentLogin() {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Not signed in");
+
+  const providerId = user.providerData?.[0]?.providerId;
+
+  if (providerId === "google.com") {
+    const provider = new GoogleAuthProvider();
+    await reauthenticateWithPopup(user, provider);
+    return;
+  }
+
+  if (providerId === "password") {
+    const password = window.prompt(
+      "For security, re-enter your password to manage 2FA:"
+    );
+    if (!password) {
+      const err = new Error("Re-authentication cancelled");
+      err.code = "auth/cancelled";
+      throw err;
+    }
+    const credential = EmailAuthProvider.credential(user.email, password);
+    await reauthenticateWithCredential(user, credential);
+    return;
+  }
+
+  // Fallback: try Google if available, otherwise ask for full re-login
+  try {
+    const provider = new GoogleAuthProvider();
+    await reauthenticateWithPopup(user, provider);
+  } catch (err) {
+    if (err?.code === "auth/popup-closed-by-user") {
+      const e = new Error("Re-authentication cancelled");
+      e.code = "auth/cancelled";
+      throw e;
+    }
+    throw new Error(
+      "Please sign out and sign back in, then try managing 2FA again."
+    );
+  }
+}
+
+/**
  * Enroll TOTP as second factor.
- * Must be called while user is signed in and (usually) recently re-authenticated.
+ * Re-authenticates first so Firebase does not return auth/requires-recent-login.
  */
 export async function enrollTotpMfa(displayName = "VocalWitness Authenticator") {
   const user = auth.currentUser;
   if (!user) throw new Error("Not signed in");
   if (!user.emailVerified) {
     throw new Error("Verify your email first before enabling 2FA");
+  }
+
+  try {
+    await ensureRecentLogin();
+  } catch (err) {
+    if (err?.code === "auth/popup-closed-by-user" || err?.code === "auth/cancelled") {
+      throw new Error("Re-authentication cancelled");
+    }
+    throw err;
   }
 
   // 1. Get MFA session
@@ -33,7 +90,7 @@ export async function enrollTotpMfa(displayName = "VocalWitness Authenticator") 
     user.email || user.uid,
     "VocalWitness"
   );
-  const secretKey = totpSecret.secretKey;   // for manual entry
+  const secretKey = totpSecret.secretKey; // for manual entry
 
   return { totpSecret, qrCodeUrl, secretKey, displayName };
 }
@@ -41,7 +98,11 @@ export async function enrollTotpMfa(displayName = "VocalWitness Authenticator") 
 /**
  * Finalize enrollment after user enters the 6-digit code from their app
  */
-export async function finalizeTotpEnrollment(totpSecret, otpFromApp, displayName = "VocalWitness Authenticator") {
+export async function finalizeTotpEnrollment(
+  totpSecret,
+  otpFromApp,
+  displayName = "VocalWitness Authenticator"
+) {
   const user = auth.currentUser;
   if (!user) throw new Error("Not signed in");
 
@@ -70,6 +131,16 @@ export async function finalizeTotpEnrollment(totpSecret, otpFromApp, displayName
 export async function unenrollMfa(factorUid) {
   const user = auth.currentUser;
   if (!user) throw new Error("Not signed in");
+
+  try {
+    await ensureRecentLogin();
+  } catch (err) {
+    if (err?.code === "auth/popup-closed-by-user" || err?.code === "auth/cancelled") {
+      throw new Error("Re-authentication cancelled");
+    }
+    throw err;
+  }
+
   await multiFactor(user).unenroll(factorUid);
 
   await updateDoc(doc(db, "users", user.uid), {
@@ -97,7 +168,7 @@ export function getEnrolledFactors() {
 export async function submitMfaChallenge() {
   const resolver = window.__pendingMfaResolver;
   const otpInput = document.getElementById("mfa-otp-input");
-  const errorEl  = document.getElementById("mfa-error");
+  const errorEl = document.getElementById("mfa-error");
   const verifyBtn = document.getElementById("mfa-verify-btn");
 
   if (!resolver) {
@@ -151,7 +222,10 @@ export async function submitMfaChallenge() {
     console.error("[mfa] Challenge verification failed:", err);
 
     let msg = "Verification failed. Please try again.";
-    if (err?.code === "auth/invalid-verification-code" || err?.code === "auth/invalid-verification-id") {
+    if (
+      err?.code === "auth/invalid-verification-code" ||
+      err?.code === "auth/invalid-verification-id"
+    ) {
       msg = "Invalid or expired code. Try again.";
     } else if (err?.message) {
       msg = err.message;
