@@ -1096,47 +1096,6 @@ export async function triggerPasswordReset() {
 window.handlePasswordReset = triggerPasswordReset;
 window.triggerPasswordReset = triggerPasswordReset;
 
-export async function triggerPasswordReset() {
-    const user = auth.currentUser;
-    if (!user) {
-        showToast('Sign in required', 'error');
-        return;
-    }
-    const providers = (user.providerData || []).map(p => p.providerId);
-    const hasPassword = providers.includes('password');
-    if (!hasPassword) {
-        showToast(
-            'This account uses Google/Twitter/GitHub sign-in. There is no password to reset. Sign in with that provider instead.',
-            'info'
-        );
-        return;
-    }
-    if (!user.email) {
-        showToast('No email on this account', 'error');
-        return;
-    }
-    try {
-        await sendPasswordResetEmail(auth, user.email, {
-            url: 'https://vocalwitness.com/profile',
-            handleCodeInApp: false
-        });
-        showToast(
-            `Reset link sent to ${user.email}. Check inbox and spam. Link expires in ~1 hour.`,
-            'success'
-        );
-    } catch (error) {
-        console.error('Password reset error:', error);
-        const msg =
-            error.code === 'auth/too-many-requests'
-                ? 'Too many attempts. Try again later.'
-                : error.code === 'auth/user-not-found'
-                  ? 'No password account for this email.'
-                  : 'Could not send reset email. Check Firebase Auth email settings.';
-        showToast(msg, 'error');
-    }
-}
-window.handlePasswordReset = triggerPasswordReset;
-
 // ====================== LANGUAGE CHANGE SUPPORT ======================
 window.addEventListener('languageChanged', () => {
     if (currentUserData) renderProfileUI(currentUserData);
