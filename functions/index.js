@@ -26,6 +26,7 @@ import { fileURLToPath } from "url";
 import { onObjectFinalized } from "firebase-functions/v2/storage";
 import { dailyAnchor, triggerAnchorNow } from "./anchor.js";
 import Parser from "rss-parser";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 
 
 // ESM __dirname equivalent
@@ -2561,3 +2562,22 @@ export const tickerHeadlines = onRequest(
 
 export { dailyAnchor, triggerAnchorNow };
 
+export const warmCuratedNews = onSchedule(
+  {
+    schedule: "every 15 minutes",
+    region: "us-central1",
+    memory: "512MiB",
+    timeoutSeconds: 60
+  },
+  async () => {
+    const headlines = await buildHeadlines();
+    if (headlines.length >= 3) {
+      await db.doc(NEWS_CACHE_DOC).set({
+        headlines,
+        updatedAtMs: Date.now(),
+        updatedAtIso: new Date().toISOString()
+      }, { merge: true });
+      logger.info("Curated news cache warmed", { count: headlines.length });
+    }
+  }
+);
