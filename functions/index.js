@@ -2424,6 +2424,7 @@ async function buildHeadlines() {
 export const getCuratedNews = onRequest(
   {
     cors: allowedOrigins,
+    invoker: "public",      
     memory: "512MiB",
     timeoutSeconds: 60,
     maxInstances: 5
@@ -2498,7 +2499,8 @@ export const getCuratedNews = onRequest(
 );
 export const tickerHeadlines = onRequest(
   {
-    cors: allowedOrigins,   // or cors: true if you need non-browser callers
+    cors: allowedOrigins,   
+    invoker: "public",
     memory: "256MiB",
     timeoutSeconds: 30,
   },
