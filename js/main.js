@@ -1281,7 +1281,35 @@ async function fetchCuratedNews() {
   } catch (_) {
     applyTicker(fallbackItems);
   }
+    // Reliable official RSS — dynamic headlines via rss2json
+  const feeds = [
+    // BBC
+    { url: 'https://feeds.bbci.co.uk/news/rss.xml', weight: 3 },
+    { url: 'https://feeds.bbci.co.uk/news/world/rss.xml', weight: 3 },
+    { url: 'https://feeds.bbci.co.uk/news/world/africa/rss.xml', weight: 3 },
 
+    // The Guardian
+    { url: 'https://www.theguardian.com/world/rss', weight: 2 },
+    { url: 'https://www.theguardian.com/world/africa/rss', weight: 2 },
+
+    // NPR
+    { url: 'https://feeds.npr.org/1001/rss.xml', weight: 2 },
+    { url: 'https://feeds.npr.org/1004/rss.xml', weight: 2 },
+
+    // Al Jazeera
+    { url: 'https://www.aljazeera.com/xml/rss/all.xml', weight: 2 },
+
+    // New York Times
+    { url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml', weight: 2 },
+    { url: 'https://rss.nytimes.com/services/xml/rss/nyt/Africa.xml', weight: 2 },
+
+    // Deutsche Welle
+    { url: 'https://rss.dw.com/rdf/rss-en-all', weight: 2 },
+    { url: 'https://rss.dw.com/rdf/rss-en-africa', weight: 2 },
+
+    // France 24
+    { url: 'https://www.france24.com/en/rss', weight: 2 },
+  ];
   try {
     const results = await Promise.allSettled(
       feeds.map(async (feed) => {
