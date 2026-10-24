@@ -2498,68 +2498,56 @@ export const getCuratedNews = onRequest(
 );
 export const tickerHeadlines = onRequest(
   {
-    cors: allowedOrigins,
+    cors: allowedOrigins,   // or cors: true if you need non-browser callers
     memory: "256MiB",
-    timeoutSeconds: 60,
+    timeoutSeconds: 30,
   },
   async (req, res) => {
-    if (req.method === "OPTIONS") {
-      return res.status(204).send("");
-    }
+    if (req.method === "OPTIONS") return res.status(204).send("");
     if (req.method !== "GET") {
       return res.status(405).json({ error: "Method Not Allowed" });
     }
 
-    res.set("Cache-Control", "public, max-age=600, s-maxage=600");
-
     try {
-      const settled = await Promise.allSettled(
-        TICKER_FEEDS.map(async (feed) => {
-          const response = await axios.get(feed.url, {
-            timeout: 8000,
-            responseType: "text",
-            headers: {
-              "User-Agent": "VocalWitnessTicker/1.0 (+https://vocalwitness.com)",
-              Accept: "application/rss+xml, application/xml, text/xml, */*",
-            },
-            validateStatus: (s) => s >= 200 && s < 400,
-          });
-          return extractRssTitles(response.data)
-            .slice(0, 5)
-            .map((title) => ({ title, weight: feed.weight }));
-        })
-      );
+      const snap = await db.doc(NEWS_CACHE_DOC).get();
+      const data = snap.exists ? snap.data() : null;
+      const headlines = Array.isArray(data?.headlines) ? data.headlines : [];
 
-      const all = [];
-      for (const r of settled) {
-        if (r.status === "fulfilled" && Array.isArray(r.value)) {
-          all.push(...r.value);
-        }
+      // Shape expected by current client: { items: string[] }
+      if (headlines.length >= 3) {
+        res.set("Cache-Control", "public, max-age=300, s-maxage=600");
+        return res.status(200).json({
+          items: headlines,
+          ts: data.updatedAtMs || Date.now(),
+        });
       }
 
-      all.sort((a, b) => {
-        if (b.weight !== a.weight) return b.weight - a.weight;
-        return Math.random() - 0.5;
-      });
+      // Cache cold → build once (same path as getCuratedNews)
+      const fresh = await buildHeadlines();
+      if (fresh.length >= 3) {
+        const now = Date.now();
+        await db.doc(NEWS_CACHE_DOC).set({
+          headlines: fresh,
+          updatedAtMs: now,
+          updatedAtIso: new Date(now).toISOString(),
+        }, { merge: true });
 
-      const seen = new Set();
-      const items = [];
-      for (const { title } of all) {
-        const key = title.toLowerCase().slice(0, 50);
-        if (seen.has(key)) continue;
-        seen.add(key);
-        items.push(title);
-        if (items.length >= 14) break;
+        res.set("Cache-Control", "public, max-age=300, s-maxage=600");
+        return res.status(200).json({ items: fresh, ts: now });
       }
 
-      return res.status(200).json({ items, ts: Date.now() });
+      // Never 500 for empty news — let client use fallbacks
+      return res.status(200).json({ items: [], ts: Date.now() });
     } catch (err) {
-      logger.error("tickerHeadlines failed", err);
-      return res.status(500).json({ items: [], error: "ticker_failed" });
+      logger.error("tickerHeadlines failed", {
+        message: err?.message,
+        stack: err?.stack,
+      });
+      // Prefer 200 + empty over 500 so the ticker stays quiet
+      return res.status(200).json({ items: [], error: "ticker_failed", ts: Date.now() });
     }
   }
 );
-
 export { dailyAnchor, triggerAnchorNow };
 
 export const warmCuratedNews = onSchedule(
