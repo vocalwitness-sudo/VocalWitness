@@ -470,7 +470,7 @@ export function renderProfileUI(userData, retryCount = 0) {
 
                     <button type="button" id="downloadProfileJsonBtn"
                             class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2 border border-zinc-600">
-                        📄 Profile JSON
+                        📄 Download Profile JSON
                     </button>
 
                     <button type="button" id="exportUserDataPdfBtn"
