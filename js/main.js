@@ -758,33 +758,35 @@ window.publishTestimony = async () => {
       evidencePackResult?.packCoreHash
     );
 
-   // Only fields allowed by firestore.rules (no title, no zk* keys)
-const testimonyData = {
-  content,
-  channel,
-  authorId: currentUser.uid,
-  author: currentUser.displayName || 'Registered Witness',
-  isAnonymous: false,
-  postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
-  fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
-  fieldNoteOrg:  postingStyle === 'field-note' ? (fieldNoteOrg  || null) : null,
-  forensicHash: (typeof primaryForensicHash === 'string' && primaryForensicHash.length === 64)
-    ? primaryForensicHash
-    : null,
-  imageUrl: mediaData.imageUrl || null,
-  videoUrl: mediaData.videoUrl || null,
-  audioUrl: mediaData.audioUrl || null,
-  evidencePack: evidencePackResult?.firestorePack || null,
-  packCoreHash: evidencePackResult?.packCoreHash || null,
-  reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
-  commentsCount: 0,
-  isPinned: false,
-  isDeleted: false,
-  feedVisibility: channel,
-  visibility: document.getElementById('postToTrustedCircleOnly')?.checked
-    ? 'public'   // or 'author_hidden' — avoid 'trusted_circle' until rules support it
-    : 'public',
-  createdAt: serverTimestamp(),
+  // Only fields allowed by firestore.rules (no title, no zk* keys)
+    const testimonyData = {
+      content,
+      channel,
+      authorId: currentUser.uid,
+      author: currentUser.displayName || 'Registered Witness',
+      isAnonymous: false,
+      postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
+      fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
+      fieldNoteOrg:  postingStyle === 'field-note' ? (fieldNoteOrg  || null) : null,
+      forensicHash: (typeof primaryForensicHash === 'string' && primaryForensicHash.length === 64)
+        ? primaryForensicHash
+        : null,
+      imageUrl: mediaData.imageUrl || null,
+      videoUrl: mediaData.videoUrl || null,
+      audioUrl: mediaData.audioUrl || null,
+      evidencePack: evidencePackResult?.firestorePack || null,
+      packCoreHash: evidencePackResult?.packCoreHash || null,
+      reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
+      commentsCount: 0,
+      isPinned: false,
+      isDeleted: false,
+      feedVisibility: channel,
+      visibility: 'public',
+      createdAt: serverTimestamp(),
+    };
+
+    const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
+    
   
     const id = await submitTestimony({
   content,
@@ -819,7 +821,7 @@ const testimonyData = {
           channel,
           clientCaptureMs: Date.now(),
           testimonyId: docRef.id,
-          forensicHash: testimonyData.hash,
+          forensicHash: testimonyData.forensicHash || primaryForensicHash,
         });
 
         await setDoc(docRef, {
