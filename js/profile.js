@@ -449,6 +449,7 @@ export function renderProfileUI(userData, retryCount = 0) {
                 </div>
 
                 <!-- Action Buttons -->
+                <!-- Action Buttons -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                     ${!isCitizenCircle && !isWitness ? `
                         <button type="button" id="btnGetVerifiedCta"
@@ -457,15 +458,31 @@ export function renderProfileUI(userData, retryCount = 0) {
                         </button>
                     ` : ''}
 
-                   <button type="button" id="btnOpenEditProfile"
-        class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
-    ✏️ Edit Profile
-</button>
+                    <button type="button" id="btnOpenEditProfile"
+                            class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                        ✏️ Edit Profile
+                    </button>
 
-<button type="button" id="downloadProfileJsonBtn"
-        class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2 border border-zinc-600">
-    📄 Profile JSON
-</button>
+                    <button type="button" id="btnOpenSettings"
+                            class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2 border border-zinc-600">
+                        ⚙️ Security & Settings
+                    </button>
+
+                    <button type="button" id="downloadProfileJsonBtn"
+                            class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2 border border-zinc-600">
+                        📄 Profile JSON
+                    </button>
+
+                    <button type="button" id="exportUserDataPdfBtn"
+                            class="col-span-1 sm:col-span-2 py-3.5 px-4 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                        📥 Download Press Credential
+                    </button>
+
+                    <button type="button" id="btnSignOut"
+                            class="col-span-1 sm:col-span-2 py-3 px-4 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                        🚪 Sign Out
+                    </button>
+                </di
                     <!-- Single clean PDF Credential button -->
                     <button type="button" id="exportUserDataPdfBtn"
                             class="col-span-1 sm:col-span-2 py-3.5 px-4 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
