@@ -758,72 +758,63 @@ window.publishTestimony = async () => {
       evidencePackResult?.packCoreHash
     );
 
-const result = await submitSecure({
+const testimonyData = {
   content,
   channel,
+  authorId: currentUser.uid,
+  author: currentUser.displayName || 'Registered Witness',
   isAnonymous: false,
-  authorDisplayName: currentUser.displayName || null,
+  postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
+  fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
+  fieldNoteOrg: postingStyle === 'field-note' ? (fieldNoteOrg || null) : null,
   forensicHash: (typeof primaryForensicHash === 'string' && primaryForensicHash.length === 64)
     ? primaryForensicHash
     : null,
   imageUrl: mediaData.imageUrl || null,
   videoUrl: mediaData.videoUrl || null,
   audioUrl: mediaData.audioUrl || null,
-  hashtags: [],
-  mentions: [],
-  postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
-  fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
-fieldNoteOrg:  postingStyle === 'field-note' ? (fieldNoteOrg  || null) : null,
   evidencePack: evidencePackResult?.firestorePack || null,
   packCoreHash: evidencePackResult?.packCoreHash || null,
-});
   reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
   commentsCount: 0,
   isPinned: false,
   isDeleted: false,
   feedVisibility: channel,
-  visibility: 'public',   // rules require == 'public' on create
+  visibility: 'public', // rules require == 'public' on create
   createdAt: serverTimestamp(),
 };
-    const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
-    
-  
-    const id = await submitTestimony({
-  content,
-  channel,
-  mediaFile: null, // media already uploaded; pass URLs via a small extension OR
-  isAnonymous: false,
-  postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
-  fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
-fieldNoteOrg:  postingStyle === 'field-note' ? (fieldNoteOrg  || null) : null,
-});
-    console.log('[publish] SUCCESS →', docRef.id, '| channel:', channel);
 
-    if (evidencePackResult && docRef.id) {
-      try {
-        const { createEvidencePack } = await import('./evidence-pack.js');
-        const finalPack = await createEvidencePack({
-          content,
-          bodyHash: mediaData.bodyHash,
-          media: {
-            imageUrl: mediaData.imageUrl,
-            imageHash: mediaData.imageHash,
-            videoUrl: mediaData.videoUrl,
-            videoHash: mediaData.videoHash,
-            audioUrl: mediaData.audioUrl,
-            audioHash: mediaData.audioHash,
-          },
-          identity: {
-            mode: 'IDENTIFIED',
-            authorId: currentUser.uid,
-            displayName: currentUser.displayName || 'Registered Witness',
-          },
-          channel,
-          clientCaptureMs: Date.now(),
-          testimonyId: docRef.id,
-          forensicHash: testimonyData.forensicHash || primaryForensicHash,
-        });
+const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
+console.log('[publish] SUCCESS →', docRef.id, '| channel:', channel);
 
+if (evidencePackResult && docRef.id) {
+  try {
+    const { createEvidencePack } = await import('./evidence-pack.js');
+    const finalPack = await createEvidencePack({
+      content,
+      bodyHash: mediaData.bodyHash,
+      media: {
+        imageUrl: mediaData.imageUrl,
+        imageHash: mediaData.imageHash,
+        videoUrl: mediaData.videoUrl,
+        videoHash: mediaData.videoHash,
+        audioUrl: mediaData.audioUrl,
+        audioHash: mediaData.audioHash,
+      },
+      identity: {
+        mode: 'IDENTIFIED',
+        authorId: currentUser.uid,
+        displayName: currentUser.displayName || 'Registered Witness',
+      },
+      channel,
+      clientCaptureMs: Date.now(),
+      testimonyId: docRef.id,
+      forensicHash: testimonyData.forensicHash || primaryForensicHash,
+    });
+  } catch (err) {
+    console.error('[publish] Failed to create secondary evidence pack:', err);
+  }
+}
         await setDoc(docRef, {
           evidencePack: finalPack.firestorePack,
           packCoreHash: finalPack.packCoreHash,
