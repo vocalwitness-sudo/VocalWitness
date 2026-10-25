@@ -1792,17 +1792,17 @@
     <div class="space-y-3">
       <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400/90">Security Controls</h4>
 
-      <!-- Password -->
-      <div class="flex items-center justify-between gap-4 rounded-2xl border border-zinc-700/80 bg-zinc-900/80 p-4 transition hover:border-zinc-600">
-        <div>
-          <div class="text-sm font-medium">Password</div>
-          <div class="text-xs text-zinc-400">Send a secure reset link to your email</div>
-        </div>
-        <button id="triggerPasswordResetBtn" type="button"
-                class="shrink-0 rounded-xl border border-zinc-600 bg-zinc-800 px-4 py-2 text-xs font-semibold transition hover:bg-zinc-700 active:scale-[0.97]">
-          Reset Password
-        </button>
-      </div>
+      <!-- Password Reset - temporarily hidden (most users use social login) -->
+<div class="hidden flex items-center justify-between gap-4 rounded-2xl border border-zinc-700/80 bg-zinc-900/80 p-4 transition hover:border-zinc-600">
+  <div>
+    <div class="text-sm font-medium">Password</div>
+    <div class="text-xs text-zinc-400">Send a secure reset link to your email</div>
+  </div>
+  <button id="triggerPasswordResetBtn" type="button"
+          class="shrink-0 rounded-xl border border-zinc-600 bg-zinc-800 px-4 py-2 text-xs font-semibold transition hover:bg-zinc-700 active:scale-[0.97]">
+    Reset Password
+  </button>
+</div>
 
       <!-- 2FA, temporarily silent this, until fully stable -->
      <!--  <div class="flex items-center justify-between gap-4 rounded-2xl border border-zinc-700/80 bg-zinc-900/80 p-4 transition hover:border-zinc-600">
