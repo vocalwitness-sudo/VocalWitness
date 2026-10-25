@@ -758,63 +758,73 @@ window.publishTestimony = async () => {
       evidencePackResult?.packCoreHash
     );
 
-const testimonyData = {
-  content,
-  channel,
-  authorId: currentUser.uid,
-  author: currentUser.displayName || 'Registered Witness',
-  isAnonymous: false,
-  postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
-  fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
-  fieldNoteOrg: postingStyle === 'field-note' ? (fieldNoteOrg || null) : null,
-  forensicHash: (typeof primaryForensicHash === 'string' && primaryForensicHash.length === 64)
-    ? primaryForensicHash
-    : null,
-  imageUrl: mediaData.imageUrl || null,
-  videoUrl: mediaData.videoUrl || null,
-  audioUrl: mediaData.audioUrl || null,
-  evidencePack: evidencePackResult?.firestorePack || null,
-  packCoreHash: evidencePackResult?.packCoreHash || null,
-  reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
-  commentsCount: 0,
-  isPinned: false,
-  isDeleted: false,
-  feedVisibility: channel,
-  visibility: 'public', // rules require == 'public' on create
-  createdAt: serverTimestamp(),
-};
+const handlePublish = async () => {
+  if (window.__isPublishing) return;
+  window.__isPublishing = true;
 
-const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
-console.log('[publish] SUCCESS →', docRef.id, '| channel:', channel);
-
-if (evidencePackResult && docRef.id) {
-  try {
-    const { createEvidencePack } = await import('./evidence-pack.js');
-    const finalPack = await createEvidencePack({
-      content,
-      bodyHash: mediaData.bodyHash,
-      media: {
-        imageUrl: mediaData.imageUrl,
-        imageHash: mediaData.imageHash,
-        videoUrl: mediaData.videoUrl,
-        videoHash: mediaData.videoHash,
-        audioUrl: mediaData.audioUrl,
-        audioHash: mediaData.audioHash,
-      },
-      identity: {
-        mode: 'IDENTIFIED',
-        authorId: currentUser.uid,
-        displayName: currentUser.displayName || 'Registered Witness',
-      },
-      channel,
-      clientCaptureMs: Date.now(),
-      testimonyId: docRef.id,
-      forensicHash: testimonyData.forensicHash || primaryForensicHash,
-    });
-  } catch (err) {
-    console.error('[publish] Failed to create secondary evidence pack:', err);
+  const postBtn = document.getElementById('post-btn');
+  const originalBtnHTML = postBtn ? postBtn.innerHTML : '';
+  if (postBtn) {
+    postBtn.disabled = true;
+    postBtn.classList.add('opacity-75', 'cursor-not-allowed', 'scale-[0.98]');
+    postBtn.innerHTML = 'Publishing...';
   }
-}
+
+  try {
+    const testimonyData = {
+      content,
+      channel,
+      authorId: currentUser.uid,
+      author: currentUser.displayName || 'Registered Witness',
+      isAnonymous: false,
+      postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
+      fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
+      fieldNoteOrg: postingStyle === 'field-note' ? (fieldNoteOrg || null) : null,
+      forensicHash: (typeof primaryForensicHash === 'string' && primaryForensicHash.length === 64)
+        ? primaryForensicHash
+        : null,
+      imageUrl: mediaData.imageUrl || null,
+      videoUrl: mediaData.videoUrl || null,
+      audioUrl: mediaData.audioUrl || null,
+      evidencePack: evidencePackResult?.firestorePack || null,
+      packCoreHash: evidencePackResult?.packCoreHash || null,
+      reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
+      commentsCount: 0,
+      isPinned: false,
+      isDeleted: false,
+      feedVisibility: channel,
+      visibility: 'public', // rules require == 'public' on create
+      createdAt: serverTimestamp(),
+    };
+
+    const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
+    console.log('[publish] SUCCESS →', docRef.id, '| channel:', channel);
+
+    if (evidencePackResult && docRef.id) {
+      try {
+        const { createEvidencePack } = await import('./evidence-pack.js');
+        const finalPack = await createEvidencePack({
+          content,
+          bodyHash: mediaData.bodyHash,
+          media: {
+            imageUrl: mediaData.imageUrl,
+            imageHash: mediaData.imageHash,
+            videoUrl: mediaData.videoUrl,
+            videoHash: mediaData.videoHash,
+            audioUrl: mediaData.audioUrl,
+            audioHash: mediaData.audioHash,
+          },
+          identity: {
+            mode: 'IDENTIFIED',
+            authorId: currentUser.uid,
+            displayName: currentUser.displayName || 'Registered Witness',
+          },
+          channel,
+          clientCaptureMs: Date.now(),
+          testimonyId: docRef.id,
+          forensicHash: testimonyData.forensicHash || primaryForensicHash,
+        });
+
         await setDoc(docRef, {
           evidencePack: finalPack.firestorePack,
           packCoreHash: finalPack.packCoreHash,
@@ -832,11 +842,13 @@ if (evidencePackResult && docRef.id) {
     }
     window.dispatchEvent(new CustomEvent('vocalWitness:posted'));
 
-    await setDoc(userRef, {
-      lastTestimonyAt: serverTimestamp()
-    }, { merge: true });
+    if (typeof userRef !== 'undefined' && userRef) {
+      await setDoc(userRef, {
+        lastTestimonyAt: serverTimestamp()
+      }, { merge: true });
+    }
 
-    const isZkOk = Boolean(zkResult.proofType === 'SNARK_GROTH16_SERVER' && !zkResult.isFallback);
+    const isZkOk = Boolean(typeof zkResult !== 'undefined' && zkResult?.proofType === 'SNARK_GROTH16_SERVER' && !zkResult.isFallback);
     if (isZkOk) {
       showToast("🛡️ Report sealed with Zero-Knowledge proof", "success");
     } else {
@@ -894,8 +906,8 @@ if (evidencePackResult && docRef.id) {
         successEl.classList.add('hidden');
         if (postBtn) postBtn.classList.remove('hidden');
 
-        if (titleInput) titleInput.value = '';
-        if (textarea) textarea.value = '';
+        if (typeof titleInput !== 'undefined' && titleInput) titleInput.value = '';
+        if (typeof textarea !== 'undefined' && textarea) textarea.value = '';
         if (typeof mediaModule?.resetMediaState === 'function') {
           mediaModule.resetMediaState();
         }
@@ -905,8 +917,8 @@ if (evidencePackResult && docRef.id) {
         window.dispatchEvent(new CustomEvent('media-changed'));
       }, 12000);
     } else {
-      if (titleInput) titleInput.value = '';
-      if (textarea) textarea.value = '';
+      if (typeof titleInput !== 'undefined' && titleInput) titleInput.value = '';
+      if (typeof textarea !== 'undefined' && textarea) textarea.value = '';
       if (typeof mediaModule?.resetMediaState === 'function') {
         mediaModule.resetMediaState();
       }
@@ -918,7 +930,7 @@ if (evidencePackResult && docRef.id) {
       initFeed(db, channel);
     }
 
-   catch (err) {
+  } catch (err) {
     console.error('[publish] FULL ERROR:', err);
     if (err.code === 'permission-denied') {
       showToast("Permission denied. Check console for exact rule failure.", "error");
@@ -934,7 +946,6 @@ if (evidencePackResult && docRef.id) {
     }
   }
 };
-
 /* ====================== EVIDENCE LEDGER ====================== */
 async function loadEvidenceLedger() {
   const container = document.getElementById('ledger-list') ||
