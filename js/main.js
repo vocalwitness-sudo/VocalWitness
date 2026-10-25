@@ -750,6 +750,7 @@ window.publishTestimony = async () => {
       console.warn('[publish] Evidence Pack creation failed (non-blocking):', packErr);
     }
 
+  
     const hasAnyHash = !!(
       mediaData.imageHash ||
       mediaData.videoHash ||
@@ -758,154 +759,157 @@ window.publishTestimony = async () => {
       evidencePackResult?.packCoreHash
     );
 
-const handlePublish = async () => {
-  if (window.__isPublishing) return;
-  window.__isPublishing = true;
+    const handlePublish = async () => {
+      const testimonyData = {
+        content,
+        channel,
+        authorId: currentUser.uid,
+        author: currentUser.displayName || 'Registered Witness',
+        isAnonymous: false,
+        postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
+        fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
+        fieldNoteOrg: postingStyle === 'field-note' ? (fieldNoteOrg || null) : null,
+        forensicHash: (typeof primaryForensicHash === 'string' && primaryForensicHash.length === 64)
+          ? primaryForensicHash
+          : null,
+        imageUrl: mediaData.imageUrl || null,
+        videoUrl: mediaData.videoUrl || null,
+        audioUrl: mediaData.audioUrl || null,
+        evidencePack: evidencePackResult?.firestorePack || null,
+        packCoreHash: evidencePackResult?.packCoreHash || null,
+        reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
+        commentsCount: 0,
+        isPinned: false,
+        isDeleted: false,
+        feedVisibility: channel,
+        visibility: 'public',
+        createdAt: serverTimestamp(),
+      };
 
-  const postBtn = document.getElementById('post-btn');
-  const originalBtnHTML = postBtn ? postBtn.innerHTML : '';
-  if (postBtn) {
-    postBtn.disabled = true;
-    postBtn.classList.add('opacity-75', 'cursor-not-allowed', 'scale-[0.98]');
-    postBtn.innerHTML = 'Publishing...';
-  }
+      const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
+      console.log('[publish] SUCCESS →', docRef.id, '| channel:', channel);
 
-  try {
-    const testimonyData = {
-      content,
-      channel,
-      authorId: currentUser.uid,
-      author: currentUser.displayName || 'Registered Witness',
-      isAnonymous: false,
-      postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
-      fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
-      fieldNoteOrg: postingStyle === 'field-note' ? (fieldNoteOrg || null) : null,
-      forensicHash: (typeof primaryForensicHash === 'string' && primaryForensicHash.length === 64)
-        ? primaryForensicHash
-        : null,
-      imageUrl: mediaData.imageUrl || null,
-      videoUrl: mediaData.videoUrl || null,
-      audioUrl: mediaData.audioUrl || null,
-      evidencePack: evidencePackResult?.firestorePack || null,
-      packCoreHash: evidencePackResult?.packCoreHash || null,
-      reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
-      commentsCount: 0,
-      isPinned: false,
-      isDeleted: false,
-      feedVisibility: channel,
-      visibility: 'public', // rules require == 'public' on create
-      createdAt: serverTimestamp(),
-    };
-
-    const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
-    console.log('[publish] SUCCESS →', docRef.id, '| channel:', channel);
-
-    if (evidencePackResult && docRef.id) {
-      try {
-        const { createEvidencePack } = await import('./evidence-pack.js');
-        const finalPack = await createEvidencePack({
-          content,
-          bodyHash: mediaData.bodyHash,
-          media: {
-            imageUrl: mediaData.imageUrl,
-            imageHash: mediaData.imageHash,
-            videoUrl: mediaData.videoUrl,
-            videoHash: mediaData.videoHash,
-            audioUrl: mediaData.audioUrl,
-            audioHash: mediaData.audioHash,
-          },
-          identity: {
-            mode: 'IDENTIFIED',
-            authorId: currentUser.uid,
-            displayName: currentUser.displayName || 'Registered Witness',
-          },
-          channel,
-          clientCaptureMs: Date.now(),
-          testimonyId: docRef.id,
-          forensicHash: testimonyData.forensicHash || primaryForensicHash,
-        });
-
-        await setDoc(docRef, {
-          evidencePack: finalPack.firestorePack,
-          packCoreHash: finalPack.packCoreHash,
-        }, { merge: true });
-      } catch (finalPackErr) {
-        console.warn('[publish] Could not finalize Evidence Pack with ID:', finalPackErr);
-      }
-    }
-
-    if (typeof window.loadEvidenceLedger === 'function') {
-      window.loadEvidenceLedger();
-    }
-    if (typeof window.loadForensicLedger === 'function') {
-      window.loadForensicLedger();
-    }
-    window.dispatchEvent(new CustomEvent('vocalWitness:posted'));
-
-    if (typeof userRef !== 'undefined' && userRef) {
-      await setDoc(userRef, {
-        lastTestimonyAt: serverTimestamp()
-      }, { merge: true });
-    }
-
-    const isZkOk = Boolean(typeof zkResult !== 'undefined' && zkResult?.proofType === 'SNARK_GROTH16_SERVER' && !zkResult.isFallback);
-    if (isZkOk) {
-      showToast("🛡️ Report sealed with Zero-Knowledge proof", "success");
-    } else {
-      showToast("🛡️ Report sealed and published", "success");
-    }
-
-    const successEl = document.getElementById('publish-success');
-    const downloadPackBtn = document.getElementById('download-pack-after-publish');
-    const viewSquareBtn = document.getElementById('view-in-square-btn');
-    const publishedId = docRef?.id;
-
-    if (successEl) {
-      successEl.classList.remove('hidden');
-      if (postBtn) postBtn.classList.add('hidden');
-
-      if (downloadPackBtn) {
-        downloadPackBtn.onclick = async () => {
-          try {
-            downloadPackBtn.disabled = true;
-            downloadPackBtn.textContent = 'Generating…';
-            showToast('Generating cryptographic Evidence Pack…', 'info');
-
-            if (typeof handleDownloadEvidencePack === 'function' && publishedId) {
-              await handleDownloadEvidencePack(publishedId);
-            } else if (evidencePackResult) {
-              const { downloadEvidencePack } = await import('./evidence-pack.js');
-              downloadEvidencePack(
-                evidencePackResult.fullPack || evidencePackResult,
-                publishedId || 'report'
-              );
-              showToast('✅ Evidence Pack downloaded', 'success');
-            } else {
-              showToast('Evidence Pack will be available on the post shortly', 'info');
-            }
-          } catch (err) {
-            console.error('[publish] Pack download failed:', err);
-            showToast('Could not prepare Evidence Pack', 'error');
-          } finally {
-            downloadPackBtn.disabled = false;
-            downloadPackBtn.innerHTML = '📥 Download Evidence Pack';
-          }
-        };
-      }
-
-      if (viewSquareBtn) {
-        viewSquareBtn.onclick = () => {
-          document.getElementById('feed-container')?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
+      if (evidencePackResult && docRef.id) {
+        try {
+          const { createEvidencePack } = await import('./evidence-pack.js');
+          const finalPack = await createEvidencePack({
+            content,
+            bodyHash: mediaData.bodyHash,
+            media: {
+              imageUrl: mediaData.imageUrl,
+              imageHash: mediaData.imageHash,
+              videoUrl: mediaData.videoUrl,
+              videoHash: mediaData.videoHash,
+              audioUrl: mediaData.audioUrl,
+              audioHash: mediaData.audioHash,
+            },
+            identity: {
+              mode: 'IDENTIFIED',
+              authorId: currentUser.uid,
+              displayName: currentUser.displayName || 'Registered Witness',
+            },
+            channel,
+            clientCaptureMs: Date.now(),
+            testimonyId: docRef.id,
+            forensicHash: testimonyData.forensicHash || primaryForensicHash,
           });
-        };
+
+          await setDoc(docRef, {
+            evidencePack: finalPack.firestorePack,
+            packCoreHash: finalPack.packCoreHash,
+          }, { merge: true });
+        } catch (finalPackErr) {
+          console.warn('[publish] Could not finalize Evidence Pack with ID:', finalPackErr);
+        }
       }
 
-      setTimeout(() => {
-        successEl.classList.add('hidden');
-        if (postBtn) postBtn.classList.remove('hidden');
+      if (typeof window.loadEvidenceLedger === 'function') {
+        window.loadEvidenceLedger();
+      }
+      if (typeof window.loadForensicLedger === 'function') {
+        window.loadForensicLedger();
+      }
+      window.dispatchEvent(new CustomEvent('vocalWitness:posted'));
 
+      if (typeof userRef !== 'undefined' && userRef) {
+        await setDoc(userRef, {
+          lastTestimonyAt: serverTimestamp()
+        }, { merge: true });
+      }
+
+      const isZkOk = Boolean(
+        typeof zkResult !== 'undefined' &&
+        zkResult?.proofType === 'SNARK_GROTH16_SERVER' &&
+        !zkResult.isFallback
+      );
+      if (isZkOk) {
+        showToast("🛡️ Report sealed with Zero-Knowledge proof", "success");
+      } else {
+        showToast("🛡️ Report sealed and published", "success");
+      }
+
+      const successEl = document.getElementById('publish-success');
+      const downloadPackBtn = document.getElementById('download-pack-after-publish');
+      const viewSquareBtn = document.getElementById('view-in-square-btn');
+      const publishedId = docRef?.id;
+
+      if (successEl) {
+        successEl.classList.remove('hidden');
+        if (postBtn) postBtn.classList.add('hidden');
+
+        if (downloadPackBtn) {
+          downloadPackBtn.onclick = async () => {
+            try {
+              downloadPackBtn.disabled = true;
+              downloadPackBtn.textContent = 'Generating…';
+              showToast('Generating cryptographic Evidence Pack…', 'info');
+
+              if (typeof handleDownloadEvidencePack === 'function' && publishedId) {
+                await handleDownloadEvidencePack(publishedId);
+              } else if (evidencePackResult) {
+                const { downloadEvidencePack } = await import('./evidence-pack.js');
+                downloadEvidencePack(
+                  evidencePackResult.fullPack || evidencePackResult,
+                  publishedId || 'report'
+                );
+                showToast('✅ Evidence Pack downloaded', 'success');
+              } else {
+                showToast('Evidence Pack will be available on the post shortly', 'info');
+              }
+            } catch (err) {
+              console.error('[publish] Pack download failed:', err);
+              showToast('Could not prepare Evidence Pack', 'error');
+            } finally {
+              downloadPackBtn.disabled = false;
+              downloadPackBtn.innerHTML = '📥 Download Evidence Pack';
+            }
+          };
+        }
+
+        if (viewSquareBtn) {
+          viewSquareBtn.onclick = () => {
+            document.getElementById('feed-container')?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          };
+        }
+
+        setTimeout(() => {
+          successEl.classList.add('hidden');
+          if (postBtn) postBtn.classList.remove('hidden');
+
+          if (typeof titleInput !== 'undefined' && titleInput) titleInput.value = '';
+          if (typeof textarea !== 'undefined' && textarea) textarea.value = '';
+          if (typeof mediaModule?.resetMediaState === 'function') {
+            mediaModule.resetMediaState();
+          }
+          const fileInputEl = document.getElementById('mediaInput') || document.querySelector('input[type="file"]');
+          if (fileInputEl) fileInputEl.value = '';
+
+          window.dispatchEvent(new CustomEvent('media-changed'));
+        }, 12000);
+      } else {
         if (typeof titleInput !== 'undefined' && titleInput) titleInput.value = '';
         if (typeof textarea !== 'undefined' && textarea) textarea.value = '';
         if (typeof mediaModule?.resetMediaState === 'function') {
@@ -913,22 +917,14 @@ const handlePublish = async () => {
         }
         const fileInputEl = document.getElementById('mediaInput') || document.querySelector('input[type="file"]');
         if (fileInputEl) fileInputEl.value = '';
-
-        window.dispatchEvent(new CustomEvent('media-changed'));
-      }, 12000);
-    } else {
-      if (typeof titleInput !== 'undefined' && titleInput) titleInput.value = '';
-      if (typeof textarea !== 'undefined' && textarea) textarea.value = '';
-      if (typeof mediaModule?.resetMediaState === 'function') {
-        mediaModule.resetMediaState();
       }
-      const fileInputEl = document.getElementById('mediaInput') || document.querySelector('input[type="file"]');
-      if (fileInputEl) fileInputEl.value = '';
-    }
 
-    if (typeof initFeed === 'function') {
-      initFeed(db, channel);
-    }
+      if (typeof initFeed === 'function') {
+        initFeed(db, channel);
+      }
+    };
+
+    await handlePublish();
 
   } catch (err) {
     console.error('[publish] FULL ERROR:', err);
@@ -946,6 +942,7 @@ const handlePublish = async () => {
     }
   }
 };
+    
 /* ====================== EVIDENCE LEDGER ====================== */
 async function loadEvidenceLedger() {
   const container = document.getElementById('ledger-list') ||
