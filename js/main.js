@@ -758,8 +758,7 @@ window.publishTestimony = async () => {
       evidencePackResult?.packCoreHash
     );
 
-  // Only fields allowed by firestore.rules (no title, no zk* keys)
-   const testimonyData = {
+const testimonyData = {
   content,
   channel,
   authorId: currentUser.uid,
@@ -767,7 +766,7 @@ window.publishTestimony = async () => {
   isAnonymous: false,
   postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
   fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
-  fieldNoteOrg:  postingStyle === 'field-note' ? (fieldNoteOrg  || null) : null,
+  fieldNoteOrg: postingStyle === 'field-note' ? (fieldNoteOrg || null) : null,
   forensicHash: (typeof primaryForensicHash === 'string' && primaryForensicHash.length === 64)
     ? primaryForensicHash
     : null,
@@ -784,7 +783,6 @@ window.publishTestimony = async () => {
   visibility: 'public',   // rules require == 'public' on create
   createdAt: serverTimestamp(),
 };
-
     const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
     
   
