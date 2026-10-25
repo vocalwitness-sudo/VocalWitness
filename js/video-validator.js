@@ -37,12 +37,13 @@ export async function inspectAndValidateVideo(file) {
         };
     }
 
-    // 1. Check Container MIME type
-    if (file.type && !VIDEO_CONSTRAINTS.ALLOWED_CONTAINERS.includes(file.type)) {
+    // 1. Check Container MIME type (Only reject if type is present and unknown)
+    const type = (file.type || '').toLowerCase();
+    if (type && !VIDEO_CONSTRAINTS.ALLOWED_CONTAINERS.includes(type)) {
         return { 
             valid: false, 
             reason: "UNSUPPORTED_FORMAT",
-            message: `Unsupported format (${file.type || 'unknown'}). Please upload MP4, WebM, or MOV formats.`,
+            message: `Unsupported format (${type}). Please upload MP4, WebM, or MOV.`,
             provenance: "unverified",
             editorDetected: false,
             detectedSignatures: []
