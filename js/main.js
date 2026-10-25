@@ -29,6 +29,7 @@ import {
   collection, addDoc, doc, getDoc, setDoc, updateDoc,
   serverTimestamp, query, getDocs, orderBy, limit
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { submitTestimony } from './createPost.js';
 
 /* ====================== GLOBAL ERROR LOGGING ====================== */
 window.addEventListener('error', (event) => {
@@ -796,7 +797,15 @@ window.publishTestimony = async () => {
       createdAt: serverTimestamp(),
     };
 
-    const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
+    const id = await submitTestimony({
+  content,
+  channel,
+  mediaFile: null, // media already uploaded; pass URLs via a small extension OR
+  isAnonymous: false,
+  postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
+  fieldNoteRole: ...,
+  fieldNoteOrg: ...,
+});
     console.log('[publish] SUCCESS →', docRef.id, '| channel:', channel);
 
     if (evidencePackResult && docRef.id) {
