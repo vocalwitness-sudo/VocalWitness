@@ -629,23 +629,7 @@ export function initComposer() {
   // Voice button (#btn-voice / live recording) is intentionally NOT handled here.
   // media.js owns 100% of voice recording UI + logic.
   root.addEventListener('click', (e) => {
-    // Photo button
-    if (e.target.closest('#btn-photo, #btn-attach-photo, [data-action="attach-photo"]')) {
-      e.preventDefault();
-      e.stopPropagation();
-      const input = document.getElementById('photoInput') || document.getElementById('media-input');
-      if (input) input.click();
-      return;
-    }
-
-    // Video button
-    if (e.target.closest('#btn-video, [data-action="attach-video"]')) {
-      e.preventDefault();
-      e.stopPropagation();
-      const input = document.getElementById('videoInput');
-      if (input) input.click();
-      return;
-    }
+  
 
     // Audio upload (secondary fallback only)
     if (e.target.closest('#btn-upload-audio, [data-action="upload-audio"]')) {
