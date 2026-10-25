@@ -489,11 +489,6 @@ export function renderProfileUI(userData, retryCount = 0) {
                         📥 Download Press Credential
                     </button>
 
-                    <button type="button" id="downloadProfileJsonBtn"
-                            class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
-                        📄 Profile JSON
-                    </button>
-
                     <button type="button" id="btnSignOut"
                             class="col-span-1 sm:col-span-2 py-3 px-4 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
                         🚪 Sign Out
