@@ -1498,19 +1498,80 @@ function initHeaderSearch() {
   }
 }
 
-/* ====================== FOCUS BANNER ====================== */
+/* ====================== FOCUS BANNER (rotating education) ====================== */
 function initFocusBanner() {
   const banner = document.getElementById('focus-banner');
-  if (!banner) return;
+  const textEl = document.getElementById('focus-banner-text');
+  if (!banner || !textEl) return;
 
-  const key = 'vw_focus_banner_dismissed';
-  if (localStorage.getItem(key) === '1') {
+  const DISMISS_KEY = 'vw_focus_banner_dismissed';
+  if (localStorage.getItem(DISMISS_KEY) === '1') {
     banner.remove();
     return;
   }
 
+  // Short educational messages about the platform
+  const messages = [
+    {
+      icon: '🎯',
+      html: `<span class="font-medium text-emerald-300">Social citizen journalism.</span>
+             <span class="text-zinc-400"> Anyone can report — only sealed records stay public.</span>`
+    },
+    {
+      icon: '🔒',
+      html: `<span class="font-medium text-emerald-300">Sealed on your device.</span>
+             <span class="text-zinc-400"> Photos & voice are fingerprinted before upload — the original can’t be quietly changed.</span>`
+    },
+    {
+      icon: '🛡️',
+      html: `<span class="font-medium text-emerald-300">Evidence Packs for anyone.</span>
+             <span class="text-zinc-400"> Download a verification file. No app needed. Prove integrity offline.</span>`
+    },
+    {
+      icon: '🌍',
+      html: `<span class="font-medium text-emerald-300">Africa-first public square.</span>
+             <span class="text-zinc-400"> Built in Enugu. Open to every citizen who has something to report.</span>`
+    },
+    {
+      icon: '⚖️',
+      html: `<span class="font-medium text-emerald-300">Trust is earned, never sold.</span>
+             <span class="text-zinc-400"> Higher tiers come from verification and participation — not payment.</span>`
+    }
+  ];
+
+  let idx = 0;
+  const iconEl = banner.querySelector('span[aria-hidden="true"]');
+
+  function showMessage(i) {
+    const msg = messages[i % messages.length];
+    textEl.style.opacity = '0';
+    if (iconEl) iconEl.style.opacity = '0';
+
+    setTimeout(() => {
+      if (iconEl) iconEl.textContent = msg.icon;
+      textEl.innerHTML = msg.html;
+      textEl.style.opacity = '1';
+      if (iconEl) iconEl.style.opacity = '1';
+    }, 280);
+  }
+
+  // Show first message immediately
+  showMessage(0);
+
+  // Rotate every 7.5 seconds
+  const rotateTimer = setInterval(() => {
+    if (!document.getElementById('focus-banner')) {
+      clearInterval(rotateTimer);
+      return;
+    }
+    idx = (idx + 1) % messages.length;
+    showMessage(idx);
+  }, 7500);
+
+  // X still dismisses permanently for this browser
   document.getElementById('dismiss-focus-banner')?.addEventListener('click', () => {
-    localStorage.setItem(key, '1');
+    localStorage.setItem(DISMISS_KEY, '1');
+    clearInterval(rotateTimer);
     banner.remove();
   });
 }
