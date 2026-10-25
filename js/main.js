@@ -630,21 +630,26 @@ window.publishTestimony = async () => {
       ? mediaModule.hasPendingMedia()
       : !!(audioInfo || window.selectedImageFile || window.selectedVideoFile);
 
-    const uploaderFunc = typeof uploadForensicMedia === 'function'
-      ? uploadForensicMedia
-      : mediaModule?.uploadForensicMedia;
+const uploaderFunc = typeof uploadForensicMedia === 'function'
+  ? uploadForensicMedia
+  : mediaModule?.uploadForensicMedia;
 
-    if (typeof uploaderFunc === 'function') {
-      try {
-        const activeImg = typeof activeImageFile !== 'undefined' ? activeImageFile : window.selectedImageFile;
-        const activeVid = typeof activeVideoFile !== 'undefined' ? activeVideoFile : window.selectedVideoFile;
+if (typeof uploaderFunc === 'function') {
+  try {
+    const pending = typeof mediaModule.getActiveMedia === 'function'
+      ? mediaModule.getActiveMedia()
+      : {
+          image: mediaModule.selectedImageFile,
+          video: mediaModule.selectedVideoFile,
+          audio: typeof getAudioForPublish === 'function' ? getAudioForPublish()?.blob : null
+        };
 
-        const uploaded = await uploaderFunc(
-          activeImg,
-          activeVid,
-          audioInfo ? audioInfo.blob : null
-        );
+    const activeImg = pending.image || null;
+    const activeVid = pending.video || null;
+    const activeAudio = pending.audio || null;
 
+    const uploaded = await uploaderFunc(activeImg, activeVid, activeAudio);
+    
         if (uploaded) {
           mediaData = {
             ...mediaData,
