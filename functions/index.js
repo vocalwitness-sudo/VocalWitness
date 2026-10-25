@@ -225,36 +225,6 @@ export const initializeCitizenProfile = beforeUserCreated(async (event) => {
 const nowpaymentsIpnSecret = defineSecret("NOWPAYMENTS_IPN_SECRET");
 
 // NOWPayments Webhook Export
-exports.nowpaymentsWebhook = onRequest(
-  { secrets: [nowpaymentsIpnSecret] },
-  async (req, res) => {
-    try {
-      const signature = req.headers["x-nowpayments-sig"];
-      const secret = nowpaymentsIpnSecret.value();
-
-      console.log("NOWPayments Webhook Received:", req.body);
-
-      const { payment_id, payment_status, price_amount, order_id } = req.body;
-
-      if (payment_status === "finished") {
-        await admin.firestore().collection("supporters").doc(order_id || payment_id.toString()).set(
-          {
-            status: "completed",
-            paymentId: payment_id,
-            amount: price_amount,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          },
-          { merge: true }
-        );
-      }
-
-      return res.status(200).send("OK");
-    } catch (error) {
-      console.error("Webhook error:", error);
-      return res.status(500).send("Internal Server Error");
-    }
-  }
-);
 
       // Log receipt for debugging
       console.log("NOWPayments Webhook Received:", req.body);
@@ -2222,22 +2192,56 @@ export const getPresignedUrl = onCall(
   }
 );
 
+// 1. Storage Trigger Function
 export const verifyAndTimestampMedia = onObjectFinalized(
   {
     memory: "512MiB",
-    timeoutSeconds: 120
+    timeoutSeconds: 120,
+    bucket: "vocalwitness-3affa.appspot.com"
   },
   async (event) => {
     const fileBucket = event.data.bucket;
-    const filePath = event.data.name; // e.g. "uploads/UID/timestamp-filename.ext"
+    const filePath = event.data.name;
     const contentType = event.data.contentType;
 
-    // Only process files in the uploads path
     if (!filePath || !filePath.startsWith("uploads/")) {
       console.log("Skipping non-upload file path:", filePath);
       return;
     }
+  }
+);
 
+// 2. NOWPayments Webhook Function
+exports.nowpaymentsWebhook = onRequest(
+  { secrets: [nowpaymentsIpnSecret] },
+  async (req, res) => {
+    try {
+      const signature = req.headers["x-nowpayments-sig"];
+      const secret = nowpaymentsIpnSecret.value();
+
+      console.log("NOWPayments Webhook Received:", req.body);
+
+      const { payment_id, payment_status, price_amount, order_id } = req.body;
+
+      if (payment_status === "finished") {
+        await admin.firestore().collection("supporters").doc(order_id || payment_id.toString()).set(
+          {
+            status: "completed",
+            paymentId: payment_id,
+            amount: price_amount,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+
+      return res.status(200).send("OK");
+    } catch (error) {
+      console.error("Webhook error:", error);
+      return res.status(500).send("Internal Server Error");
+    }
+  }
+);
     // Extract UID from the path structure: uploads/{uid}/{filename}
     const pathParts = filePath.split("/");
     const uid = pathParts[1];
