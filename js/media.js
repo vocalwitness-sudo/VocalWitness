@@ -640,20 +640,15 @@ export function getPendingMedia() {
 
 // ====================== MEDIA BUTTONS WIRING ======================
 /**
- * Wire all media buttons (Live Voice, Photo, Video, Upload Audio)
+ * Wire media buttons (Live Voice, Audio Input)
  * Call this once after the engine is ready.
+ * Note: Photo, Video, and Audio upload buttons are triggered directly via HTML <label for="..."> elements.
  */
 export function initMediaButtons() {
-  const btnVoice       = document.getElementById('btn-voice');
-  const btnPhoto       = document.getElementById('btn-photo');
-  const btnVideo       = document.getElementById('btn-video');
-  const btnUploadAudio = document.getElementById('btn-upload-audio');
-
-  const photoInput = document.getElementById('photoInput');
-  const videoInput = document.getElementById('videoInput');
+  const btnVoice = document.getElementById('btn-voice');
   const audioInput = document.getElementById('audioInput');
 
-  // --- 1. LIVE VOICE ONLY (mic) — never open a file picker ---
+  // --- 1. LIVE VOICE ONLY (mic) ---
   if (btnVoice) {
     btnVoice.replaceWith(btnVoice.cloneNode(true)); // drop old listeners
     const fresh = document.getElementById('btn-voice');
@@ -674,14 +669,9 @@ export function initMediaButtons() {
     });
   }
 
-  // --- 2. EXISTING AUDIO ONLY (file picker) ---
-  if (btnUploadAudio && audioInput) {
-    btnUploadAudio.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      audioInput.click(); // only this button
-    });
-
+  // --- 2. AUDIO FILE CHANGE ---
+  if (audioInput && !audioInput.dataset.mediaJsWired) {
+    audioInput.dataset.mediaJsWired = 'true';
     audioInput.addEventListener('change', async (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
@@ -690,7 +680,7 @@ export function initMediaButtons() {
         maxSizeBytes: 15 * 1024 * 1024,
         allowedTypes: [
           'audio/webm', 'audio/mp3', 'audio/mpeg',
-          'audio/wav', 'audio/ogg', 'audio/m4a'
+          'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/mp4'
         ]
       });
 
@@ -715,7 +705,7 @@ export function initMediaButtons() {
             <p class="text-xs text-zinc-400 mt-1">${file.name} • ${(file.size / 1024 / 1024).toFixed(2)} MB</p>
             <audio controls class="mt-3 w-full" src="${objectUrl}"></audio>
             <button type="button" id="removeMediaBtn"
-                    class="absolute top-2 right-2 bg-red-600/90 hover:bg-red-700 text-white rounded-full p-1.5">
+                    class="absolute top-2 right-2 bg-red-600/95 hover:bg-red-700 text-white rounded-full p-1.5">
               ✕
             </button>
           </div>`;
@@ -727,28 +717,12 @@ export function initMediaButtons() {
       }
 
       showToast('Uploaded audio ready', 'success');
+      window.dispatchEvent(new CustomEvent('media-changed'));
       audioInput.value = '';
     });
   }
-
-  // --- 3. PHOTO ---
-  if (btnPhoto && photoInput) {
-    btnPhoto.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      photoInput.click();
-    });
-  }
-
-  // --- 4. VIDEO ---
-  if (btnVideo && videoInput) {
-    btnVideo.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      videoInput.click();
-    });
-  }
 }
+
 export async function uploadForensicMedia(
   activeImageFile = null,
   activeVideoFile = null,
