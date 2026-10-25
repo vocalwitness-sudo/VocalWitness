@@ -473,7 +473,11 @@ export const UPLOAD_COST_CONFIG = {
  * Calculates the upload cost for a video file based on user tier and file size.
  */
 export async function calculateVideoUploadCost(file) {
-  if (!file || !file.type.startsWith('video/')) {
+  const type = (file?.type || '').toLowerCase();
+  const looksVideo = type.startsWith('video/') ||
+    /\.(mp4|webm|mov|mkv|m4v|3gp)$/i.test(file?.name || '');
+
+  if (!file || !looksVideo) {
     return { isFree: true, feeUSD: 0, reason: 'Image/Audio uploads are free.' };
   }
 
