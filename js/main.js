@@ -758,23 +758,25 @@ window.publishTestimony = async () => {
       evidencePackResult?.packCoreHash
     );
 
-const testimonyData = {
+const result = await submitSecure({
   content,
   channel,
-  authorId: currentUser.uid,
-  author: currentUser.displayName || 'Registered Witness',
   isAnonymous: false,
-  postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
-  fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
-fieldNoteOrg:  postingStyle === 'field-note' ? (fieldNoteOrg  || null) : null,
+  authorDisplayName: currentUser.displayName || null,
   forensicHash: (typeof primaryForensicHash === 'string' && primaryForensicHash.length === 64)
     ? primaryForensicHash
     : null,
   imageUrl: mediaData.imageUrl || null,
   videoUrl: mediaData.videoUrl || null,
   audioUrl: mediaData.audioUrl || null,
+  hashtags: [],
+  mentions: [],
+  postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
+  fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
+fieldNoteOrg:  postingStyle === 'field-note' ? (fieldNoteOrg  || null) : null,
   evidencePack: evidencePackResult?.firestorePack || null,
   packCoreHash: evidencePackResult?.packCoreHash || null,
+});
   reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
   commentsCount: 0,
   isPinned: false,
