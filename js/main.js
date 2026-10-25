@@ -2,7 +2,6 @@
 if (typeof window !== 'undefined') {
   window.initDarkMode = window.initDarkMode || function () {};
 }
-
 /* ====================== IMPORTS ====================== */
 import { db, auth, storage } from './firebase-config.js';
 import { state, updateAppState, isUserAuthenticated } from './app-state.js';
