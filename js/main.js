@@ -1749,7 +1749,6 @@ function removeSplash() {
   document.body.style.overflow = '';
   document.documentElement.style.overflow = '';
 }
-
 function hideSplash() {
   const splash = document.getElementById('app-splash-screen');
   if (!splash) return;
@@ -1771,7 +1770,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (err) {
     console.error('Bootstrap failed:', err);
   } finally {
-    removeSplash();
+    hideSplash(); // Fixed function name from removeSplash to hideSplash
   }
 
   setTimeout(() => {
