@@ -918,7 +918,7 @@ if (evidencePackResult && docRef.id) {
       initFeed(db, channel);
     }
 
-  } catch (err) {
+   catch (err) {
     console.error('[publish] FULL ERROR:', err);
     if (err.code === 'permission-denied') {
       showToast("Permission denied. Check console for exact rule failure.", "error");
