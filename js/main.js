@@ -1228,6 +1228,12 @@ async function fetchCuratedNews() {
     '🏛️ DAO governance: quadratic voting is open',
     '✅ Verify integrity without revealing identity'
   ];
+  function restartTickerAnimation() {
+  tickerEl.style.animation = 'none';
+  void tickerEl.offsetWidth;
+  tickerEl.style.animation = 'ticker-scroll 45s linear infinite';
+  tickerEl.classList.remove('ticker-paused');
+}
 
   function applyTicker(items) {
     let list = Array.isArray(items) ? items.filter(Boolean).map(String) : [];
