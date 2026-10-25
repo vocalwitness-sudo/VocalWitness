@@ -794,8 +794,8 @@ fieldNoteOrg:  postingStyle === 'field-note' ? (fieldNoteOrg  || null) : null,
   mediaFile: null, // media already uploaded; pass URLs via a small extension OR
   isAnonymous: false,
   postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
-  fieldNoteRole: ...,
-  fieldNoteOrg: ...,
+  fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
+fieldNoteOrg:  postingStyle === 'field-note' ? (fieldNoteOrg  || null) : null,
 });
     console.log('[publish] SUCCESS →', docRef.id, '| channel:', channel);
 
