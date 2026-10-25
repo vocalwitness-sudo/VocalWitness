@@ -1229,7 +1229,6 @@ async function fetchCuratedNews() {
     '✅ Verify integrity without revealing identity'
   ];
 
- function restartTickerAnimation() 
   function applyTicker(items) {
     let list = Array.isArray(items) ? items.filter(Boolean).map(String) : [];
     if (list.length < 4) list = fallbackItems.slice();
