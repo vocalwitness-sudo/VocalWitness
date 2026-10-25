@@ -220,6 +220,46 @@ export const initializeCitizenProfile = beforeUserCreated(async (event) => {
     console.error(`Error creating profile for ${userId}:`, error);
   }
 });
+
+const { onRequest } = require("firebase-functions/v2/https");
+const { defineSecret } = require("firebase-functions/params");
+const admin = require("firebase-admin");
+
+// Define secret registered via CLI
+const nowpaymentsIpnSecret = defineSecret("NOWPAYMENTS_IPN_SECRET");
+
+// Export the webhook function
+exports.nowpaymentsWebhook = onRequest(
+  { secrets: [nowpaymentsIpnSecret] },
+  async (req, res) => {
+    try {
+      const signature = req.headers["x-nowpayments-sig"];
+      const secret = nowpaymentsIpnSecret.value();
+
+      // Log receipt for debugging
+      console.log("NOWPayments Webhook Received:", req.body);
+
+      const { payment_id, payment_status, price_amount, order_id } = req.body;
+
+      if (payment_status === "finished") {
+        await admin.firestore().collection("supporters").doc(order_id || payment_id.toString()).set(
+          {
+            status: "completed",
+            paymentId: payment_id,
+            amount: price_amount,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+
+      return res.status(200).send("OK");
+    } catch (error) {
+      console.error("Webhook error:", error);
+      return res.status(500).send("Internal Server Error");
+    }
+  }
+);
 // ======================================================
 // 1. R2 PRE-SIGNED URL
 // ======================================================
