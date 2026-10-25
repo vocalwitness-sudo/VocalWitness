@@ -457,16 +457,15 @@ export function renderProfileUI(userData, retryCount = 0) {
                         </button>
                     ` : ''}
 
-                    <button type="button" id="btnOpenEditProfile"
-                            class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-black text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
-                        ✏️ Edit Profile
-                    </button>
+                   <button type="button" id="btnOpenEditProfile"
+        class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+    ✏️ Edit Profile
+</button>
 
-                    <button type="button" id="btnOpenSettings"
-                            class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
-                        ⚙️ Settings & Security
-                    </button>
-
+<button type="button" id="downloadProfileJsonBtn"
+        class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2 border border-zinc-600">
+    📄 Profile JSON
+</button>
                     <!-- Single clean PDF Credential button -->
                     <button type="button" id="exportUserDataPdfBtn"
                             class="col-span-1 sm:col-span-2 py-3.5 px-4 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
