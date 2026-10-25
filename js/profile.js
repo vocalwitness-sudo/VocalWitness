@@ -1059,8 +1059,17 @@ export async function triggerPasswordReset() {
     const hasPassword = providers.includes('password');
 
     if (!hasPassword) {
+      const providerNames = providers
+        .map(p => {
+          if (p === 'google.com') return 'Google';
+          if (p === 'github.com') return 'GitHub';
+          if (p === 'twitter.com') return 'Twitter/X';
+          return p;
+        })
+        .join(', ');
+
       showToast(
-        'This account uses Google/Twitter/GitHub sign-in. There is no password to reset. Sign in with that provider instead.',
+        `This account uses ${providerNames || 'a social provider'} sign-in. There is no password to reset.`,
         'info'
       );
       return;
@@ -1075,10 +1084,8 @@ export async function triggerPasswordReset() {
       url: 'https://vocalwitness.com/',
       handleCodeInApp: false
     });
-    showToast(
-      `Reset link sent to ${user.email}. Check inbox and spam.`,
-      'success'
-    );
+
+    showToast(`Reset link sent to ${user.email}. Check inbox and spam.`, 'success');
   } catch (error) {
     console.error('Password reset error:', error);
     const msg =
@@ -1092,8 +1099,10 @@ export async function triggerPasswordReset() {
     setTimeout(() => { _passwordResetInFlight = false; }, 1500);
   }
 }
+
 window.handlePasswordReset = triggerPasswordReset;
 window.triggerPasswordReset = triggerPasswordReset;
+
 
 // ====================== LANGUAGE CHANGE SUPPORT ======================
 window.addEventListener('languageChanged', () => {
@@ -1399,69 +1408,76 @@ export function initProfileModals() {
     });
 
     // ====================== 2FA / MFA TOGGLE ======================
-    const toggle2FAEl = document.getElementById('toggle2FA');
-    if (toggle2FAEl) {
-        try {
-            const factors = getEnrolledFactors();
-            toggle2FAEl.checked = !!(factors && factors.length);
-        } catch (err) {
-            console.warn('[profile] MFA status read failed:', err);
-        }
-        toggle2FAEl.addEventListener('change', async (e) => {
-            const user = auth.currentUser;
-            if (!user) {
-                e.target.checked = false;
-                showToast('Sign in required for 2FA', 'error');
-                return;
-            }
-            if (e.target.checked) {
-                e.target.checked = false;
-                try {
-                    const { totpSecret, qrCodeUrl, secretKey } = await enrollTotpMfa();
-                    window.__pendingTotpSecret = totpSecret;
-                    const mfaModal = document.getElementById('mfaModal');
-                    if (mfaModal) {
-                        const qrImg = document.getElementById('mfaQrImage');
-                        const secretEl = document.getElementById('mfaSecretKey');
-                        if (qrImg) {
-                            qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(qrCodeUrl);
-                        }
-                        if (secretEl) secretEl.textContent = secretKey;
-                        mfaModal.classList.remove('hidden');
-                        mfaModal.classList.add('flex');
-                        mfaModal.setAttribute('aria-hidden', 'false');
-                    } else {
-                        showToast('Add this key in your authenticator app: ' + secretKey, 'info');
-                    }
-                } catch (err) {
-                    console.error(err);
-                    if (err.code === 'auth/requires-recent-login') {
-                        showToast('For security, please sign out and sign back in before enabling 2FA.', 'error');
-                    } else {
-                        showToast(err.message || 'Could not start 2FA setup', 'error');
-                    }
-                }
-            } else {
-                try {
-                    const enrolledFactors = user?.multiFactor?.enrolledFactors;
-                    if (!enrolledFactors || enrolledFactors.length === 0) {
-                        showToast('No active 2FA factors found to remove', 'info');
-                        return;
-                    }
-                    await unenrollMfa(enrolledFactors[0]);
-                    showToast('2FA disabled', 'success');
-                } catch (err) {
-                    console.error(err);
-                    e.target.checked = true;
-                    if (err.code === 'auth/requires-recent-login') {
-                        showToast('For security, please sign out and sign back in before modifying 2FA.', 'error');
-                    } else {
-                        showToast('Could not disable 2FA', 'error');
-                    }
-                }
-            }
-        });
+   // ====================== 2FA / MFA TOGGLE ======================
+const toggle2FAEl = document.getElementById('toggle2FA');
+if (toggle2FAEl) {
+  try {
+    const factors = getEnrolledFactors();
+    toggle2FAEl.checked = !!(factors && factors.length);
+  } catch (err) {
+    console.warn('[profile] MFA status read failed:', err);
+  }
+
+  toggle2FAEl.addEventListener('change', async (e) => {
+    const user = auth.currentUser;
+    if (!user) {
+      e.target.checked = false;
+      showToast('Sign in required for 2FA', 'error');
+      return;
     }
+
+    // Turning ON
+    if (e.target.checked) {
+      e.target.checked = false; // stay off until enrollment succeeds
+      try {
+        const { totpSecret, qrCodeUrl, secretKey } = await enrollTotpMfa();
+        window.__pendingTotpSecret = totpSecret;
+
+        const mfaModal = document.getElementById('mfaModal');
+        if (mfaModal) {
+          const qrImg = document.getElementById('mfaQrImage');
+          const secretEl = document.getElementById('mfaSecretKey');
+          if (qrImg) {
+            qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(qrCodeUrl);
+          }
+          if (secretEl) secretEl.textContent = secretKey;
+          mfaModal.classList.remove('hidden');
+          mfaModal.classList.add('flex');
+          mfaModal.setAttribute('aria-hidden', 'false');
+        } else {
+          showToast('Add this key in your authenticator app: ' + secretKey, 'info');
+        }
+      } catch (err) {
+        console.error(err);
+        if (err.code === 'auth/requires-recent-login') {
+          showToast('For security, please sign out and sign back in before enabling 2FA.', 'error');
+        } else {
+          showToast(err.message || 'Could not start 2FA setup', 'error');
+        }
+      }
+    }
+    // Turning OFF
+    else {
+      try {
+        const enrolledFactors = user?.multiFactor?.enrolledFactors || [];
+        if (enrolledFactors.length === 0) {
+          // Silent – nothing to remove
+          return;
+        }
+        await unenrollMfa(enrolledFactors[0]);
+        showToast('2FA disabled', 'success');
+      } catch (err) {
+        console.error(err);
+        e.target.checked = true; // revert
+        if (err.code === 'auth/requires-recent-login') {
+          showToast('For security, please sign out and sign back in before modifying 2FA.', 'error');
+        } else {
+          showToast('Could not disable 2FA', 'error');
+        }
+      }
+    }
+  });
+}
     document.getElementById('closeProfileModalBtn')?.addEventListener('click', closeProfile);
     document.getElementById('closeEditProfileBtn')?.addEventListener('click', closeEditProfile);
     document.getElementById('btn-close-edit-profile')?.addEventListener('click', closeEditProfile);
