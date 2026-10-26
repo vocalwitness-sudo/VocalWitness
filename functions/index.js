@@ -2201,7 +2201,6 @@ export const verifyAndTimestampMedia = onObjectFinalized(
   {
     memory: "512MiB",
     timeoutSeconds: 120,
-    bucket: "vocalwitness-3affa.appspot.com"
   },
   async (event) => {
     const fileBucket = event.data.bucket;
