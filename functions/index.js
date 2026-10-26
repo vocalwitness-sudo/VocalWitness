@@ -220,19 +220,22 @@ export const initializeCitizenProfile = beforeUserCreated(async (event) => {
     console.error(`Error creating profile for ${userId}:`, error);
   }
 });
-
 // Define secret registered via CLI
 const nowpaymentsIpnSecret = defineSecret("NOWPAYMENTS_IPN_SECRET");
 
 // NOWPayments Webhook Export
-
+export const nowPaymentsWebhook = onRequest(
+  {
+    secrets: [nowpaymentsIpnSecret],
+  },
+  async (req, res) => {
+    try {
       // Log receipt for debugging
       console.log("NOWPayments Webhook Received:", req.body);
 
-      const { payment_id, payment_status, price_amount, order_id } = req.body;
+      const { payment_id, payment_status, price_amount, order_id } = req.body || {};
 
-      if (payment_status === "
-          finished") {
+      if (payment_status === "finished") {
         await admin.firestore().collection("supporters").doc(order_id || payment_id.toString()).set(
           {
             status: "completed",
