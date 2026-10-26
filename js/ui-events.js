@@ -26,12 +26,14 @@ export function wireIndexPage() {
   window.__vwIndexWired = true;
 
   // ---------- Data Saver ----------
-  on(document.getElementById('data-saver-btn'), 'click', () => window.toggleDataSaver?.());
-  on(document.getElementById('data-saver-btn-mobile'), 'click', () => window.toggleDataSaver?.());
-  on(document.getElementById('footer-data-saver-btn'), 'click', () => window.toggleDataSaver?.());
+  // Owned by main.js (initDataSaver + window.toggleDataSaver).
+  // Only wire FOOTER here so it still works if main forgets it.
+  on(document.getElementById('footer-data-saver-btn'), 'click', (e) => {
+    e.preventDefault();
+    window.toggleDataSaver?.();
+  });
 
   // ---------- Support ----------
-  // Use one consistent name. Prefer openSupportModal (defined in main.js)
   const openSupport = () => {
     if (typeof window.openSupportModal === 'function') {
       window.openSupportModal();
@@ -87,47 +89,19 @@ export function wireIndexPage() {
   });
 
   // ---------- Main nav tabs ----------
-  // IMPORTANT: use the real function name switchTab (not switchMainTab)
-  document.querySelectorAll('.nav-tab[data-tab], #main-nav button[data-tab]').forEach((tab) => {
-    on(tab, 'click', (e) => {
-      e.preventDefault();
-      const tabName = tab.dataset.tab;
-      if (tabName && typeof window.switchTab === 'function') {
-        window.switchTab(tabName);
-      }
-    });
-  });
+  // DO NOT wire here. main.js wireTabButtons() owns #main-nav.
 
-  // ========== PUBLIC SQUARE – COMPOSER ==========
+  // ---------- PUBLIC SQUARE – COMPOSER ----------
+  // DO NOT wire photo/video/voice/file inputs/publish/rec controls here.
+  // Owners: composer.js (files + preview), media.js (live voice), main.js (publish).
   const mainInput = document.getElementById('mainInput');
   const charCount = document.getElementById('char-count');
-  if (mainInput && charCount) {
+  if (mainInput && charCount && !mainInput.dataset.charCountWired) {
+    mainInput.dataset.charCountWired = 'true';
     on(mainInput, 'input', () => {
       charCount.textContent = `${mainInput.value.length} / 3000`;
     });
   }
-  on(document.getElementById('btn-photo'), 'click', () => document.getElementById('photoInput')?.click());
-  on(document.getElementById('btn-video'), 'click', () => document.getElementById('videoInput')?.click());
-  on(document.getElementById('btn-voice'), 'click', () => {
-    if (typeof window.startVoiceRecording === 'function') {
-      window.startVoiceRecording();
-    } else {
-      document.getElementById('audioInput')?.click();
-    }
-  });
-
-  on(document.getElementById('photoInput'), 'change', (e) => window.handleMediaSelect?.(e, 'photo'));
-  on(document.getElementById('videoInput'), 'change', (e) => window.handleMediaSelect?.(e, 'video'));
-  on(document.getElementById('audioInput'), 'change', (e) => window.handleMediaSelect?.(e, 'audio'));
-
-  on(document.getElementById('rec-pause-btn'), 'click', () => window.pauseRecording?.());
-  on(document.getElementById('rec-stop-btn'), 'click', () => window.stopRecording?.());
-  on(document.getElementById('rec-replay-btn'), 'click', () => window.replayRecording?.());
-  on(document.getElementById('rec-rerecord-btn'), 'click', () => window.rerecordVoice?.());
-  on(document.getElementById('verify-voice-btn'), 'click', () => window.verifyVoiceRecording?.());
-  on(document.getElementById('postButton'), 'click', () => window.publishTestimony?.());
-  on(document.getElementById('feedSortSelect'), 'change', (e) => window.applyFeedSort?.(e.target.value));
-  on(document.getElementById('targetFeedSelect'), 'change', (e) => window.setTargetFeed?.(e.target.value));
 
   // ========== LEDGER ==========
   on(document.getElementById('refreshLedgerBtn'), 'click', () => window.refreshLedger?.());
