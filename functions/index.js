@@ -220,17 +220,17 @@ export const initializeCitizenProfile = beforeUserCreated(async (event) => {
     console.error(`Error creating profile for ${userId}:`, error);
   }
 });
+
 // Define secret registered via CLI
 const nowpaymentsIpnSecret = defineSecret("NOWPAYMENTS_IPN_SECRET");
 
-// NOWPayments Webhook Export
+// NOWPayments Webhook
 export const nowPaymentsWebhook = onRequest(
   {
     secrets: [nowpaymentsIpnSecret],
   },
   async (req, res) => {
     try {
-      // Log receipt for debugging
       console.log("NOWPayments Webhook Received:", req.body);
 
       const { payment_id, payment_status, price_amount, order_id } = req.body || {};
@@ -254,6 +254,7 @@ export const nowPaymentsWebhook = onRequest(
     }
   }
 );
+
 // ======================================================
 // 1. R2 PRE-SIGNED URL
 // ======================================================
