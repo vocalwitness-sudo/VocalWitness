@@ -2214,37 +2214,7 @@ export const verifyAndTimestampMedia = onObjectFinalized(
   }
 );
 
-// 2. NOWPayments Webhook Function
-exports.nowpaymentsWebhook = onRequest(
-  { secrets: [nowpaymentsIpnSecret] },
-  async (req, res) => {
-    try {
-      const signature = req.headers["x-nowpayments-sig"];
-      const secret = nowpaymentsIpnSecret.value();
 
-      console.log("NOWPayments Webhook Received:", req.body);
-
-      const { payment_id, payment_status, price_amount, order_id } = req.body;
-
-      if (payment_status === "finished") {
-        await admin.firestore().collection("supporters").doc(order_id || payment_id.toString()).set(
-          {
-            status: "completed",
-            paymentId: payment_id,
-            amount: price_amount,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          },
-          { merge: true }
-        );
-      }
-
-      return res.status(200).send("OK");
-    } catch (error) {
-      console.error("Webhook error:", error);
-      return res.status(500).send("Internal Server Error");
-    }
-  }
-);
     // Extract UID from the path structure: uploads/{uid}/{filename}
     const pathParts = filePath.split("/");
     const uid = pathParts[1];
