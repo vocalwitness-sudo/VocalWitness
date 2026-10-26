@@ -2212,9 +2212,6 @@ export const verifyAndTimestampMedia = onObjectFinalized(
       console.log("Skipping non-upload file path:", filePath);
       return;
     }
-  }
-);
-
 
     // Extract UID from the path structure: uploads/{uid}/{filename}
     const pathParts = filePath.split("/");
@@ -2241,7 +2238,7 @@ export const verifyAndTimestampMedia = onObjectFinalized(
 
       let rfc3161TokenHex = null;
 
-      // 2. Optional: Request RFC3161 timestamp from Free TSA (or alternative provider)
+      // 2. Optional: Request RFC3161 timestamp from Free TSA
       try {
         const hashBuffer = Buffer.from(serverHash, "hex");
         const tsaResponse = await axios.post("https://freetsa.org/tsr", hashBuffer, {
@@ -2295,7 +2292,6 @@ export const verifyAndTimestampMedia = onObjectFinalized(
     }
   }
 );
-
 export const heavyProcessingTask = onRequest(
   {
     concurrency: 80,
