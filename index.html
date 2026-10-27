@@ -824,7 +824,7 @@
     <!-- ========== COLLAPSED VIEW (default) ========== -->
     <div id="composer-collapsed" 
          class="flex items-center gap-3 cursor-pointer group"
-         onclick="expandComposer()">
+        onclick="typeof window.expandComposer==='function'&&window.expandComposer()">
       <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xl text-emerald-400 group-hover:bg-emerald-500/25 transition">
         🗣️
       </div>
@@ -1101,7 +1101,7 @@
           Your voice becomes part of the permanent public record.
         </p>
         <button type="button" 
-                onclick="expandComposer(); document.getElementById('mainInput')?.focus();"
+               onclick="typeof window.expandComposer==='function'&&window.expandComposer();document.getElementById('mainInput')?.focus();"
                 class="mt-7 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
           🎤 Speak as a Citizen Now
         </button>
