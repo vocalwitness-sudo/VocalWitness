@@ -3,6 +3,9 @@
 // Central event wiring – no inline handlers
 // Dropdowns (More + Notifications) are owned by main.js only
 // Auth / Profile are owned by auth.js
+// Live Voice + recorder → media.js
+// Photo / Video / Audio file + Publish → composer.js
+// Main nav tabs → main.js
 // -------------------------------------------------
 
 function on(el, event, handler, options) {
@@ -31,7 +34,7 @@ export function wireIndexPage() {
   on(document.getElementById('footer-data-saver-btn'), 'click', () => window.toggleDataSaver?.());
 
   // ---------- Support ----------
-  // Use one consistent name. Prefer openSupportModal (defined in main.js)
+  // Prefer openSupportModal (defined in main.js)
   const openSupport = () => {
     if (typeof window.openSupportModal === 'function') {
       window.openSupportModal();
@@ -87,18 +90,14 @@ export function wireIndexPage() {
   });
 
   // ---------- Main nav tabs ----------
-  // IMPORTANT: use the real function name switchTab (not switchMainTab)
-  document.querySelectorAll('.nav-tab[data-tab], #main-nav button[data-tab]').forEach((tab) => {
-    on(tab, 'click', (e) => {
-      e.preventDefault();
-      const tabName = tab.dataset.tab;
-      if (tabName && typeof window.switchTab === 'function') {
-        window.switchTab(tabName);
-      }
-    });
-  });
+  // Owned exclusively by main.js (wireTabButtons + switchTab).
+  // Do NOT attach listeners here – causes double-fires / dead first taps on phone.
 
   // ========== PUBLIC SQUARE – COMPOSER ==========
+  // Media buttons (#btn-photo, #btn-video, #btn-voice), file inputs,
+  // recorder controls and Publish (#postButton) are owned by
+  // media.js + composer.js. Do not wire them here.
+
   const mainInput = document.getElementById('mainInput');
   const charCount = document.getElementById('char-count');
   if (mainInput && charCount) {
@@ -106,18 +105,8 @@ export function wireIndexPage() {
       charCount.textContent = `${mainInput.value.length} / 3000`;
     });
   }
-  on(document.getElementById('btn-photo'), 'click', () => document.getElementById('photoInput')?.click());
-  on(document.getElementById('btn-video'), 'click', () => document.getElementById('videoInput')?.click());
- // Live Voice owned by media.js (initMediaButtons) — do not wire #btn-voice here
 
-
-  on(document.getElementById('photoInput'), 'change', (e) => window.handleMediaSelect?.(e, 'photo'));
-  on(document.getElementById('videoInput'), 'change', (e) => window.handleMediaSelect?.(e, 'video'));
-  on(document.getElementById('audioInput'), 'change', (e) => window.handleMediaSelect?.(e, 'audio'));
-
- // Recorder controls owned by media.js (initVoiceControls)
-  on(document.getElementById('verify-voice-btn'), 'click', () => window.verifyVoiceRecording?.());
-  on(document.getElementById('postButton'), 'click', () => window.publishTestimony?.());
+  // Keep only non-media composer helpers
   on(document.getElementById('feedSortSelect'), 'change', (e) => window.applyFeedSort?.(e.target.value));
   on(document.getElementById('targetFeedSelect'), 'change', (e) => window.setTargetFeed?.(e.target.value));
 
@@ -197,7 +186,7 @@ export function wireIndexPage() {
     if (e.target.id === 'supportModal') window.closeSupportModal?.();
   });
 
-  console.log('[ui-events] wireIndexPage complete (dropdowns left to main.js)');
+  console.log('[ui-events] wireIndexPage complete (media/publish/voice/nav left to their owners)');
 }
 
 // Auto-run once DOM is ready
