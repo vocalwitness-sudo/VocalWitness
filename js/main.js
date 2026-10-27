@@ -95,7 +95,8 @@ function updateDataSaverUI(isOn) {
 function initDataSaver() {
   updateDataSaverUI(getDataSaverState());
 
-  ['data-saver-btn', 'data-saver-btn-mobile'].forEach(id => {
+  // Desktop + mobile header + footer — one owner, no double-toggle
+  ['data-saver-btn', 'data-saver-btn-mobile', 'footer-data-saver-btn'].forEach(id => {
     const btn = document.getElementById(id);
     if (!btn || btn.dataset.wired === 'true') return;
     btn.dataset.wired = 'true';
@@ -116,7 +117,6 @@ function initDataSaver() {
     });
   });
 }
-
 window.toggleDataSaver = function () {
   const next = !getDataSaverState();
   localStorage.setItem(DATA_SAVER_KEY, String(next));
@@ -547,11 +547,24 @@ window.publishTestimony = async () => {
   const fieldNoteRole  = document.getElementById('field-note-role')?.value.trim() || window.selectedRole || null;
   const fieldNoteOrg   = document.getElementById('field-note-org')?.value.trim() || null;
 
-  if (!content) {
-    showToast("Please write something before publishing", "error");
+  // Phone-friendly: explain why publish is blocked (button is no longer silently disabled)
+  const hasMediaEarly =
+    (typeof mediaModule?.hasPendingMedia === 'function' && mediaModule.hasPendingMedia()) ||
+    (typeof mediaModule?.hasAnyMedia === 'function' && mediaModule.hasAnyMedia()) ||
+    (typeof getAudioForPublish === 'function' && !!getAudioForPublish());
+
+  if (!content && !hasMediaEarly) {
+    showToast('Write something or add media before publishing', 'error');
     return;
   }
-
+  if (content && content.length < 15 && !hasMediaEarly) {
+    showToast('Write at least 15 characters, or add a photo / voice / video', 'error');
+    return;
+  }
+  if (!content && hasMediaEarly) {
+    showToast('Please add a short text description with your media', 'error');
+    return;
+  }
   // Title is UI-only (not written to Firestore — rules reject unknown keys)
   if (!title && content) {
     title = content.length <= 80
@@ -1579,16 +1592,10 @@ function initFocusBanner() {
 }
 
 /* ====================== COMPOSER WIRING ====================== */
+// Intentionally empty: publish click is handled in composer.js only.
+// Keeping the function name avoids errors if something still calls it.
 function wireTestimonyComposer() {
-  const postBtn = document.getElementById('postButton');
-  if (postBtn && !postBtn.dataset.wired) {
-    postBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      window.publishTestimony();
-    });
-    postBtn.dataset.wired = 'true';
-  }
-  console.log('✅ Testimony composer wired (publish only)');
+  console.log('[main] wireTestimonyComposer skipped (composer.js owns publish)');
 }
 
 /* ====================== COMPOSER LIVE STATE ====================== */
@@ -1599,27 +1606,35 @@ function initComposerLiveState() {
   const postBtn = document.getElementById('postButton');
 
   if (!textarea || !postBtn) return;
+  if (textarea.dataset.liveStateWired === 'true') return;
+  textarea.dataset.liveStateWired = 'true';
 
   const updateState = () => {
     const text = textarea.value.trim();
     const len = text.length;
-    const hasMedia = !!(window.selectedImageFile || window.selectedVideoFile ||
-                        (typeof getAudioForPublish === 'function' && getAudioForPublish()));
+    const hasMedia =
+      (typeof mediaModule?.hasAnyMedia === 'function' && mediaModule.hasAnyMedia()) ||
+      (typeof mediaModule?.hasPendingMedia === 'function' && mediaModule.hasPendingMedia()) ||
+      !!(typeof getAudioForPublish === 'function' && getAudioForPublish());
 
     if (charCount) {
-      charCount.textContent = `${len} / 2000`;
+      charCount.textContent = `${len} / 3000`;
       charCount.classList.remove('text-zinc-500', 'text-emerald-400', 'text-red-400');
       if (len === 0) {
         charCount.classList.add('text-zinc-500');
-      } else if (len >= 1800) {
+      } else if (len >= 2800) {
         charCount.classList.add('text-red-400');
       } else {
         charCount.classList.add('text-emerald-400');
       }
     }
 
+    // Do NOT disable the button on mobile (silent dead tap).
+    // Visual hint only; real checks live in publishTestimony.
     const canPublish = len >= 15 || hasMedia;
-    postBtn.disabled = !canPublish;
+    postBtn.dataset.canPublish = canPublish ? 'true' : 'false';
+    postBtn.classList.toggle('opacity-60', !canPublish);
+    postBtn.disabled = false;
   };
 
   textarea.addEventListener('input', updateState);
@@ -1628,6 +1643,8 @@ function initComposerLiveState() {
   updateState();
 }
 
+// So composer.js can call it safely if needed
+window.initComposerLiveState = initComposerLiveState;
 /* ====================== BOOTSTRAP ====================== */
 async function bootstrap() {
   if (isInitialized) {
@@ -1767,17 +1784,29 @@ function hideSplash() {
 
 /* ====================== DOM READY ====================== */
 document.addEventListener('DOMContentLoaded', async () => {
+  // Always clear splash within 4s even if bootstrap hangs (phones)
+  if (!window.__vwSplashWatchdog) {
+    window.__vwSplashWatchdog = true;
+    setTimeout(() => {
+      try {
+        hideSplash();
+        removeSplash();
+      } catch (_) {}
+    }, 4000);
+  }
+
   try {
     await bootstrap();
   } catch (err) {
     console.error('Bootstrap failed:', err);
+    showToast?.('Failed to initialize app. Please refresh.', 'error');
   } finally {
-    hideSplash(); // Fixed function name from removeSplash to hideSplash
+    try {
+      hideSplash();
+      removeSplash();
+    } catch (_) {}
   }
 
-  setTimeout(() => {
-    if (typeof wireTestimonyComposer === 'function') {
-      wireTestimonyComposer();
-    }
-  }, 500);
+  // Publish is owned by composer.js (and window.publishTestimony).
+  // Do NOT wire postButton again here — avoids double-publish on phones.
 });
