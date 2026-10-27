@@ -102,6 +102,8 @@ export function wireIndexPage() {
       charCount.textContent = `${mainInput.value.length} / 3000`;
     });
   }
+  on(document.getElementById('feedSortSelect'), 'change', (e) => window.applyFeedSort?.(e.target.value));
+  on(document.getElementById('targetFeedSelect'), 'change', (e) => window.setTargetFeed?.(e.target.value));
 
   // ========== LEDGER ==========
   on(document.getElementById('refreshLedgerBtn'), 'click', () => window.refreshLedger?.());
