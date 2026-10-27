@@ -639,90 +639,92 @@ export function getPendingMedia() {
  */
 
 // ====================== MEDIA BUTTONS WIRING ======================
+// js/media.js
+// -------------------------------------------------
+// Media Engine, Live Voice Wiring, & Upload Pipeline
+// -------------------------------------------------
+
+let engineInstance = null;
+let isUploading = false;
+
+// Internal state references if needed by uploadForensicMedia
+let selectedImageFile = null;
+let selectedVideoFile = null;
+let selectedAudioFile = null;
+
 /**
- * Wire media buttons (Live Voice, Audio Input)
- * Call this once after the engine is ready.
- * Note: Photo, Video, and Audio upload buttons are triggered directly via HTML <label for="..."> elements.
+ * Connect the engine instance and clear loading states on media buttons.
+ */
+export function setEngine(engine) {
+  engineInstance = engine;
+  console.log('✅ Media Engine Connected');
+  
+  setTimeout(() => {
+    // If you have an initVoiceControls or similar setup function, call it here:
+    // typeof window.initVoiceControls === 'function' && window.initVoiceControls();
+
+    const btn = document.getElementById('btn-voice');
+    if (btn) {
+      btn.removeAttribute('aria-busy');
+      btn.title = 'Record live voice';
+    }
+    
+    // Safe to call again — guarded by dataset.voiceWired
+    initMediaButtons();
+  }, 300);
+}
+
+// ====================== MEDIA BUTTONS WIRING ======================
+/**
+ * Wire Live Voice only. Call once after setEngine().
+ * Note: Photo, Video, and Audio file inputs are handled via HTML labels and composer.js.
  */
 export function initMediaButtons() {
   const btnVoice = document.getElementById('btn-voice');
-  const audioInput = document.getElementById('audioInput');
+  if (!btnVoice) return;
 
-  // --- 1. LIVE VOICE ONLY (mic) ---
-  if (btnVoice) {
-    btnVoice.replaceWith(btnVoice.cloneNode(true)); // drop old listeners
-    const fresh = document.getElementById('btn-voice');
+  // Already wired — do not clone or double-bind
+  if (btnVoice.dataset.voiceWired === 'true') {
+    console.log('[media] btn-voice already wired');
+    return;
+  }
+  btnVoice.dataset.voiceWired = 'true';
 
-    fresh.addEventListener('click', async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (fresh.disabled) return;
-      fresh.disabled = true;
-      try {
-        await toggleVoiceRecording(fresh); // mic only
-      } catch (err) {
-        console.error('Voice recording error:', err);
-        showToast(err?.message || 'Could not start recording', 'error');
-      } finally {
-        setTimeout(() => { fresh.disabled = false; }, 800);
-      }
-    });
+  // Show not-ready state until engine exists
+  if (!engineInstance) {
+    btnVoice.setAttribute('aria-busy', 'true');
+    btnVoice.title = 'Preparing microphone…';
   }
 
-  // --- 2. AUDIO FILE CHANGE ---
-  if (audioInput && !audioInput.dataset.mediaJsWired) {
-    audioInput.dataset.mediaJsWired = 'true';
-    audioInput.addEventListener('change', async (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+  btnVoice.addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-      const check = validateMediaFile(file, {
-        maxSizeBytes: 15 * 1024 * 1024,
-        allowedTypes: [
-          'audio/webm', 'audio/mp3', 'audio/mpeg',
-          'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/mp4'
-        ]
-      });
+    if (btnVoice.disabled) return;
 
-      if (!check.valid) {
-        showToast(check.error, 'error');
-        audioInput.value = '';
-        return;
-      }
+    if (!engineInstance) {
+      showToast('Voice engine still loading. Wait a second and try again.', 'info');
+      return;
+    }
 
-      setAudioFile(file, 'uploaded_audio');
+    btnVoice.disabled = true;
+    try {
+      // Assumes toggleVoiceRecording is imported or defined globally
+      await toggleVoiceRecording(btnVoice);
+    } catch (err) {
+      console.error('Voice recording error:', err);
+      showToast(err?.message || 'Could not start recording', 'error');
+    } finally {
+      setTimeout(() => {
+        btnVoice.disabled = false;
+      }, 600);
+    }
+  });
 
-      const previewArea = document.getElementById('preview-area');
-      if (previewArea) {
-        if (previewArea.dataset.objectUrl) {
-          URL.revokeObjectURL(previewArea.dataset.objectUrl);
-        }
-        const objectUrl = URL.createObjectURL(file);
-        previewArea.dataset.objectUrl = objectUrl;
-        previewArea.innerHTML = `
-          <div class="relative mt-2 rounded-2xl border border-amber-500/40 bg-zinc-900 p-4 w-full max-w-md">
-            <p class="text-sm text-amber-400 font-medium">Uploaded Audio</p>
-            <p class="text-xs text-zinc-400 mt-1">${file.name} • ${(file.size / 1024 / 1024).toFixed(2)} MB</p>
-            <audio controls class="mt-3 w-full" src="${objectUrl}"></audio>
-            <button type="button" id="removeMediaBtn"
-                    class="absolute top-2 right-2 bg-red-600/95 hover:bg-red-700 text-white rounded-full p-1.5">
-              ✕
-            </button>
-          </div>`;
-        previewArea.classList.add('has-content');
-
-        document.getElementById('removeMediaBtn')?.addEventListener('click', () => {
-          removeMedia(previewArea);
-        });
-      }
-
-      showToast('Uploaded audio ready', 'success');
-      window.dispatchEvent(new CustomEvent('media-changed'));
-      audioInput.value = '';
-    });
-  }
+  console.log('[media] Live Voice button wired');
 }
 
+// ====================== FORENSIC MEDIA UPLOAD ======================
 export async function uploadForensicMedia(
   activeImageFile = null,
   activeVideoFile = null,
@@ -743,7 +745,7 @@ export async function uploadForensicMedia(
       imageHash: null,
       videoHash: null,
       audioHash: null,
-      bodyHash: null,          // will be filled by publishTestimony
+      bodyHash: null,         // filled by publishTestimony
       hasEvidencePack: false,
       evidencePack: null,
       packCoreHash: null
@@ -764,13 +766,11 @@ export async function uploadForensicMedia(
       try {
         if (targetImage.size === 0) throw new Error("Selected image is empty");
 
-        // media-pipeline returns { file, hash, mimeType, size }
         const prepared = await prepareMediaForUpload(targetImage, {
           maxWidth: 1920,
           maxHeight: 1080
         });
 
-        // Support both shapes: object from pipeline OR a plain File
         const cleanedFile = (prepared && prepared.file instanceof Blob)
           ? prepared.file
           : prepared;
@@ -779,19 +779,15 @@ export async function uploadForensicMedia(
           throw new Error('Image preparation returned an invalid file');
         }
 
-        // Prefer hash from pipeline when available
         const hash = prepared?.hash || await generateSha256Hash(cleanedFile);
 
-        // Mark as already cleaned so uploadSecurePhoto does not re-process
         try {
           Object.defineProperty(cleanedFile, 'isCleaned', {
             value: true,
             writable: false,
             configurable: true
           });
-        } catch (_) {
-          // Some environments disallow defineProperty on File – safe to ignore
-        }
+        } catch (_) {}
 
         const uploadedUrl = await uploadSecurePhoto(cleanedFile, 'evidence');
         await verifyMediaUrl(uploadedUrl);
@@ -805,6 +801,7 @@ export async function uploadForensicMedia(
         throw e;
       }
     }
+
     // ---------- 2. Video Path (Isolated) ----------
     if (targetVideo) {
       try {
@@ -848,4 +845,3 @@ export async function uploadForensicMedia(
     isUploading = false;
   }
 }
-
