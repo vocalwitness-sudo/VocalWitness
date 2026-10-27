@@ -930,7 +930,7 @@ export function resetForm() {
   if (anonymousCheckbox) anonymousCheckbox.checked = false;
   if (trustedOnly) trustedOnly.checked = false;
 
-  // Full media cleanup
+ // Full media cleanup
   clearAllMediaStates();
   window.activeSubmissionDraft = {};
   clearAiFeedback();
@@ -939,12 +939,3 @@ export function resetForm() {
   // Collapse back to the compact status box
   collapseComposer();
 }
-Changes applied
-Update	What changed
-A	renderGenericMediaPreview fully replaced – HEIC notice, extension fallbacks, object URL cleanup, remove (✕) button that calls clearAllMediaStates
-B	handleAudioSelectAction now uses looksAudio (MIME or extension) so Android empty file.type still works
-C	Publish click stays only in initComposer delegation (comment added). Confirm you removed any duplicate listener in main.js / ui-events
-D	handleComposerSubmit finally re-enables the button when !window.__isPublishing
-Paste Part 1 + Part 2 together into js/composer.js.
-If you want the matching main.js no-op for the publish listener next, paste that file and I’ll patch it.
-
