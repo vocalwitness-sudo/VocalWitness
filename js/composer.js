@@ -91,7 +91,7 @@ function showVideoPolicyModal(customMessage) {
  */
 function syncPostingStyleUI() {
   const select = document.getElementById('postingStyleSelect');
- const fields = document.getElementById('field-note-panel');
+  const fields = document.getElementById('field-note-panel');
   if (!select) return;
 
   const style = select.value === 'field-note' ? 'field-note' : 'citizen';
@@ -300,42 +300,78 @@ function clearAiFeedback() {
 
 /**
  * Type-neutral preview renderer for images, videos, and audio clips
- * Includes proper object URL cleanup to prevent memory leaks
+ * Includes proper object URL cleanup + HEIC handling + remove button
+ * (Update A)
  */
 function renderGenericMediaPreview(file, previewArea) {
-    if (!previewArea) return;
-    // Revoke previous object URL if it exists
-    if (previewArea.dataset.objectUrl) {
-        URL.revokeObjectURL(previewArea.dataset.objectUrl);
-        delete previewArea.dataset.objectUrl;
-    }
-    previewArea.innerHTML = '';
-    const objectUrl = URL.createObjectURL(file);
-    previewArea.dataset.objectUrl = objectUrl;
-    let previewElement;
-    if (file.type.startsWith('image/')) {
-        previewElement = document.createElement('img');
-        previewElement.src = objectUrl;
-        previewElement.className = 'max-h-48 rounded-xl object-cover border border-zinc-700 mx-auto';
-        previewElement.alt = 'Media preview';
-    } else if (file.type.startsWith('video/')) {
-        previewElement = document.createElement('video');
-        previewElement.src = objectUrl;
-        previewElement.controls = true;
-        previewElement.preload = 'metadata';
-        previewElement.className = 'max-h-48 rounded-xl w-full object-cover border border-zinc-700';
-    } else if (file.type.startsWith('audio/')) {
-        previewElement = document.createElement('audio');
-        previewElement.src = objectUrl;
-        previewElement.controls = true;
-        previewElement.preload = 'metadata';
-        previewElement.className = 'w-full mt-2';
+  if (!previewArea || !file) return;
+
+  if (previewArea.dataset.objectUrl) {
+    URL.revokeObjectURL(previewArea.dataset.objectUrl);
+    delete previewArea.dataset.objectUrl;
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+  previewArea.dataset.objectUrl = objectUrl;
+  previewArea.classList.add('has-content');
+
+  const type = (file.type || '').toLowerCase();
+  const name = (file.name || '').toLowerCase();
+  const isHeic =
+    type.includes('heic') ||
+    type.includes('heif') ||
+    /\.heic$|\.heif$/i.test(name);
+
+  let mediaHtml = '';
+
+  if (type.startsWith('image/') || isHeic || /\.(jpe?g|png|webp|gif)$/i.test(name)) {
+    if (isHeic) {
+      mediaHtml = `
+        <div class="w-full max-w-sm text-center space-y-2">
+          <p class="text-amber-300 text-xs font-medium">HEIC photo selected</p>
+          <p class="text-zinc-500 text-[11px] leading-relaxed">
+            Some phones cannot preview HEIC here. Publishing may still work after conversion on server/client.
+            For best results, use JPEG from Camera or “Duplicate as JPEG” in Photos.
+          </p>
+          <p class="text-zinc-400 text-xs truncate">${file.name || 'photo'} · ${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+        </div>`;
     } else {
-        previewElement = document.createElement('div');
-        previewElement.className = 'text-xs text-zinc-400 p-2';
-        previewElement.innerText = `File attached: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`;
+      mediaHtml = `<img src="${objectUrl}" class="max-h-48 rounded-xl object-cover border border-zinc-700 mx-auto" alt="Media preview">`;
     }
-    previewArea.appendChild(previewElement);
+  } else if (type.startsWith('video/') || /\.(mp4|mov|webm|mkv)$/i.test(name)) {
+    mediaHtml = `<video src="${objectUrl}" controls playsinline webkit-playsinline preload="metadata"
+      class="max-h-48 rounded-xl w-full object-cover border border-zinc-700"></video>`;
+  } else if (type.startsWith('audio/') || /\.(mp3|m4a|wav|ogg|webm)$/i.test(name)) {
+    mediaHtml = `<audio src="${objectUrl}" controls preload="metadata" class="w-full mt-2"></audio>`;
+  } else {
+    mediaHtml = `<div class="text-xs text-zinc-400 p-2">File: ${file.name || 'attached'} (${(file.size / 1024 / 1024).toFixed(1)} MB)</div>`;
+  }
+
+  previewArea.innerHTML = `
+    <div class="relative w-full flex flex-col items-center gap-2">
+      ${mediaHtml}
+      <button type="button" id="removeMediaBtn"
+        class="absolute top-0 right-0 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-red-600 text-white shadow-lg active:scale-95"
+        aria-label="Remove media">✕</button>
+    </div>`;
+
+  const removeBtn = document.getElementById('removeMediaBtn');
+  if (removeBtn) {
+    removeBtn.onclick = (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      clearAllMediaStates();
+      previewArea.innerHTML = `
+        <div id="preview-empty" class="text-center">
+          <p class="text-sm">Preview will appear here...</p>
+          <p class="mt-1 text-xs text-zinc-600">Live voice, photos, videos or audio</p>
+        </div>`;
+      previewArea.classList.remove('has-content');
+      delete previewArea.dataset.objectUrl;
+      window.dispatchEvent(new CustomEvent('media-changed'));
+      showToast('Media removed', 'info');
+    };
+  }
 }
 
 /**
@@ -463,13 +499,20 @@ export async function handleVideoSelectAction(event) {
 /**
  * Distinct handler for Audio Selection (file upload only)
  * Live voice recording is owned 100% by media.js
+ * (Update B – hardened MIME / Android empty type)
  */
 export async function handleAudioSelectAction(event) {
   const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
   const file = event.target?.files?.[0];
   if (!file) return;
 
-  if (!file.type.startsWith('audio/')) {
+  const t = (file.type || '').toLowerCase();
+  const n = (file.name || '').toLowerCase();
+  const looksAudio =
+    t.startsWith('audio/') ||
+    /\.(mp3|m4a|wav|ogg|webm|aac|mpeg)$/i.test(n);
+
+  if (!looksAudio) {
     showToast('Please select an audio file', 'error');
     event.target.value = '';
     return;
@@ -628,6 +671,8 @@ export function initComposer() {
   // ===== CLICK DELEGATION =====
   // Voice button (#btn-voice / live recording) is intentionally NOT handled here.
   // media.js owns 100% of voice recording UI + logic.
+  // (Update C) – keep publish ONLY here (composer delegation for #postButton).
+  // Ensure main.js / ui-events does NOT also wire a publish listener.
   root.addEventListener('click', (e) => {
   
 
@@ -640,7 +685,7 @@ export function initComposer() {
       return;
     }
 
-    // Publish button
+    // Publish button – single owner
     if (e.target.closest('#postButton, #submitBtn')) {
       e.preventDefault();
       if (typeof handleComposerSubmit === 'function') {
@@ -822,6 +867,7 @@ function renderAiFeedback(container, analysis, category) {
 
 /**
  * Strengthen handleComposerSubmit success path
+ * (Update D – re-enable button on failure)
  */
 async function handleComposerSubmit(e) {
   if (e?.preventDefault) e.preventDefault();
@@ -854,8 +900,11 @@ async function handleComposerSubmit(e) {
     showToast('Failed to publish. Please try again.', 'error');
   } finally {
     isSubmitting = false;
-    // Note: we deliberately do NOT re-enable the button here.
-    // The success state in main.js will handle UI reset.
+    // main.publishTestimony also manages the button; re-enable if still stuck
+    if (submitBtn && !window.__isPublishing) {
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+    }
   }
 }
 
@@ -890,3 +939,12 @@ export function resetForm() {
   // Collapse back to the compact status box
   collapseComposer();
 }
+Changes applied
+Update	What changed
+A	renderGenericMediaPreview fully replaced – HEIC notice, extension fallbacks, object URL cleanup, remove (✕) button that calls clearAllMediaStates
+B	handleAudioSelectAction now uses looksAudio (MIME or extension) so Android empty file.type still works
+C	Publish click stays only in initComposer delegation (comment added). Confirm you removed any duplicate listener in main.js / ui-events
+D	handleComposerSubmit finally re-enables the button when !window.__isPublishing
+Paste Part 1 + Part 2 together into js/composer.js.
+If you want the matching main.js no-op for the publish listener next, paste that file and I’ll patch it.
+
