@@ -20,18 +20,20 @@ let replayUrl = null;
 let isUploading = false;
 
 export function setEngine(engine) {
-  engineInstance = engine;
-  console.log('✅ Media Engine Connected');
-
-  setTimeout(() => {
-    initVoiceControls();
-
-    const btn = document.getElementById('btn-voice');
-    if (btn) {
-      btn.removeAttribute('aria-busy');
-      btn.title = 'Record live voice';
-    }
-
+    engineInstance = engine;
+    console.log("✅ Media Engine Connected");
+    setTimeout(() => {
+        initVoiceControls();
+        const btn = document.getElementById('btn-voice');
+        if (btn) {
+            btn.removeAttribute('aria-busy');
+            btn.title = 'Record live voice';
+        }
+        if (typeof initMediaButtons === 'function') {
+            initMediaButtons();
+        }
+    }, 300);
+}
     // Safe to call again — guarded inside initMediaButtons
     initMediaButtons();
   }, 300);
