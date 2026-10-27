@@ -108,22 +108,14 @@ export function wireIndexPage() {
   }
   on(document.getElementById('btn-photo'), 'click', () => document.getElementById('photoInput')?.click());
   on(document.getElementById('btn-video'), 'click', () => document.getElementById('videoInput')?.click());
-  on(document.getElementById('btn-voice'), 'click', () => {
-    if (typeof window.startVoiceRecording === 'function') {
-      window.startVoiceRecording();
-    } else {
-      document.getElementById('audioInput')?.click();
-    }
-  });
+ // Live Voice owned by media.js (initMediaButtons) — do not wire #btn-voice here
+
 
   on(document.getElementById('photoInput'), 'change', (e) => window.handleMediaSelect?.(e, 'photo'));
   on(document.getElementById('videoInput'), 'change', (e) => window.handleMediaSelect?.(e, 'video'));
   on(document.getElementById('audioInput'), 'change', (e) => window.handleMediaSelect?.(e, 'audio'));
 
-  on(document.getElementById('rec-pause-btn'), 'click', () => window.pauseRecording?.());
-  on(document.getElementById('rec-stop-btn'), 'click', () => window.stopRecording?.());
-  on(document.getElementById('rec-replay-btn'), 'click', () => window.replayRecording?.());
-  on(document.getElementById('rec-rerecord-btn'), 'click', () => window.rerecordVoice?.());
+ // Recorder controls owned by media.js (initVoiceControls)
   on(document.getElementById('verify-voice-btn'), 'click', () => window.verifyVoiceRecording?.());
   on(document.getElementById('postButton'), 'click', () => window.publishTestimony?.());
   on(document.getElementById('feedSortSelect'), 'change', (e) => window.applyFeedSort?.(e.target.value));
