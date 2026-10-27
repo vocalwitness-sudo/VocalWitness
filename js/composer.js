@@ -547,15 +547,19 @@ export function expandComposer() {
   collapsed.classList.add('hidden');
   expanded.classList.remove('hidden');
 
-  // Focus the textarea after a short delay so the browser finishes rendering
+  // Mobile-safe focus (iOS / Android keyboards)
   setTimeout(() => {
     const input = document.getElementById('mainInput');
-    if (input) {
-      input.focus();
-      const len = input.value.length;
-      input.setSelectionRange(len, len);
-    }
-  }, 40);
+    if (!input) return;
+    input.focus({ preventScroll: true });
+    requestAnimationFrame(() => {
+      input.focus({ preventScroll: true });
+      try {
+        const len = input.value.length;
+        input.setSelectionRange(len, len);
+      } catch (_) {}
+    });
+  }, 50);
 }
 
 /**
@@ -673,21 +677,35 @@ export function initComposer() {
   // media.js owns 100% of voice recording UI + logic.
   // (Update C) – keep publish ONLY here (composer delegation for #postButton).
   // Ensure main.js / ui-events does NOT also wire a publish listener.
-  root.addEventListener('click', (e) => {
-  
+ root.addEventListener('click', (e) => {
+    // Photo button
+    if (e.target.closest('#btn-photo, [data-action="photo"]')) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById('photoInput')?.click();
+      return;
+    }
+
+    // Video button
+    if (e.target.closest('#btn-video, [data-action="video"]')) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById('videoInput')?.click();
+      return;
+    }
 
     // Audio upload (secondary fallback only)
     if (e.target.closest('#btn-upload-audio, [data-action="upload-audio"]')) {
       e.preventDefault();
       e.stopPropagation();
-      const input = document.getElementById('audioInput');
-      if (input) input.click();
+      document.getElementById('audioInput')?.click();
       return;
     }
 
     // Publish button – single owner
     if (e.target.closest('#postButton, #submitBtn')) {
       e.preventDefault();
+      e.stopPropagation();
       if (typeof handleComposerSubmit === 'function') {
         handleComposerSubmit(e);
       } else if (typeof window.publishTestimony === 'function') {
@@ -900,14 +918,12 @@ async function handleComposerSubmit(e) {
     showToast('Failed to publish. Please try again.', 'error');
   } finally {
     isSubmitting = false;
-    // main.publishTestimony also manages the button; re-enable if still stuck
+    // Always re-enable if we are not in the middle of a main.js publish flow
     if (submitBtn && !window.__isPublishing) {
       submitBtn.disabled = false;
       submitBtn.classList.remove('opacity-60', 'cursor-not-allowed');
     }
   }
-}
-
 /**
  * Reset form UI + collapse the composer back to compact state
  */
