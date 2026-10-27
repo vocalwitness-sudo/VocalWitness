@@ -635,4 +635,36 @@
   }
 </style>
 
-```
+/* ===== Mobile tap hardening (phone UX) ===== */
+button,
+[role="button"],
+label[for],
+.nav-tab,
+.feed-pill,
+.posting-style-btn,
+.role-chip,
+#btn-voice,
+#btn-photo,
+#btn-video,
+#postButton {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 767px) {
+  #btn-voice,
+  #btn-photo,
+  #btn-video,
+  #postButton,
+  .role-chip,
+  .posting-style-btn,
+  .feed-pill,
+  #main-nav button[data-tab] {
+    min-height: 44px;
+  }
+
+  #removeMediaBtn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
