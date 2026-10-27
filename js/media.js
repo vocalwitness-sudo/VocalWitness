@@ -27,7 +27,9 @@ export function setEngine(engine) {
     // Prefer the modern button wiring
     if (typeof initMediaButtons === 'function') {
       initMediaButtons();
-    } else if (typeof initVoiceControls === 'function') {
+    }
+    // Always wire the recorder controls
+    if (typeof initVoiceControls === 'function') {
       initVoiceControls();
     }
 
@@ -71,6 +73,7 @@ export function clearAllMedia() {
 
   resetMediaState();
 }
+
 // ====================== HELPERS ======================
 function formatTime(ms) {
   const totalSec = Math.floor(ms / 1000);
@@ -469,6 +472,7 @@ export async function toggleVoiceRecording(voiceBtn) {
       }
     }
   } else {
+    // ===== STOP RECORDING =====
     const blob = await engineInstance.stopVoiceRecording();
     voiceBtn?.classList.remove('recording-active', 'animate-pulse');
     stopWaveAndTimer();
@@ -493,8 +497,12 @@ export async function toggleVoiceRecording(voiceBtn) {
 
     if (replayUrl) URL.revokeObjectURL(replayUrl);
     replayUrl = URL.createObjectURL(blob);
+
     const audioEl = document.getElementById('rec-replay-audio');
-    if (audioEl) audioEl.src = replayUrl;
+    if (audioEl) {
+      audioEl.src = replayUrl;
+      audioEl.load();          // CRITICAL for iOS Safari – forces the element to recognise the new source
+    }
     if (replayBtn) replayBtn.classList.remove('hidden');
 
     showMicPermissionMsg(null);
