@@ -27,10 +27,6 @@ function setupButtonIndicators() {
 }
 
 /* ==========================================================================
-   BATCH 1: DUAL UI & LANGUAGE ENGINE FUNCTIONS
-   ========================================================================== */
-
-/* ==========================================================================
    BATCH 1: DUAL UI — Language + Data Saver (IDs match index.html)
    ========================================================================== */
 
@@ -74,22 +70,25 @@ function initLanguageSync() {
  *    Real IDs: data-saver-btn / data-saver-btn-mobile
  *              data-saver-status / data-saver-status-mobile
  *
- * Prefer letting main.js own Data Saver if it already wires both buttons.
- * Keep this only if ui.js is the single source of truth.
+ * main.js owns Data Saver when window.toggleDataSaver exists.
+ * This is only a fallback if main.js has not loaded yet.
+ * Storage key MUST match main.js: vw_data_saver
  */
 function initDataSaverSync() {
-  const desktopBtn    = document.getElementById('data-saver-btn');
-  const mobileBtn     = document.getElementById('data-saver-btn-mobile');
-  const desktopStatus = document.getElementById('data-saver-status');
-  const mobileStatus  = document.getElementById('data-saver-status-mobile');
-
   // If main.js already owns Data Saver, skip to avoid double-toggles
   if (typeof window.toggleDataSaver === 'function') {
     console.log('[ui.js] Data Saver owned by main.js — skipping local wiring');
     return;
   }
 
-  let isDataSaver = localStorage.getItem('vw_datasaver') === 'true';
+  const desktopBtn    = document.getElementById('data-saver-btn');
+  const mobileBtn     = document.getElementById('data-saver-btn-mobile');
+  const desktopStatus = document.getElementById('data-saver-status');
+  const mobileStatus  = document.getElementById('data-saver-status-mobile');
+
+  // Same key as main.js (was vw_datasaver — that caused desync)
+  const DATA_SAVER_KEY = 'vw_data_saver';
+  let isDataSaver = localStorage.getItem(DATA_SAVER_KEY) === 'true';
 
   function updateDataSaverUI(enabled) {
     const text = enabled ? 'On' : 'Off';
@@ -110,7 +109,7 @@ function initDataSaverSync() {
 
   function toggleDataSaver() {
     isDataSaver = !isDataSaver;
-    localStorage.setItem('vw_datasaver', String(isDataSaver));
+    localStorage.setItem(DATA_SAVER_KEY, String(isDataSaver));
     updateDataSaverUI(isDataSaver);
     window.dispatchEvent(new CustomEvent('data-saver-changed', {
       detail: { enabled: isDataSaver }
