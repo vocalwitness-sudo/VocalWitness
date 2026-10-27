@@ -1,8 +1,13 @@
 // js/ui-events.js
 // -------------------------------------------------
 // Central event wiring – no inline handlers
-// Dropdowns (More + Notifications) are owned by main.js only
-// Auth / Profile are owned by auth.js
+// Dropdowns (More + Notifications) → main.js only
+// Auth / Profile → auth.js (+ safety net here)
+// Tabs → main.js wireTabButtons only
+// Live Voice → media.js only
+// Photo/Video/Audio files + preview → composer.js only
+// Publish → composer.js → window.publishTestimony (main.js)
+// Data Saver → main.js only
 // -------------------------------------------------
 
 function on(el, event, handler, options) {
@@ -27,11 +32,7 @@ export function wireIndexPage() {
 
   // ---------- Data Saver ----------
   // Owned by main.js (initDataSaver + window.toggleDataSaver).
-  // Only wire FOOTER here so it still works if main forgets it.
-  on(document.getElementById('footer-data-saver-btn'), 'click', (e) => {
-    e.preventDefault();
-    window.toggleDataSaver?.();
-  });
+  // Do NOT wire header/mobile/footer here — avoids double-toggle on phones.
 
   // ---------- Support ----------
   const openSupport = () => {
@@ -45,7 +46,7 @@ export function wireIndexPage() {
   on(document.getElementById('openSupportModalBtnMobile'), 'click', openSupport);
   on(document.getElementById('footerSupportBtn'), 'click', openSupport);
 
-  // ---------- Auth / Profile (safety net – auth.js also handles these via delegation) ----------
+  // ---------- Auth / Profile (safety net – auth.js also handles these) ----------
   document.querySelectorAll('[data-action="open-auth-modal"]').forEach((btn) => {
     on(btn, 'click', () => window.openAuthModal?.());
   });
@@ -89,11 +90,15 @@ export function wireIndexPage() {
   });
 
   // ---------- Main nav tabs ----------
-  // DO NOT wire here. main.js wireTabButtons() owns #main-nav.
+  // Owned by main.js wireTabButtons() — do NOT wire here (double switchTab on phones).
 
-  // ---------- PUBLIC SQUARE – COMPOSER ----------
-  // DO NOT wire photo/video/voice/file inputs/publish/rec controls here.
-  // Owners: composer.js (files + preview), media.js (live voice), main.js (publish).
+  // ========== PUBLIC SQUARE – COMPOSER ==========
+  // Photo / Video: HTML <label for="photoInput|videoInput"> only
+  // Live Voice: media.js initMediaButtons only
+  // File change + preview: composer.js only
+  // Rec controls: media.js initVoiceControls only
+  // Publish: composer.js → window.publishTestimony
+
   const mainInput = document.getElementById('mainInput');
   const charCount = document.getElementById('char-count');
   if (mainInput && charCount && !mainInput.dataset.charCountWired) {
@@ -102,8 +107,13 @@ export function wireIndexPage() {
       charCount.textContent = `${mainInput.value.length} / 3000`;
     });
   }
-  on(document.getElementById('feedSortSelect'), 'change', (e) => window.applyFeedSort?.(e.target.value));
-  on(document.getElementById('targetFeedSelect'), 'change', (e) => window.setTargetFeed?.(e.target.value));
+
+  on(document.getElementById('feedSortSelect'), 'change', (e) => {
+    window.applyFeedSort?.(e.target.value);
+  });
+  on(document.getElementById('targetFeedSelect'), 'change', (e) => {
+    window.setTargetFeed?.(e.target.value);
+  });
 
   // ========== LEDGER ==========
   on(document.getElementById('refreshLedgerBtn'), 'click', () => window.refreshLedger?.());
@@ -113,7 +123,9 @@ export function wireIndexPage() {
   on(document.getElementById('notifyArenaBtn'), 'click', () => window.notifyLiveArena?.());
 
   // ========== MY CIRCLE ==========
-  on(document.getElementById('startPhoneVerificationBtn'), 'click', () => window.startPhoneVerification?.());
+  on(document.getElementById('startPhoneVerificationBtn'), 'click', () => {
+    window.startPhoneVerification?.();
+  });
   on(document.getElementById('startZKVerificationBtn'), 'click', () => {
     (window.startZKUpgrade || window.startZKVerification)?.();
   });
@@ -166,6 +178,7 @@ export function wireIndexPage() {
   on(document.getElementById('customSupportAmount'), 'input', (e) => {
     window.setSupportAmount?.(Number(e.target.value) || 0);
   });
+
   on(document.getElementById('paystackPayBtn'), 'click', () => {
     if (typeof window.initiatePayment === 'function') {
       const amountInput = document.getElementById('customSupportAmount');
@@ -175,13 +188,14 @@ export function wireIndexPage() {
       window.startPaystackPayment?.();
     }
   });
+
   on(document.getElementById('proceedCryptoBtn'), 'click', () => window.startCryptoPayment?.());
   on(document.getElementById('copyUsdtBtn'), 'click', () => window.copyUsdtAddress?.());
   on(document.getElementById('supportModal'), 'click', (e) => {
     if (e.target.id === 'supportModal') window.closeSupportModal?.();
   });
 
-  console.log('[ui-events] wireIndexPage complete (dropdowns left to main.js)');
+  console.log('[ui-events] wireIndexPage complete (composer/voice/tabs/data-saver left to owners)');
 }
 
 // Auto-run once DOM is ready
@@ -190,3 +204,24 @@ if (document.readyState === 'loading') {
 } else {
   wireIndexPage();
 }
+What was removed (on purpose)
+Removed	Why
+Data Saver clicks	main.js owns them
+Nav tab clicks	main.js wireTabButtons owns them
+btn-photo / btn-video click	Labels already open the inputs
+btn-voice click + file fallback	Was opening audio picker; media.js owns mic
+File change → handleMediaSelect	composer.js owns real handlers
+Rec pause/stop/replay/rerecord/verify	media.js owns them
+postButton click	composer.js → publishTestimony
+What was kept
+Support, Join/Profile, bookmarks, language, feed pills, char count, feed sort / target feed, ledger, arena, circle, witness filters, support modal / Paystack.
+
+After commit — phone check
+Hard refresh
+Live Voice → mic prompt / record (not file picker)
+Photo → one picker open
+Tabs → one switch per tap
+Data Saver → one toggle
+Support / Profile still open
+Next when ready: give me media full (Live Voice reliability), then composer full (preview / remove / HEIC).
+
