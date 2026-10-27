@@ -7,7 +7,7 @@
   <!-- Brand & Theme -->
   <meta name="theme-color" content="#10b981">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="VocalWitness – Privacy-first public square for truth, evidence, and citizen reporting. Protected by zero-knowledge technology. Built in Enugu, Nigeria.">
+<meta name="description" content="VocalWitness – Privacy-first public square for sealed citizen reports and evidence. Client-side hashing and application-level protection. Built in Enugu, Nigeria.">
   <meta name="robots" content="index, follow">
   <meta name="author" content="Lawmann Ngwu">
   <meta name="keywords" content="citizen journalism, zero knowledge proof, evidence logging, truth public square, decentralized media, anti-deepfake, cryptographic proof, VocalWitness, Nigeria">
@@ -19,7 +19,7 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://vocalwitness.com/">
   <meta property="og:title" content="VocalWitness • Truth • Evidence • Public Square">
-  <meta property="og:description" content="Privacy-first public square for truth and evidence. Capture, seal, and verify field reports protected by zero-knowledge technology.">
+  <meta property="og:description" content="Privacy-first public square for truth and evidence. Capture, seal, and verify field reports protected by client-side hashing and application-level seals.">
   <meta property="og:image" content="https://vocalwitness.com/logo.png">
   <meta property="og:image:width" content="512">
   <meta property="og:image:height" content="512">
@@ -29,7 +29,7 @@
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="VocalWitness • Truth • Evidence • Public Square">
-  <meta name="twitter:description" content="Privacy-first public square for truth and evidence. Share what you saw — protected by zero-knowledge technology.">
+  <meta name="twitter:description" content="Privacy-first public square for truth and evidence. Share what you saw — protected by client-side hashing and application-level seals.">
   <meta name="twitter:image" content="https://vocalwitness.com/logo.png">
 
   <!-- PWA / Mobile -->
@@ -362,7 +362,7 @@
             <span class="text-emerald-400 transition group-hover:text-emerald-300">Vocal</span><span class="text-white">Witness</span>
           </h1>
           <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-400/70">
-            Truth • Evidence • Zero-Knowledge
+            Truth • Evidence • Sealed
           </p>
         </div>
         <!-- Live indicator – JS should toggle: hidden ↔ inline-flex -->
@@ -695,7 +695,7 @@
   <span class="truncate">The Square</span>
 </button>
       
-     <!-- 2. Immutable Record Tab -->
+     <!-- 2. Sealed Record Tab -->
       <button type="button" 
               id="tab-ledger"
               data-tab="ledger" 
@@ -704,7 +704,7 @@
               aria-controls="evidence-ledger"
               class="nav-tab flex-shrink-0 min-w-[4.5rem] h-11 items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-medium text-zinc-300 transition hover:border-zinc-500 sm:h-12 sm:px-4 sm:text-sm">
         <span class="text-base leading-none" aria-hidden="true">📜</span>
-        <span class="truncate" data-i18n="nav_immutable_record">Immutable Record</span>
+        <span class="truncate" data-i18n="nav_immutable_record">Sealed Record</span>
       </button>
       
       <!-- 3. Arena -->
@@ -847,7 +847,7 @@
   <div>
     <h3 id="composer-title" class="text-lg font-bold text-white">Speak as a Citizen</h3>
     <p id="composer-subtitle" class="text-xs text-zinc-400">
-      Your report will be sealed and added to the permanent public record
+      Your report will be sealed and added to the public record
     </p>
   </div>
 
@@ -1055,7 +1055,7 @@
     </div>
     <h4 class="text-lg font-bold text-white">Report sealed and published</h4>
     <p class="mt-1.5 text-sm text-zinc-400">
-      Your evidence is now part of the permanent public record.
+      Your evidence is now part of the public record.
     </p>
     <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
       <button type="button" id="download-pack-after-publish"
@@ -1098,7 +1098,7 @@
         <h4 class="text-xl font-bold text-white">The Square is waiting for sealed reports</h4>
         <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400">
           Be among the first citizens to publish a cryptographically sealed report. 
-          Your voice becomes part of the permanent public record.
+Your voice becomes part of the sealed public record.
         </p>
         <button type="button" 
                onclick="typeof window.expandComposer==='function'&&window.expandComposer();document.getElementById('mainInput')?.focus();"
@@ -1112,12 +1112,12 @@
 
 </section>
   
-<!-- ========== 2. IMMUTABLE RECORD ========== -->
-  <section id="evidence-ledger" class="hidden space-y-6" role="tabpanel" aria-label="Immutable Record" aria-hidden="true">
+<!-- ========== 2. Sealed Record ========== -->
+  <section id="evidence-ledger" class="hidden space-y-6" role="tabpanel" aria-label="Sealed Record" aria-hidden="true">
     <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div>
-        <h2 class="text-2xl font-bold text-emerald-400" data-i18n="ledger_title">Immutable Record</h2>
-        <p class="mt-1 text-sm text-zinc-400" data-i18n="ledger_subtitle">Protected • Timestamped • Mathematically Unchangeable</p>
+        <h2 class="text-2xl font-bold text-emerald-400" data-i18n="ledger_title">Sealed Record</h2>
+        <p class="mt-1 text-sm text-zinc-400" data-i18n="ledger_subtitle">Protected • Timestamped • Application-Level Sealed</p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
        <span id="ledger-chain-status" class="rounded-full border border-zinc-700 bg-zinc-900 px-3.5 py-1.5 text-xs font-medium text-zinc-400">
@@ -1136,9 +1136,9 @@
         <p class="font-medium text-emerald-400" data-i18n="ledger_info_title">Your reports stay safe</p>
         <p class="mt-1 text-sm text-zinc-400 leading-relaxed" data-i18n="ledger_info_desc">
   Every report is cryptographically sealed and linked to the ledger.
-  Media and hashes cannot be changed after publish.
-  Text may be corrected for 30 minutes; after that only soft-hide is allowed.
-  Hard delete is not available so the sealed record stays verifiable.
+Media and hashes cannot be changed by ordinary users after publish.
+Text may be corrected for 30 minutes; after that only soft-hide is allowed.
+Hard delete is not available so the sealed record stays verifiable.
 </p>
       </div>
     </div>
@@ -1288,7 +1288,7 @@
   <!-- Positioning banner -->
   <div class="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-5 py-4">
     <p class="text-sm text-zinc-300 leading-relaxed">
-      This is the forensic channel. Only first-hand observations. 
+      This is the high-integrity channel. Only first-hand observations. 
       Media and text are hashed on your device before upload. 
       Every sealed report can be independently verified with an Evidence Pack.
     </p>
@@ -1447,13 +1447,13 @@
               <span class="text-emerald-400">Vocal</span><span class="text-white">Witness</span>
             </h3>
             <p class="text-[11px] font-semibold uppercase tracking-wider text-emerald-400/70">
-              Truth • Evidence • Zero-Knowledge
+              Truth • Evidence • Sealed
             </p>
           </div>
         </div>
         <p class="mt-4 text-sm leading-relaxed text-zinc-400">
           A privacy-first public square where citizens can publish sealed reports. 
-          Evidence is cryptographically protected so the original cannot be secretly edited or deleted.
+         Evidence is cryptographically protected so the original cannot be secretly edited or hard-deleted by ordinary users.
         </p>
       </div>
 
