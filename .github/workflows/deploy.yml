@@ -28,9 +28,9 @@ function flattenKeys(obj, prefix = '') {
 
 function auditTranslations() {
   const baseFilePath = path.join(TRANSLATIONS_DIR, `${BASE_LANG}.json`);
-  
+
   if (!fs.existsSync(baseFilePath)) {
-    console.error(`❌ Base language file (${BASE_LANG}.json) not found in ${TRANSLATIONS_DIR}![cite: 1]`);
+    console.error(`❌ Base language file (${BASE_LANG}.json) not found in ${TRANSLATIONS_DIR}!`);
     process.exit(1);
   }
 
@@ -40,10 +40,11 @@ function auditTranslations() {
 
   console.log(`🌍 i18n Audit Report (Base: ${BASE_LANG}.json with ${totalKeys} keys)\n`);
 
-  const files = fs.readdirSync(TRANSLATIONS_DIR).filter(f => f.endsWith('.json') && f !== `${BASE_LANG}.json`);
-  
+  const files = fs.readdirSync(TRANSLATIONS_DIR)
+    .filter(f => f.endsWith('.json') && f !== `${BASE_LANG}.json`);
+
   if (files.length === 0) {
-    console.log('⚠️ No other translation files found to compare against.');
+    console.log('⚠️  No other translation files found to compare against.');
     process.exit(0);
   }
 
@@ -52,18 +53,20 @@ function auditTranslations() {
   files.forEach(file => {
     const langCode = path.basename(file, '.json');
     const langFilePath = path.join(TRANSLATIONS_DIR, file);
-    
+
     let langContent;
     try {
       langContent = JSON.parse(fs.readFileSync(langFilePath, 'utf8'));
     } catch (e) {
-      console.error(`❌ [${langCode}] Failed to parse JSON: ${e.message}[cite: 1]`);
+      console.error(`❌ [${langCode}] Failed to parse JSON: ${e.message}`);
       hasErrors = true;
       return;
     }
 
     const langKeys = flattenKeys(langContent);
-    const missingKeys = Object.keys(baseKeys).filter(k => langKeys[k] === undefined || langKeys[k] === '');
+    const missingKeys = Object.keys(baseKeys).filter(
+      k => langKeys[k] === undefined || langKeys[k] === ''
+    );
     const completeness = ((totalKeys - missingKeys.length) / totalKeys * 100).toFixed(1);
 
     const statusIcon = completeness == 100 ? '✅' : completeness > 80 ? '⚠️' : '❌';
@@ -81,8 +84,8 @@ function auditTranslations() {
 
   console.log('\n----------------------------------------');
   if (hasErrors) {
-    console.log('❌ Audit complete: Missing translation keys detected.[cite: 1]');
-    process.exit(1); //[cite: 1]
+    console.log('❌ Audit complete: Missing translation keys detected.');
+    process.exit(1);
   } else {
     console.log('✨ Audit complete: All translation files are 100% complete!');
     process.exit(0);
