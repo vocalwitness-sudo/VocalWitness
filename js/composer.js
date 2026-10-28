@@ -946,7 +946,7 @@ export function resetForm() {
   if (anonymousCheckbox) anonymousCheckbox.checked = false;
   if (trustedOnly) trustedOnly.checked = false;
 
- // Full media cleanup
+  // Full media cleanup
   clearAllMediaStates();
   window.activeSubmissionDraft = {};
   clearAiFeedback();
