@@ -1,95 +1,63 @@
-/**
- * VocalWitness i18n Audit Script (ESM Version)
- * Scans all translation JSON files in /translations and reports completeness against en.json.
- * Exits with code 1 if missing keys are found (ideal for CI/CD checks).
- */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+name: Deploy to Production (Live)
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
-const TRANSLATIONS_DIR = path.join(__dirname, '../translations');
-const BASE_LANG = 'en';
+jobs:
+  deploy-live:
+    runs-on: ubuntu-latest
 
-function flattenKeys(obj, prefix = '') {
-  return Object.keys(obj).reduce((acc, k) => {
-    const pre = prefix.length ? `${prefix}.${k}` : k;
-    if (typeof obj[k] === 'object' && obj[k] !== null && !Array.isArray(obj[k])) {
-      Object.assign(acc, flattenKeys(obj[k], pre));
-    } else {
-      acc[pre] = obj[k];
-    }
-    return acc;
-  }, {});
-}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-function auditTranslations() {
-  const baseFilePath = path.join(TRANSLATIONS_DIR, `${BASE_LANG}.json`);
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
 
-  if (!fs.existsSync(baseFilePath)) {
-    console.error(`❌ Base language file (${BASE_LANG}.json) not found in ${TRANSLATIONS_DIR}!`);
-    process.exit(1);
-  }
+      - name: Install root dependencies
+        run: npm ci || npm install
 
-  const baseContent = JSON.parse(fs.readFileSync(baseFilePath, 'utf8'));
-  const baseKeys = flattenKeys(baseContent);
-  const totalKeys = Object.keys(baseKeys).length;
+      - name: Install Functions dependencies
+        working-directory: functions
+        run: npm ci || npm install
 
-  console.log(`🌍 i18n Audit Report (Base: ${BASE_LANG}.json with ${totalKeys} keys)\n`);
+      - name: Install Tailwind CLI
+        run: npm install -D tailwindcss @tailwindcss/cli
 
-  const files = fs.readdirSync(TRANSLATIONS_DIR)
-    .filter(f => f.endsWith('.json') && f !== `${BASE_LANG}.json`);
+      - name: Build production CSS
+        run: npx @tailwindcss/cli -i ./input.css -o ./style.css --minify
 
-  if (files.length === 0) {
-    console.log('⚠️  No other translation files found to compare against.');
-    process.exit(0);
-  }
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
-  let hasErrors = false;
+      - name: Install Firebase Tools
+        run: npm install -g firebase-tools@latest
 
-  files.forEach(file => {
-    const langCode = path.basename(file, '.json');
-    const langFilePath = path.join(TRANSLATIONS_DIR, file);
+      - name: Deploy Firestore + Storage + Functions
+        env:
+          NODE_OPTIONS: "--experimental-vm-modules"
+        run: |
+          firebase deploy \
+            --only firestore,storage,functions \
+            --project vocalwitness-3affa \
+            --force \
+            --non-interactive
 
-    let langContent;
-    try {
-      langContent = JSON.parse(fs.readFileSync(langFilePath, 'utf8'));
-    } catch (e) {
-      console.error(`❌ [${langCode}] Failed to parse JSON: ${e.message}`);
-      hasErrors = true;
-      return;
-    }
-
-    const langKeys = flattenKeys(langContent);
-    const missingKeys = Object.keys(baseKeys).filter(
-      k => langKeys[k] === undefined || langKeys[k] === ''
-    );
-    const completeness = ((totalKeys - missingKeys.length) / totalKeys * 100).toFixed(1);
-
-    const statusIcon = completeness == 100 ? '✅' : completeness > 80 ? '⚠️' : '❌';
-    console.log(`${statusIcon} ${langCode.padEnd(10)} : ${completeness}% complete (${missingKeys.length} missing keys)`);
-
-    if (missingKeys.length > 0) {
-      hasErrors = true;
-      if (missingKeys.length <= 5) {
-        console.log(`    Missing: ${missingKeys.join(', ')}`);
-      } else {
-        console.log(`    Missing keys (showing first 5 of ${missingKeys.length}): ${missingKeys.slice(0, 5).join(', ')}...`);
-      }
-    }
-  });
-
-  console.log('\n----------------------------------------');
-  if (hasErrors) {
-    console.log('❌ Audit complete: Missing translation keys detected.');
-    process.exit(1);
-  } else {
-    console.log('✨ Audit complete: All translation files are 100% complete!');
-    process.exit(0);
-  }
-}
-
-auditTranslations();
+      - name: Deploy to Firebase Hosting (Live)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: vocalwitness-3affa
+          channelId: live
+          entryPoint: .
+          firebaseToolsVersion: latest
