@@ -1,4 +1,3 @@
-
 {
   "appTitle": "VocalWitness",
   "appSubtitle": "Citizen Reporting • Sealed Evidence",
@@ -355,7 +354,6 @@
   "ledgerIntegrityPoint3": "Records are linked together for extra protection.",
   "ledgerIntegrityClarification": "Important: This is strong application-level protection, not a full public blockchain. The data lives in secure cloud storage (Firebase).",
   "ledgerIntegrityFuture": "Future option: We may add extra public anchoring. This is not yet active.",
-
   "verifyPageTitle": "VocalWitness • Evidence Verification Portal",
   "legalBannerText": "VocalWitness checks integrity hashes only. A successful verification means the bits have not changed after sealing. It does not prove that real-world events occurred.",
   "verifyHeaderTitle": "🔍 Evidence Verifier",
