@@ -1,10 +1,14 @@
 /**
- * VocalWitness i18n Stub & Auto-Fill Script
+ * VocalWitness i18n Auto-Stubber (ESM Version)
  * Recursively scans secondary locale files and stubs missing keys using en.json as the source of truth.
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const TRANSLATIONS_DIR = path.join(__dirname, '../translations');
 const BASE_LANG = 'en';
@@ -21,7 +25,6 @@ function fillMissingKeys(source, target) {
       addedCount += fillMissingKeys(source[key], target[key]);
     } else {
       if (target[key] === undefined || target[key] === '') {
-        // Stub format: Mark clearly so translators or automated workflows can spot stubs
         target[key] = `[STUB] ${source[key]}`;
         addedCount++;
       }
@@ -62,7 +65,6 @@ function runStubber() {
     const added = fillMissingKeys(baseContent, langContent);
 
     if (added > 0) {
-      // Write back nicely formatted JSON with 2-space indentation
       fs.writeFileSync(langFilePath, JSON.stringify(langContent, null, 2) + '\n', 'utf8');
       console.log(`✅ [${file}] Added and stubbed ${added} missing key(s).`);
     } else {
