@@ -4,15 +4,16 @@
   "description": "VocalWitness - Truth • Evidence • Public Square",
   "private": true,
   "type": "module",
-  "scripts": {
+ "scripts": {
     "build:css": "npx @tailwindcss/cli -i ./input.css -o ./style.css --minify",
     "watch:css": "npx @tailwindcss/cli -i ./input.css -o ./style.css --watch",
     "lint": "eslint js functions --no-error-on-unmatched-pattern",
     "lint:fix": "eslint js functions --fix --no-error-on-unmatched-pattern",
+    "audit:i18n": "node scripts/audit-i18n.js",
     "emulators": "firebase emulators:start",
-    "deploy": "firebase deploy",
-    "deploy:hosting": "npm run build:css && firebase deploy --only hosting",
-    "deploy:functions": "npm --prefix functions install && firebase deploy --only functions",
+    "deploy": "npm run audit:i18n && firebase deploy",
+    "deploy:hosting": "npm run audit:i18n && npm run build:css && firebase deploy --only hosting",
+    "deploy:functions": "firebase deploy --only functions",
     "logs": "firebase functions:log",
     "install:all": "npm install && npm --prefix functions install"
   },
