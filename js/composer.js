@@ -924,6 +924,7 @@ async function handleComposerSubmit(e) {
       submitBtn.classList.remove('opacity-60', 'cursor-not-allowed');
     }
   }
+  }
 /**
  * Reset form UI + collapse the composer back to compact state
  */
