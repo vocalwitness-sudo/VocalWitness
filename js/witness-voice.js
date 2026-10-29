@@ -63,19 +63,15 @@ let recordingTimerInterval = null;
 function setupLiveVoiceRecording() {
   const btnVoice = document.getElementById('wv-btn-voice');
   if (!btnVoice) return;
-
-  // Avoid double-wiring if init runs twice
   if (document.getElementById('voice-recording-controls')) return;
 
-  const voiceSection = btnVoice.parentElement;
+  const voiceSection =
+    document.getElementById('wv-voice-dock') || btnVoice.parentElement;
+
   const controls = document.createElement('div');
-  const voiceSection = document.getElementById('wv-voice-dock') || btnVoice.parentElement;
   controls.id = 'voice-recording-controls';
-  
-  // VISIBLE by default — not hidden
   controls.className = 'mt-3 space-y-3 w-full';
   controls.innerHTML = `
-    <p class="text-xs text-zinc-400">Live voice recording — sealed on device after you attach it.</p>
     <div class="flex flex-wrap items-center gap-3">
       <button type="button" id="wv-record-start"
               class="flex items-center gap-2 rounded-xl bg-red-600 hover:bg-red-500 px-4 py-2.5 text-sm font-semibold text-white transition">
@@ -87,7 +83,13 @@ function setupLiveVoiceRecording() {
       </button>
       <span id="wv-recording-timer" class="text-sm font-mono text-red-400 hidden">00:00</span>
     </div>
-
+    <p id="wv-mic-hint" class="text-xs text-zinc-500">
+      Allow microphone when the browser asks. If blocked, use “Upload audio file” below.
+    </p>
+    <button type="button" id="wv-upload-audio-fallback"
+            class="text-xs font-medium text-sky-400 hover:text-sky-300 underline underline-offset-2">
+      Upload audio file instead
+    </button>
     <div id="wv-recording-preview" class="hidden">
       <audio id="wv-audio-preview" controls class="w-full"></audio>
       <div class="mt-2 flex flex-wrap gap-2">
@@ -102,10 +104,8 @@ function setupLiveVoiceRecording() {
       </div>
     </div>
   `;
-
   voiceSection.appendChild(controls);
 
-  // Voice button scrolls to / focuses Start — does not hide panel
   btnVoice.addEventListener('click', () => {
     controls.classList.remove('hidden');
     controls.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -115,41 +115,160 @@ function setupLiveVoiceRecording() {
   const startBtn = document.getElementById('wv-record-start');
   const stopBtn = document.getElementById('wv-record-stop');
   const timerEl = document.getElementById('wv-recording-timer');
+  const hintEl = document.getElementById('wv-mic-hint');
   const previewContainer = document.getElementById('wv-recording-preview');
   const audioPreview = document.getElementById('wv-audio-preview');
   const useBtn = document.getElementById('wv-use-recording');
   const discardBtn = document.getElementById('wv-discard-recording');
+  const uploadFallback = document.getElementById('wv-upload-audio-fallback');
+  const voiceFileInput = document.getElementById('wv-voice-input');
+
+  let activeStream = null;
+
+  function pickMimeType() {
+    const candidates = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/mp4',
+      'audio/ogg;codecs=opus',
+      ''
+    ];
+    for (const t of candidates) {
+      if (!t || (window.MediaRecorder && MediaRecorder.isTypeSupported(t))) return t;
+    }
+    return '';
+  }
+
+  function resetRecUI() {
+    isRecording = false;
+    if (recordingTimerInterval) {
+      clearInterval(recordingTimerInterval);
+      recordingTimerInterval = null;
+    }
+    startBtn.classList.remove('hidden');
+    stopBtn.classList.add('hidden');
+    timerEl.classList.add('hidden');
+    timerEl.textContent = '00:00';
+  }
+
+  function stopTracks() {
+    if (activeStream) {
+      activeStream.getTracks().forEach((t) => {
+        try { t.stop(); } catch (_) {}
+      });
+      activeStream = null;
+    }
+  }
+
+  function micErrorMessage(err) {
+    const name = err?.name || '';
+    if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+      return 'Microphone blocked. Click the lock icon in the address bar → allow Microphone for vocalwitness.com, then try again — or upload an audio file.';
+    }
+    if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+      return 'No microphone found on this device. Upload an audio file instead.';
+    }
+    if (name === 'NotReadableError' || name === 'TrackStartError') {
+      return 'Microphone is in use by another app. Close it and try again.';
+    }
+    if (name === 'SecurityError') {
+      return 'Microphone blocked by browser security policy. Use HTTPS and allow mic for this site.';
+    }
+    return err?.message || 'Could not access microphone';
+  }
+
+  uploadFallback?.addEventListener('click', () => {
+    voiceFileInput?.click();
+  });
+
+  if (voiceFileInput) {
+    voiceFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        showToast('Hashing audio…', 'info');
+        const hash = await computeSHA256(file);
+        const previewUrl = URL.createObjectURL(file);
+        attachedMedia.push({
+          id: crypto.randomUUID(),
+          type: 'audio',
+          file,
+          hash,
+          previewUrl
+        });
+        renderMediaPreview();
+        showToast('Audio file attached', 'success');
+      } catch (err) {
+        console.error(err);
+        showToast('Failed to attach audio', 'error');
+      } finally {
+        e.target.value = '';
+      }
+    });
+  }
 
   startBtn.addEventListener('click', async () => {
+    if (isRecording) return;
+
+    if (!window.isSecureContext) {
+      showToast('Recording requires HTTPS', 'error');
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      showToast('This browser does not support live recording. Upload an audio file.', 'error');
+      voiceFileInput?.click();
+      return;
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mime = MediaRecorder.isTypeSupported('audio/webm')
-        ? 'audio/webm'
-        : (MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '');
+      activeStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          channelCount: 1
+        }
+      });
+
+      const mime = pickMimeType();
       mediaRecorder = mime
-        ? new MediaRecorder(stream, { mimeType: mime })
-        : new MediaRecorder(stream);
+        ? new MediaRecorder(activeStream, { mimeType: mime })
+        : new MediaRecorder(activeStream);
+
       recordedChunks = [];
 
       mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) recordedChunks.push(e.data);
+        if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+      };
+
+      mediaRecorder.onerror = (ev) => {
+        console.error('[MediaRecorder]', ev.error);
+        showToast('Recording error — try upload instead', 'error');
+        stopTracks();
+        resetRecUI();
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
-        const url = URL.createObjectURL(blob);
-        audioPreview.src = url;
-        previewContainer.classList.remove('hidden');
-        stream.getTracks().forEach((track) => track.stop());
+        try {
+          const type = mediaRecorder?.mimeType || 'audio/webm';
+          const blob = new Blob(recordedChunks, { type });
+          if (blob.size === 0) {
+            showToast('Empty recording — try again or upload a file', 'warning');
+          } else {
+            audioPreview.src = URL.createObjectURL(blob);
+            previewContainer.classList.remove('hidden');
+          }
+        } finally {
+          stopTracks();
+        }
       };
 
-      mediaRecorder.start();
+      mediaRecorder.start(250);
       isRecording = true;
       recordingStartTime = Date.now();
-
       startBtn.classList.add('hidden');
       stopBtn.classList.remove('hidden');
       timerEl.classList.remove('hidden');
+      if (hintEl) hintEl.textContent = 'Recording… speak clearly, then press Stop.';
 
       recordingTimerInterval = setInterval(() => {
         const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
@@ -158,51 +277,66 @@ function setupLiveVoiceRecording() {
         timerEl.textContent = `${mins}:${secs}`;
       }, 1000);
 
-      showToast('Recording started...', 'info');
+      showToast('Recording started', 'info');
     } catch (err) {
       console.error(err);
-      showToast('Microphone access denied or not available', 'error');
+      stopTracks();
+      resetRecUI();
+      const msg = micErrorMessage(err);
+      if (hintEl) {
+        hintEl.textContent = msg;
+        hintEl.classList.add('text-amber-400');
+      }
+      showToast(msg, 'error');
     }
   });
 
   stopBtn.addEventListener('click', () => {
-    if (mediaRecorder && isRecording) {
-      mediaRecorder.stop();
-      isRecording = false;
-      clearInterval(recordingTimerInterval);
-
-      startBtn.classList.remove('hidden');
-      stopBtn.classList.add('hidden');
-      timerEl.classList.add('hidden');
-      timerEl.textContent = '00:00';
-
-      showToast('Recording stopped', 'success');
+    if (!mediaRecorder || !isRecording) {
+      resetRecUI();
+      stopTracks();
+      return;
     }
+    try {
+      if (mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+    } catch (err) {
+      console.error('stop failed', err);
+      stopTracks();
+    }
+    resetRecUI();
+    if (hintEl) {
+      hintEl.textContent = 'Review the preview, then “Use This Recording”.';
+      hintEl.classList.remove('text-amber-400');
+    }
+    showToast('Recording stopped', 'success');
   });
 
   useBtn.addEventListener('click', async () => {
-    if (recordedChunks.length === 0) return;
-
-    const blob = new Blob(recordedChunks, {
-      type: mediaRecorder?.mimeType || 'audio/webm'
-    });
-    const file = new File([blob], `witness-voice-${Date.now()}.webm`, {
-      type: blob.type || 'audio/webm'
-    });
+    if (recordedChunks.length === 0) {
+      showToast('No recording to use', 'warning');
+      return;
+    }
+    const type = mediaRecorder?.mimeType || 'audio/webm';
+    const blob = new Blob(recordedChunks, { type });
+    const ext = type.includes('mp4') ? 'm4a' : type.includes('ogg') ? 'ogg' : 'webm';
+    const file = new File([blob], `witness-voice-${Date.now()}.${ext}`, { type });
 
     try {
-      showToast('Hashing voice recording...', 'info');
+      showToast('Hashing voice recording…', 'info');
       const hash = await computeSHA256(file);
       const previewUrl = URL.createObjectURL(file);
-      const id = crypto.randomUUID();
-
-      attachedMedia.push({ id, type: 'audio', file, hash, previewUrl });
+      attachedMedia.push({
+        id: crypto.randomUUID(),
+        type: 'audio',
+        file,
+        hash,
+        previewUrl
+      });
       renderMediaPreview();
-
-      // Keep Start Recording visible — only hide preview
       previewContainer.classList.add('hidden');
       recordedChunks = [];
-
       showToast('Voice recording added as evidence', 'success');
     } catch (err) {
       console.error(err);
