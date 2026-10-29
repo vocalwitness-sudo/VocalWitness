@@ -64,46 +64,51 @@ function setupLiveVoiceRecording() {
   const btnVoice = document.getElementById('wv-btn-voice');
   if (!btnVoice) return;
 
-  // Create recording UI controls dynamically
+  // Avoid double-wiring if init runs twice
+  if (document.getElementById('voice-recording-controls')) return;
+
   const voiceSection = btnVoice.parentElement;
-  
-  // Add recording controls container
+
   const controls = document.createElement('div');
   controls.id = 'voice-recording-controls';
-  controls.className = 'mt-3 hidden space-y-3';
+  // VISIBLE by default — not hidden
+  controls.className = 'mt-3 space-y-3 w-full';
   controls.innerHTML = `
-    <div class="flex items-center gap-3">
-      <button type="button" id="wv-record-start" 
+    <p class="text-xs text-zinc-400">Live voice recording — sealed on device after you attach it.</p>
+    <div class="flex flex-wrap items-center gap-3">
+      <button type="button" id="wv-record-start"
               class="flex items-center gap-2 rounded-xl bg-red-600 hover:bg-red-500 px-4 py-2.5 text-sm font-semibold text-white transition">
         🔴 Start Recording
       </button>
-      <button type="button" id="wv-record-stop" 
+      <button type="button" id="wv-record-stop"
               class="hidden flex items-center gap-2 rounded-xl bg-zinc-700 hover:bg-zinc-600 px-4 py-2.5 text-sm font-semibold text-white transition">
         ⏹ Stop
       </button>
       <span id="wv-recording-timer" class="text-sm font-mono text-red-400 hidden">00:00</span>
     </div>
-    
+
     <div id="wv-recording-preview" class="hidden">
       <audio id="wv-audio-preview" controls class="w-full"></audio>
-      <div class="mt-2 flex gap-2">
-        <button type="button" id="wv-use-recording" 
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button type="button" id="wv-use-recording"
                 class="rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition">
           ✅ Use This Recording
         </button>
-        <button type="button" id="wv-discard-recording" 
+        <button type="button" id="wv-discard-recording"
                 class="rounded-xl border border-zinc-600 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 transition">
           Discard
         </button>
       </div>
     </div>
   `;
-  
+
   voiceSection.appendChild(controls);
 
-  // Toggle recording panel
+  // Voice button scrolls to / focuses Start — does not hide panel
   btnVoice.addEventListener('click', () => {
-    controls.classList.toggle('hidden');
+    controls.classList.remove('hidden');
+    controls.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    document.getElementById('wv-record-start')?.focus();
   });
 
   const startBtn = document.getElementById('wv-record-start');
@@ -117,7 +122,12 @@ function setupLiveVoiceRecording() {
   startBtn.addEventListener('click', async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      const mime = MediaRecorder.isTypeSupported('audio/webm')
+        ? 'audio/webm'
+        : (MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '');
+      mediaRecorder = mime
+        ? new MediaRecorder(stream, { mimeType: mime })
+        : new MediaRecorder(stream);
       recordedChunks = [];
 
       mediaRecorder.ondataavailable = (e) => {
@@ -125,13 +135,11 @@ function setupLiveVoiceRecording() {
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+        const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
         const url = URL.createObjectURL(blob);
         audioPreview.src = url;
         previewContainer.classList.remove('hidden');
-        
-        // Stop all tracks
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
       };
 
       mediaRecorder.start();
@@ -142,7 +150,6 @@ function setupLiveVoiceRecording() {
       stopBtn.classList.remove('hidden');
       timerEl.classList.remove('hidden');
 
-      // Timer
       recordingTimerInterval = setInterval(() => {
         const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
         const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
@@ -175,8 +182,12 @@ function setupLiveVoiceRecording() {
   useBtn.addEventListener('click', async () => {
     if (recordedChunks.length === 0) return;
 
-    const blob = new Blob(recordedChunks, { type: 'audio/webm' });
-    const file = new File([blob], `witness-voice-${Date.now()}.webm`, { type: 'audio/webm' });
+    const blob = new Blob(recordedChunks, {
+      type: mediaRecorder?.mimeType || 'audio/webm'
+    });
+    const file = new File([blob], `witness-voice-${Date.now()}.webm`, {
+      type: blob.type || 'audio/webm'
+    });
 
     try {
       showToast('Hashing voice recording...', 'info');
@@ -187,9 +198,8 @@ function setupLiveVoiceRecording() {
       attachedMedia.push({ id, type: 'audio', file, hash, previewUrl });
       renderMediaPreview();
 
-      // Hide recording UI
+      // Keep Start Recording visible — only hide preview
       previewContainer.classList.add('hidden');
-      controls.classList.add('hidden');
       recordedChunks = [];
 
       showToast('Voice recording added as evidence', 'success');
@@ -206,7 +216,6 @@ function setupLiveVoiceRecording() {
     showToast('Recording discarded', 'info');
   });
 }
-
 /* ------------------------------------------------------------------ */
 /*  Evidence Intake Assistant                                         */
 /* ------------------------------------------------------------------ */
