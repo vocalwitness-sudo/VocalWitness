@@ -263,9 +263,10 @@ export function showLegalNotice() {
     <div class="bg-zinc-900 border border-red-600/50 rounded-3xl max-w-lg mx-4 p-8 text-center">
       <div class="text-5xl mb-6">⚖️</div>
       <h2 class="text-3xl font-bold text-white mb-4">Important Legal Notice</h2>
+    
       <p class="text-red-400 font-medium mb-6">
-        VocalWitness functions strictly as an un-manipulated decentralized distribution medium.
-      </p>
+  VocalWitness is infrastructure for sealed citizen reports — not an editorial publisher of truth.
+    </p>
       <p class="text-zinc-400 text-sm leading-relaxed mb-8">
         This platform does not verify the truthfulness of testimonies.
         Users are solely responsible for what they publish.
@@ -304,7 +305,7 @@ function showWelcomeOnboarding() {
           <div class="text-2xl">🛡️</div>
           <div>
             <strong class="text-white">Post Anonymously</strong>
-            <p class="text-sm text-zinc-400">Share what you saw safely. Your identity is protected, and your report can never be secretly deleted or edited by anyone, thus zk technology do it for us. (If signed in, your trust tier still grows privately).</p>
+            <p class="text-sm text-zinc-400">Share what you saw safely. Your identity is protected. Sealed reports cannot be secretly deleted or rewritten by ordinary users. (If signed in, your trust tier still grows privately.)</p>
           </div>
         </div>
         <div class="flex gap-4">
