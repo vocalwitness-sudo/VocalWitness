@@ -11,7 +11,9 @@ import {
   limit,
   onSnapshot
 } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+import { loadVerifiedWitnesses } from './circle.js';
 
+let witnessFilterWired = false;
 let witnessReportsUnsub = null;
 let citizenReportsUnsub = null;
 
@@ -202,14 +204,59 @@ export function loadCitizenReports() {
   );
 }
 
+function setWitnessFilterActive(filter) {
+  document.querySelectorAll('[data-witness-filter]').forEach((btn) => {
+    const active = btn.getAttribute('data-witness-filter') === filter;
+    btn.classList.toggle('border-amber-500', active);
+    btn.classList.toggle('bg-amber-500/15', active);
+    btn.classList.toggle('text-amber-300', active);
+    btn.classList.toggle('border-zinc-700', !active);
+    btn.classList.toggle('text-zinc-300', !active);
+  });
+}
+
+function wireWitnessPeopleFilters() {
+  if (witnessFilterWired) return;
+  witnessFilterWired = true;
+
+  document.querySelectorAll('[data-witness-filter]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const f = btn.getAttribute('data-witness-filter') || 'all';
+      setWitnessFilterActive(f);
+      loadVerifiedWitnesses(f).catch((err) =>
+        console.error('[Witness] people filter failed', err)
+      );
+    });
+  });
+}
+
 /**
  * Called when the Witness tab becomes active
  */
 export function initWitnessTab() {
   loadHigherTrustReports();
   loadCitizenReports();
+  wireWitnessPeopleFilters();
+  setWitnessFilterActive('all');
+  loadVerifiedWitnesses('all').catch((err) =>
+    console.error('[Witness] people grid failed', err)
+  );
 }
 
+/**
+ * Clean up listeners when leaving the tab
+ */
+export function destroyWitnessTab() {
+  if (typeof witnessReportsUnsub === 'function') {
+    witnessReportsUnsub();
+    witnessReportsUnsub = null;
+  }
+  if (typeof citizenReportsUnsub === 'function') {
+    citizenReportsUnsub();
+    citizenReportsUnsub = null;
+  }
+}
 /**
  * Clean up listeners when leaving the tab
  */
