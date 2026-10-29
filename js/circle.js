@@ -38,16 +38,23 @@ export async function loadCircle(force = false) {
   const fresh = Date.now() - _cache.loadedAt < CACHE_TTL_MS && _cache.uid === uid;
   if (!force && fresh) return _cache;
 
-  const snap = await getDoc(doc(db, 'users', uid));
-  const data = snap.exists() ? snap.data() : {};
+  try {
+    const snap = await getDoc(doc(db, 'users', uid));
+    const data = snap.exists() ? snap.data() : {};
 
-  _cache = {
-    following: Array.isArray(data.following) ? data.following : [],
-    trusted: Array.isArray(data.trusted) ? data.trusted : [],
-    followers: Array.isArray(data.followers) ? data.followers : [],
-    loadedAt: Date.now(),
-    uid
-  };
+    _cache = {
+      following: Array.isArray(data.following) ? data.following : [],
+      trusted: Array.isArray(data.trusted) ? data.trusted : [],
+      followers: Array.isArray(data.followers) ? data.followers : [],
+      loadedAt: Date.now(),
+      uid
+    };
+  } catch (e) {
+    console.warn('[circle] loadCircle failed:', e);
+    if (_cache.uid !== uid) {
+      _cache = { following: [], trusted: [], followers: [], loadedAt: 0, uid };
+    }
+  }
   return _cache;
 }
 
@@ -73,14 +80,23 @@ export function hasCircle() {
   return getCircleAuthorIds().length > 0;
 }
 
-/** Follow a user */
+/**
+ * Follow a user.
+ * Own users/{uid}.following is required.
+ * Target users/{target}.followers is best-effort (rules often block writing another user).
+ */
 export async function followUser(targetUid) {
   const uid = currentUid();
   if (!uid || !targetUid || uid === targetUid) return false;
 
-  await updateDoc(doc(db, 'users', uid), {
-    following: arrayUnion(targetUid)
-  });
+  try {
+    await updateDoc(doc(db, 'users', uid), {
+      following: arrayUnion(targetUid)
+    });
+  } catch (e) {
+    console.error('[circle] follow failed:', e);
+    return false;
+  }
 
   try {
     await updateDoc(doc(db, 'users', targetUid), {
@@ -94,14 +110,20 @@ export async function followUser(targetUid) {
   return true;
 }
 
-/** Unfollow */
+/** Unfollow (+ drop from trusted if present) */
 export async function unfollowUser(targetUid) {
   const uid = currentUid();
   if (!uid || !targetUid) return false;
 
-  await updateDoc(doc(db, 'users', uid), {
-    following: arrayRemove(targetUid)
-  });
+  try {
+    await updateDoc(doc(db, 'users', uid), {
+      following: arrayRemove(targetUid),
+      trusted: arrayRemove(targetUid)
+    });
+  } catch (e) {
+    console.error('[circle] unfollow failed:', e);
+    return false;
+  }
 
   try {
     await updateDoc(doc(db, 'users', targetUid), {
@@ -114,18 +136,24 @@ export async function unfollowUser(targetUid) {
   return true;
 }
 
-/** Mark as Trusted */
+/** Mark as Trusted (ensures following first) */
 export async function trustUser(targetUid) {
   const uid = currentUid();
   if (!uid || !targetUid || uid === targetUid) return false;
 
   if (!_cache.following.includes(targetUid)) {
-    await followUser(targetUid);
+    const ok = await followUser(targetUid);
+    if (!ok) return false;
   }
 
-  await updateDoc(doc(db, 'users', uid), {
-    trusted: arrayUnion(targetUid)
-  });
+  try {
+    await updateDoc(doc(db, 'users', uid), {
+      trusted: arrayUnion(targetUid)
+    });
+  } catch (e) {
+    console.error('[circle] trust failed:', e);
+    return false;
+  }
 
   if (!_cache.trusted.includes(targetUid)) _cache.trusted.push(targetUid);
   return true;
@@ -135,9 +163,14 @@ export async function untrustUser(targetUid) {
   const uid = currentUid();
   if (!uid || !targetUid) return false;
 
-  await updateDoc(doc(db, 'users', uid), {
-    trusted: arrayRemove(targetUid)
-  });
+  try {
+    await updateDoc(doc(db, 'users', uid), {
+      trusted: arrayRemove(targetUid)
+    });
+  } catch (e) {
+    console.error('[circle] untrust failed:', e);
+    return false;
+  }
 
   _cache.trusted = _cache.trusted.filter((id) => id !== targetUid);
   return true;
@@ -176,12 +209,13 @@ function renderWitnessGrid(people) {
   grid.innerHTML = people
     .map(
       (p) => `
-    <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 hover:border-amber-500/40 transition">
+    <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 hover:border-amber-500/40 transition"
+         data-witness-uid="${escapeHtml(p.uid || '')}">
       <div class="flex items-start gap-4">
         <div class="h-12 w-12 shrink-0 rounded-full bg-zinc-800 flex items-center justify-center text-xl overflow-hidden">
           ${
             p.photoURL
-              ? `<img src="${escapeHtml(p.photoURL)}" alt="" class="h-full w-full object-cover">`
+              ? `<img src="${escapeHtml(p.photoURL)}" alt="" class="h-full w-full object-cover" loading="lazy">`
               : '🛡️'
           }
         </div>
@@ -198,11 +232,66 @@ function renderWitnessGrid(people) {
           </div>
           <p class="mt-1 text-xs text-zinc-400">Rep: ${p.reputation ?? 0}</p>
           ${p.bio ? `<p class="mt-2 text-sm text-zinc-300 line-clamp-2">${escapeHtml(p.bio)}</p>` : ''}
+          ${
+            p.uid && auth.currentUser && p.uid !== auth.currentUser.uid
+              ? `<div class="mt-3 flex gap-2">
+                   <button type="button"
+                     class="circle-follow-btn rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-[11px] font-medium text-zinc-300 hover:border-emerald-500/50 hover:text-emerald-400"
+                     data-action="follow" data-uid="${escapeHtml(p.uid)}">
+                     ${isInCircle(p.uid) ? 'Following' : 'Follow'}
+                   </button>
+                   <button type="button"
+                     class="circle-trust-btn rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-[11px] font-medium text-zinc-300 hover:border-amber-500/50 hover:text-amber-400"
+                     data-action="trust" data-uid="${escapeHtml(p.uid)}">
+                     ${isTrusted(p.uid) ? 'Trusted' : 'Trust'}
+                   </button>
+                 </div>`
+              : ''
+          }
         </div>
       </div>
     </div>`
     )
     .join('');
+
+  // Wire follow/trust once per render
+  grid.querySelectorAll('[data-action="follow"]').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const target = btn.getAttribute('data-uid');
+      if (!target) return;
+      if (!auth.currentUser) {
+        if (typeof window.showAuthModal === 'function') window.showAuthModal();
+        return;
+      }
+      btn.disabled = true;
+      const already = isInCircle(target);
+      const ok = already ? await unfollowUser(target) : await followUser(target);
+      if (ok) {
+        btn.textContent = isInCircle(target) ? 'Following' : 'Follow';
+      }
+      btn.disabled = false;
+    });
+  });
+
+  grid.querySelectorAll('[data-action="trust"]').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const target = btn.getAttribute('data-uid');
+      if (!target) return;
+      if (!auth.currentUser) {
+        if (typeof window.showAuthModal === 'function') window.showAuthModal();
+        return;
+      }
+      btn.disabled = true;
+      const already = isTrusted(target);
+      const ok = already ? await untrustUser(target) : await trustUser(target);
+      if (ok) {
+        btn.textContent = isTrusted(target) ? 'Trusted' : 'Trust';
+      }
+      btn.disabled = false;
+    });
+  });
 }
 
 /**
@@ -221,6 +310,11 @@ export async function loadVerifiedWitnesses(filter = 'all') {
       <div class="animate-pulse text-4xl mb-3">🛡️</div>
       <p>Loading verified voices…</p>
     </div>`;
+
+  // Ensure circle cache is warm so Follow/Trust labels are accurate
+  try {
+    await loadCircle();
+  } catch (_) {}
 
   try {
     let people = [];
@@ -254,10 +348,11 @@ export async function loadVerifiedWitnesses(filter = 'all') {
       );
       const phoneSnap = await getDocs(phoneQ);
       phoneSnap.forEach((docSnap) => {
-        if (people.some((p) => p.uid === (docSnap.data().uid || docSnap.id))) return;
         const d = docSnap.data();
+        const id = d.uid || docSnap.id;
+        if (people.some((p) => p.uid === id)) return;
         people.push({
-          uid: d.uid || docSnap.id,
+          uid: id,
           displayName: d.displayName || d.name || 'Anonymous Witness',
           photoURL: d.photoURL || null,
           reputation: d.reputation || 0,
@@ -280,3 +375,11 @@ export async function loadVerifiedWitnesses(filter = 'all') {
       </div>`;
   }
 }
+
+// Optional globals for HTML onclick / other modules
+window.loadCircle = loadCircle;
+window.followUser = followUser;
+window.unfollowUser = unfollowUser;
+window.trustUser = trustUser;
+window.untrustUser = untrustUser;
+window.loadVerifiedWitnesses = loadVerifiedWitnesses;
