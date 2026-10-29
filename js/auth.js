@@ -75,8 +75,8 @@ async function createOrUpdateUser(user) {
     const safePhotoURL =
       user.photoURL && user.photoURL.trim() ? user.photoURL.trim() : null;
 
-    if (!snap.exists()) {
-      // ── New user ──────────────────────────────────────
+       if (!snap.exists()) {
+      // Minimal + safe fields only — privileged flags (phone, tier elevation) are server-only
       const minimal = {
         uid: user.uid,
         email: safeEmail,
@@ -85,30 +85,34 @@ async function createOrUpdateUser(user) {
       };
 
       try {
-        // Prefer the full payload
         await setDoc(userRef, {
           ...minimal,
           photoURL: safePhotoURL,
           isAnonymous: !!user.isAnonymous,
           tier: DEFAULT_TIER,
           isVerified: false,
+          following: [],
+          trusted: [],
+          followers: [],
           updatedAt: serverTimestamp(),
         });
         console.log("[auth] Full user document created for:", user.uid);
       } catch (createErr) {
-        console.warn(
-          "[auth] Full create failed, falling back to minimal payload:",
-          createErr
-        );
-        await setDoc(userRef, minimal);
-        console.log("[auth] Minimal user document created for:", user.uid);
+        console.warn("[auth] Full create failed, falling back to minimal payload:", createErr);
+        try {
+          await setDoc(userRef, minimal);
+          console.log("[auth] Minimal user document created for:", user.uid);
+        } catch (minErr) {
+          // beforeUserCreated Cloud Function may have already written the doc
+          console.warn("[auth] Minimal create also failed (likely race with CF):", minErr);
+        }
       }
 
       updateVerificationUI(false);
       if (!user.isAnonymous) {
-        showToast("🎉 Account created! Welcome to the Public Square.", "success");
+        showToast("Account created! Welcome to the Public Square.", "success");
       }
-    } else {
+    }
       // ── Existing user ─────────────────────────────────
       const existing = snap.data() || {};
       const changes = {
