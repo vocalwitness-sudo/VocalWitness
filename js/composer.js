@@ -900,31 +900,26 @@ async function handleComposerSubmit(e) {
   }
 
   try {
+    // Origin claim is client/audit only — never written by client to testimonies
     window.activeSubmissionDraft = window.activeSubmissionDraft || {};
     window.activeSubmissionDraft.mediaOriginClaim = getSelectedMediaOriginClaim();
 
-    if (typeof window.publishTestimony === 'function') {
-      await window.publishTestimony();
-    } else if (typeof publishTestimonyOrQueue === 'function') {
-      await publishTestimonyOrQueue(window.activeSubmissionDraft);
-    } else {
-      throw new Error('No publish function available');
+    if (typeof window.publishTestimony !== 'function') {
+      throw new Error('Publish engine not loaded. Refresh the page.');
     }
-
-    // Optional: clear AI feedback after successful publish
+    await window.publishTestimony();
     clearAiFeedback();
   } catch (err) {
     console.error('[composer] Publish failed:', err);
-    showToast('Failed to publish. Please try again.', 'error');
+    showToast(err.message || 'Failed to publish. Please try again.', 'error');
   } finally {
     isSubmitting = false;
-    // Always re-enable if we are not in the middle of a main.js publish flow
     if (submitBtn && !window.__isPublishing) {
       submitBtn.disabled = false;
       submitBtn.classList.remove('opacity-60', 'cursor-not-allowed');
     }
   }
-  }
+}
 /**
  * Reset form UI + collapse the composer back to compact state
  */
