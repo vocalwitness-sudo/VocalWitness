@@ -416,35 +416,42 @@
                 const claimed = (claimedHash || '').trim().toLowerCase();
                 const storedNorm = (stored || '').trim().toLowerCase();
 
+              
                 let match = null;
                 if (claimed && storedNorm) {
                     match = claimed === storedNorm;
                 }
 
                 const share = buildShareUrl(data);
-                const title =
-                    match === true
-                        ? '✅ Hash matches ledger'
-                        : match === false
-                            ? '❌ Hash does not match ledger'
-                            : storedNorm
-                                ? 'ℹ️ Record found (no h= in link to compare)'
-                                : '⚠️ Record found but no forensic hash stored';
 
-                const isOk = match !== false && !!storedNorm;
+                let title;
+                let isOk;
+                if (match === true) {
+                    title = '✅ Hash matches ledger';
+                    isOk = true;
+                } else if (match === false) {
+                    title = '❌ Hash does not match ledger';
+                    isOk = false;
+                } else if (storedNorm) {
+                    title = 'ℹ️ Record found (no h= to compare — not a full seal check)';
+                    isOk = false;
+                } else {
+                    title = '⚠️ Record found but no forensic hash stored';
+                    isOk = false;
+                }
 
                 showResult(isOk, title, `
                     <p><strong>Record type:</strong> Testimony</p>
                     <p><strong>Testimony ID:</strong> ${escapeHtml(data.id)}</p>
                     <p><strong>Stored hash:</strong> ${escapeHtml(stored || '—')}</p>
                     <p><strong>Claimed h=:</strong> ${escapeHtml(claimed || '—')}</p>
-                    <p><strong>Match:</strong> ${match === null ? 'n/a' : match}</p>
+                    <p><strong>Match:</strong> ${match === null ? 'n/a (add h= for full check)' : match}</p>
                     <p><strong>Status:</strong> ${escapeHtml(data.status || '—')}</p>
                     <p><strong>Anonymous:</strong> ${data.isAnonymous ? 'yes' : 'no'}</p>
                     <p><strong>Channel:</strong> ${escapeHtml(data.targetFeed || data.channel || '—')}</p>
                     <p><strong>Canonical link:</strong> ${escapeHtml(share)}</p>
                     <p style="margin-top:0.75rem;color:#9ca3af">
-                        Application-level integrity only. This does <strong>not</strong> prove real-world events.
+                        Green only when stored hash matches claimed h=. Id-only lookup is informational.
                     </p>
                 `);
             } catch (e) {
@@ -586,16 +593,16 @@
                 try {
                     const isValid = await verifyEvidenceJSON(rawText);
 
-                    if (isValid) {
+                                 if (isValid) {
                         showResult(true, '✓ VERIFIED: Evidence Hash Match', `
-                            <p class="text-green-400 font-bold">Evidence hash matches immutable record successfully.</p>
-                            <p style="margin-top:0.75rem;color:#9ca3af">The embedded media data hashes correctly to the claimed cryptographic reference.</p>
+                            <p style="color:#34d399;font-weight:700">Evidence hash matches.</p>
                         `);
                     } else {
                         showResult(false, '✗ TAMPERED: Hash Mismatch', `
-                            <p class="text-red-400 font-bold">Hashes do not match! The payload or media data may have been altered.</p>
+                            <p style="color:#f87171;font-weight:700">Hashes do not match.</p>
                         `);
                     }
+
                 } catch (err) {
                     console.error('JSON verification error:', err);
                     showResult(false, '⚠️ Invalid Evidence Structure',
