@@ -2215,8 +2215,13 @@ window.closeModal = closeModal;
 
     // Phone Verification
     $('closePhoneVerificationBtn')?.addEventListener('click', () => window.closePhoneVerificationModal());
-    $('startPhoneVerificationBtn')?.addEventListener('click', () => window.openPhoneVerificationModal());
-
+  $('startPhoneVerificationBtn')?.addEventListener('click', () => {
+  if (typeof window.startPhoneVerification === 'function') {
+    window.startPhoneVerification();
+  } else if (typeof window.openPhoneVerificationModal === 'function') {
+    window.openPhoneVerificationModal();
+  }
+});
     $('send-otp-btn')?.addEventListener('click', () => {
       if (typeof handleSendOTP === 'function') handleSendOTP();
       else showToast('OTP system loading…', 'info');
