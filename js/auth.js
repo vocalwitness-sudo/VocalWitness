@@ -510,22 +510,15 @@ export function closeMfaChallengeModal() {
   window.__pendingMfaResolver = null;
   document.body.style.overflow = '';
 }
+
 export function openVerificationModal() {
   if (!requireAuth("Please sign in to complete citizen verification.")) return;
-
-  const phoneModal = document.getElementById('phoneVerificationModal');
-  if (phoneModal) {
-    phoneModal.classList.remove('hidden');
-    phoneModal.classList.add('flex');
-    phoneModal.setAttribute('aria-hidden', 'false');
+  if (typeof window.startPhoneVerification === 'function') {
+    window.startPhoneVerification();
     return;
   }
-
-  const modal = document.getElementById('verificationModal');
-  if (modal) {
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-  }
+  // fallback if module not loaded yet
+  import('./phoneVerification.js').then(m => m.startPhoneVerification());
 }
 
 export function closeVerificationModal() {
