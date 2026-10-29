@@ -236,25 +236,25 @@ window.closeVerificationModal = closeVerificationModal;
 
 /**
  * Verify Standalone Evidence JSON Pack
- * Supports both legacy { mediaData, claimedHash } and richer packs
- * with integrity.forensicHash / packCoreHash.
+ * Supports legacy { mediaData, claimedHash } and richer packs
+ * (packCoreHash, forensicHash, integrity.forensicHash).
  */
 export async function verifyEvidenceJSON(jsonString) {
   try {
     const pack = typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
 
-    // Prefer explicit media payload when present
-    const mediaPayload =
-      pack.mediaData ??
-      pack.media ??
-      pack.payload ??
-      null;
-
     const claimed =
       pack.claimedHash ||
       pack.integrity?.forensicHash ||
+      pack.forensicHash ||
       pack.packCoreHash ||
       pack.hash ||
+      null;
+
+    // Only hash raw mediaData/payload strings — not media[] metadata arrays
+    const mediaPayload =
+      pack.mediaData ??
+      pack.payload ??
       null;
 
     let isValid = false;
@@ -264,28 +264,36 @@ export async function verifyEvidenceJSON(jsonString) {
         typeof mediaPayload === 'string' ? mediaPayload : JSON.stringify(mediaPayload)
       );
       isValid = calculatedHash.toLowerCase() === String(claimed).trim().toLowerCase();
-    } else if (claimed && pack.integrity?.forensicHash) {
-      // Structure-only check when no media blob is embedded
-      isValid = String(claimed).trim().toLowerCase() ===
-        String(pack.integrity.forensicHash).trim().toLowerCase();
+    } else if (claimed && (pack.packCoreHash || pack.integrity?.forensicHash || pack.forensicHash)) {
+      const a = String(claimed).trim().toLowerCase();
+      const candidates = [
+        pack.packCoreHash,
+        pack.integrity?.forensicHash,
+        pack.forensicHash,
+        pack.hash
+      ]
+        .filter(Boolean)
+        .map((x) => String(x).trim().toLowerCase());
+      isValid = candidates.includes(a);
     } else {
-      throw new Error('Evidence pack missing mediaData/claimedHash (or integrity.forensicHash)');
+      throw new Error(
+        'Evidence pack missing claimedHash / packCoreHash / integrity.forensicHash (optional mediaData for byte check)'
+      );
     }
 
     const resultEl = document.getElementById('verify-result');
     if (resultEl) {
       resultEl.innerHTML = isValid
-        ? `<span class="text-green-600 font-bold">✓ VERIFIED: Evidence hash matches immutable record.</span>`
-        : `<span class="text-red-600 font-bold">✗ TAMPERED: Hashes do not match!</span>`;
+        ? `<span style="color:#34d399;font-weight:700">✓ VERIFIED: Evidence hash matches.</span>`
+        : `<span style="color:#f87171;font-weight:700">✗ TAMPERED: Hashes do not match!</span>`;
     }
     return isValid;
   } catch (err) {
-    console.error("Invalid evidence format", err);
+    console.error('Invalid evidence format', err);
     const resultEl = document.getElementById('verify-result');
     if (resultEl) {
-      resultEl.innerHTML = `<span class="text-red-600 font-bold">✗ ERROR: Invalid JSON or evidence structure.</span>`;
+      resultEl.innerHTML = `<span style="color:#f87171;font-weight:700">✗ ERROR: ${String(err.message || 'Invalid JSON')}</span>`;
     }
-    // Re-throw so verify.html can show the message in the result box
     throw err;
   }
 }
