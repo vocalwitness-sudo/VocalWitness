@@ -257,16 +257,3 @@ export function destroyWitnessTab() {
     citizenReportsUnsub = null;
   }
 }
-/**
- * Clean up listeners when leaving the tab
- */
-export function destroyWitnessTab() {
-  if (typeof witnessReportsUnsub === 'function') {
-    witnessReportsUnsub();
-    witnessReportsUnsub = null;
-  }
-  if (typeof citizenReportsUnsub === 'function') {
-    citizenReportsUnsub();
-    citizenReportsUnsub = null;
-  }
-}
