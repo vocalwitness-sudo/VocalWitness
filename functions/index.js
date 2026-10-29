@@ -337,6 +337,13 @@ export const confirmPhoneVerification = onCall(
         );
       }
 
+      const existingClaims = userRecord.customClaims || {};
+      await admin.auth().setCustomUserClaims(uid, {
+        ...existingClaims,
+        phone_verified: true,
+        tier: "citizen_circle"
+      });
+
       await db.collection("users").doc(uid).set(
         {
           isPhoneVerified: true,
@@ -345,6 +352,18 @@ export const confirmPhoneVerification = onCall(
           phoneVerifiedAt: admin.firestore.FieldValue.serverTimestamp(),
           verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
           tier: "citizen_circle",
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        },
+        { merge: true }
+      );
+
+      // Optional public profile for Circle discovery (no raw phone)
+      await db.collection("publicProfiles").doc(uid).set(
+        {
+          uid,
+          isPhoneVerified: true,
+          displayName: userRecord.displayName || "Citizen",
+          photoURL: userRecord.photoURL || null,
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
         },
         { merge: true }
@@ -359,7 +378,7 @@ export const confirmPhoneVerification = onCall(
         severity: "info"
       });
 
-      return { success: true };
+      return { success: true, tier: "citizen_circle" };
     } catch (error) {
       console.error("Phone verification confirmation error:", error);
       if (error instanceof HttpsError) throw error;
@@ -367,7 +386,6 @@ export const confirmPhoneVerification = onCall(
     }
   }
 );
-
 // ======================================================
 // 3. TRUST TIER
 // ======================================================
