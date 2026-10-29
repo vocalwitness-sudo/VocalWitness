@@ -1,4 +1,6 @@
+
 // js/live-arena.js – World-Class Live Arena (Evidence-grade)
+// Fixed: init guard, one-time UI wiring, participantCount on re-join/create
 
 import { listenToVerifiedCount, showToast } from './utils.js';
 import { requireAuth } from './auth.js';
@@ -29,6 +31,8 @@ let currentFilter = 'all';
 let allRoomsCache = [];
 let isHost = false;
 let myParticipantDocId = null;
+let liveArenaInitialized = false;
+let beforeUnloadWired = false;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -47,10 +51,16 @@ function escapeHTML(str) {
 // Lobby boot
 // ---------------------------------------------------------------------------
 export function initLiveArena() {
+  if (liveArenaInitialized) {
+    console.log('[LiveArena] already initialized – skipping duplicate start');
+    return;
+  }
+  liveArenaInitialized = true;
+
   console.log('[LiveArena] World-class engine starting…');
 
   // Soft progress toward mega-stages
-   listenToVerifiedCount((count) => {
+  listenToVerifiedCount((count) => {
     const n = typeof count === 'number' && count >= 0 ? count : 0;
     const countEl = document.getElementById('verifiedCount');
     const progressBar = document.getElementById('verifiedProgress');
@@ -95,17 +105,23 @@ export function initLiveArena() {
         grid.innerHTML = `
           <div class="col-span-full py-16 text-center text-red-400">
             <p class="font-medium">Could not load live rooms</p>
-            <p class="text-sm text-zinc-500 mt-1">Check connection or permissions, then refresh.</p>
+            <p class="text-sm text-zinc-500 mt-1">Check connection or permissions, then refresh. If new, create the Firestore composite index for isLive + participantCount.</p>
           </div>`;
       }
     }
   );
 
-  // Create room
-  document.getElementById('createRoomBtn')?.addEventListener('click', createRoom);
+  // Create room (wire once)
+  const createBtn = document.getElementById('createRoomBtn');
+  if (createBtn && !createBtn.dataset.wired) {
+    createBtn.dataset.wired = '1';
+    createBtn.addEventListener('click', createRoom);
+  }
 
-  // Filters (including Protest / Weather / Election / General from HTML)
+  // Filters (wire once per button)
   document.querySelectorAll('[data-filter]').forEach(btn => {
+    if (btn.dataset.wired) return;
+    btn.dataset.wired = '1';
     btn.addEventListener('click', () => {
       currentFilter = btn.dataset.filter || 'all';
       document.querySelectorAll('[data-filter]').forEach(b => {
@@ -125,10 +141,13 @@ export function initLiveArena() {
     joinLiveRoom(roomId, true);
   }
 
-  // Cleanup on tab close
-  window.addEventListener('beforeunload', () => {
-    if (currentRoomId) leaveCurrentRoom(true);
-  });
+  // Cleanup on tab close (once)
+  if (!beforeUnloadWired) {
+    beforeUnloadWired = true;
+    window.addEventListener('beforeunload', () => {
+      if (currentRoomId) leaveCurrentRoom(true);
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -286,22 +305,34 @@ window.joinLiveRoom = async function (roomId, alreadyInUrl = false) {
     const roomData = roomSnap.data() || {};
     isHost = roomData.createdBy === auth.currentUser.uid;
 
-    await updateDoc(doc(db, 'liveRooms', roomId), {
-      participantCount: increment(1),
-      lastActivityAt: serverTimestamp()
-    });
-
     const userTier = await getCurrentUserTier();
     myParticipantDocId = auth.currentUser.uid;
 
+    const partRef = doc(db, 'liveRooms', roomId, 'participants', auth.currentUser.uid);
+    const existingPart = await getDoc(partRef);
+
+    // Only bump count for first-time joiners (host already counted at create)
+    if (!existingPart.exists()) {
+      await updateDoc(doc(db, 'liveRooms', roomId), {
+        participantCount: increment(1),
+        lastActivityAt: serverTimestamp()
+      });
+    } else {
+      await updateDoc(doc(db, 'liveRooms', roomId), {
+        lastActivityAt: serverTimestamp()
+      });
+    }
+
     await setDoc(
-      doc(db, 'liveRooms', roomId, 'participants', auth.currentUser.uid),
+      partRef,
       {
         uid: auth.currentUser.uid,
         displayName: auth.currentUser.displayName || 'Citizen',
         photoURL: auth.currentUser.photoURL || null,
         tier: userTier,
-        joinedAt: serverTimestamp(),
+        joinedAt: existingPart.exists()
+          ? (existingPart.data()?.joinedAt || serverTimestamp())
+          : serverTimestamp(),
         isSpeaking: false,
         isMuted: false,
         isHost: isHost,
@@ -314,7 +345,6 @@ window.joinLiveRoom = async function (roomId, alreadyInUrl = false) {
       history.pushState({}, '', `?room=${encodeURIComponent(roomId)}`);
     }
 
-    // Defined in Part 2
     showActiveRoom(roomId, roomData);
   } catch (err) {
     console.error(err);
@@ -322,7 +352,6 @@ window.joinLiveRoom = async function (roomId, alreadyInUrl = false) {
     showToast("Could not join room", "error");
   }
 };
-
 
 async function showActiveRoom(roomId, room = {}) {
   document.getElementById('lobbyView')?.classList.add('hidden');
@@ -483,13 +512,9 @@ async function showActiveRoom(roomId, room = {}) {
     document.getElementById('hostControls')?.classList.remove('hidden');
   }
 
-  // Wire controls (LiveKit, reactions, share, report, etc.) — Part 3
   wireActiveRoomControls(roomId);
-
-  // Drop evidence modal (local to this room view)
   wireDropEvidenceModal(roomId);
 
-  // Participants live list
   if (participantsUnsubscribe) participantsUnsubscribe();
   participantsUnsubscribe = onSnapshot(
     collection(db, 'liveRooms', roomId, 'participants'),
@@ -505,7 +530,6 @@ async function showActiveRoom(roomId, room = {}) {
     (err) => console.error('[LiveArena] participants error:', err)
   );
 
-  // Corroboration count
   if (window._corrUnsub) {
     try { window._corrUnsub(); } catch (_) {}
   }
@@ -523,7 +547,6 @@ async function showActiveRoom(roomId, room = {}) {
     }
   );
 
-  // Live reaction totals on room doc
   if (window._reactUnsub) {
     try { window._reactUnsub(); } catch (_) {}
   }
@@ -606,7 +629,7 @@ function renderParticipants(participants) {
 }
 
 // ---------------------------------------------------------------------------
-// Drop evidence modal (photo / audio + seal into room + testimonies)
+// Drop evidence modal
 // ---------------------------------------------------------------------------
 function wireDropEvidenceModal(roomId) {
   const dropModal = document.getElementById('dropEvidenceModal');
@@ -723,7 +746,6 @@ function wireDropEvidenceModal(roomId) {
 // ========== LIVEKIT ==========
 async function connectToLiveKit(roomId) {
   try {
-    // Tear down any previous session
     if (livekitRoom) {
       try { await livekitRoom.disconnect(); } catch (_) {}
       livekitRoom = null;
@@ -873,7 +895,6 @@ async function stopSpeaking() {
 function wireActiveRoomControls(roomId) {
   connectToLiveKit(roomId);
 
-  // Push-to-talk
   const talkBtn = document.getElementById('pushToTalkBtn');
   if (talkBtn) {
     talkBtn.addEventListener('mousedown', (e) => {
@@ -890,7 +911,6 @@ function wireActiveRoomControls(roomId) {
     talkBtn.addEventListener('touchcancel', stopSpeaking);
   }
 
-  // Raise hand
   document.getElementById('raiseHandBtn')?.addEventListener('click', async () => {
     if (!myParticipantDocId || !currentRoomId) return;
     try {
@@ -905,7 +925,6 @@ function wireActiveRoomControls(roomId) {
     }
   });
 
-  // Live reactions: 👏 🔥 👍 👎
   document.querySelectorAll('.room-react-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       if (!requireAuth("Sign in to react")) return;
@@ -925,7 +944,6 @@ function wireActiveRoomControls(roomId) {
     });
   });
 
-  // Share (bottom + top bar)
   const shareHandler = async () => {
     const shareUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(roomId)}`;
     const title =
@@ -947,7 +965,6 @@ function wireActiveRoomControls(roomId) {
   document.getElementById('shareRoomBtn')?.addEventListener('click', shareHandler);
   document.getElementById('shareRoomBtnTop')?.addEventListener('click', shareHandler);
 
-  // Report room
   document.getElementById('reportBtn')?.addEventListener('click', async () => {
     if (!requireAuth("Sign in to report")) return;
     const reason = prompt(
@@ -969,7 +986,6 @@ function wireActiveRoomControls(roomId) {
     }
   });
 
-  // Corroborate
   document.getElementById('corroborateBtn')?.addEventListener('click', async () => {
     if (!requireAuth()) return;
 
@@ -995,7 +1011,6 @@ function wireActiveRoomControls(roomId) {
     }
   });
 
-  // Seal segment
   document.getElementById('sealBtn')?.addEventListener('click', async () => {
     if (!requireAuth()) return;
     try {
@@ -1013,7 +1028,6 @@ function wireActiveRoomControls(roomId) {
     }
   });
 
-  // Host: mute all
   document.getElementById('muteAllBtn')?.addEventListener('click', async () => {
     if (!isHost) return;
     try {
@@ -1032,7 +1046,6 @@ function wireActiveRoomControls(roomId) {
     }
   });
 
-  // Host: lower all hands
   document.getElementById('lowerHandsBtn')?.addEventListener('click', async () => {
     if (!isHost) return;
     try {
@@ -1061,7 +1074,6 @@ window.hostAction = async function (uid, action) {
       await updateDoc(ref, { isSpeaking: false, handRaised: false });
       showToast("Participant muted", "info");
     } else if (action === 'promote') {
-      // Soft promote: clear mute flags / lower hand so they can speak
       await updateDoc(ref, { isMuted: false, handRaised: false });
       showToast("Participant promoted to speak", "success");
     } else if (action === 'remove') {
@@ -1096,7 +1108,6 @@ window.leaveCurrentRoom = async function (silent = false) {
   }
   isSpeaking = false;
 
-  // Remove stray remote audio elements
   document.querySelectorAll('[id^="audio-"]').forEach(el => el.remove());
 
   if (participantsUnsubscribe) {
