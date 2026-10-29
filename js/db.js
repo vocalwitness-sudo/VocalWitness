@@ -183,97 +183,67 @@ export async function publishTestimonyOrQueue(prepared) {
 
   return publishTestimonyNow(publicData, privateData);
 }
-
 /**
- * Write public testimony + optional private tier contribution with full metadata persistence.
- * Payload is restricted to fields allowed by isSafeTestimonyCreate() in firestore.rules.
+ * @deprecated Prefer submitTestimony() from createPost.js
+ * Thin wrapper so offline queue / old callers stay safe.
+ * Does NOT client-write testimonies (no addDoc).
  */
 export async function publishTestimonyNow(publicData, privateData = null) {
-  const targetFeed = normalizeFeedTarget(publicData.targetFeed);
-  const isWitnessVoice =
-    publicData.isWitnessVoice !== undefined
-      ? publicData.isWitnessVoice
-      : targetFeed === 'witness_voice';
-
-  const isAnonymous = Boolean(publicData.isAnonymous);
   const user = auth?.currentUser;
+  const isAnonymous = Boolean(publicData?.isAnonymous);
 
-  // Must be signed in for non-anonymous posts (rules require authorId == request.auth.uid)
   if (!isAnonymous && !user) {
     throw new Error('Authentication required to publish identified testimony');
   }
 
-  // 🛡️ Sanitize forensicHash: Must be null or exactly 64 chars (never empty string)
-  const rawHash = publicData.forensicHash || publicData.imageHash || publicData.audioHash || publicData.videoHash || null;
-  const forensicHash = (typeof rawHash === 'string' && rawHash.trim().length === 64) ? rawHash.trim() : null;
+  const targetFeed = normalizeFeedTarget(publicData?.targetFeed);
+  const isWitnessVoice =
+    publicData?.isWitnessVoice !== undefined
+      ? publicData.isWitnessVoice
+      : targetFeed === 'witness_voice';
 
-  // Channel must be one of the values accepted by the rules
-  const channel = isWitnessVoice || targetFeed === 'witness_voice' || targetFeed === 'witness-voice'
-    ? 'witness-voice'
-    : 'citizen-talk';
+  const channel =
+    isWitnessVoice ||
+    targetFeed === 'witness_voice' ||
+    targetFeed === 'witness-voice' ||
+    publicData?.channel === 'witness-voice'
+      ? 'witness-voice'
+      : 'citizen-talk';
 
-  // Field-note style (allowed by rules)
-  const postingStyle = publicData.postingStyle === 'field-note' ? 'field-note' : 'citizen';
-  const fieldNoteRole = postingStyle === 'field-note' ? (publicData.fieldNoteRole || null) : null;
-  const fieldNoteOrg  = postingStyle === 'field-note' ? (publicData.fieldNoteOrg  || null) : null;
+  const postingStyle =
+    publicData?.postingStyle === 'field-note' ? 'field-note' : 'citizen';
+  const fieldNoteRole =
+    postingStyle === 'field-note' ? (publicData?.fieldNoteRole || null) : null;
+  const fieldNoteOrg =
+    postingStyle === 'field-note' ? (publicData?.fieldNoteOrg || null) : null;
 
-  // ============================================================
-  // CLIENT-SAFE PAYLOAD ONLY — must satisfy isSafeTestimonyCreate()
-  // Forbidden / unknown keys cause permission-denied:
-  //   title, headline, visibility, timestamp, authorTier,
-  //   imageHash/audioHash/videoHash, hasForensic, syntheticScore,
-  //   mediaOriginClaim, provenance, mediaMetadata, status, etc.
-  // ============================================================
-  const testimonyPayload = {
-    content: (publicData.content || '').trim(),
-    channel,
-    authorId: isAnonymous ? null : (publicData.authorId || user?.uid || null),
-    author: isAnonymous
-      ? 'Anonymous Witness'
-      : (user?.displayName || publicData.author || 'Witness'),
-    isAnonymous,
-
-    postingStyle,
-    fieldNoteRole,
-    fieldNoteOrg,
-
-    forensicHash,
-
-    imageUrl: publicData.imageUrl || null,
-    videoUrl: publicData.videoUrl || null,
-    audioUrl: publicData.audioUrl || null,
-
-    evidencePack: publicData.evidencePack || null,
-    packCoreHash: publicData.packCoreHash || null,
-
-    reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
-    commentsCount: 0,
-    isPinned: false,
-    isDeleted: false,
-
-    feedVisibility: channel,
-    createdAt: serverTimestamp(),
-  };
-
-  // Rules require authorId == request.auth.uid for non-anonymous creates.
-  // If anonymous path is ever enabled client-side, rules must also allow it.
-  if (!isAnonymous && testimonyPayload.authorId !== user.uid) {
-    testimonyPayload.authorId = user.uid;
-  }
-
-  // Content is required by rules (size > 0)
-  if (!testimonyPayload.content) {
+  const content = (publicData?.content || '').trim();
+  if (!content) {
     throw new Error('Testimony content is required');
   }
 
-  const testimonyRef = await addDoc(collection(db, 'testimonies'), testimonyPayload);
+  // Secure path only — no client addDoc
+  const { submitTestimony } = await import('./createPost.js');
 
-  // Optional private tier contribution (separate collection — already rule-safe)
+  const id = await submitTestimony({
+    content,
+    channel,
+    isAnonymous,
+    postingStyle,
+    fieldNoteRole,
+    fieldNoteOrg,
+    imageFile: publicData?.imageFile || null,
+    videoFile: publicData?.videoFile || null,
+    audioFile: publicData?.audioFile || null,
+    mediaFile: publicData?.mediaFile || null,
+  });
+
+  // Optional private tier contribution (separate collection)
   if (privateData?.countsTowardTier && user) {
     try {
       await addDoc(collection(db, 'userContributions'), {
         uid: user.uid,
-        testimonyId: testimonyRef.id,
+        testimonyId: id,
         isAnonymous: Boolean(privateData.isAnonymous),
         nullifierNonce: privateData.nullifierNonce ?? null,
         testimonyClientId: privateData.testimonyClientId || null,
@@ -285,16 +255,18 @@ export async function publishTestimonyNow(publicData, privateData = null) {
   }
 
   try {
-    await logSecurityAudit('TESTIMONY_PUBLISHED', testimonyRef.id, {
+    await logSecurityAudit('TESTIMONY_PUBLISHED', id, {
       targetFeed,
       isAnonymous,
-      offline: Boolean(publicData.syncedFromOffline),
+      offline: Boolean(publicData?.syncedFromOffline),
+      via: 'publishTestimonyNow→submitTestimony',
     });
   } catch (_) {}
 
-  window.dispatchEvent(new CustomEvent('vocalWitness:posted'));
-  return { id: testimonyRef.id, queued: false };
+  window.dispatchEvent(new CustomEvent('vocalWitness:posted', { detail: { id } }));
+  return { id, queued: false };
 }
+
 // ==================== USER PROFILE ====================
 export const updateUserProfile = async (userId, updates) => {
   const userRef = doc(db, 'users', userId);
@@ -351,22 +323,47 @@ export const editPost = async (postId, userId, newContent, collectionName = 'tes
     throw new Error('Not authorized to edit this content');
   }
 
+  const data = snap.data();
+  const created = data.createdAt?.toDate ? data.createdAt.toDate() : null;
+  if (created) {
+    const ageMs = Date.now() - created.getTime();
+    if (ageMs > 30 * 60 * 1000) {
+      throw new Error('Text can only be edited within 30 minutes of publishing.');
+    }
+  }
+
+  const trimmed = (newContent || '').trim();
+  if (!trimmed || trimmed.length > 3000) {
+    throw new Error('Content must be 1–3000 characters.');
+  }
+
+  // Only fields allowed by isSafeAuthorTestimonyUpdate inside correction window
   await updateDoc(docRef, {
-    content: newContent.trim(),
-    editedAt: serverTimestamp(),
+    content: trimmed,
+    updatedAt: serverTimestamp(),
   });
 };
-
+/**
+ * Soft-hide only. Sealed hashes and media remain for verification.
+ * Matches firestore.rules isSafeAuthorTestimonyUpdate hide path.
+ */
 export const deletePost = async (postId, userId, collectionName = 'testimonies') => {
   const docRef = doc(db, collectionName, postId);
   const snap = await getDoc(docRef);
 
   if (!snap.exists() || snap.data().authorId !== userId) {
-    throw new Error('Not authorized to delete this content');
+    throw new Error('Not authorized to hide this content');
   }
 
-  await deleteDoc(docRef);
-};
+  await updateDoc(docRef, {
+    visibility: 'author_hidden',
+    isDeleted: true,
+    hiddenAt: serverTimestamp(),
+    hiddenBy: userId,
+    hiddenReason: 'author_request',
+    updatedAt: serverTimestamp(),
+  });
+}
 
 export const togglePinPost = async (postId, userId, collectionName = 'testimonies') => {
   const docRef = doc(db, collectionName, postId);
@@ -436,25 +433,39 @@ export async function syncOfflineDrafts() {
 
   showToast(`Syncing ${drafts.length} offline draft(s)...`, 'info');
 
+  const { submitTestimony } = await import('./createPost.js');
+
   for (const draft of drafts) {
     if (activeSyncIds.has(draft.id)) continue;
     activeSyncIds.add(draft.id);
 
     try {
-      const publicData = {
-        ...(draft.public || draft),
-        syncedFromOffline: true,
-        originalOfflineTimestamp: draft.savedAt || draft.createdAt || null,
-      };
-      const privateData = draft.private || draft._private || null;
-
-      if (!publicData.isAnonymous && !auth?.currentUser) {
-        console.log('Skipping identified draft until auth restores');
+      if (!auth?.currentUser) {
+        console.log('Skipping draft until auth restores');
         activeSyncIds.delete(draft.id);
         continue;
       }
 
-      await publishTestimonyNow(publicData, privateData);
+      // Prefer text-only offline drafts; media should be re-attached online
+      if (draft.hasMediaPending && !draft.imageUrl && !draft.audioUrl && !draft.videoUrl) {
+        console.warn('Skipping media draft that needs re-upload:', draft.id);
+        failedCount++;
+        activeSyncIds.delete(draft.id);
+        continue;
+      }
+
+      const content = draft.content || draft.public?.content || '';
+      const channel = draft.channel || draft.public?.channel || 'citizen-talk';
+
+      await submitTestimony({
+        content,
+        channel,
+        isAnonymous: !!(draft.isAnonymous || draft.public?.isAnonymous),
+        postingStyle: draft.postingStyle || draft.public?.postingStyle || 'citizen',
+        fieldNoteRole: draft.fieldNoteRole || draft.public?.fieldNoteRole || null,
+        fieldNoteOrg: draft.fieldNoteOrg || draft.public?.fieldNoteOrg || null,
+      });
+
       await removeOfflineDraft(draft.id);
       syncedCount++;
     } catch (err) {
@@ -468,11 +479,10 @@ export async function syncOfflineDrafts() {
   isSyncing = false;
 
   if (syncedCount > 0) {
-    showToast(`✅ Successfully published ${syncedCount} offline testimony draft(s)!`, 'success');
+    showToast(`✅ Published ${syncedCount} offline draft(s)!`, 'success');
   }
-
   if (failedCount > 0) {
-    showToast(`⚠️ ${failedCount} draft(s) could not be synced. Retrying later.`, 'error');
+    showToast(`⚠️ ${failedCount} draft(s) could not sync. Retry later.`, 'error');
   }
 }
 
