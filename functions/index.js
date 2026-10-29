@@ -1313,9 +1313,7 @@ export const requestTimestamp = onCall(
   }
 );
 
-// ======================================================
 // 11. LIVEKIT TOKEN FOR LIVE ARENA
-// ======================================================
 const livekitApiKey = defineSecret("LIVEKIT_API_KEY");
 const livekitApiSecret = defineSecret("LIVEKIT_API_SECRET");
 
@@ -1343,7 +1341,7 @@ export const getLiveKitToken = onCall(
         {
           identity: request.auth.uid,
           name: participantName,
-          ttl: "2h",               // explicit expiry
+          ttl: "2h",
         }
       );
 
@@ -1367,7 +1365,6 @@ export const getLiveKitToken = onCall(
     }
   }
 );
-
 // ======================================================
 // 12. ZK MEMBERSHIP — real Groth16 (Poseidon + Merkle)
 // Elevate ONLY after snarkjs.groth16.verify succeeds.
