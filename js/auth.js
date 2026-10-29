@@ -517,12 +517,24 @@ export function closeMfaChallengeModal() {
 
 export function openVerificationModal() {
   if (!requireAuth("Please sign in to complete citizen verification.")) return;
-  if (typeof window.startPhoneVerification === 'function') {
+
+  if (typeof window.startPhoneVerification === "function") {
     window.startPhoneVerification();
     return;
   }
-  // fallback if module not loaded yet
-  import('./phoneVerification.js').then(m => m.startPhoneVerification());
+
+  import("./phoneVerification.js")
+    .then((m) => {
+      if (typeof m.startPhoneVerification === "function") {
+        m.startPhoneVerification();
+      } else {
+        showToast("Phone verification is temporarily unavailable. Refresh and try again.", "error");
+      }
+    })
+    .catch((err) => {
+      console.error("[auth] phoneVerification load failed:", err);
+      showToast("Could not load phone verification. Refresh the page.", "error");
+    });
 }
 
 export function closeVerificationModal() {
