@@ -524,7 +524,7 @@ function showWelcomeNote() {
   localStorage.setItem('hasSeenWelcome', 'true');
 }
 
-/* ====================== PUBLISH TESTIMONY ====================== */
+/* ====================== PUBLISH TESTIMONY (single secure path) ====================== */
 window.publishTestimony = async () => {
   if (window.__isPublishing) {
     console.warn('[publish] Already publishing – ignored');
@@ -533,21 +533,30 @@ window.publishTestimony = async () => {
 
   const currentUser = auth.currentUser;
   if (!currentUser) {
-    showToast("Session expired. Please re-authenticate.", "error");
+    showToast("Please sign in to publish.", "error");
+    if (typeof openAuthModal === 'function') openAuthModal();
     return;
   }
 
   const titleInput = document.getElementById('testimonyTitle');
   const textarea = document.getElementById('mainInput');
-  let title = titleInput ? titleInput.value.trim() : '';
   const content = textarea ? textarea.value.trim() : '';
 
-  // Capture composer metadata for standard/field-note posting styles and roles
-  const postingStyle   = typeof currentPostingStyle !== 'undefined' ? currentPostingStyle : (window.currentPostingStyle || 'citizen');
-  const fieldNoteRole  = document.getElementById('field-note-role')?.value.trim() || window.selectedRole || null;
-  const fieldNoteOrg   = document.getElementById('field-note-org')?.value.trim() || null;
+  const postingStyle =
+    (typeof window.currentPostingStyle !== 'undefined' && window.currentPostingStyle) ||
+    'citizen';
+  const fieldNoteRole =
+    document.getElementById('field-note-role')?.value.trim() ||
+    window.selectedRole ||
+    null;
+  const fieldNoteOrg =
+    document.getElementById('field-note-org')?.value.trim() || null;
 
-  // Phone-friendly: explain why publish is blocked (button is no longer silently disabled)
+  const isAnonymous = !!(
+    document.getElementById('post-anonymously')?.checked ||
+    document.getElementById('isAnonymous')?.checked
+  );
+
   const hasMediaEarly =
     (typeof mediaModule?.hasPendingMedia === 'function' && mediaModule.hasPendingMedia()) ||
     (typeof mediaModule?.hasAnyMedia === 'function' && mediaModule.hasAnyMedia()) ||
@@ -565,11 +574,32 @@ window.publishTestimony = async () => {
     showToast('Please add a short text description with your media', 'error');
     return;
   }
-  // Title is UI-only (not written to Firestore — rules reject unknown keys)
-  if (!title && content) {
-    title = content.length <= 80
-      ? content
-      : content.slice(0, 80).replace(/\s+\S*$/, '') + '...';
+
+  // Channel
+  const targetFeedEl = document.getElementById('targetFeedSelect');
+  let channel =
+    targetFeedEl?.value === 'witness-voice' ||
+    targetFeedEl?.value === 'witness_voice'
+      ? 'witness-voice'
+      : 'citizen-talk';
+
+  // Witness Voice gate (client hint; server enforces too)
+  if (channel === 'witness-voice') {
+    try {
+      const userRef = doc(db, 'users', currentUser.uid);
+      const userSnap = await getDoc(userRef);
+      const ud = userSnap.exists() ? userSnap.data() : {};
+      const isWitness = ud.tier === 'witness_circle' || ud.zkVerified === true;
+      if (!isWitness) {
+        showToast(
+          'Witness Voice needs Witness Circle. Publishing to Citizen Talk instead.',
+          'warning'
+        );
+        channel = 'citizen-talk';
+      }
+    } catch (_) {
+      channel = 'citizen-talk';
+    }
   }
 
   const postBtn = document.getElementById('postButton') || document.getElementById('postBtn');
@@ -586,368 +616,144 @@ window.publishTestimony = async () => {
   }
 
   try {
-    try {
-      const { remindUserOfAIRestrictions } = await import('./ai-services.js');
-      remindUserOfAIRestrictions("publish");
-    } catch (aiErr) {
-      console.warn("[publish] AI notice skipped:", aiErr);
-    }
-
-    const userRef = doc(db, 'users', currentUser.uid);
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) {
-      console.log('[publish] Creating missing user document...');
-      await setDoc(userRef, {
-        uid: currentUser.uid,
-        email: currentUser.email || '',
-        displayName: currentUser.displayName || 'Registered Witness',
-        createdAt: serverTimestamp(),
-        tier: 'citizen',
-        isVerified: false
-      }, { merge: true });
-    }
-
-    // Channel from index.html #targetFeedSelect
-    const targetFeedEl = document.getElementById('targetFeedSelect');
-    let channel = targetFeedEl?.value === 'witness-voice' ? 'witness-voice' : 'citizen-talk';
-
-    // Witness Voice only if user is Witness Circle (matches firestore.rules isWitnessCircle)
-    if (channel === 'witness-voice') {
-      const ud = userSnap.exists() ? userSnap.data() : {};
-      const isWitness = ud.tier === 'witness_circle' || ud.zkVerified === true;
-      if (!isWitness) {
-        console.warn('[publish] Witness Voice selected but not Witness Circle — using citizen-talk');
-        showToast('Witness Voice needs Witness Circle. Publishing to Citizen Talk instead.', 'warning');
-        channel = 'citizen-talk';
-      }
-    }
-
-    const audioInfo = typeof getAudioForPublish === 'function' ? getAudioForPublish() : null;
-
-    let mediaData = {
-      imageUrl: null,
-      videoUrl: null,
-      audioUrl: null,
-      audioSource: null,
-      audioLabel: null,
-      imageHash: null,
-      videoHash: null,
-      audioHash: null,
-      bodyHash: null,
-      hasEvidencePack: false,
-      evidencePack: null,
-      packCoreHash: null
-    };
-
-    const userSelectedMedia = typeof mediaModule?.hasPendingMedia === 'function'
-      ? mediaModule.hasPendingMedia()
-      : !!(audioInfo || window.selectedImageFile || window.selectedVideoFile);
-
-const uploaderFunc = typeof uploadForensicMedia === 'function'
-  ? uploadForensicMedia
-  : mediaModule?.uploadForensicMedia;
-
-if (typeof uploaderFunc === 'function') {
-  try {
-    const pending = typeof mediaModule.getActiveMedia === 'function'
-      ? mediaModule.getActiveMedia()
-      : {
-          image: mediaModule.selectedImageFile,
-          video: mediaModule.selectedVideoFile,
-          audio: typeof getAudioForPublish === 'function' ? getAudioForPublish()?.blob : null
-        };
-
-    const activeImg = pending.image || null;
-    const activeVid = pending.video || null;
-    const activeAudio = pending.audio || null;
-
-    const uploaded = await uploaderFunc(activeImg, activeVid, activeAudio);
-    
-        if (uploaded) {
-          mediaData = {
-            ...mediaData,
-            ...uploaded,
-            audioSource: audioInfo ? audioInfo.source : null
+    // Resolve active media once
+    const pending =
+      typeof mediaModule?.getActiveMedia === 'function'
+        ? mediaModule.getActiveMedia()
+        : {
+            image: mediaModule?.selectedImageFile || null,
+            video: mediaModule?.selectedVideoFile || null,
+            audio:
+              typeof getAudioForPublish === 'function'
+                ? getAudioForPublish()?.blob
+                : null,
           };
-          if (audioInfo?.isLive) {
-            mediaData.audioLabel = 'Live Voice';
-          } else if (audioInfo) {
-            mediaData.audioLabel = 'Uploaded Audio';
-          }
-        } else if (userSelectedMedia) {
-          throw new Error('Media upload returned empty result');
-        }
-      } catch (mediaErr) {
-        console.error('[publish] Media upload failed – aborting:', mediaErr);
-        const isCorsLike = mediaErr?.message?.includes('Network error') ||
-                           mediaErr?.message?.includes('CORS') ||
-                           mediaErr?.name === 'NetworkError';
-        showToast(
-          isCorsLike
-            ? 'Media upload blocked (CORS). Open https://vocalwitness.com and try again. Report was NOT published.'
-            : 'Media upload failed. Report was NOT published. Please try again.',
-          'error'
-        );
-        return;
-      }
-    }
 
-    try {
-      if (content && typeof generateSha256Hash === 'function') {
-        const textBlob = new Blob([content], { type: 'text/plain' });
-        mediaData.bodyHash = await generateSha256Hash(textBlob);
-      }
-    } catch (hashErr) {
-      console.warn('[publish] Could not compute bodyHash:', hashErr);
-    }
-
-    // ZK only when Witness Voice. Optional / non-blocking.
-    // Do NOT write zk* fields to Firestore (rules forbid them).
-    let zkResult = {
-      isFallback: true,
-      proofType: 'NONE',
-      proof: null,
-      publicSignals: []
-    };
-
-    if (channel === 'witness-voice') {
-      try {
-        const { generateZKProofAsync } = await import('./zk-client.js');
-        const contentHash = mediaData.bodyHash || await generateSha256Hash(new Blob([content]));
-        const authorHash  = await generateSha256Hash(currentUser.uid);
-
-        zkResult = await generateZKProofAsync({
-          contentHash,
-          authorHash,
-          timestamp: Date.now().toString(),
-          mediaHash: mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash || '0'
-        });
-
-        console.log('[publish] ZK result:', zkResult.proofType, zkResult.isFallback ? '(fallback)' : '(real proof)');
-      } catch (zkErr) {
-        console.warn('[publish] ZK failed, continuing without proof:', zkErr);
-        showToast('ZK unavailable. Publishing without higher-trust proof.', 'warning');
-      }
-    }
-
-    const primaryForensicHash =
-      mediaData.imageHash ||
-      mediaData.videoHash ||
-      mediaData.audioHash ||
-      mediaData.bodyHash ||
-      null;
-
-    let evidencePackResult = null;
-    try {
-      const { createEvidencePack } = await import('./evidence-pack.js');
-
-      evidencePackResult = await createEvidencePack({
-        content,
-        bodyHash: mediaData.bodyHash,
-        media: {
-          imageUrl: mediaData.imageUrl,
-          imageHash: mediaData.imageHash,
-          videoUrl: mediaData.videoUrl,
-          videoHash: mediaData.videoHash,
-          audioUrl: mediaData.audioUrl,
-          audioHash: mediaData.audioHash,
-        },
-        identity: {
-          mode: 'IDENTIFIED',
-          authorId: currentUser.uid,
-          displayName: currentUser.displayName || 'Registered Witness',
-        },
-        channel,
-        clientCaptureMs: Date.now(),
-        testimonyId: null,
-        forensicHash: primaryForensicHash,
+    const imageFile = pending.image || null;
+    const videoFile = pending.video || null;
+    let audioFile = pending.audio || null;
+    if (audioFile && !(audioFile instanceof File) && audioFile instanceof Blob) {
+      audioFile = new File([audioFile], 'live-voice.webm', {
+        type: audioFile.type || 'audio/webm',
+        lastModified: Date.now(),
       });
-
-      console.log('[publish] Evidence Pack created →', evidencePackResult.packCoreHash?.slice(0, 12) + '…');
-    } catch (packErr) {
-      console.warn('[publish] Evidence Pack creation failed (non-blocking):', packErr);
     }
 
-  
-    const hasAnyHash = !!(
-      mediaData.imageHash ||
-      mediaData.videoHash ||
-      mediaData.audioHash ||
-      mediaData.bodyHash ||
-      evidencePackResult?.packCoreHash
-    );
-
-    const handlePublish = async () => {
-      const testimonyData = {
+    // Offline → queue minimal text draft (media should be published online)
+    if (!navigator.onLine) {
+      const { saveDraftOffline } = await import('./db.js');
+      await saveDraftOffline({
         content,
         channel,
-        authorId: currentUser.uid,
-        author: currentUser.displayName || 'Registered Witness',
-        isAnonymous: false,
-        postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
-        fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
-        fieldNoteOrg: postingStyle === 'field-note' ? (fieldNoteOrg || null) : null,
-        forensicHash: (typeof primaryForensicHash === 'string' && primaryForensicHash.length === 64)
-          ? primaryForensicHash
-          : null,
-        imageUrl: mediaData.imageUrl || null,
-        videoUrl: mediaData.videoUrl || null,
-        audioUrl: mediaData.audioUrl || null,
-        evidencePack: evidencePackResult?.firestorePack || null,
-        packCoreHash: evidencePackResult?.packCoreHash || null,
-        reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
-        commentsCount: 0,
-        isPinned: false,
-        isDeleted: false,
-        feedVisibility: channel,
-        visibility: 'public',
-        createdAt: serverTimestamp(),
-      };
-
-      const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
-      console.log('[publish] SUCCESS →', docRef.id, '| channel:', channel);
-
-      if (evidencePackResult && docRef.id) {
-        try {
-          const { createEvidencePack } = await import('./evidence-pack.js');
-          const finalPack = await createEvidencePack({
-            content,
-            bodyHash: mediaData.bodyHash,
-            media: {
-              imageUrl: mediaData.imageUrl,
-              imageHash: mediaData.imageHash,
-              videoUrl: mediaData.videoUrl,
-              videoHash: mediaData.videoHash,
-              audioUrl: mediaData.audioUrl,
-              audioHash: mediaData.audioHash,
-            },
-            identity: {
-              mode: 'IDENTIFIED',
-              authorId: currentUser.uid,
-              displayName: currentUser.displayName || 'Registered Witness',
-            },
-            channel,
-            clientCaptureMs: Date.now(),
-            testimonyId: docRef.id,
-            forensicHash: testimonyData.forensicHash || primaryForensicHash,
-          });
-
-          await setDoc(docRef, {
-            evidencePack: finalPack.firestorePack,
-            packCoreHash: finalPack.packCoreHash,
-          }, { merge: true });
-        } catch (finalPackErr) {
-          console.warn('[publish] Could not finalize Evidence Pack with ID:', finalPackErr);
-        }
-      }
-
-      if (typeof window.loadEvidenceLedger === 'function') {
-        window.loadEvidenceLedger();
-      }
-      if (typeof window.loadForensicLedger === 'function') {
-        window.loadForensicLedger();
-      }
-      window.dispatchEvent(new CustomEvent('vocalWitness:posted'));
-
-      if (typeof userRef !== 'undefined' && userRef) {
-        await setDoc(userRef, {
-          lastTestimonyAt: serverTimestamp()
-        }, { merge: true });
-      }
-
-      const isZkOk = Boolean(
-        typeof zkResult !== 'undefined' &&
-        zkResult?.proofType === 'SNARK_GROTH16_SERVER' &&
-        !zkResult.isFallback
+        isAnonymous,
+        postingStyle,
+        fieldNoteRole,
+        fieldNoteOrg,
+        // Do not queue large blobs here; ask user to retry online for media
+        hasMediaPending: !!(imageFile || videoFile || audioFile),
+      });
+      showToast(
+        imageFile || videoFile || audioFile
+          ? 'Offline: text draft saved. Reconnect to seal media + publish.'
+          : 'Saved offline. Will publish when you are back online.',
+        'info'
       );
-      if (isZkOk) {
-        showToast("🛡️ Report sealed with Zero-Knowledge proof", "success");
-      } else {
-        showToast("🛡️ Report sealed and published", "success");
-      }
+      return;
+    }
 
-      const successEl = document.getElementById('publish-success');
-      const downloadPackBtn = document.getElementById('download-pack-after-publish');
-      const viewSquareBtn = document.getElementById('view-in-square-btn');
-      const publishedId = docRef?.id;
+    const id = await submitTestimony({
+      content,
+      channel,
+      imageFile,
+      videoFile,
+      audioFile,
+      isAnonymous,
+      postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
+      fieldNoteRole: postingStyle === 'field-note' ? fieldNoteRole : null,
+      fieldNoteOrg: postingStyle === 'field-note' ? fieldNoteOrg : null,
+      onProgress: (p) => {
+        if (postBtn && typeof p === 'number') {
+          postBtn.innerHTML = `
+            <span class="inline-block w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin mr-2"></span>
+            Uploading… ${Math.round(p)}%
+          `;
+        }
+      },
+    });
 
-      if (successEl) {
-        successEl.classList.remove('hidden');
-        if (postBtn) postBtn.classList.add('hidden');
+    console.log('[publish] SUCCESS via submitTestimonySecure →', id, '| channel:', channel);
 
-        if (downloadPackBtn) {
-          downloadPackBtn.onclick = async () => {
-            try {
-              downloadPackBtn.disabled = true;
-              downloadPackBtn.textContent = 'Generating…';
-              showToast('Generating cryptographic Evidence Pack…', 'info');
+    // Post-success UI
+    window.dispatchEvent(new CustomEvent('vocalWitness:posted', { detail: { id, channel } }));
 
-              if (typeof handleDownloadEvidencePack === 'function' && publishedId) {
-                await handleDownloadEvidencePack(publishedId);
-              } else if (evidencePackResult) {
-                const { downloadEvidencePack } = await import('./evidence-pack.js');
-                downloadEvidencePack(
-                  evidencePackResult.fullPack || evidencePackResult,
-                  publishedId || 'report'
-                );
-                showToast('✅ Evidence Pack downloaded', 'success');
-              } else {
-                showToast('Evidence Pack will be available on the post shortly', 'info');
-              }
-            } catch (err) {
-              console.error('[publish] Pack download failed:', err);
-              showToast('Could not prepare Evidence Pack', 'error');
-            } finally {
-              downloadPackBtn.disabled = false;
-              downloadPackBtn.innerHTML = '📥 Download Evidence Pack';
+    try {
+      const userRef = doc(db, 'users', currentUser.uid);
+      await setDoc(userRef, { lastTestimonyAt: serverTimestamp() }, { merge: true });
+    } catch (_) {}
+
+    if (typeof window.loadEvidenceLedger === 'function') window.loadEvidenceLedger();
+    if (typeof window.loadForensicLedger === 'function') window.loadForensicLedger();
+
+    const successEl = document.getElementById('publish-success');
+    const downloadPackBtn = document.getElementById('download-pack-after-publish');
+    const viewSquareBtn = document.getElementById('view-in-square-btn');
+
+    if (successEl) {
+      successEl.classList.remove('hidden');
+      if (postBtn) postBtn.classList.add('hidden');
+
+      if (downloadPackBtn) {
+        downloadPackBtn.onclick = async () => {
+          try {
+            downloadPackBtn.disabled = true;
+            if (typeof handleDownloadEvidencePack === 'function') {
+              await handleDownloadEvidencePack(id);
+            } else {
+              showToast('Open the post to download the Evidence Pack', 'info');
             }
-          };
-        }
-
-        if (viewSquareBtn) {
-          viewSquareBtn.onclick = () => {
-            document.getElementById('feed-container')?.scrollIntoView({
-              behavior: 'smooth',
-              block: 'start'
-            });
-          };
-        }
-
-        setTimeout(() => {
-          successEl.classList.add('hidden');
-          if (postBtn) postBtn.classList.remove('hidden');
-
-          if (typeof titleInput !== 'undefined' && titleInput) titleInput.value = '';
-          if (typeof textarea !== 'undefined' && textarea) textarea.value = '';
-          if (typeof mediaModule?.resetMediaState === 'function') {
-            mediaModule.resetMediaState();
+          } catch (err) {
+            console.error('[publish] Pack download failed:', err);
+            showToast('Could not prepare Evidence Pack', 'error');
+          } finally {
+            downloadPackBtn.disabled = false;
+            downloadPackBtn.innerHTML = '📥 Download Evidence Pack';
           }
-          const fileInputEl = document.getElementById('mediaInput') || document.querySelector('input[type="file"]');
-          if (fileInputEl) fileInputEl.value = '';
-
-          window.dispatchEvent(new CustomEvent('media-changed'));
-        }, 12000);
-      } else {
-        if (typeof titleInput !== 'undefined' && titleInput) titleInput.value = '';
-        if (typeof textarea !== 'undefined' && textarea) textarea.value = '';
-        if (typeof mediaModule?.resetMediaState === 'function') {
-          mediaModule.resetMediaState();
-        }
-        const fileInputEl = document.getElementById('mediaInput') || document.querySelector('input[type="file"]');
-        if (fileInputEl) fileInputEl.value = '';
+        };
       }
 
-      if (typeof initFeed === 'function') {
-        initFeed(db, channel);
+      if (viewSquareBtn) {
+        viewSquareBtn.onclick = () => {
+          if (typeof window.switchTab === 'function') window.switchTab('square');
+          document.getElementById('feed-container')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          });
+        };
       }
-    };
 
-    await handlePublish();
+      setTimeout(() => {
+        successEl.classList.add('hidden');
+        if (postBtn) postBtn.classList.remove('hidden');
+        if (titleInput) titleInput.value = '';
+        if (textarea) textarea.value = '';
+        if (typeof mediaModule?.resetMediaState === 'function') mediaModule.resetMediaState();
+        window.dispatchEvent(new CustomEvent('media-changed'));
+      }, 12000);
+    } else {
+      if (titleInput) titleInput.value = '';
+      if (textarea) textarea.value = '';
+      if (typeof mediaModule?.resetMediaState === 'function') mediaModule.resetMediaState();
+    }
 
+    if (typeof initFeed === 'function') {
+      initFeed(db, channel === 'witness-voice' ? 'witness-voice' : 'citizen-talk');
+    }
   } catch (err) {
     console.error('[publish] FULL ERROR:', err);
-    if (err.code === 'permission-denied') {
+    if (err.code === 'permission-denied' || err?.message?.includes('permission')) {
       showToast("Permission denied. Check console for exact rule failure.", "error");
+    } else if (err.code === 'functions/unauthenticated') {
+      showToast("Session expired. Please sign in again.", "error");
     } else {
       showToast(err.message || "Failed to publish. See console.", "error");
     }
@@ -956,7 +762,7 @@ if (typeof uploaderFunc === 'function') {
     if (postBtn) {
       postBtn.disabled = false;
       postBtn.classList.remove('opacity-75', 'cursor-not-allowed', 'scale-[0.98]');
-      postBtn.innerHTML = originalBtnHTML;
+      postBtn.innerHTML = originalBtnHTML || postBtn.innerHTML;
     }
   }
 };
