@@ -231,16 +231,21 @@ if (previousTab === 'witness' && tab !== 'witness' && typeof destroyWitnessTab =
     if (tab === 'ledger' && typeof loadEvidenceLedger === 'function') {
       loadEvidenceLedger();
     }
-    if (tab === 'mycircle' && typeof loadCircle === 'function') {
-      loadCircle();
+if (tab === 'mycircle') {
+      if (typeof loadCircle === 'function') {
+        loadCircle(true).catch((e) => console.warn('[Tab] loadCircle', e));
+      }
+      if (typeof window.renderCircleList === 'function') {
+        window.renderCircleList();
+      }
     }
 
-   // ===== WITNESS VOICE =====
-if (tab === 'witness') {
-  if (typeof initWitnessTab === 'function') {
-    initWitnessTab();          // loads sealed Witness Voice + citizen reports
-  }
-}
+    // ===== WITNESS VOICE =====
+    if (tab === 'witness') {
+      if (typeof initWitnessTab === 'function') {
+        initWitnessTab(); // reports + people grid + filters (inside witness-tab.js)
+      }
+    }
 
     if (tab === 'arena') {
       try {
