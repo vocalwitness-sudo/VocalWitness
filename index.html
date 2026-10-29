@@ -1311,6 +1311,33 @@ Hard delete is not available so the sealed record stays verifiable.
     </div>
   </div>
 
+    <!-- ========== VERIFIED WITNESS PEOPLE ========== -->
+  <div class="space-y-4 pt-4 border-t border-zinc-800">
+    <div class="flex items-center justify-between gap-3 flex-wrap">
+      <div>
+        <h3 class="text-sm font-semibold text-zinc-200">Verified Witness Records</h3>
+        <p class="text-xs text-zinc-500 mt-0.5">People with phone or Higher Trust verification</p>
+      </div>
+      <div class="flex gap-2 text-[11px]">
+        <button type="button" data-witness-filter="all"
+                class="rounded-lg border border-zinc-700 px-2.5 py-1 text-zinc-300 hover:border-amber-500/50">All</button>
+        <button type="button" data-witness-filter="zk"
+                class="rounded-lg border border-zinc-700 px-2.5 py-1 text-zinc-300 hover:border-amber-500/50">Higher Trust</button>
+        <button type="button" data-witness-filter="phone"
+                class="rounded-lg border border-zinc-700 px-2.5 py-1 text-zinc-300 hover:border-amber-500/50">Phone</button>
+      </div>
+    </div>
+
+    <div id="verified-witnesses-grid"
+         class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <!-- filled by js/circle.js → loadVerifiedWitnesses() -->
+      <div class="col-span-full py-16 text-center text-zinc-500">
+        <p class="text-4xl mb-3">🛡️</p>
+        <p>No verified voices found yet.</p>
+        <p class="text-sm mt-1">Be the first to complete Higher Trust verification.</p>
+      </div>
+    </div>
+  </div>
   <!-- ========== CITIZEN REPORTS (open channel) ========== -->
   <div class="space-y-4 pt-4 border-t border-zinc-800">
     <div class="flex items-center justify-between">
