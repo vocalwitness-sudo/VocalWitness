@@ -68,9 +68,10 @@ function setupLiveVoiceRecording() {
   if (document.getElementById('voice-recording-controls')) return;
 
   const voiceSection = btnVoice.parentElement;
-
   const controls = document.createElement('div');
+  const voiceSection = document.getElementById('wv-voice-dock') || btnVoice.parentElement;
   controls.id = 'voice-recording-controls';
+  
   // VISIBLE by default — not hidden
   controls.className = 'mt-3 space-y-3 w-full';
   controls.innerHTML = `
