@@ -6,19 +6,17 @@ import {
   signOut,
   setPersistence,
   browserLocalPersistence,
-  browserSessionPersistence,
   onAuthStateChanged,
   signInAnonymously,
-  getMultiFactorResolver,
-  TotpMultiFactorGenerator
+  getMultiFactorResolver
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
-import {  
-  auth, 
-  googleProvider, 
-  twitterProvider, 
-  githubProvider, 
-  db 
+import {
+  auth,
+  googleProvider,
+  twitterProvider,
+  githubProvider,
+  db
 } from './firebase-config.js';
 
 import { showToast } from './utils.js';
@@ -27,12 +25,12 @@ import { applyTierTheme, updateTierBadge, clearProfileCache } from './tier.js';
 import { initNotifications } from './notifications.js';
 import { onAuthStateChangedForZk } from './zk-secret-manager.js';
 
-import {  
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
-  serverTimestamp 
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const DEFAULT_TIER = "citizen";
@@ -75,13 +73,13 @@ async function createOrUpdateUser(user) {
     const safePhotoURL =
       user.photoURL && user.photoURL.trim() ? user.photoURL.trim() : null;
 
-       if (!snap.exists()) {
+    if (!snap.exists()) {
       // Minimal + safe fields only — privileged flags (phone, tier elevation) are server-only
       const minimal = {
         uid: user.uid,
         email: safeEmail,
         displayName: safeDisplayName,
-        createdAt: serverTimestamp(),
+        createdAt: serverTimestamp()
       };
 
       try {
@@ -94,7 +92,7 @@ async function createOrUpdateUser(user) {
           following: [],
           trusted: [],
           followers: [],
-          updatedAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
         });
         console.log("[auth] Full user document created for:", user.uid);
       } catch (createErr) {
@@ -112,12 +110,12 @@ async function createOrUpdateUser(user) {
       if (!user.isAnonymous) {
         showToast("Account created! Welcome to the Public Square.", "success");
       }
-    }
-      // ── Existing user ─────────────────────────────────
+    } else {
+      // Existing user
       const existing = snap.data() || {};
       const changes = {
         lastLoginAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       };
 
       if (safeDisplayName && safeDisplayName !== existing.displayName) {
@@ -157,17 +155,22 @@ async function createOrUpdateUser(user) {
 
 export { createOrUpdateUser };
 window.createOrUpdateUser = createOrUpdateUser;
+
 export function updateVerificationUI(isVerified = false) {
   const statusEl = document.getElementById('verification-status');
   const verifyBtn = document.getElementById('request-verification-btn');
 
   if (statusEl) {
     if (isVerified) {
-      statusEl.className = "inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-lg border border-emerald-400/20";
-      statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Citizen Circle`;
+      statusEl.className =
+        "inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-lg border border-emerald-400/20";
+      statusEl.innerHTML =
+        `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Citizen Circle`;
     } else {
-      statusEl.className = "inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-lg border border-amber-400/20";
-      statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Citizen (Unverified)`;
+      statusEl.className =
+        "inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-lg border border-amber-400/20";
+      statusEl.innerHTML =
+        `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Citizen (Unverified)`;
     }
   }
 
@@ -210,7 +213,9 @@ export function restorePendingDraft() {
     if (mainInput) {
       mainInput.value = draft;
       showToast("✅ Your testimony draft has been restored!", "success");
-      try { localStorage.removeItem('vocal_pending_draft'); } catch (_) {}
+      try {
+        localStorage.removeItem('vocal_pending_draft');
+      } catch (_) {}
       clearInterval(interval);
     } else if (++attempts > 25) {
       clearInterval(interval);
@@ -257,6 +262,7 @@ export async function loginAnonymously() {
 }
 
 // ====================== SOCIAL LOGIN ======================
+
 async function socialLogin(provider, providerName, event) {
   if (authActionInProgress) return;
   authActionInProgress = true;
@@ -284,11 +290,13 @@ async function socialLogin(provider, providerName, event) {
     try {
       if (btn) btn.innerHTML = 'Signing in…';
       const result = await signInWithPopup(auth, provider);
-      
+
       if (result?.user) {
-        // Patch D: Force refresh the token to ensure custom claims or updated backend state are active
         try {
           await result.user.getIdToken(true);
+        } catch (_) {}
+        try {
+          refreshTierUI();
         } catch (_) {}
 
         showToast(`✅ Signed in with ${providerName}!`, "success");
@@ -341,7 +349,6 @@ async function socialLogin(provider, providerName, event) {
     }
   }
 }
-
 
 export async function googleLogin(event) {
   return socialLogin(googleProvider, "Google", event);
@@ -406,7 +413,7 @@ export function updateUIForAuthState(userParam = null) {
   ].join(', ');
 
   document.querySelectorAll(guestSelectors)
-    .forEach(el => el.classList.toggle('hidden', isLoggedIn));
+    .forEach((el) => el.classList.toggle('hidden', isLoggedIn));
 
   const profileSelectors = [
     '#profile-btn',
@@ -417,13 +424,13 @@ export function updateUIForAuthState(userParam = null) {
   ].join(', ');
 
   document.querySelectorAll(profileSelectors)
-    .forEach(el => el.classList.toggle('hidden', !isLoggedIn));
+    .forEach((el) => el.classList.toggle('hidden', !isLoggedIn));
 
   document.querySelectorAll('.requires-auth')
-    .forEach(el => el.classList.toggle('hidden', !isLoggedIn));
+    .forEach((el) => el.classList.toggle('hidden', !isLoggedIn));
 
   document.querySelectorAll('#postButton, #btn-photo, #btn-voice')
-    .forEach(btn => {
+    .forEach((btn) => {
       if (btn) btn.style.opacity = isLoggedIn ? '1' : '0.6';
     });
 
@@ -480,25 +487,26 @@ export function showAuthModal() {
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     modal.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';   // lock scroll on mobile
+    document.body.style.overflow = 'hidden';
   }
 }
+
 export function closeLoginModal() {
   document.querySelectorAll('#authModal, #loginModal, #createAccountModal')
-    .forEach(modal => {
+    .forEach((modal) => {
       if (modal) {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
         modal.setAttribute('aria-hidden', 'true');
       }
     });
-  document.body.style.overflow = '';          // restore scroll
+  document.body.style.overflow = '';
 }
 
 export function openMfaChallengeModal(resolver) {
   window.__pendingMfaResolver = resolver;
   const mfaModal = document.getElementById('mfaChallengeModal');
-  
+
   if (mfaModal) {
     mfaModal.classList.remove('hidden');
     mfaModal.classList.add('flex');
@@ -633,7 +641,7 @@ export function bindHeaderEvents() {
 
     if (!e.target.closest('#profile-btn, #profile-btn-mobile, #userProfileBtn, #profile-menu, #user-dropdown')) {
       document.querySelectorAll('#profile-menu, #user-dropdown')
-        .forEach(el => el.classList.add('hidden'));
+        .forEach((el) => el.classList.add('hidden'));
     }
   });
 }
@@ -646,34 +654,39 @@ export function initAuth() {
 
   bindHeaderEvents();
 
-     getRedirectResult(auth)
-      .then(async (result) => {
-        if (result?.user) {
-          try {
-            await result.user.getIdToken(true);
-          } catch (_) {}
-          showToast("Signed in successfully!", "success");
-          closeLoginModal();
-          restorePendingDraft();
-        }
-      })
-       
-.catch((error) => {
-  if (error?.code === 'auth/multi-factor-auth-required') {
-    const resolver = getMultiFactorResolver(auth, error);
-    closeLoginModal();
-    openMfaChallengeModal(resolver);
-    return;
-  }
-  if (error?.code === 'auth/missing-initial-state') {
-    console.warn('[auth] Redirect state lost (common on mobile). User can retry.');
-    showToast('Sign-in was interrupted. Please try again.', 'warning');
-    return;
-  }
-  console.error("Redirect auth error:", error);
-  const msg = handleAuthError(error);
-  if (msg) showToast(msg, "error");
-});
+  getRedirectResult(auth)
+    .then(async (result) => {
+      if (result?.user) {
+        try {
+          await result.user.getIdToken(true);
+        } catch (_) {}
+        try {
+          refreshTierUI();
+        } catch (_) {}
+        showToast("Signed in successfully!", "success");
+        closeLoginModal();
+        restorePendingDraft();
+      }
+    })
+    .catch((error) => {
+      if (error?.code === "auth/multi-factor-auth-required") {
+        const resolver = getMultiFactorResolver(auth, error);
+        closeLoginModal();
+        openMfaChallengeModal(resolver);
+        return;
+      }
+      if (error?.code === "auth/missing-initial-state") {
+        console.warn("[auth] Redirect state lost (common on mobile). User can retry.");
+        showToast("Sign-in was interrupted. Please try again.", "warning");
+        return;
+      }
+      console.error("Redirect auth error:", error);
+      const msg = handleAuthError(error);
+      if (msg) showToast(msg, "error");
+    });
+
+  return new Promise((resolve) => {
+    let first = true;
 
     onAuthStateChanged(auth, async (user) => {
       try {
@@ -683,29 +696,35 @@ export function initAuth() {
           updateAppState({ isAuthenticated: true, currentUser: user });
           await createOrUpdateUser(user);
           try {
-            if (typeof initNotifications === 'function') {
+            if (typeof initNotifications === "function") {
               initNotifications(user.uid);
             }
           } catch (nErr) {
             console.warn("Notifications init failed:", nErr);
           }
           updateUIForAuthState(user);
+          try {
+            refreshTierUI();
+          } catch (_) {}
         } else {
           updateAppState({ isAuthenticated: false, currentUser: null });
           updateVerificationUI(false);
           try {
-            if (typeof initNotifications === 'function') {
+            if (typeof initNotifications === "function") {
               initNotifications(null);
             }
           } catch (_) {}
           updateUIForAuthState(null);
         }
 
-        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
+        window.dispatchEvent(new CustomEvent("auth-changed", { detail: { user } }));
       } catch (err) {
         console.error("Auth state handler error:", err);
       } finally {
-        resolve(user || null);
+        if (first) {
+          first = false;
+          resolve(user || null);
+        }
       }
     });
   });
