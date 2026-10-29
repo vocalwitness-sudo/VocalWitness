@@ -284,7 +284,13 @@ async function socialLogin(provider, providerName, event) {
     try {
       if (btn) btn.innerHTML = 'Signing in…';
       const result = await signInWithPopup(auth, provider);
+      
       if (result?.user) {
+        // Patch D: Force refresh the token to ensure custom claims or updated backend state are active
+        try {
+          await result.user.getIdToken(true);
+        } catch (_) {}
+
         showToast(`✅ Signed in with ${providerName}!`, "success");
         closeLoginModal();
         restorePendingDraft();
@@ -640,15 +646,18 @@ export function initAuth() {
 
   bindHeaderEvents();
 
-  return new Promise((resolve) => {
-    getRedirectResult(auth)
-      .then((result) => {
+     getRedirectResult(auth)
+      .then(async (result) => {
         if (result?.user) {
-          showToast("✅ Signed in successfully!", "success");
+          try {
+            await result.user.getIdToken(true);
+          } catch (_) {}
+          showToast("Signed in successfully!", "success");
           closeLoginModal();
           restorePendingDraft();
         }
       })
+       
 .catch((error) => {
   if (error?.code === 'auth/multi-factor-auth-required') {
     const resolver = getMultiFactorResolver(auth, error);
