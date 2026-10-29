@@ -509,8 +509,25 @@ const toggleModal = (modalId, show = true) => {
   }
 };
 
-window.openVerificationModal = () => toggleModal('verificationModal', true);
-window.closeVerificationModal = () => toggleModal('verificationModal', false);
+// Do NOT override auth.js phone flow. Only provide fallbacks if auth never loaded.
+if (typeof window.openVerificationModal !== 'function') {
+  window.openVerificationModal = () => {
+    if (typeof window.startPhoneVerification === 'function') {
+      window.startPhoneVerification();
+    } else {
+      toggleModal('verificationModal', true);
+    }
+  };
+}
+if (typeof window.closeVerificationModal !== 'function') {
+  window.closeVerificationModal = () => {
+    if (typeof window.closeAllVerificationModals === 'function') {
+      window.closeAllVerificationModals();
+    } else {
+      toggleModal('verificationModal', false);
+    }
+  };
+}
 window.openQvModal = () => toggleModal('quadratic-vote-modal', true);
 window.closeQvModal = () => toggleModal('quadratic-vote-modal', false);
 window.openSupportModal = () => toggleModal('supportModal', true);
