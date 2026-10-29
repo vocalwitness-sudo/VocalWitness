@@ -1,4 +1,5 @@
-// js/phoneVerification.js - Hardened Production Version (Delegated to Cloud Functions)
+
+// js/phoneVerification.js - Production-hardened
 import { db, auth } from './firebase-config.js';
 import { RecaptchaVerifier, linkWithPhoneNumber } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { showToast } from "./utils.js";
@@ -7,94 +8,195 @@ import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/
 
 let recaptchaVerifier = null;
 let confirmationResult = null;
-
-const isDemoMode = location.hostname === 'localhost' ||
-                   location.hostname === '127.0.0.1' ||
-                   location.search.includes('demo=true');
 let demoCode = null;
+
+const isDemoMode =
+  (location.hostname === 'localhost' || location.hostname === '127.0.0.1') &&
+  location.search.includes('demo=true');
+
+function normalizePhone(raw) {
+  let p = String(raw || '').trim().replace(/[\s\-()]/g, '');
+  if (!p) return '';
+  if (p.startsWith('0') && p.length >= 10) p = '+234' + p.slice(1); // Nigeria-first
+  if (!p.startsWith('+')) p = '+' + p.replace(/^\+/, '');
+  return p;
+}
 
 async function triggerServerPhoneConfirmation() {
   const functions = getFunctions();
   const confirm = httpsCallable(functions, "confirmPhoneVerification");
   await confirm({});
+  // Force fresh ID token so custom claims (if any) and rules see latest state
+  if (auth.currentUser) {
+    await auth.currentUser.getIdToken(true);
+  }
   if (typeof refreshTierAndUI === 'function') refreshTierAndUI();
+  try {
+    const { updateVerificationUI } = await import('./auth.js');
+    updateVerificationUI?.(true);
+  } catch (_) {}
 }
 
-export function initPhoneRecaptcha(buttonId = 'send-otp-btn') {
-  if (recaptchaVerifier || isDemoMode) return;
+export function initPhoneRecaptcha(containerId = 'phone-recaptcha-container') {
+  if (isDemoMode) return null;
   try {
-    let btnContainer = document.getElementById(buttonId);
-    if (!btnContainer) {
-      btnContainer = document.createElement('div');
-      btnContainer.id = buttonId;
-      btnContainer.style.display = 'none';
-      document.body.appendChild(btnContainer);
+    let el = document.getElementById(containerId);
+    if (!el) {
+      el = document.createElement('div');
+      el.id = containerId;
+      el.className = 'flex justify-center my-2 min-h-[78px]';
+      document.body.appendChild(el);
+    }
+    if (recaptchaVerifier) {
+      try { recaptchaVerifier.clear(); } catch (_) {}
+      recaptchaVerifier = null;
+      window.recaptchaVerifier = null;
     }
     if (window.recaptchaVerifier) {
       try { window.recaptchaVerifier.clear(); } catch (_) {}
     }
-    recaptchaVerifier = new RecaptchaVerifier(auth, buttonId, {
+    recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
       size: 'invisible',
       callback: () => {},
       'expired-callback': () => {
-        showToast("reCAPTCHA expired. Please try again.", "error");
+        showToast("Security check expired. Tap Send OTP again.", "error");
+        try { recaptchaVerifier?.clear(); } catch (_) {}
         recaptchaVerifier = null;
         window.recaptchaVerifier = null;
       }
     });
     window.recaptchaVerifier = recaptchaVerifier;
+    return recaptchaVerifier;
   } catch (e) {
     console.warn("reCAPTCHA init failed:", e);
     showToast("Security check failed to load. Refresh the page.", "error");
+    return null;
   }
 }
 
+export function ensurePhoneModal() {
+  let modal = document.getElementById('phoneVerificationModal');
+  if (modal) return modal;
+
+  modal = document.createElement('div');
+  modal.id = 'phoneVerificationModal';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('aria-labelledby', 'phone-modal-title');
+  modal.className = 'fixed inset-0 z-[110] hidden items-center justify-center bg-black/85 p-4';
+  modal.innerHTML = `
+    <div class="w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-900 p-6 shadow-2xl">
+      <div class="mb-4 flex items-center justify-between">
+        <h2 id="phone-modal-title" class="text-lg font-bold text-white">Verify phone · Citizen Circle</h2>
+        <button type="button" class="close-modal-btn rounded-lg px-2 text-xl text-zinc-400 hover:text-white" aria-label="Close">×</button>
+      </div>
+      <p class="mb-4 text-sm text-zinc-400">
+        International format required (e.g. <span class="font-mono text-emerald-400">+2348012345678</span>).
+        Phone is used only for anti-spam — not written on the public sealed record.
+      </p>
+      <div id="phone-step-number" class="space-y-3">
+        <label class="block text-xs font-medium text-zinc-300" for="phone-input">Phone number</label>
+        <input id="phone-input" type="tel" inputmode="tel" autocomplete="tel"
+               placeholder="+2348012345678"
+               class="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white placeholder:text-zinc-600 focus:border-emerald-500 focus:outline-none" />
+        <div id="phone-recaptcha-container" class="flex min-h-[1px] justify-center"></div>
+        <p id="phone-error" class="hidden text-sm text-red-400"></p>
+        <button type="button" id="send-otp-btn"
+                class="w-full rounded-xl bg-emerald-600 py-3 font-semibold text-white hover:bg-emerald-500 disabled:opacity-50">
+          Send OTP
+        </button>
+      </div>
+      <div id="phone-step-code" class="mt-4 hidden space-y-3">
+        <label class="block text-xs font-medium text-zinc-300" for="otp-input">6-digit code</label>
+        <input id="otp-input" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code"
+               placeholder="123456"
+               class="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-center font-mono text-lg tracking-widest text-white focus:border-emerald-500 focus:outline-none" />
+        <button type="button" id="verify-otp-btn"
+                class="w-full rounded-xl bg-emerald-600 py-3 font-semibold text-white hover:bg-emerald-500 disabled:opacity-50">
+          Verify &amp; join Citizen Circle
+        </button>
+        <button type="button" id="resend-otp-btn" class="w-full text-sm text-zinc-400 hover:text-emerald-400">
+          Resend code
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  modal.querySelector('.close-modal-btn')?.addEventListener('click', () => closeAllVerificationModals());
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeAllVerificationModals();
+  });
+
+  modal.querySelector('#send-otp-btn')?.addEventListener('click', async () => {
+    const input = modal.querySelector('#phone-input');
+    const err = modal.querySelector('#phone-error');
+    const phone = normalizePhone(input?.value);
+    if (err) { err.classList.add('hidden'); err.textContent = ''; }
+    if (!phone || phone.length < 10) {
+      if (err) { err.textContent = 'Enter a valid international number, e.g. +2348012345678'; err.classList.remove('hidden'); }
+      return;
+    }
+    const btn = modal.querySelector('#send-otp-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+    const ok = await sendPhoneVerification(phone);
+    if (btn) { btn.disabled = false; btn.textContent = 'Send OTP'; }
+    if (ok) {
+      modal.querySelector('#phone-step-code')?.classList.remove('hidden');
+      modal.querySelector('#otp-input')?.focus();
+    }
+  });
+
+  modal.querySelector('#verify-otp-btn')?.addEventListener('click', async () => {
+    const code = modal.querySelector('#otp-input')?.value;
+    const btn = modal.querySelector('#verify-otp-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Verifying…'; }
+    await verifyPhoneCode(code);
+    if (btn) { btn.disabled = false; btn.textContent = 'Verify & join Citizen Circle'; }
+  });
+
+  modal.querySelector('#resend-otp-btn')?.addEventListener('click', async () => {
+    const phone = normalizePhone(modal.querySelector('#phone-input')?.value);
+    if (phone) await sendPhoneVerification(phone);
+  });
+
+  modal.querySelector('#otp-input')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') modal.querySelector('#verify-otp-btn')?.click();
+  });
+
+  return modal;
+}
+
 export function setupModalDismissListeners() {
+  if (window.__phoneModalDismissBound) return;
+  window.__phoneModalDismissBound = true;
   document.addEventListener('click', (e) => {
     const target = e.target;
     if (
       target.closest('.close-modal-btn') ||
-      target.closest('.modal-close') ||
-      target.closest('#closePhoneAuth') ||
       target.closest('[data-dismiss="modal"]') ||
-      target.classList.contains('modal-backdrop') ||
-      target.classList.contains('modal-overlay') ||
-      target.textContent?.trim() === '×' ||
-      target.textContent?.trim() === '✕' ||
-      target.getAttribute('aria-label')?.toLowerCase().includes('close')
+      target.classList?.contains('modal-backdrop')
     ) {
-      e.preventDefault();
-      closeAllVerificationModals();
+      if (target.closest('#phoneVerificationModal') || target.closest('#phone-upgrade-modal')) {
+        e.preventDefault();
+        closeAllVerificationModals();
+      }
     }
   });
 }
 
 export function closeAllVerificationModals() {
-  const modalIds = [
-    'phoneVerificationModal',
-    'phone-upgrade-modal',
-    'verificationModal',
-    'phoneAuthModal'
-  ];
-  modalIds.forEach(id => {
+  ['phoneVerificationModal', 'phone-upgrade-modal', 'verificationModal', 'phoneAuthModal'].forEach(id => {
     const modal = document.getElementById(id);
     if (modal) {
       modal.classList.add('hidden');
+      modal.classList.remove('flex');
       modal.style.display = 'none';
     }
   });
-  document.querySelectorAll('.modal, [role="dialog"]').forEach(m => {
-    if (m.id && modalIds.includes(m.id)) return;
-    if (m.textContent?.includes('Verify Phone') || m.textContent?.includes('Phone Number')) {
-      m.classList.add('hidden');
-      m.style.display = 'none';
-    }
-  });
-  if (window.recaptchaVerifier || recaptchaVerifier) {
-    try {
-      if (recaptchaVerifier) recaptchaVerifier.clear();
-      if (window.recaptchaVerifier) window.recaptchaVerifier.clear();
-    } catch (_) {}
+  document.body.style.overflow = '';
+  if (recaptchaVerifier || window.recaptchaVerifier) {
+    try { recaptchaVerifier?.clear(); window.recaptchaVerifier?.clear(); } catch (_) {}
     recaptchaVerifier = null;
     window.recaptchaVerifier = null;
   }
@@ -110,30 +212,35 @@ if (document.readyState === 'loading') {
 
 export function startPhoneVerification() {
   if (!auth.currentUser) {
-    showToast("Please log in to verify your phone number", "error");
+    showToast("Please sign in first to verify your phone", "info");
+    if (typeof window.showAuthModal === 'function') window.showAuthModal();
     return;
   }
-  const modal = document.getElementById('phoneVerificationModal') ||
-                document.getElementById('phone-upgrade-modal') ||
-                document.getElementById('verificationModal');
-  if (modal) {
-    modal.classList.remove('hidden');
-    modal.style.display = 'flex';
-  } else {
-    const phone = prompt("Enter your phone number in international format (e.g., +2348012345678):");
-    if (phone) {
-      sendPhoneVerification(phone).then(success => {
-        if (success) {
-          const code = prompt("Enter the 6-digit verification code sent to your phone:");
-          if (code) verifyPhoneCode(code);
-        }
-      });
-    }
+  // Already has phone linked?
+  const hasPhone = auth.currentUser.providerData?.some(p => p.providerId === 'phone');
+  if (hasPhone) {
+    triggerServerPhoneConfirmation()
+      .then(() => {
+        showToast("You are already phone verified (Citizen Circle).", "success");
+        closeAllVerificationModals();
+      })
+      .catch(() => showToast("Could not refresh verification status.", "error"));
+    return;
   }
+
+  const modal = ensurePhoneModal();
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  modal.querySelector('#phone-step-code')?.classList.add('hidden');
+  modal.querySelector('#phone-input')?.focus();
+  initPhoneRecaptcha('phone-recaptcha-container');
 }
 
 export async function sendPhoneVerification(phoneNumber) {
-  if (!phoneNumber || !phoneNumber.startsWith('+')) {
+  const phone = normalizePhone(phoneNumber);
+  if (!phone || !phone.startsWith('+') || phone.length < 10) {
     showToast("Use international format, e.g. +2348012345678", "error");
     return false;
   }
@@ -142,40 +249,27 @@ export async function sendPhoneVerification(phoneNumber) {
     return false;
   }
   if (isDemoMode) {
-    demoCode = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log(`%c🔑 DEMO OTP for ${phoneNumber}: ${demoCode}`, "color: lime; font-size: 16px; font-weight: bold");
-    showToast(`✅ Demo OTP generated! Check browser console (F12)`, "success");
+    demoCode = String(Math.floor(100000 + Math.random() * 900000));
+    console.log(`%c🔑 DEMO OTP for ${phone}: ${demoCode}`, "color: lime; font-size: 16px; font-weight: bold");
+    showToast("Demo OTP in console (F12)", "success");
     return true;
   }
   try {
-    if (recaptchaVerifier) {
-      try { recaptchaVerifier.clear(); } catch (_) {}
-      recaptchaVerifier = null;
-      window.recaptchaVerifier = null;
-    }
-    initPhoneRecaptcha('send-otp-btn');
+    initPhoneRecaptcha('phone-recaptcha-container');
     if (!recaptchaVerifier) {
-      showToast("reCAPTCHA not ready. Please refresh the page.", "error");
+      showToast("Security check not ready. Refresh and try again.", "error");
       return false;
     }
-    confirmationResult = null;
-    window.confirmationResult = null;
-    confirmationResult = await linkWithPhoneNumber(
-      auth.currentUser,
-      phoneNumber,
-      recaptchaVerifier
-    );
+    confirmationResult = await linkWithPhoneNumber(auth.currentUser, phone, recaptchaVerifier);
     window.confirmationResult = confirmationResult;
-    showToast(`✅ OTP sent to ${phoneNumber}`, "success");
+    showToast(`OTP sent to ${phone}`, "success");
     return true;
   } catch (e) {
     console.error("SMS Send Error:", e);
     if (e.code === 'auth/provider-already-linked') {
       const hasPhone = auth.currentUser.providerData.some(p => p.providerId === 'phone');
       if (hasPhone) {
-        try {
-          await triggerServerPhoneConfirmation();
-        } catch (_) {}
+        try { await triggerServerPhoneConfirmation(); } catch (_) {}
         showToast("You are already phone verified (Citizen Circle).", "success");
         closeAllVerificationModals();
         return true;
@@ -183,18 +277,17 @@ export async function sendPhoneVerification(phoneNumber) {
       showToast("This phone number is already linked to another account.", "error");
       return false;
     }
-    let msg = e.message || "Failed to send OTP";
-    if (e.code === 'auth/too-many-requests') msg = "Too many attempts. Wait a few minutes.";
-    if (e.code === 'auth/invalid-phone-number') msg = "Invalid phone number format.";
-    if (e.code === 'auth/quota-exceeded') msg = "SMS quota exceeded. Try again later.";
-    if (e.code === 'auth/captcha-check-failed') msg = "Security check failed. Refresh and try again.";
-    if (e.code === 'auth/credential-already-in-use') msg = "This phone number is already linked to another account.";
-    showToast(msg, "error");
-    if (recaptchaVerifier) {
-      try { recaptchaVerifier.clear(); } catch (_) {}
-      recaptchaVerifier = null;
-      window.recaptchaVerifier = null;
-    }
+    const map = {
+      'auth/too-many-requests': "Too many attempts. Wait a few minutes.",
+      'auth/invalid-phone-number': "Invalid phone number format.",
+      'auth/quota-exceeded': "SMS quota exceeded. Try again later.",
+      'auth/captcha-check-failed': "Security check failed. Refresh and try again.",
+      'auth/credential-already-in-use': "This phone number is already linked to another account."
+    };
+    showToast(map[e.code] || e.message || "Failed to send OTP", "error");
+    try { recaptchaVerifier?.clear(); } catch (_) {}
+    recaptchaVerifier = null;
+    window.recaptchaVerifier = null;
     return false;
   }
 }
@@ -212,7 +305,7 @@ export async function verifyPhoneCode(enteredCode) {
   try {
     if (isDemoMode) {
       if (code !== demoCode) {
-        showToast("❌ Incorrect code. Try again.", "error");
+        showToast("Incorrect code. Try again.", "error");
         return false;
       }
     } else {
@@ -224,20 +317,17 @@ export async function verifyPhoneCode(enteredCode) {
       await result.confirm(code);
     }
     await triggerServerPhoneConfirmation();
-    showToast("🎉 Phone Verified! You are now in Citizen Circle", "success");
+    showToast("Phone verified! You are in Citizen Circle", "success");
     closeAllVerificationModals();
     return true;
   } catch (e) {
     console.error("Verification Error:", e);
-    let msg = "Invalid code or verification failed.";
-    if (e.code === "auth/invalid-verification-code") {
-      msg = "Incorrect code. Please check and try again.";
-    } else if (e.code === "auth/code-expired") {
-      msg = "Code has expired. Please request a new one.";
-    } else if (e.code === "auth/credential-already-in-use") {
-      msg = "This phone number is already linked to another account.";
-    }
-    showToast(msg, "error");
+    const map = {
+      'auth/invalid-verification-code': "Incorrect code. Check and try again.",
+      'auth/code-expired': "Code expired. Request a new one.",
+      'auth/credential-already-in-use': "This phone number is already linked to another account."
+    };
+    showToast(map[e.code] || "Invalid code or verification failed.", "error");
     return false;
   }
 }
@@ -247,3 +337,4 @@ window.sendPhoneVerification = sendPhoneVerification;
 window.verifyPhoneCode = verifyPhoneCode;
 window.initPhoneRecaptcha = initPhoneRecaptcha;
 window.closeAllVerificationModals = closeAllVerificationModals;
+window.ensurePhoneModal = ensurePhoneModal;
