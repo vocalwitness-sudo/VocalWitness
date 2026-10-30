@@ -1,23 +1,34 @@
-// js/firebase-config.js - Centralized Firebase Initialization & Config
+// js/firebase-config.js
+// World-class Firebase initialization for VocalWitness
+// - App Check (reCAPTCHA Enterprise) kept and made non-blocking
+// - Optimized for African mobile networks (MTN, Airtel, Glo…)
+// - Fail-open design: one service failing does not kill the app
+// - Clear logging + production hardening
+
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { 
-  getAuth, 
-  GoogleAuthProvider, 
-  TwitterAuthProvider, 
-  GithubAuthProvider, 
-  setPersistence, 
-  browserLocalPersistence 
+import {
+  getAuth,
+  GoogleAuthProvider,
+  TwitterAuthProvider,
+  GithubAuthProvider,
+  setPersistence,
+  browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { 
-  initializeFirestore, 
+import {
+  initializeFirestore,
   getFirestore,
   persistentLocalCache,
   persistentMultipleTabManager
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
-import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app-check.js";
+import {
+  initializeAppCheck,
+  ReCaptchaEnterpriseProvider
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app-check.js";
 
-// Dynamically target auth domain for custom domain or web.app execution
+/* ------------------------------------------------------------------ */
+/* 1. Config                                                          */
+/* ------------------------------------------------------------------ */
 const hostDomain = window.location.hostname;
 const isCustomDomain = hostDomain.includes("vocalwitness.com");
 
@@ -30,55 +41,93 @@ const firebaseConfig = {
   appId: "1:108466981866:web:b53360ad44012a576c8093"
 };
 
-// Safe singleton initialization
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+/* ------------------------------------------------------------------ */
+/* 2. App singleton                                                   */
+/* ------------------------------------------------------------------ */
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// ========== INITIALIZE APP CHECK ==========
-// Ensure you register your site key in the Firebase Console under App Check -> reCAPTCHA Enterprise
-const appCheck = initializeAppCheck(app, {
-  provider: new ReCaptchaEnterpriseProvider('6LdT0tktAAAAABiw8cRxNV06RyHuvPcvaxXeJ6qM'),
-  isTokenAutoRefreshEnabled: true
-});
+/* ------------------------------------------------------------------ */
+/* 3. App Check – KEEP Enterprise, but make it safe                   */
+/* ------------------------------------------------------------------ */
+let appCheck = null;
 
-// Authentication
+try {
+  // Optional: enable debug token on localhost / preview (never in production)
+  if (location.hostname === "localhost" || location.hostname.includes("web.app")) {
+    // self.FIREBASE_APPCHECK_DEBUG_TOKEN = true; // uncomment only while debugging
+  }
+
+  appCheck = initializeAppCheck(app, {
+    provider: new ReCaptchaEnterpriseProvider("6LdT0tktAAAAABiw8cRxNV06RyHuvPcvaxXeJ6qM"),
+    isTokenAutoRefreshEnabled: true
+  });
+
+  console.log("[firebase-config] App Check (reCAPTCHA Enterprise) initialized");
+} catch (err) {
+  // Critical: never let App Check crash the whole module
+  console.warn(
+    "[firebase-config] App Check failed – continuing without it (fail-open):",
+    err?.message || err
+  );
+  appCheck = null;
+}
+
+/* ------------------------------------------------------------------ */
+/* 4. Auth                                                            */
+/* ------------------------------------------------------------------ */
 const auth = getAuth(app);
+
 setPersistence(auth, browserLocalPersistence).catch((err) => {
-  console.warn("Firebase local persistence fallback:", err?.message || err);
+  console.warn("[firebase-config] Persistence fallback:", err?.message || err);
 });
 
-// ========== SAFE FIRESTORE INITIALIZATION ==========
+/* ------------------------------------------------------------------ */
+/* 5. Firestore – best settings for mobile + offline                  */
+/* ------------------------------------------------------------------ */
 let db;
+
 try {
   db = initializeFirestore(app, {
     localCache: persistentLocalCache({
-      tabManager: persistentMultipleTabManager()
+      tabManager: persistentMultipleTabManager(),
+      // Optional: limit cache size (in bytes). 40 MB is a good balance.
+      // cacheSizeBytes: 40 * 1024 * 1024
     }),
-    experimentalForceLongPolling: true   // ← now actually applied
-    // Alternative (often better): experimentalAutoDetectLongPolling: true
+    // Prefer auto-detect (modern best practice) over force
+    experimentalAutoDetectLongPolling: true
+    // Keep force only if you still see WebChannel problems on specific networks:
+    // experimentalForceLongPolling: true
   });
+  console.log("[firebase-config] Firestore ready (persistent + auto long-polling)");
 } catch (e) {
-  // Already initialized (HMR, multiple imports, etc.)
-  console.warn("[firebase-config] Firestore already initialized, using existing instance");
+  console.warn("[firebase-config] Firestore already initialized, reusing instance");
   db = getFirestore(app);
 }
+
+/* ------------------------------------------------------------------ */
+/* 6. Storage + Providers                                             */
+/* ------------------------------------------------------------------ */
 const storage = getStorage(app);
 
-// OAuth Providers
 const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({
-  prompt: 'select_account'
-});
+googleProvider.setCustomParameters({ prompt: "select_account" });
+googleProvider.addScope("profile");
+googleProvider.addScope("email");
 
 const twitterProvider = new TwitterAuthProvider();
 const githubProvider = new GithubAuthProvider();
+githubProvider.addScope("read:user");
 
-export { 
-  app, 
-  appCheck,
-  auth, 
-  db, 
-  storage, 
-  googleProvider, 
-  twitterProvider, 
-  githubProvider 
+/* ------------------------------------------------------------------ */
+/* 7. Exports                                                         */
+/* ------------------------------------------------------------------ */
+export {
+  app,
+  appCheck,          // can be null if it failed – callers must tolerate this
+  auth,
+  db,
+  storage,
+  googleProvider,
+  twitterProvider,
+  githubProvider
 };
