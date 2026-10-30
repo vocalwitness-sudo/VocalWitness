@@ -2145,7 +2145,7 @@ Hard delete is not available so the sealed record stays verifiable.
     });
 
    <script>
-  // Absolute last-resort splash killer (in case main.js fails to load)
+  // Absolute last-resort splash killer (in case main.js fails)
   setTimeout(() => {
     const splash = document.getElementById('app-splash-screen');
     if (splash) {
@@ -2154,6 +2154,7 @@ Hard delete is not available so the sealed record stays verifiable.
     }
   }, 6000);
 </script>
+
 
   function openModal(id) {
     const m = $(id);
