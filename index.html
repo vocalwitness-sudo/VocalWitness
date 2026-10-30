@@ -40,6 +40,19 @@
   <meta name="apple-mobile-web-app-title" content="VocalWitness">
   <meta name="format-detection" content="telephone=no">
 
+  <!-- Better mobile + offline handling -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  
+  <!-- Preconnect to critical third parties (helps mobile) -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://accounts.google.com">
+  <link rel="dns-prefetch" href="https://js.paystack.co">
+
+  <link rel="stylesheet" href="./style.css?v=3.2">
+<script type="module" src="./js/main.js?v=2.4"></script>
+  
   <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
   <!-- Icons & Manifest -->
@@ -58,13 +71,35 @@
   <link rel="preload" href="./style.css?v=3.1" as="style">
   <link rel="stylesheet" href="./style.css?v=3.1">
 
- <!-- External Scripts & Libraries (Lightweight) -->
-<script src="https://accounts.google.com/gsi/client" defer></script>
-<script src="https://js.paystack.co/v2/inline.js" defer></script>
+ <!-- External Scripts – resilient for flaky networks -->
+  <script>
+    // Load Google Identity Services only when needed (or with error handling)
+    function loadGSI() {
+      const s = document.createElement('script');
+      s.src = 'https://accounts.google.com/gsi/client';
+      s.async = true;
+      s.defer = true;
+      s.onerror = () => console.warn('[index] Google GSI client failed to load – continuing without it');
+      document.head.appendChild(s);
+    }
+    // Load it after a short delay so it never blocks first paint
+    setTimeout(loadGSI, 1500);
 
-<!-- Main application -->
-<script type="module" src="./js/main.js?v=2.3"></script>
+    // Paystack – also make resilient
+    function loadPaystack() {
+      const s = document.createElement('script');
+      s.src = 'https://js.paystack.co/v2/inline.js';
+      s.async = true;
+      s.defer = true;
+      s.onerror = () => console.warn('[index] Paystack failed to load');
+      document.head.appendChild(s);
+    }
+    setTimeout(loadPaystack, 2000);
+  </script>
 
+  <!-- Main application (keep this) -->
+  <script type="module" src="./js/main.js?v=2.4"></script>
+  
   <style>
     :root {
       --bg-dark: #0b1120;
@@ -2109,12 +2144,16 @@ Hard delete is not available so the sealed record stays verifiable.
       toast.style.transform = 'translate(-50%, 0)';
     });
 
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translate(-50%, 12px)';
-      setTimeout(() => toast.remove(), 300);
-    }, 3400);
-  }
+   <script>
+  // Absolute last-resort splash killer (in case main.js fails to load)
+  setTimeout(() => {
+    const splash = document.getElementById('app-splash-screen');
+    if (splash) {
+      splash.classList.add('fade-out');
+      setTimeout(() => splash.remove(), 500);
+    }
+  }, 6000);
+</script>
 
   function openModal(id) {
     const m = $(id);
