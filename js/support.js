@@ -137,8 +137,8 @@ export function initSupportModal() {
     // Paystack - Improved
 paystackBtn?.addEventListener('click', async () => {
   const amountVal = parseFloat(customInput?.value) || 15;
-  if (!Number.isFinite(amountVal) || amountVal < 1) {
-    return showToast('Please enter a valid amount (minimum $1).', 'error');
+  if (!Number.isFinite(amountVal) || amountVal < 5) {
+    return showToast('Minimum support is $5.', 'error');
   }
 
   if (!auth.currentUser) {
@@ -147,21 +147,15 @@ paystackBtn?.addEventListener('click', async () => {
     return;
   }
 
+  paystackBtn.disabled = true;
   showToast('Connecting to secure payment…', 'info');
 
   try {
-    // Paystack amount is kobo (NGN * 100). Approximate USD→NGN; adjust rate as needed.
-    const USD_TO_NGN = 1600;
-    const amountKobo = Math.max(1000, Math.round(amountVal * USD_TO_NGN * 100));
-
     const initialize = httpsCallable(functions, 'initializePaystack');
     const result = await initialize({
-      amount: amountKobo,
-      metadata: {
-        purpose: 'support',
-        source: 'support_modal',
-        amount_usd: amountVal
-      }
+      amount: amountVal,       // major units (USD on UI)
+      currency: 'NGN',         // settle in NGN on Paystack
+      note: 'support_modal',
     });
 
     const url = result?.data?.authorization_url;
@@ -173,9 +167,11 @@ paystackBtn?.addEventListener('click', async () => {
       ? 'Please sign in to pay with card.'
       : 'Payment initialization failed. Try again or use USDT.';
     showToast(msg, 'error');
+  } finally {
+    paystackBtn.disabled = false;
   }
 });
-
+    
 // Auto init
 document.addEventListener('DOMContentLoaded', () => {
     initSupportModal();
