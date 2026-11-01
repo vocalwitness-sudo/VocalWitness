@@ -221,39 +221,7 @@ export const initializeCitizenProfile = beforeUserCreated(async (event) => {
   }
 });
 
-// Define secret registered via CLI
-const nowpaymentsIpnSecret = defineSecret("NOWPAYMENTS_IPN_SECRET");
 
-// NOWPayments Webhook
-export const nowPaymentsWebhook = onRequest(
-  {
-    secrets: [nowpaymentsIpnSecret],
-  },
-  async (req, res) => {
-    try {
-      console.log("NOWPayments Webhook Received:", req.body);
-
-      const { payment_id, payment_status, price_amount, order_id } = req.body || {};
-
-      if (payment_status === "finished") {
-        await admin.firestore().collection("supporters").doc(order_id || payment_id.toString()).set(
-          {
-            status: "completed",
-            paymentId: payment_id,
-            amount: price_amount,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          },
-          { merge: true }
-        );
-      }
-
-      return res.status(200).send("OK");
-    } catch (error) {
-      console.error("Webhook error:", error);
-      return res.status(500).send("Internal Server Error");
-    }
-  }
-);
 
 // ======================================================
 // 1. R2 PRE-SIGNED URL
@@ -880,6 +848,280 @@ export const summarizeReport = onCall(
 );
 
 // ======================================================
+// 6. PAYSTACK — ONE-TIME SUPPORT
+// ======================================================
+
+export const initializePaystack = onCall(
+  {
+    cors: allowedOrigins,
+    secrets: [paystackSecretKey],
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in required to support the Square.");
+    }
+
+    const { amount, currency = "NGN", note = "" } = request.data || {};
+    const major = Number(amount);
+    const cur = String(currency || "NGN").toUpperCase();
+
+    // NGN minimum 1000, USD minimum 5
+    const minMajor = cur === "USD" ? 5 : 1000;
+    if (!Number.isFinite(major) || major < minMajor) {
+      throw new HttpsError(
+        "invalid-argument",
+        `Amount must be at least ${minMajor} ${cur}.`
+      );
+    }
+
+    const uid = request.auth.uid;
+    const email =
+      request.auth.token.email ||
+      `supporter+${uid.slice(0, 8)}@vocalwitness.app`;
+
+    const reference = `VW_${Date.now()}_${uid.slice(0, 6)}_${Math.floor(Math.random() * 100000)}`;
+    const amountSubunit = Math.round(major * 100);
+
+    try {
+      await db.collection("supporters").doc(reference).set({
+        reference,
+        userId: uid,
+        email,
+        amount: major,
+        amountSubunit,
+        currency: cur,
+        provider: "paystack",
+        type: "one_time",
+        status: "pending",
+        note: String(note || "").slice(0, 200),
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        completedAt: null,
+        metadata: {},
+      });
+
+      const paystack = getPaystackClient();
+      const transaction = await paystack.transaction.initialize({
+        amount: amountSubunit,
+        email,
+        reference,
+        currency: cur,
+        metadata: {
+          userId: uid,
+          type: "one_time_support",
+          platform: "vocalwitness",
+        },
+        callback_url: "https://vocalwitness.com/?support=success",
+      });
+
+      return {
+        authorization_url: transaction.data.authorization_url,
+        access_code: transaction.data.access_code,
+        reference: transaction.data.reference,
+      };
+    } catch (error) {
+      console.error("Paystack init error:", error);
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError("internal", "Could not start payment. Try again.");
+    }
+  }
+);
+
+export const paystackWebhook = onRequest(
+  {
+    cors: false,
+    secrets: [paystackSecretKey],
+  },
+  async (req, res) => {
+    if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+
+    const secret = paystackSecretKey.value();
+    const signature = req.headers["x-paystack-signature"];
+
+    if (!signature || typeof signature !== "string") {
+      return res.status(400).send("Missing signature");
+    }
+    if (!req.rawBody) {
+      return res.status(400).send("Missing raw body");
+    }
+
+    const expectedHash = crypto
+      .createHmac("sha512", secret)
+      .update(req.rawBody)
+      .digest("hex");
+
+    const sigBuf = Buffer.from(signature);
+    const hashBuf = Buffer.from(expectedHash);
+    if (
+      sigBuf.length !== hashBuf.length ||
+      !crypto.timingSafeEqual(sigBuf, hashBuf)
+    ) {
+      console.error("Invalid Paystack webhook signature");
+      return res.status(400).send("Invalid signature");
+    }
+
+    const event = req.body;
+    if (event?.event !== "charge.success") {
+      return res.status(200).send("Ignored");
+    }
+
+    const data = event.data || {};
+    const reference = data.reference;
+    const userId = data.metadata?.userId;
+    const amountMajor = (data.amount || 0) / 100;
+    const currency = String(data.currency || "NGN").toUpperCase();
+
+    if (!reference || !userId) {
+      console.warn("Paystack success missing reference or userId", reference, userId);
+      return res.status(200).send("Missing metadata");
+    }
+
+    try {
+      await db.collection("supporters").doc(reference).set(
+        {
+          status: "completed",
+          paymentId: String(data.id || data.reference),
+          amount: amountMajor,
+          amountSubunit: data.amount,
+          currency,
+          provider: "paystack",
+          type: "one_time",
+          completedAt: admin.firestore.FieldValue.serverTimestamp(),
+          rawChannel: data.channel || null,
+        },
+        { merge: true }
+      );
+
+      await db.collection("users").doc(userId).set(
+        {
+          isSupporter: true,
+          supporterTier: "supporter",
+          supporterSince: admin.firestore.FieldValue.serverTimestamp(),
+          totalContributed: admin.firestore.FieldValue.increment(amountMajor),
+          lastSupportAt: admin.firestore.FieldValue.serverTimestamp(),
+          lastSupportRef: reference,
+        },
+        { merge: true }
+      );
+
+      const userRecord = await admin.auth().getUser(userId);
+      const currentClaims = userRecord.customClaims || {};
+      await admin.auth().setCustomUserClaims(userId, {
+        ...currentClaims,
+        supporter: true,
+      });
+
+      await writeAuditLog({
+        action: "supporter_granted",
+        performedBy: "system",
+        targetId: userId,
+        targetType: "user",
+        details: {
+          amount: amountMajor,
+          currency,
+          reference,
+          provider: "paystack",
+        },
+        severity: "info",
+      });
+
+      return res.status(200).send("OK");
+    } catch (err) {
+      console.error("Paystack webhook processing error:", err);
+      return res.status(500).send("Processing error");
+    }
+  }
+);
+
+// ======================================================
+// NOWPayments — same supporter model
+// ======================================================
+
+export const nowPaymentsWebhook = onRequest(
+  { secrets: [nowpaymentsIpnSecret] },
+  async (req, res) => {
+    try {
+      const body = req.body || {};
+      const {
+        payment_id,
+        payment_status,
+        price_amount,
+        order_id,
+        pay_currency,
+        price_currency,
+      } = body;
+
+      if (payment_status !== "finished" && payment_status !== "confirmed") {
+        return res.status(200).send("Ignored");
+      }
+
+      const reference = String(order_id || payment_id || "");
+      if (!reference) return res.status(200).send("No reference");
+
+      const supportRef = db.collection("supporters").doc(reference);
+      const snap = await supportRef.get();
+      const existing = snap.exists ? snap.data() : {};
+      const userId = existing.userId || null;
+
+      await supportRef.set(
+        {
+          reference,
+          paymentId: String(payment_id),
+          amount: Number(price_amount) || existing.amount || 0,
+          currency: String(price_currency || pay_currency || "USD").toUpperCase(),
+          provider: "nowpayments",
+          type: existing.type || "one_time",
+          status: "completed",
+          completedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      if (userId) {
+        await db.collection("users").doc(userId).set(
+          {
+            isSupporter: true,
+            supporterTier: "supporter",
+            supporterSince: admin.firestore.FieldValue.serverTimestamp(),
+            totalContributed: admin.firestore.FieldValue.increment(
+              Number(price_amount) || 0
+            ),
+            lastSupportAt: admin.firestore.FieldValue.serverTimestamp(),
+            lastSupportRef: reference,
+          },
+          { merge: true }
+        );
+
+        const userRecord = await admin.auth().getUser(userId);
+        const claims = userRecord.customClaims || {};
+        await admin.auth().setCustomUserClaims(userId, {
+          ...claims,
+          supporter: true,
+        });
+
+        await writeAuditLog({
+          action: "supporter_granted",
+          performedBy: "system",
+          targetId: userId,
+          targetType: "user",
+          details: {
+            amount: price_amount,
+            reference,
+            provider: "nowpayments",
+          },
+          severity: "info",
+        });
+      }
+
+      return res.status(200).send("OK");
+    } catch (error) {
+      console.error("NOWPayments webhook error:", error);
+      return res.status(500).send("Internal Server Error");
+    }
+  }
+);
+
+// ======================================================
 // ZERO-KNOWLEDGE PROOF VERIFICATION & WITNESS CIRCLE
 // ======================================================
 
@@ -1141,104 +1383,6 @@ export const scoreToxicity = onCall(
   }
 );
 
-// ======================================================
-// 6. PAYSTACK
-// ======================================================
-export const initializePaystack = onCall(
-  {
-    cors: allowedOrigins,
-    secrets: [paystackSecretKey]
-  },
-  async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Must be logged in to make payment.");
-    }
-
-    const { amount, metadata = {} } = request.data || {};
-    if (typeof amount !== "number" || amount < 1000) {
-      throw new HttpsError("invalid-argument", "Amount must be a number equal to or greater than 1000.");
-    }
-
-    try {
-      const paystack = getPaystackClient();
-      const transaction = await paystack.transaction.initialize({
-        amount: Math.round(amount),
-        email: request.auth.token.email || "supporter@vocalwitness.app",
-        reference: `VW_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
-        metadata: { ...metadata, userId: request.auth.uid }
-      });
-
-      return {
-        authorization_url: transaction.data.authorization_url,
-        reference: transaction.data.reference
-      };
-    } catch (error) {
-      console.error("Paystack Error:", error);
-      if (error instanceof HttpsError) throw error;
-      throw new HttpsError("internal", "Payment initialization failed.");
-    }
-  }
-);
-
-export const paystackWebhook = onRequest(
-  { cors: allowedOrigins, secrets: [paystackSecretKey] },
-  async (req, res) => {
-    if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
-
-    const secret = paystackSecretKey.value();
-    const signature = req.headers["x-paystack-signature"];
-
-    if (!signature || typeof signature !== "string") {
-      return res.status(400).send("Missing or invalid signature header");
-    }
-    if (!req.rawBody) return res.status(400).send("Missing raw body for verification.");
-
-    const expectedHash = crypto.createHmac("sha512", secret).update(req.rawBody).digest("hex");
-    const sigBuffer = Buffer.from(signature);
-    const hashBuffer = Buffer.from(expectedHash);
-
-    if (sigBuffer.length !== hashBuffer.length || !crypto.timingSafeEqual(sigBuffer, hashBuffer)) {
-      console.error("Invalid Paystack webhook signature.");
-      return res.status(400).send("Invalid signature payload");
-    }
-
-    const event = req.body;
-    if (event?.event === "charge.success") {
-      const userId = event.data?.metadata?.userId;
-      if (userId) {
-        try {
-          const amountInMainCurrency = event.data.amount / 100;
-          await db.collection("users").doc(userId).set(
-            {
-              supporterTier: "supporter",
-              isPremium: true,
-              supporterSince: admin.firestore.FieldValue.serverTimestamp(),
-              totalContributed: admin.firestore.FieldValue.increment(amountInMainCurrency)
-            },
-            { merge: true }
-          );
-
-          const userRecord = await admin.auth().getUser(userId);
-          const currentClaims = userRecord.customClaims || {};
-          await admin.auth().setCustomUserClaims(userId, { ...currentClaims, supporter: true });
-
-          await writeAuditLog({
-            action: "supporter_granted",
-            performedBy: "system",
-            targetId: userId,
-            targetType: "user",
-            details: { amount: amountInMainCurrency, reference: event.data.reference },
-            severity: "info"
-          });
-        } catch (err) {
-          console.error("Failed to update supporter status:", err);
-          return res.status(500).send("Database processing error.");
-        }
-      }
-    }
-    return res.status(200).send("Webhook processed");
-  }
-);
 
 //// ======================================================
 // 10. EVIDENCE PACK — PLATFORM TIMESTAMP
