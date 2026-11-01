@@ -2143,8 +2143,8 @@ Hard delete is not available so the sealed record stays verifiable.
       toast.style.opacity = '1';
       toast.style.transform = 'translate(-50%, 0)';
     });
+  }
 
-   <script>
   // Absolute last-resort splash killer (in case main.js fails)
   setTimeout(() => {
     const splash = document.getElementById('app-splash-screen');
@@ -2153,8 +2153,6 @@ Hard delete is not available so the sealed record stays verifiable.
       setTimeout(() => splash.remove(), 500);
     }
   }, 6000);
-</script>
-
 
   function openModal(id) {
     const m = $(id);
