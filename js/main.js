@@ -457,50 +457,6 @@ function updateVoiceUI(state) {
   }
 }
 
-/* ====================== PAYMENT (PAYSTACK) ====================== */
-const PAYSTACK_PUBLIC_KEY = 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923'; // TODO: move to env / Remote Config
-
-window.initiatePayment = function (amount, email = null, metadata = {}) {
-  if (!requireAuth?.("Sign in to support VocalWitness")) return;
-
-  if (typeof PaystackPop === 'undefined') {
-    showToast?.("Payment gateway library not loaded. Please refresh.", "error");
-    return;
-  }
-
-  const finalAmount = Number(amount);
-  if (!finalAmount || finalAmount < 100) {
-    showToast?.("Minimum support amount is ₦100", "error");
-    return;
-  }
-
-  try {
-    const handler = PaystackPop.setup({
-      key: PAYSTACK_PUBLIC_KEY,
-      email: email || auth?.currentUser?.email || 'guest@vocalwitness.com',
-      amount: Math.round(finalAmount * 100),
-      currency: "NGN",
-      metadata: {
-        source: "VocalWitness",
-        userId: auth?.currentUser?.uid || null,
-        ...metadata
-      },
-      onSuccess: (transaction) => {
-        console.log('[Paystack] Success:', transaction);
-        showToast?.(`✅ Payment successful! Ref: ${transaction.reference}`, "success");
-        window.closeSupportModal?.();
-      },
-      onCancel: () => {
-        showToast?.("Payment was cancelled", "info");
-      }
-    });
-    handler.openIframe();
-  } catch (err) {
-    console.error("[Paystack] Startup error:", err);
-    showToast?.("Unable to open payment gateway", "error");
-  }
-};
-
 /* ====================== MODAL CONTROLLERS ====================== */
 const toggleModal = (modalId, show = true) => {
   const modal = document.getElementById(modalId);
@@ -1295,15 +1251,6 @@ if (typeof bindMfaChallengeEvents === 'function') {
     initComposer();
   }
 
-  // Paystack button
-  document.getElementById('paystackPayBtn')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    const amountInput = document.getElementById('customSupportAmount');
-    const amount = amountInput ? parseFloat(amountInput.value) || 15 : 15;
-    if (typeof window.initiatePayment === 'function') {
-      window.initiatePayment(amount);
-    }
-  });
 
   console.log("✅ Application listeners active");
 } // ← function ends here
