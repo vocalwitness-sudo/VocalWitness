@@ -2212,34 +2212,18 @@ window.closeModal = closeModal;
   };
   window.closeVideoPolicyModal = () => closeModal('video-policy-modal');
 
-  // Data Saver
-  window.toggleDataSaver = function () {
-    if (typeof window.toggleDataSaverFromModule === 'function') {
-      return window.toggleDataSaverFromModule();
-    }
-    const enabled = localStorage.getItem('vocalwitness_data_saver') === 'true';
-    const next = !enabled;
-    localStorage.setItem('vocalwitness_data_saver', String(next));
-    ['data-saver-status', 'data-saver-status-mobile', 'footer-data-saver-status'].forEach((id) => {
-      const el = $(id);
-      if (!el) return;
-      el.textContent = next ? 'On' : 'Off';
-      el.classList.toggle('text-emerald-400', next);
-      el.classList.toggle('text-zinc-300', !next);
-    });
-    showToast(`Data Saver mode turned ${next ? 'ON' : 'OFF'}`, 'info');
-  };
-
-  document.addEventListener('DOMContentLoaded', () => {
-    // Restore Data Saver status
-    const enabled = localStorage.getItem('vocalwitness_data_saver') === 'true';
-    ['data-saver-status', 'data-saver-status-mobile', 'footer-data-saver-status'].forEach((id) => {
-      const el = $(id);
-      if (!el) return;
+  // Early Data Saver UI restore (uses the single source of truth)
+document.addEventListener('DOMContentLoaded', () => {
+  const enabled = localStorage.getItem('vw_data_saver') === 'true';
+  ['data-saver-status', 'data-saver-status-mobile', 'footer-data-saver-status'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
       el.textContent = enabled ? 'On' : 'Off';
       el.classList.toggle('text-emerald-400', enabled);
       el.classList.toggle('text-zinc-300', !enabled);
-    });
+    }
+  });
+});
 
     // Support
     $('footerSupportBtn')?.addEventListener('click', () => window.openSupportModal());
@@ -2247,10 +2231,6 @@ window.closeModal = closeModal;
     $('openSupportModalBtnMobile')?.addEventListener('click', () => window.openSupportModal());
     $('closeSupportModal')?.addEventListener('click', () => window.closeSupportModal());
 
-    // Data Saver
-    $('data-saver-btn')?.addEventListener('click', () => window.toggleDataSaver());
-    $('data-saver-btn-mobile')?.addEventListener('click', () => window.toggleDataSaver());
-    $('footer-data-saver-btn')?.addEventListener('click', () => window.toggleDataSaver());
 
     // Phone Verification
     $('closePhoneVerificationBtn')?.addEventListener('click', () => window.closePhoneVerificationModal());
