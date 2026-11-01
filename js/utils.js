@@ -93,18 +93,6 @@ export function showToast(message, type = "success", duration = null) {
     });
 }
 
-/* ====================== DATA & PERFORMANCE ====================== */
-export function isLowDataMode() {
-    return localStorage.getItem('lowDataMode') === 'true';
-}
-
-export function toggleLowDataMode() {
-    const current = isLowDataMode();
-    localStorage.setItem('lowDataMode', String(!current));
-    showToast(!current ? "Low Data Mode Enabled" : "Low Data Mode Disabled", "info");
-    setTimeout(() => location.reload(), 800);
-}
-
 /* ====================== SAFE ACTION WRAPPER ====================== */
 export async function executeAction(actionFn, buttonEl, loadingText = "Processing...") {
     if (!buttonEl || typeof actionFn !== 'function') return;
