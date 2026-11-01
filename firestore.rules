@@ -106,7 +106,9 @@ service cloud.firestore {
         'zkVerified', 'score', 'isVerified', 'uid', 'tier',
         'hasVerifiedPhone', 'isPhoneVerified', 'phoneVerifiedAt',
         'reputation', 'credibilityScore', 'weeklyPoints',
-        'phoneNumber', 'phone', 'phoneHash', 'humanityScore'
+        'phoneNumber', 'phone', 'phoneHash', 'humanityScore',
+        'isSupporter', 'supporterTier', 'supporterSince', 'totalContributed',
+        'lastSupportAt', 'lastSupportRef', 'isPremium'
       ];
       let allowed = [
         'email', 'displayName', 'photoURL', 'bio',
@@ -137,7 +139,37 @@ service cloud.firestore {
           && (!('lastCycleStart' in request.resource.data)
               || request.resource.data.lastCycleStart is timestamp
               || request.resource.data.lastCycleStart == request.time);
-    }
+  }
+
+  // Support log rule
+  match /support_log/{logId} {
+    allow read: if isAuthenticated() &&
+      (resource.data.giverId == request.auth.uid ||
+       resource.data.targetId == request.auth.uid);
+    allow create: if isAuthenticated()
+      && isNotBanned()
+      && request.resource.data.giverId == request.auth.uid
+      && request.resource.data.targetId is string
+      && request.resource.data.targetId != request.auth.uid
+      && request.resource.data.strength is number
+      && request.resource.data.strength >= 1
+      && request.resource.data.strength <= 5
+      && request.resource.data.cost is number
+      && request.resource.data.reputationGiven is number
+      && request.resource.data.keys().hasAll([
+        'giverId', 'targetId', 'strength', 'cost',
+        'reputationGiven', 'createdAt'
+      ]);
+    allow update, delete: if false;
+  }
+
+  // Supporters collection rule
+  match /supporters/{supportId} {
+    allow read: if isAuthenticated() && (
+      resource.data.userId == request.auth.uid || isAdmin() || isModerator()
+    );
+    allow create, update, delete: if false;
+  }
 
     function isValidNotification() {
       return request.resource.data.keys().hasAll(['type', 'createdAt'])
@@ -697,26 +729,7 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    match /support_log/{logId} {
-      allow read: if isAuthenticated() &&
-        (resource.data.giverId == request.auth.uid ||
-         resource.data.targetId == request.auth.uid);
-      allow create: if isAuthenticated()
-        && isNotBanned()
-        && request.resource.data.giverId == request.auth.uid
-        && request.resource.data.targetId is string
-        && request.resource.data.targetId != request.auth.uid
-        && request.resource.data.strength is number
-        && request.resource.data.strength >= 1
-        && request.resource.data.strength <= 5
-        && request.resource.data.cost is number
-        && request.resource.data.reputationGiven is number
-        && request.resource.data.keys().hasAll([
-          'giverId', 'targetId', 'strength', 'cost',
-          'reputationGiven', 'createdAt'
-        ]);
-      allow update, delete: if false;
-    }
+
 
     match /dao_proposals/{proposalId} {
       allow read: if true;
