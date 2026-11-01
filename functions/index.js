@@ -48,6 +48,7 @@ const r2AccessKeyId = defineSecret("R2_ACCESS_KEY_ID");
 const r2SecretAccessKey = defineSecret("R2_SECRET_ACCESS_KEY");
 const paystackSecretKey = defineSecret("PAYSTACK_SECRET_KEY");
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
+const nowpaymentsIpnSecret = defineSecret("NOWPAYMENTS_IPN_SECRET");
 
 // ======================================================
 // INITIALIZE & SINGLETONS
