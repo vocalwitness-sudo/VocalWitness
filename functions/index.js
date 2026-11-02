@@ -2237,7 +2237,7 @@ const REACTION_TYPES = ["respect", "truth", "solidarity", "impact"];
 export const onTestimonyReactionWrite = onDocumentWritten(
   {
     document: "testimonies/{testimonyId}/reactions/{uid}",
-    region: "africa-south1",
+    region: "us-central1",
   },
   async (event) => {
     const testimonyId = event.params.testimonyId;
