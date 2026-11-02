@@ -2623,6 +2623,7 @@ export const getCuratedNews = onRequest(
     timeoutSeconds: 60,
     maxInstances: 5,
     concurrency: 20,
+    cpu: 1,
   },
   async (req, res) => {
     if (req.method === "OPTIONS") {
