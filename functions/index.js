@@ -2622,6 +2622,7 @@ export const getCuratedNews = onRequest(
     memory: "512MiB",
     timeoutSeconds: 60,
     maxInstances: 5
+    concurrency: 20,
   },
   async (req, res) => {
     if (req.method === "OPTIONS") {
