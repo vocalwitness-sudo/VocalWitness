@@ -2231,13 +2231,17 @@ export const submitTestimonySecure = onCall(
 // ======================================================
 // BATCH 2.3 — REACTION COUNTERS (server-owned)
 // Path: testimonies/{testimonyId}/reactions/{uid}
+// Renamed to V2 to escape stuck Cloud Run/Eventarc service
+// after failed region migration (us-central1 ↔ africa-south1).
 // ======================================================
 const REACTION_TYPES = ["respect", "truth", "solidarity", "impact"];
 
-export const onTestimonyReactionWrite = onDocumentWritten(
+export const onTestimonyReactionWriteV2 = onDocumentWritten(
   {
     document: "testimonies/{testimonyId}/reactions/{uid}",
     region: "us-central1",
+    memory: "256MiB",
+    maxInstances: 3,
   },
   async (event) => {
     const testimonyId = event.params.testimonyId;
