@@ -35,9 +35,9 @@ const __dirname = path.dirname(__filename);
 
 setGlobalOptions({
   region: "us-central1",
-  cpu: 0.5,           // was effectively 1
-  memory: "256MiB",   // raise only on heavy functions
-  maxInstances: 20,
+  cpu: 0.5,
+  memory: "256MiB",
+  maxInstances: 5,   // was 20 — main quota saver
 });
 
 // ======================================================
@@ -2453,10 +2453,11 @@ export const verifyAndTimestampMedia = onObjectFinalized(
 );
 export const heavyProcessingTask = onRequest(
   {
-    concurrency: 80,
-    cpu: 1,              // required when concurrency > 1
+    concurrency: 10,   // was 80
+    cpu: 1,
     memory: "512MiB",
-    timeoutSeconds: 60
+    timeoutSeconds: 60,
+    maxInstances: 3,
   },
   (req, res) => {
     res.status(200).send({ status: "processed" });
@@ -2621,8 +2622,8 @@ export const getCuratedNews = onRequest(
     invoker: "public",
     memory: "512MiB",
     timeoutSeconds: 60,
-    maxInstances: 5,
-    concurrency: 20,
+    maxInstances: 3,
+    concurrency: 10,
     cpu: 1,
   },
   async (req, res) => {
