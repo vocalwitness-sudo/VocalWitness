@@ -2618,10 +2618,10 @@ async function buildHeadlines() {
 export const getCuratedNews = onRequest(
   {
     cors: allowedOrigins,
-    invoker: "public",      
+    invoker: "public",
     memory: "512MiB",
     timeoutSeconds: 60,
-    maxInstances: 5
+    maxInstances: 5,
     concurrency: 20,
   },
   async (req, res) => {
