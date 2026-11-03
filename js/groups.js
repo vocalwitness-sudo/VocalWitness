@@ -1,4 +1,4 @@
-// js/groups.js - VocalWitness Groups System (with Trending & Invite Flow)
+// js/groups.js - VocalWitness Groups System (with Trending, Invites & Moderation)
 
 import { db, auth } from './firebase-config.js';
 import {
@@ -8,6 +8,7 @@ import {
   orderBy,
   updateDoc,
   doc,
+  getDoc,
   arrayUnion,
   arrayRemove,
   increment,
@@ -64,7 +65,7 @@ export function initGroups(containerId = 'group-container') {
   // Create Group modal wiring
   wireCreateGroupModal();
 
-  // Inspect URL for incoming invite links (e.g., groups.html?join=GROUP_ID or ?code=GROUP_ID)
+  // Inspect URL for incoming invite links
   checkIncomingInviteParams();
 
   // Real-time listener
@@ -133,15 +134,11 @@ function wireCreateGroupModal() {
   });
 }
 
-/**
- * Check if the page was opened via an invite link
- */
 function checkIncomingInviteParams() {
   const params = new URLSearchParams(window.location.search);
   const inviteGroupId = params.get('join') || params.get('code');
   
   if (inviteGroupId) {
-    // Find matching group or trigger generic join flow
     const targetGroup = allGroups.find(g => g.id === inviteGroupId);
     if (typeof window.openGroupInviteModal === 'function') {
       window.openGroupInviteModal({
@@ -154,9 +151,6 @@ function checkIncomingInviteParams() {
   }
 }
 
-/**
- * Render groups based on current tab + search
- */
 function renderGroups() {
   const container = document.getElementById('group-container');
   const emptyState = document.getElementById('empty-state');
@@ -167,21 +161,18 @@ function renderGroups() {
 
   let filtered = [...allGroups];
 
-  // ===== TAB FILTERS =====
   if (currentTab === 'my-groups' && currentUid) {
     filtered = filtered.filter(
       (g) => g.members?.includes(currentUid) || g.creatorId === currentUid
     );
   }
 
-  // 🔥 TRENDING
   if (currentTab === 'trending') {
     filtered = filtered
       .map((g) => {
         const members = g.memberCount || 1;
         const created = g.createdAt?.toMillis?.() || (g.createdAt?.seconds ? g.createdAt.seconds * 1000 : 0);
         const updated = g.updatedAt?.toMillis?.() || (g.updatedAt?.seconds ? g.updatedAt.seconds * 1000 : created);
-
         const ageInDays = (Date.now() - updated) / (1000 * 60 * 60 * 24);
         const recencyBoost = Math.max(0, 30 - ageInDays);
 
@@ -194,12 +185,10 @@ function renderGroups() {
       .slice(0, 30);
   }
 
-  // Visibility filter
   if (currentVisibility !== 'all') {
     filtered = filtered.filter((g) => g.visibility === currentVisibility);
   }
 
-  // Search filter
   if (searchTerm) {
     filtered = filtered.filter(
       (g) =>
@@ -247,7 +236,6 @@ function renderGroups() {
         ? `<span class="text-[10px] bg-orange-500/15 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/30">🔥 Trending</span>`
         : '';
 
-    // Action button render logic
     let actionButtonHtml = '';
     if (isMember) {
       actionButtonHtml = `<div class="flex items-center gap-2">
@@ -268,11 +256,7 @@ function renderGroups() {
           <div class="flex items-center gap-2 mb-1 flex-wrap">
             <h3 class="font-bold text-lg text-emerald-400 truncate">${escapeHtml(group.name)}</h3>
             ${isCreator ? '<span class="text-[10px] bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded-full">Creator</span>' : ''}
-            ${
-              group.visibility === 'witness_circle' || group.creatorTier === 'witness_circle'
-                ? '<span class="text-[10px] bg-cyan-500/15 text-cyan-400 px-2 py-0.5 rounded-full border border-cyan-500/30">🔐 High Trust</span>'
-                : ''
-            }
+            ${group.visibility === 'witness_circle' || group.creatorTier === 'witness_circle' ? '<span class="text-[10px] bg-cyan-500/15 text-cyan-400 px-2 py-0.5 rounded-full border border-cyan-500/30">🔐 High Trust</span>' : ''}
             ${trendingBadge}
           </div>
           <p class="text-zinc-400 text-sm line-clamp-2 mb-3">
@@ -280,28 +264,10 @@ function renderGroups() {
           </p>
           <div class="flex flex-wrap items-center gap-3 text-xs text-zinc-500">
             <span>👥 ${group.memberCount || 1} members</span>
-            <span class="px-2.5 py-1 bg-zinc-800 rounded-full capitalize">
-              ${formatVisibility(group.visibility)}
-            </span>
+            <span class="px-2.5 py-1 bg-zinc-800 rounded-full capitalize">${formatVisibility(group.visibility)}</span>
           </div>
         </div>
-        <div class="shrink-0">
-          ${actionButtonHtml}
-        </div>
-      </div>
-      <div class="mt-4 pt-3 border-t border-zinc-800 flex flex-wrap gap-2 items-center">
-        <button type="button" data-action="tool" data-tool="locker" data-group-id="${group.id}"
-                class="text-[11px] px-2.5 py-1 bg-emerald-500/10 text-emerald-400 rounded-full hover:bg-emerald-500/20 transition">
-          🗄️ Evidence Locker
-        </button>
-        <button type="button" data-action="tool" data-tool="attestation" data-group-id="${group.id}"
-                class="text-[11px] px-2.5 py-1 bg-amber-500/10 text-amber-400 rounded-full hover:bg-amber-500/20 transition">
-          📜 Attestation Wall
-        </button>
-        <button type="button" data-action="tool" data-tool="timeline" data-group-id="${group.id}"
-                class="text-[11px] px-2.5 py-1 bg-cyan-500/10 text-cyan-400 rounded-full hover:bg-cyan-500/20 transition">
-          ⏱️ Forensic Timeline
-        </button>
+        <div class="shrink-0">${actionButtonHtml}</div>
       </div>
     `;
 
@@ -313,9 +279,6 @@ function renderGroups() {
     container.appendChild(card);
   });
 
-  // Event Listener Bindings for Group Cards
-
-  // 1. Direct Join
   container.querySelectorAll('.join-btn').forEach((btn) => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -323,7 +286,6 @@ function renderGroups() {
     });
   });
 
-  // 2. Request to Join (Pending Approval)
   container.querySelectorAll('.request-join-btn').forEach((btn) => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -331,7 +293,6 @@ function renderGroups() {
     });
   });
 
-  // 3. Share / Invite Link
   container.querySelectorAll('.share-invite-btn').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -346,28 +307,18 @@ function renderGroups() {
       }
     });
   });
-
-  // 4. Tool buttons
-  container.querySelectorAll('button[data-action="tool"]').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const toolName = btn.getAttribute('data-tool');
-      const groupId = btn.getAttribute('data-group-id');
-      window.location.href = `group-detail.html?id=${groupId}&tab=${toolName}`;
-    });
-  });
 }
 
-/**
- * Direct Join a public group
- */
-export async function joinGroup(groupId) {
-  if (!auth.currentUser) {
-    return showToast('Please sign in to join groups', 'error');
-  }
+// ====================== GROUP ACTIONS & MODERATION ======================
 
+export async function joinGroup(groupId) {
+  if (!auth.currentUser) return showToast('Please sign in to join groups', 'error');
   try {
     const groupRef = doc(db, 'groups', groupId);
+    const snap = await getDoc(groupRef);
+    if (snap.exists() && snap.data().bannedMembers?.includes(auth.currentUser.uid)) {
+      return showToast('❌ You have been expelled from this group and cannot join.', 'error');
+    }
     await updateDoc(groupRef, {
       members: arrayUnion(auth.currentUser.uid),
       memberCount: increment(1)
@@ -379,16 +330,14 @@ export async function joinGroup(groupId) {
   }
 }
 
-/**
- * Request to Join a restricted group (Approval Queue)
- */
 export async function requestToJoinGroup(groupId) {
-  if (!auth.currentUser) {
-    return showToast('Please sign in to request group access', 'error');
-  }
-
+  if (!auth.currentUser) return showToast('Please sign in to request group access', 'error');
   try {
     const groupRef = doc(db, 'groups', groupId);
+    const snap = await getDoc(groupRef);
+    if (snap.exists() && snap.data().bannedMembers?.includes(auth.currentUser.uid)) {
+      return showToast('❌ You have been expelled from this group and cannot join.', 'error');
+    }
     await updateDoc(groupRef, {
       pendingMembers: arrayUnion(auth.currentUser.uid)
     });
@@ -399,9 +348,6 @@ export async function requestToJoinGroup(groupId) {
   }
 }
 
-/**
- * Approve a pending member (Admin function for group-detail.html)
- */
 export async function approveGroupMember(groupId, memberUid) {
   if (!auth.currentUser) return;
   try {
@@ -418,16 +364,11 @@ export async function approveGroupMember(groupId, memberUid) {
   }
 }
 
-/**
- * Reject a pending member request
- */
 export async function rejectGroupMember(groupId, memberUid) {
   if (!auth.currentUser) return;
   try {
     const groupRef = doc(db, 'groups', groupId);
-    await updateDoc(groupRef, {
-      pendingMembers: arrayRemove(memberUid)
-    });
+    await updateDoc(groupRef, { pendingMembers: arrayRemove(memberUid) });
     showToast('Member request declined', 'info');
   } catch (err) {
     console.error(err);
@@ -435,9 +376,52 @@ export async function rejectGroupMember(groupId, memberUid) {
   }
 }
 
-/**
- * Create new group
- */
+export async function removeGroupMember(groupId, memberUid) {
+  if (!auth.currentUser) return;
+  try {
+    const groupRef = doc(db, 'groups', groupId);
+    await updateDoc(groupRef, {
+      members: arrayRemove(memberUid),
+      admins: arrayRemove(memberUid),
+      memberCount: increment(-1)
+    });
+    showToast('Member removed from group', 'info');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to remove member', 'error');
+  }
+}
+
+export async function expelGroupMember(groupId, memberUid) {
+  if (!auth.currentUser) return;
+  try {
+    const groupRef = doc(db, 'groups', groupId);
+    await updateDoc(groupRef, {
+      members: arrayRemove(memberUid),
+      admins: arrayRemove(memberUid),
+      pendingMembers: arrayRemove(memberUid),
+      bannedMembers: arrayUnion(memberUid),
+      memberCount: increment(-1)
+    });
+    showToast('🚫 Member expelled and banned from group', 'warning');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to expel member', 'error');
+  }
+}
+
+export async function unbanGroupMember(groupId, memberUid) {
+  if (!auth.currentUser) return;
+  try {
+    const groupRef = doc(db, 'groups', groupId);
+    await updateDoc(groupRef, { bannedMembers: arrayRemove(memberUid) });
+    showToast('Member unbanned', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to unban member', 'error');
+  }
+}
+
 export async function createNewGroup(name, description, visibility) {
   if (!auth.currentUser) {
     showToast('Sign in required to create a group', 'error');
@@ -447,10 +431,6 @@ export async function createNewGroup(name, description, visibility) {
   const trimmed = (name || '').trim();
   if (!trimmed) {
     showToast('Group name is required', 'error');
-    return null;
-  }
-  if (trimmed.length > 60) {
-    showToast('Group name must be 60 characters or less', 'error');
     return null;
   }
 
@@ -475,9 +455,7 @@ export async function createNewGroup(name, description, visibility) {
     members: [uid],
     admins: [uid],
     pendingMembers: [],
-    hasEvidenceLocker: true,
-    hasAttestationWall: true,
-    hasForensicTimeline: true,
+    bannedMembers: [],
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   };
@@ -488,11 +466,7 @@ export async function createNewGroup(name, description, visibility) {
     return ref.id;
   } catch (err) {
     console.error('createNewGroup error:', err);
-    const msg =
-      err?.code === 'permission-denied'
-        ? 'Permission denied — sign in and check Firestore rules'
-        : err?.message || 'Failed to create group';
-    showToast(msg, 'error');
+    showToast(err?.message || 'Failed to create group', 'error');
     return null;
   }
 }
@@ -505,7 +479,6 @@ async function createGroupFromForm() {
 
   if (!nameInput || !nameInput.value.trim()) {
     showToast('Group Name is required', 'error');
-    nameInput?.focus();
     return;
   }
 
@@ -524,7 +497,6 @@ async function createGroupFromForm() {
     if (id) {
       nameInput.value = '';
       if (descInput) descInput.value = '';
-      if (visibilityInput) visibilityInput.value = 'public';
       closeGroupModal();
       window.location.href = `group-detail.html?id=${id}`;
     }
@@ -535,8 +507,6 @@ async function createGroupFromForm() {
     }
   }
 }
-
-// ====================== HELPERS ======================
 
 function escapeHtml(text) {
   if (!text) return '';
@@ -558,18 +528,10 @@ function formatVisibility(vis) {
   return map[vis] || vis || 'Public';
 }
 
-// ====================== GLOBAL MODAL CONTROLS ======================
-
 function showGroupCreationModal() {
   const modal = document.getElementById('groupModal');
-  if (!modal) {
-    showToast('Create modal missing — hard refresh the page', 'error');
-    return;
-  }
-  if (!auth.currentUser) {
-    showToast('Please sign in to create a group', 'error');
-    return;
-  }
+  if (!modal) return;
+  if (!auth.currentUser) return showToast('Please sign in to create a group', 'error');
   modal.classList.remove('hidden');
   modal.classList.add('flex');
   document.getElementById('groupName')?.focus();
@@ -586,240 +548,3 @@ function closeGroupModal() {
 window.showGroupCreationModal = showGroupCreationModal;
 window.closeGroupModal = closeGroupModal;
 window.createGroup = createGroupFromForm;
-
-window.addEventListener('languageChanged', () => {
-  renderGroups();
-});
-
-/**
- * Remove a member from the group (Can re-join later)
- */
-export async function removeGroupMember(groupId, memberUid) {
-  if (!auth.currentUser) return;
-  try {
-    const groupRef = doc(db, 'groups', groupId);
-    await updateDoc(groupRef, {
-      members: arrayRemove(memberUid),
-      admins: arrayRemove(memberUid), // Remove admin status if applicable
-      memberCount: increment(-1)
-    });
-    showToast('Member removed from group', 'info');
-  } catch (err) {
-    console.error('removeGroupMember error:', err);
-    showToast('Failed to remove member', 'error');
-  }
-}
-
-/**
- * Expel & Ban a member from the group (Cannot re-join)
- */
-export async function expelGroupMember(groupId, memberUid) {
-  if (!auth.currentUser) return;
-  try {
-    const groupRef = doc(db, 'groups', groupId);
-    await updateDoc(groupRef, {
-      members: arrayRemove(memberUid),
-      admins: arrayRemove(memberUid),
-      pendingMembers: arrayRemove(memberUid),
-      bannedMembers: arrayUnion(memberUid), // Permanent blocklist
-      memberCount: increment(-1)
-    });
-    showToast('🚫 Member expelled and banned from group', 'warning');
-  } catch (err) {
-    console.error('expelGroupMember error:', err);
-    showToast('Failed to expel member', 'error');
-  }
-}
-
-/**
- * Unban an expelled member
- */
-export async function unbanGroupMember(groupId, memberUid) {
-  if (!auth.currentUser) return;
-  try {
-    const groupRef = doc(db, 'groups', groupId);
-    await updateDoc(groupRef, {
-      bannedMembers: arrayRemove(memberUid)
-    });
-    showToast('Member unbanned', 'success');
-  } catch (err) {
-    console.error('unbanGroupMember error:', err);
-    showToast('Failed to unban member', 'error');
-  }
-}
-
-/**
- * Direct Join a public group
- */
-export async function joinGroup(groupId) {
-  if (!auth.currentUser) {
-    return showToast('Please sign in to join groups', 'error');
-  }
-
-  try {
-    const groupRef = doc(db, 'groups', groupId);
-    const snap = await getDoc(groupRef);
-    if (snap.exists()) {
-      const data = snap.data();
-      if (data.bannedMembers?.includes(auth.currentUser.uid)) {
-        return showToast('❌ You have been expelled from this group and cannot join.', 'error');
-      }
-    }
-
-    await updateDoc(groupRef, {
-      members: arrayUnion(auth.currentUser.uid),
-      memberCount: increment(1)
-    });
-    showToast('✅ Successfully joined the group!', 'success');
-  } catch (err) {
-    console.error(err);
-    showToast(err?.message || 'Failed to join group', 'error');
-  }
-}
-
-/**
- * Request to Join a restricted group (Approval Queue)
- */
-export async function requestToJoinGroup(groupId) {
-  if (!auth.currentUser) {
-    return showToast('Please sign in to request group access', 'error');
-  }
-
-  try {
-    const groupRef = doc(db, 'groups', groupId);
-    const snap = await getDoc(groupRef);
-    if (snap.exists()) {
-      const data = snap.data();
-      if (data.bannedMembers?.includes(auth.currentUser.uid)) {
-        return showToast('❌ You have been expelled from this group and cannot join.', 'error');
-      }
-    }
-
-    await updateDoc(groupRef, {
-      pendingMembers: arrayUnion(auth.currentUser.uid)
-    });
-    showToast('⏳ Request submitted! Waiting for admin approval.', 'success');
-  } catch (err) {
-    console.error(err);
-    showToast(err?.message || 'Failed to submit request', 'error');
-  }
-}
-
-import { removeGroupMember, expelGroupMember, unbanGroupMember, approveGroupMember, rejectGroupMember } from './groups.js';
-
-/**
- * Render Admin Member Management Lists
- */
-export function renderAdminMemberPanel(groupData) {
-  const panel = document.getElementById('admin-members-panel');
-  if (!panel) return;
-
-  const currentUid = auth.currentUser?.uid;
-  const isAdmin = groupData.admins?.includes(currentUid) || groupData.creatorId === currentUid;
-
-  if (!isAdmin) {
-    panel.classList.add('hidden');
-    return;
-  }
-  panel.classList.remove('hidden');
-
-  // 1. Pending Members Queue
-  const pendingContainer = document.getElementById('pending-members-list');
-  const pendingCountEl = document.getElementById('pending-count');
-  const pending = groupData.pendingMembers || [];
-  if (pendingCountEl) pendingCountEl.textContent = pending.length;
-
-  if (pending.length === 0) {
-    pendingContainer.innerHTML = `<div class="p-3 text-center text-xs text-zinc-500 rounded-xl bg-zinc-900/40 border border-zinc-800/80">No pending join requests</div>`;
-  } else {
-    pendingContainer.innerHTML = pending.map(uid => `
-      <div class="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/90 p-3 text-xs">
-        <span class="font-mono text-zinc-300">${uid.slice(0, 12)}...</span>
-        <div class="flex items-center gap-2">
-          <button type="button" class="approve-member-btn px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/40 font-semibold transition" data-uid="${uid}">
-            ✓ Approve
-          </button>
-          <button type="button" class="reject-member-btn px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-400 hover:bg-zinc-700 font-medium transition" data-uid="${uid}">
-            ✕ Decline
-          </button>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  // 2. Active Members List
-  const activeContainer = document.getElementById('active-members-list');
-  const activeCountEl = document.getElementById('active-count');
-  const members = groupData.members || [];
-  if (activeCountEl) activeCountEl.textContent = members.length;
-
-  activeContainer.innerHTML = members.map(uid => {
-    const isOwner = uid === groupData.creatorId;
-    return `
-      <div class="flex items-center justify-between rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-3 text-xs">
-        <div class="flex items-center gap-2">
-          <span class="font-mono text-zinc-300">${uid.slice(0, 12)}...</span>
-          ${isOwner ? '<span class="text-[10px] bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30">Owner</span>' : ''}
-        </div>
-        ${!isOwner && uid !== currentUid ? `
-          <div class="flex items-center gap-2">
-            <button type="button" class="remove-member-btn px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 font-medium transition" data-uid="${uid}">
-              Remove
-            </button>
-            <button type="button" class="expel-member-btn px-3 py-1.5 rounded-xl bg-red-500/15 text-red-400 hover:bg-red-500/25 border border-red-500/30 font-semibold transition" data-uid="${uid}">
-              🚫 Expel & Ban
-            </button>
-          </div>
-        ` : ''}
-      </div>
-    `;
-  }).join('');
-
-  // 3. Expelled / Banned List
-  const bannedContainer = document.getElementById('banned-members-list');
-  const bannedCountEl = document.getElementById('banned-count');
-  const banned = groupData.bannedMembers || [];
-  if (bannedCountEl) bannedCountEl.textContent = banned.length;
-
-  if (banned.length === 0) {
-    bannedContainer.innerHTML = `<div class="p-3 text-center text-xs text-zinc-500 rounded-xl bg-zinc-900/40 border border-zinc-800/80">No banned members</div>`;
-  } else {
-    bannedContainer.innerHTML = banned.map(uid => `
-      <div class="flex items-center justify-between rounded-2xl border border-red-500/20 bg-red-950/20 p-3 text-xs">
-        <span class="font-mono text-red-300">${uid.slice(0, 12)}... (Banned)</span>
-        <button type="button" class="unban-member-btn px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 font-medium transition" data-uid="${uid}">
-          Unban
-        </button>
-      </div>
-    `).join('');
-  }
-
-  // Attach Click Handlers
-  pendingContainer.querySelectorAll('.approve-member-btn').forEach(btn => {
-    btn.addEventListener('click', async () => await approveGroupMember(groupData.id, btn.dataset.uid));
-  });
-
-  pendingContainer.querySelectorAll('.reject-member-btn').forEach(btn => {
-    btn.addEventListener('click', async () => await rejectGroupMember(groupData.id, btn.dataset.uid));
-  });
-
-  activeContainer.querySelectorAll('.remove-member-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      if (confirm('Remove this member? They can re-join later via invite link.')) {
-        await removeGroupMember(groupData.id, btn.dataset.uid);
-      }
-    });
-  });
-
-  activeContainer.querySelectorAll('.expel-member-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      if (confirm('🚫 EXPEL & BAN MEMBER?\n\nThis user will be permanently blocked from re-joining this group until unbanned.')) {
-        await expelGroupMember(groupData.id, btn.dataset.uid);
-      }
-    });
-  });
-
-  bannedContainer.querySelectorAll('.unban-member-btn').forEach(btn => {
-    btn.addEventListener('click', async () => await unbanGroupMember(groupData.id, btn.dataset.uid));
-  });
-}
