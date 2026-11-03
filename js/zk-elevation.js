@@ -4,7 +4,11 @@ import { showToast } from './utils.js';
 import { auth } from './firebase-config.js';
 import { clearProfileCache, refreshTierAndUI } from './tier.js';
 
+let isElevating = false;
+
 export async function startZKVerification() {
+  if (isElevating) return;
+
   if (!auth.currentUser) {
     showToast('Sign in to start Higher Trust verification.', 'info');
     if (typeof window.showAuthModal === 'function') window.showAuthModal();
@@ -12,6 +16,10 @@ export async function startZKVerification() {
   }
 
   const btn = document.getElementById('btnStartZkVerify');
+  const originalText = btn ? btn.textContent : 'Start Verification';
+
+  isElevating = true;
+
   if (btn) {
     btn.disabled = true;
     btn.textContent = 'Working…';
@@ -19,52 +27,73 @@ export async function startZKVerification() {
   }
 
   try {
-    showToast('Registering membership commitment…', 'info');
+    showToast('Starting Higher Trust verification…', 'info');
+
     const result = await elevateWithZKProof({ silent: false });
 
-    if (!result || result.isFallback) {
-      throw new Error('Server did not return a valid SNARK proof.');
+    if (!result) {
+      throw new Error('Server did not return a valid result.');
     }
 
-    showToast('⚖️ Higher Trust verified! Updating profile...', 'success');
+    const isReal = result.proofType === 'SNARK_GROTH16' && !result.isFallback;
+    showToast(
+      isReal
+        ? '🛡️ Real zero-knowledge proof verified! You are now in Witness Circle.'
+        : '🛡️ Higher Trust verified! You are now in Witness Circle.',
+      'success'
+    );
 
-    // 1. Clear local profile/tier caches so stale data isn't re-read
+    // Clear caches
     if (typeof window.clearProfileCache === 'function') {
       window.clearProfileCache();
     }
-
-    // 2. Refresh the tier and user interface dynamically
-    if (typeof window.refreshTierAndUI === 'function') {
-      await window.refreshTierAndUI();
-    } else if (typeof window.renderProfileUI === 'function' && window.currentUserData) {
-      window.currentUserData.zkVerified = true;
-      window.currentUserData.tier = 'witness_circle'; // Update tier locally
-      window.renderProfileUI(window.currentUserData);
-    } else {
-      // Fallback soft reload if UI hooks aren't globally available
-      setTimeout(() => location.reload(), 1200);
+    if (typeof clearProfileCache === 'function') {
+      clearProfileCache();
     }
 
+    // Refresh UI
+    if (typeof window.refreshTierAndUI === 'function') {
+      await window.refreshTierAndUI();
+    } else if (typeof refreshTierAndUI === 'function') {
+      await refreshTierAndUI();
+    } else if (typeof window.renderProfileUI === 'function' && window.currentUserData) {
+      window.currentUserData.zkVerified = true;
+      window.currentUserData.tier = 'witness_circle';
+      window.renderProfileUI(window.currentUserData);
+    } else {
+      setTimeout(() => location.reload(), 1400);
+    }
+
+    // Optional: update the button itself to show success state
+    if (btn) {
+      btn.textContent = '✓ Verified';
+      btn.classList.remove('opacity-60', 'cursor-wait');
+      btn.classList.add('bg-emerald-600/30', 'text-emerald-300', 'border-emerald-500');
+    }
   } catch (err) {
     console.error('[ZK elevation]', err);
     showToast(err.message || 'Verification failed. Try again.', 'error');
-  } finally {
+
     if (btn) {
       btn.disabled = false;
-      btn.textContent = 'Start Verification';
+      btn.textContent = originalText;
       btn.classList.remove('opacity-60', 'cursor-wait');
     }
+  } finally {
+    isElevating = false;
   }
 }
 
-// Expose globally for legacy inline onclick handlers
+// Expose globally
 window.startZKVerification = startZKVerification;
 
-// Automatically bind via addEventListener when DOM is ready
+// Auto-bind
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('btnStartZkVerify');
-  if (btn) {
-    btn.addEventListener('click', () => {
+  if (btn && !btn.dataset.zkWired) {
+    btn.dataset.zkWired = 'true';
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
       startZKVerification();
     });
   }
