@@ -108,6 +108,21 @@ service firebase.storage {
       allow delete: if isOwner(userId) || isModerator();
     }
 
+    // Witness vault (sealed — no owner delete)
+    match /witness-vault/{allPaths=**} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidMedia() && isValidPayload(25);
+      allow update: if false;
+      allow delete: if isModerator();
+    }
+
+    match /witness_vault/{allPaths=**} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidMedia() && isValidPayload(25);
+      allow update: if false;
+      allow delete: if isModerator();
+    }
+
     // Fallback — deny everything else
     match /{allPaths=**} {
       allow read, write: if false;
