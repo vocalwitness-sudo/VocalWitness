@@ -391,20 +391,21 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
             }
         });
     }
+    
+const q = query(
+    collection(db, 'testimonies'),
+    where('channel', '==', currentChannel),  // or feedVisibility
+    orderBy('createdAt', 'desc'),
+    limit(50)
+);
 
-   query(
-  collection(db, 'testimonies'),
-  where('channel', '==', currentChannel),  // or feedVisibility
-  orderBy('createdAt', 'desc'),
-  limit(50)
-)
-    let previousIds = new Set();
-    let isFirstSnapshot = true;
+let previousIds = new Set();
+let isFirstSnapshot = true;
 
-    activeFeedListener = onSnapshot(q, (snapshot) => {
-        const previousCache = [...allPostsCache];
-        allPostsCache = [];
-
+activeFeedListener = onSnapshot(q, (snapshot) => {
+    const previousCache = [...allPostsCache];
+    allPostsCache = [];
+    
         if (snapshot.empty) {
             renderFilteredPosts([], feedContainer);
             previousIds = new Set();
