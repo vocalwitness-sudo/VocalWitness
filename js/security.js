@@ -22,6 +22,8 @@ export const PANIC_STORAGE_KEYS = [
   'vw_default_door',
   'vw_default_page',
   'theme',
+  'vw_zk_session',
+  'vw_last_channel',
 ];
 
 const DEFAULT_PANIC_REDIRECT = 'https://www.accuweather.com'; // harmless decoy page
