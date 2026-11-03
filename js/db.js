@@ -225,7 +225,7 @@ export async function publishTestimonyNow(publicData, privateData = null) {
   // Secure path only — no client addDoc
   const { submitTestimony } = await import('./createPost.js');
 
-  const id = await submitTestimony({
+  const result = await submitTestimony({
     content,
     channel,
     isAnonymous,
@@ -238,7 +238,16 @@ export async function publishTestimonyNow(publicData, privateData = null) {
     mediaFile: publicData?.mediaFile || null,
   });
 
-  // Optional private tier contribution (separate collection)
+  // createPost returns { id, fullPack, ... } — always normalize to string id
+  const id =
+    typeof result === 'string'
+      ? result
+      : (result?.id || null);
+
+  if (!id || typeof id !== 'string') {
+    throw new Error('Publish succeeded but no document id was returned');
+  }
+
   if (privateData?.countsTowardTier && user) {
     try {
       await addDoc(collection(db, 'userContributions'), {
@@ -263,9 +272,26 @@ export async function publishTestimonyNow(publicData, privateData = null) {
     });
   } catch (_) {}
 
-  window.dispatchEvent(new CustomEvent('vocalWitness:posted', { detail: { id } }));
-  return { id, queued: false };
-}
+  window.dispatchEvent(
+    new CustomEvent('vocalWitness:posted', {
+      detail: {
+        id,
+        channel,
+        fullPack: result?.fullPack || null,
+        packCoreHash: result?.packCoreHash || null,
+        forensicHash: result?.forensicHash || null,
+      },
+    })
+  );
+
+  return {
+    id,
+    queued: false,
+    fullPack: result?.fullPack || null,
+    packCoreHash: result?.packCoreHash || null,
+    forensicHash: result?.forensicHash || null,
+    channel,
+  };
 
 // ==================== USER PROFILE ====================
 export const updateUserProfile = async (userId, updates) => {
