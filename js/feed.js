@@ -614,30 +614,47 @@ function renderFilteredPosts(posts, container) {
                 </div>
             `;
         } else {
-            // Case 2: Truly empty Public Square (no posts at all)
+            // Case 2: Truly empty Public Square
+            const isZk = window.currentUserData?.zkVerified === true ||
+                         window.currentUserData?.tier === 'witness_circle';
+
             feedContainer.innerHTML = `
                 <div id="empty-feed-state" class="rounded-3xl border border-dashed border-emerald-500/30 bg-zinc-900/50 px-6 py-16 text-center">
                     <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl">
                         🗣️
                     </div>
-                    <h4 class="text-xl font-bold text-white">The Square is waiting for the first sealed reports</h4>
+                    <h4 class="text-xl font-bold text-white">The Square is waiting for sealed reports</h4>
                     <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400">
-                        Be among the first citizens to publish a cryptographically sealed report. 
+                        Be among the first citizens to publish a cryptographically sealed report.
                         Your voice becomes part of the permanent public record.
                     </p>
-                    <button type="button" 
-                            onclick="document.getElementById('mainInput')?.focus(); document.getElementById('btn-voice')?.scrollIntoView({behavior:'smooth', block:'center'});"
-                            class="mt-7 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
-                        </svg>
-                        Record Live Voice Now
-                    </button>
-                    <p class="mt-4 text-xs text-zinc-500">Recommended • Stronger evidence weight</p>
+
+                    <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+                        <button type="button"
+                                onclick="document.getElementById('mainInput')?.focus(); document.getElementById('btn-voice')?.scrollIntoView({behavior:'smooth', block:'center'});"
+                                class="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+                            </svg>
+                            Speak as a Citizen
+                        </button>
+
+                        ${isZk ? `
+                        <button type="button"
+                                onclick="if(typeof window.switchTab==='function') window.switchTab('witness'); document.getElementById('btn-voice')?.scrollIntoView({behavior:'smooth', block:'center'});"
+                                class="inline-flex items-center gap-2 rounded-2xl border border-amber-500/50 bg-amber-950/40 px-6 py-3.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-900/40 active:scale-[0.98]">
+                            🔬 Publish Witness Voice
+                        </button>` : ''}
+                    </div>
+
+                    <p class="mt-5 text-xs text-zinc-500">
+                        Live voice carries stronger weight as evidence
+                    </p>
                 </div>
             `;
         }
+
         return;
     }
 
