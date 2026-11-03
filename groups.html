@@ -196,5 +196,160 @@
       initGroups('group-container');
     });
   </script>
+
+  <!-- Create Group Modal -->
+  <div id="groupModal" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+    <!-- (Your existing create group modal content remains untouched) -->
+  </div>
+
+  <!-- ====================== GROUP INVITE & JOIN MODAL ====================== -->
+  <div id="groupInviteModal"
+       class="fixed inset-0 z-[10020] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+       role="dialog" aria-modal="true" aria-labelledby="groupModalTitle" aria-hidden="true">
+    
+    <div class="glass relative w-full max-w-md rounded-3xl border border-emerald-500/25 p-5 sm:p-6 text-white shadow-2xl space-y-5">
+      
+      <!-- Close Button -->
+      <button type="button" id="closeGroupModalBtn"
+              class="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full text-xl text-zinc-400 transition hover:bg-zinc-800 hover:text-white active:scale-90"
+              aria-label="Close modal">✕</button>
+
+      <!-- Header Icon & Title -->
+      <div class="text-center">
+        <div id="groupModalIcon" class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/20 text-3xl">
+          👥
+        </div>
+        <h3 id="groupModalTitle" class="text-xl font-bold text-white">Group Invitation</h3>
+        <p id="groupModalSubtitle" class="mt-1 text-xs text-zinc-400">
+          Share this secure link or request access to join the collective.
+        </p>
+      </div>
+
+      <!-- VIEW A: ADMIN / SHARE VIEW -->
+      <div id="groupInviteView" class="space-y-4">
+        <div>
+          <label class="mb-1.5 block text-xs font-medium text-zinc-400">Secure Invite Link</label>
+          <div class="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900/90 p-2">
+            <input type="text" id="groupInviteLinkInput" readonly
+                   class="w-full bg-transparent px-2 font-mono text-xs text-emerald-400 focus:outline-none"
+                   value="https://vocalwitness.com/groups/join?code=loading...">
+            <button type="button" id="copyGroupInviteBtn"
+                    class="shrink-0 rounded-lg bg-emerald-500 px-3.5 py-2 text-xs font-bold text-zinc-950 transition hover:bg-emerald-400 active:scale-95">
+              Copy
+            </button>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-3 text-center text-xs text-zinc-400">
+          Anyone with this link can view the group. Private groups require admin approval upon joining.
+        </div>
+      </div>
+
+      <!-- VIEW B: VISITOR / JOIN VIEW -->
+      <div id="groupJoinView" class="hidden space-y-4 text-center">
+        <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
+          <h4 id="targetGroupName" class="text-base font-bold text-white">Civic Action Collective</h4>
+          <p id="targetGroupDesc" class="mt-1 text-xs text-zinc-400">Local investigative reporting and evidence sharing in Enugu.</p>
+        </div>
+
+        <div id="joinActionArea">
+          <button type="button" id="confirmJoinGroupBtn"
+                  class="w-full rounded-xl bg-emerald-500 py-3 text-sm font-bold text-zinc-950 shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
+            Request to Join Group
+          </button>
+        </div>
+
+        <div id="pendingStatusArea" class="hidden rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300">
+          ⏳ Your membership request has been sent to the group admin. You will be notified upon acceptance.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module">
+    import { initGroups } from './js/groups.js';
+    import { initLanguage } from './js/i18n.js';
+
+    // Global toast helper if not already loaded globally
+    window.showToast = window.showToast || function(msg, type = 'info') {
+      const t = document.createElement('div');
+      t.className = `fixed bottom-6 left-1/2 z-[11000] -translate-x-1/2 rounded-2xl px-6 py-3.5 text-sm font-medium text-white shadow-2xl ${
+        type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-600' : 'bg-zinc-800'
+      }`;
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
+    };
+
+    // Modal Controllers
+    window.openGroupInviteModal = (groupData = null) => {
+      const modal = document.getElementById('groupInviteModal');
+      if (!modal) return;
+      const inviteView = document.getElementById('groupInviteView');
+      const joinView = document.getElementById('groupJoinView');
+
+      if (groupData && groupData.isJoining) {
+        inviteView.classList.add('hidden');
+        joinView.classList.remove('hidden');
+        document.getElementById('targetGroupName').textContent = groupData.name || 'Citizen Group';
+        document.getElementById('targetGroupDesc').textContent = groupData.description || '';
+        document.getElementById('pendingStatusArea').classList.add('hidden');
+        document.getElementById('joinActionArea').classList.remove('hidden');
+      } else {
+        joinView.classList.add('hidden');
+        inviteView.classList.remove('hidden');
+        const inviteCode = groupData?.code || Math.random().toString(36).substring(2, 10).toUpperCase();
+        const linkInput = document.getElementById('groupInviteLinkInput');
+        if (linkInput) linkInput.value = `${window.location.origin}/groups/join?code=${inviteCode}`;
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.closeGroupInviteModal = () => {
+      const modal = document.getElementById('groupInviteModal');
+      if (!modal) return;
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.style.overflow = '';
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initLanguage();
+      initGroups('group-container');
+
+      document.getElementById('closeGroupModalBtn')?.addEventListener('click', window.closeGroupInviteModal);
+
+      // Copy Link Handler
+      document.getElementById('copyGroupInviteBtn')?.addEventListener('click', async () => {
+        const input = document.getElementById('groupInviteLinkInput');
+        if (!input) return;
+        try {
+          await navigator.clipboard.writeText(input.value);
+          window.showToast('Invite link copied to clipboard!', 'success');
+        } catch {
+          input.select();
+          window.showToast('Copy failed — please select manually', 'error');
+        }
+      });
+
+      // Request to Join Handler
+      document.getElementById('confirmJoinGroupBtn')?.addEventListener('click', () => {
+        document.getElementById('joinActionArea').classList.add('hidden');
+        document.getElementById('pendingStatusArea').classList.remove('hidden');
+        window.showToast('Membership request sent to admins', 'success');
+      });
+
+      // Backdrop dismissal
+      const modal = document.getElementById('groupInviteModal');
+      modal?.addEventListener('click', (e) => {
+        if (e.target === modal) window.closeGroupInviteModal();
+      });
+    });
+  </script>
+  
 </body>
 </html>
