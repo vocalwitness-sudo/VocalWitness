@@ -168,6 +168,8 @@ export async function submitTestimony({
 
   let firestorePack = null;
   let packCoreHash = null;
+  let fullPack = null;
+
   try {
     const packResult = await createEvidencePack({
       content: cleanedContent || '',
@@ -182,7 +184,6 @@ export async function submitTestimony({
       },
       identity: {
         mode: isAnonymous ? 'ANONYMOUS' : 'IDENTIFIED',
-        // Server still binds authorId to auth.uid; UI anonymity is display-only
         authorId: user.uid,
         displayName: isAnonymous ? null : (user.displayName || null),
       },
@@ -192,6 +193,7 @@ export async function submitTestimony({
     });
     firestorePack = packResult.firestorePack;
     packCoreHash = packResult.packCoreHash;
+    fullPack = packResult.fullPack;
   } catch (packErr) {
     console.warn("Evidence pack generation issue, proceeding without pack:", packErr);
   }
@@ -224,11 +226,24 @@ export async function submitTestimony({
     throw new Error("Secure submit returned no document id.");
   }
 
+  // Attach the real id to the full pack
+  if (fullPack) {
+    fullPack.packId = id;
+    fullPack.verifyUrl = fullPack.verifyUrl || 
+      `https://vocalwitness.com/verify.html?id=${id}&h=${packCoreHash || forensicHash || ''}`;
+  }
+
   if (moderationResult.status === 'pending_review') {
     showToast("⚠️ Testimony submitted (server sealed).", "warning");
   } else {
     showToast("🛡️ Testimony cryptographically sealed and published!", "success");
   }
 
-  return id;
-}
+  // Return rich object so the UI can show download + share
+  return {
+    id,
+    fullPack,
+    packCoreHash,
+    forensicHash,
+    channel,
+  };
