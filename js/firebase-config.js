@@ -73,13 +73,23 @@ try {
 }
 
 /* ------------------------------------------------------------------ */
-/* 4. Auth                                                            */
+/* 4. Auth & Persistence (Defensive Fallback for Legacy/Restricted Browsers) */
 /* ------------------------------------------------------------------ */
-const auth = getAuth(app);
+let auth;
 
-setPersistence(auth, browserLocalPersistence).catch((err) => {
-  console.warn("[firebase-config] Persistence fallback:", err?.message || err);
-});
+try {
+  // Attempt standard initialization
+  auth = getAuth(app);
+  
+  // Apply local persistence safely with error handling
+  setPersistence(auth, browserLocalPersistence).catch((err) => {
+    console.warn("[firebase-config] Local persistence restricted or blocked, continuing with default:", err?.message || err);
+  });
+} catch (err) {
+  console.warn("[firebase-config] Auth initialization warning on legacy browser, applying fallback:", err?.message || err);
+  // Fallback initialization if storage throws synchronously
+  auth = getAuth(app);
+}
 
 /* ------------------------------------------------------------------ */
 /* 5. Firestore – best settings for mobile + offline                  */
