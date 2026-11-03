@@ -247,3 +247,4 @@ export async function submitTestimony({
     forensicHash,
     channel,
   };
+}
