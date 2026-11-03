@@ -463,3 +463,70 @@ export function exportForNewsroom(testimony, extras = {}) {
   downloadJson(`vocalwitness-newsroom-${id}.json`, pack);
   return pack;
 }
+
+/**
+ * Show prominent post-publish success card with Download + Share as primary actions
+ */
+export function showPublishSuccessCard({ id, fullPack, channel = 'citizen-talk' }) {
+  // Remove any existing card
+  document.getElementById('vw-publish-success')?.remove();
+
+  const isWitness = channel === 'witness-voice' || channel === 'witness-circle';
+  const title = isWitness ? 'Witness Voice sealed' : 'Report sealed & published';
+
+  const card = document.createElement('div');
+  card.id = 'vw-publish-success';
+  card.className = 'fixed inset-0 z-[12000] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm';
+  card.innerHTML = `
+    <div class="w-full max-w-md rounded-3xl border border-emerald-500/40 bg-zinc-900 p-6 shadow-2xl">
+      <div class="text-center">
+        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/15 text-3xl">🛡️</div>
+        <h3 class="text-xl font-bold text-white">${title}</h3>
+        <p class="mt-2 text-sm text-zinc-400">
+          Your evidence is now part of the permanent public record.
+          Download the Evidence Pack or share the sealed link.
+        </p>
+      </div>
+
+      <div class="mt-6 space-y-3">
+        <button id="vw-download-pack"
+                class="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
+          📥 Download Evidence Pack
+        </button>
+
+        <button id="vw-share-pack"
+                class="flex w-full items-center justify-center gap-2 rounded-2xl border border-emerald-500/50 bg-emerald-950/40 px-5 py-3.5 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-900/40 active:scale-[0.98]">
+          🔗 Share sealed report
+        </button>
+
+        <button id="vw-success-close"
+                class="w-full rounded-xl py-2.5 text-sm text-zinc-400 hover:text-white transition">
+          Close · Publish another
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(card);
+
+  // Wire buttons
+  card.querySelector('#vw-download-pack')?.addEventListener('click', () => {
+    if (fullPack) {
+      downloadEvidencePack(fullPack, id);
+      showToast('Evidence Pack downloaded', 'success');
+    } else {
+      showToast('Pack not available', 'warning');
+    }
+  });
+
+  card.querySelector('#vw-share-pack')?.addEventListener('click', async () => {
+    const result = await shareTestimony({ id, ...fullPack }, { preferNative: true });
+    if (result.ok) {
+      showToast(result.method === 'native' ? 'Shared' : 'Link copied', 'success');
+    }
+  });
+
+  const close = () => card.remove();
+  card.querySelector('#vw-success-close')?.addEventListener('click', close);
+  card.addEventListener('click', (e) => { if (e.target === card) close(); });
+}
