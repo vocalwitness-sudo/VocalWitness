@@ -390,11 +390,12 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
         });
     }
 
-    const q = query(
-        collection(dbInstance, 'testimonies'),
-        limit(50)
-    );
-
+   query(
+  collection(db, 'testimonies'),
+  where('channel', '==', currentChannel),  // or feedVisibility
+  orderBy('createdAt', 'desc'),
+  limit(50)
+)
     let previousIds = new Set();
     let isFirstSnapshot = true;
 
