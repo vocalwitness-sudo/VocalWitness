@@ -1,4 +1,4 @@
-// js/groups.js - VocalWitness Groups System (with Trending)
+// js/groups.js - VocalWitness Groups System (with Trending & Invite Flow)
 
 import { db, auth } from './firebase-config.js';
 import {
@@ -9,6 +9,7 @@ import {
   updateDoc,
   doc,
   arrayUnion,
+  arrayRemove,
   increment,
   addDoc,
   serverTimestamp
@@ -62,6 +63,9 @@ export function initGroups(containerId = 'group-container') {
 
   // Create Group modal wiring
   wireCreateGroupModal();
+
+  // Inspect URL for incoming invite links (e.g., groups.html?join=GROUP_ID or ?code=GROUP_ID)
+  checkIncomingInviteParams();
 
   // Real-time listener
   if (unsubscribe) unsubscribe();
@@ -130,6 +134,27 @@ function wireCreateGroupModal() {
 }
 
 /**
+ * Check if the page was opened via an invite link
+ */
+function checkIncomingInviteParams() {
+  const params = new URLSearchParams(window.location.search);
+  const inviteGroupId = params.get('join') || params.get('code');
+  
+  if (inviteGroupId) {
+    // Find matching group or trigger generic join flow
+    const targetGroup = allGroups.find(g => g.id === inviteGroupId);
+    if (typeof window.openGroupInviteModal === 'function') {
+      window.openGroupInviteModal({
+        id: inviteGroupId,
+        name: targetGroup?.name || 'Truth Circle',
+        description: targetGroup?.description || 'You were invited to join this collective.',
+        isJoining: true
+      });
+    }
+  }
+}
+
+/**
  * Render groups based on current tab + search
  */
 function renderGroups() {
@@ -158,7 +183,7 @@ function renderGroups() {
         const updated = g.updatedAt?.toMillis?.() || (g.updatedAt?.seconds ? g.updatedAt.seconds * 1000 : created);
 
         const ageInDays = (Date.now() - updated) / (1000 * 60 * 60 * 24);
-        const recencyBoost = Math.max(0, 30 - ageInDays); // last 30 days get boost
+        const recencyBoost = Math.max(0, 30 - ageInDays);
 
         return {
           ...g,
@@ -209,7 +234,9 @@ function renderGroups() {
 
   filtered.forEach((group) => {
     const isMember = currentUid && group.members?.includes(currentUid);
+    const isPending = currentUid && group.pendingMembers?.includes(currentUid);
     const isCreator = currentUid && group.creatorId === currentUid;
+    const requiresApproval = group.visibility === 'citizen_circle' || group.visibility === 'witness_circle';
 
     const card = document.createElement('div');
     card.className = 'glass p-5 rounded-3xl transition hover:border-emerald-500/40 cursor-pointer';
@@ -219,6 +246,21 @@ function renderGroups() {
       currentTab === 'trending'
         ? `<span class="text-[10px] bg-orange-500/15 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/30">🔥 Trending</span>`
         : '';
+
+    // Action button render logic
+    let actionButtonHtml = '';
+    if (isMember) {
+      actionButtonHtml = `<div class="flex items-center gap-2">
+        <button type="button" class="share-invite-btn px-3 py-2 bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/25 rounded-2xl text-xs font-semibold transition" data-id="${group.id}">🔗 Invite</button>
+        <button type="button" class="px-4 py-2 bg-zinc-800 text-zinc-300 rounded-2xl text-xs font-medium cursor-default">Joined</button>
+      </div>`;
+    } else if (isPending) {
+      actionButtonHtml = `<button type="button" class="px-4 py-2 bg-amber-500/15 border border-amber-500/30 text-amber-300 rounded-2xl text-xs font-medium cursor-default">⏳ Pending</button>`;
+    } else if (requiresApproval) {
+      actionButtonHtml = `<button type="button" class="request-join-btn bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-2xl text-xs font-semibold transition" data-id="${group.id}">Request Join</button>`;
+    } else {
+      actionButtonHtml = `<button type="button" class="join-btn bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-2xl text-sm font-medium transition" data-id="${group.id}">Join</button>`;
+    }
 
     card.innerHTML = `
       <div class="flex justify-between items-start gap-4">
@@ -244,12 +286,7 @@ function renderGroups() {
           </div>
         </div>
         <div class="shrink-0">
-          ${
-            isMember
-              ? `<button type="button" class="px-5 py-2.5 bg-zinc-800 text-zinc-300 rounded-2xl text-sm font-medium cursor-default">Joined</button>`
-              : `<button type="button" class="join-btn bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-2xl text-sm font-medium transition"
-                        data-id="${group.id}">Join</button>`
-          }
+          ${actionButtonHtml}
         </div>
       </div>
       <div class="mt-4 pt-3 border-t border-zinc-800 flex flex-wrap gap-2 items-center">
@@ -276,7 +313,9 @@ function renderGroups() {
     container.appendChild(card);
   });
 
-  // Join buttons
+  // Event Listener Bindings for Group Cards
+
+  // 1. Direct Join
   container.querySelectorAll('.join-btn').forEach((btn) => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -284,7 +323,31 @@ function renderGroups() {
     });
   });
 
-  // Tool buttons
+  // 2. Request to Join (Pending Approval)
+  container.querySelectorAll('.request-join-btn').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      await requestToJoinGroup(btn.dataset.id);
+    });
+  });
+
+  // 3. Share / Invite Link
+  container.querySelectorAll('.share-invite-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const group = allGroups.find(g => g.id === btn.dataset.id);
+      if (typeof window.openGroupInviteModal === 'function') {
+        window.openGroupInviteModal({
+          code: group?.id,
+          name: group?.name,
+          description: group?.description,
+          isJoining: false
+        });
+      }
+    });
+  });
+
+  // 4. Tool buttons
   container.querySelectorAll('button[data-action="tool"]').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -296,7 +359,7 @@ function renderGroups() {
 }
 
 /**
- * Join a group
+ * Direct Join a public group
  */
 export async function joinGroup(groupId) {
   if (!auth.currentUser) {
@@ -313,6 +376,62 @@ export async function joinGroup(groupId) {
   } catch (err) {
     console.error(err);
     showToast(err?.message || 'Failed to join group', 'error');
+  }
+}
+
+/**
+ * Request to Join a restricted group (Approval Queue)
+ */
+export async function requestToJoinGroup(groupId) {
+  if (!auth.currentUser) {
+    return showToast('Please sign in to request group access', 'error');
+  }
+
+  try {
+    const groupRef = doc(db, 'groups', groupId);
+    await updateDoc(groupRef, {
+      pendingMembers: arrayUnion(auth.currentUser.uid)
+    });
+    showToast('⏳ Request submitted! Waiting for admin approval.', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast(err?.message || 'Failed to submit request', 'error');
+  }
+}
+
+/**
+ * Approve a pending member (Admin function for group-detail.html)
+ */
+export async function approveGroupMember(groupId, memberUid) {
+  if (!auth.currentUser) return;
+  try {
+    const groupRef = doc(db, 'groups', groupId);
+    await updateDoc(groupRef, {
+      pendingMembers: arrayRemove(memberUid),
+      members: arrayUnion(memberUid),
+      memberCount: increment(1)
+    });
+    showToast('✅ Member approved!', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to approve member', 'error');
+  }
+}
+
+/**
+ * Reject a pending member request
+ */
+export async function rejectGroupMember(groupId, memberUid) {
+  if (!auth.currentUser) return;
+  try {
+    const groupRef = doc(db, 'groups', groupId);
+    await updateDoc(groupRef, {
+      pendingMembers: arrayRemove(memberUid)
+    });
+    showToast('Member request declined', 'info');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to decline request', 'error');
   }
 }
 
@@ -467,31 +586,6 @@ function closeGroupModal() {
 window.showGroupCreationModal = showGroupCreationModal;
 window.closeGroupModal = closeGroupModal;
 window.createGroup = createGroupFromForm;
-
-window.showUpgradeToWitnessModal = function () {
-  const modal = document.getElementById('upgradeToWitnessModal');
-  if (modal) {
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-  }
-};
-
-window.closeUpgradeModal = function () {
-  const modal = document.getElementById('upgradeToWitnessModal');
-  if (modal) {
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-  }
-};
-
-window.startZKUpgradeFromGroups = function () {
-  closeUpgradeModal();
-  if (typeof startZKVerification === 'function') {
-    startZKVerification();
-  } else {
-    showToast('ZK Verification module not available', 'error');
-  }
-};
 
 window.addEventListener('languageChanged', () => {
   renderGroups();
