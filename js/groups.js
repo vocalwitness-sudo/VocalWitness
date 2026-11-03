@@ -590,3 +590,117 @@ window.createGroup = createGroupFromForm;
 window.addEventListener('languageChanged', () => {
   renderGroups();
 });
+
+/**
+ * Remove a member from the group (Can re-join later)
+ */
+export async function removeGroupMember(groupId, memberUid) {
+  if (!auth.currentUser) return;
+  try {
+    const groupRef = doc(db, 'groups', groupId);
+    await updateDoc(groupRef, {
+      members: arrayRemove(memberUid),
+      admins: arrayRemove(memberUid), // Remove admin status if applicable
+      memberCount: increment(-1)
+    });
+    showToast('Member removed from group', 'info');
+  } catch (err) {
+    console.error('removeGroupMember error:', err);
+    showToast('Failed to remove member', 'error');
+  }
+}
+
+/**
+ * Expel & Ban a member from the group (Cannot re-join)
+ */
+export async function expelGroupMember(groupId, memberUid) {
+  if (!auth.currentUser) return;
+  try {
+    const groupRef = doc(db, 'groups', groupId);
+    await updateDoc(groupRef, {
+      members: arrayRemove(memberUid),
+      admins: arrayRemove(memberUid),
+      pendingMembers: arrayRemove(memberUid),
+      bannedMembers: arrayUnion(memberUid), // Permanent blocklist
+      memberCount: increment(-1)
+    });
+    showToast('🚫 Member expelled and banned from group', 'warning');
+  } catch (err) {
+    console.error('expelGroupMember error:', err);
+    showToast('Failed to expel member', 'error');
+  }
+}
+
+/**
+ * Unban an expelled member
+ */
+export async function unbanGroupMember(groupId, memberUid) {
+  if (!auth.currentUser) return;
+  try {
+    const groupRef = doc(db, 'groups', groupId);
+    await updateDoc(groupRef, {
+      bannedMembers: arrayRemove(memberUid)
+    });
+    showToast('Member unbanned', 'success');
+  } catch (err) {
+    console.error('unbanGroupMember error:', err);
+    showToast('Failed to unban member', 'error');
+  }
+}
+
+/**
+ * Direct Join a public group
+ */
+export async function joinGroup(groupId) {
+  if (!auth.currentUser) {
+    return showToast('Please sign in to join groups', 'error');
+  }
+
+  try {
+    const groupRef = doc(db, 'groups', groupId);
+    const snap = await getDoc(groupRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.bannedMembers?.includes(auth.currentUser.uid)) {
+        return showToast('❌ You have been expelled from this group and cannot join.', 'error');
+      }
+    }
+
+    await updateDoc(groupRef, {
+      members: arrayUnion(auth.currentUser.uid),
+      memberCount: increment(1)
+    });
+    showToast('✅ Successfully joined the group!', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast(err?.message || 'Failed to join group', 'error');
+  }
+}
+
+/**
+ * Request to Join a restricted group (Approval Queue)
+ */
+export async function requestToJoinGroup(groupId) {
+  if (!auth.currentUser) {
+    return showToast('Please sign in to request group access', 'error');
+  }
+
+  try {
+    const groupRef = doc(db, 'groups', groupId);
+    const snap = await getDoc(groupRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.bannedMembers?.includes(auth.currentUser.uid)) {
+        return showToast('❌ You have been expelled from this group and cannot join.', 'error');
+      }
+    }
+
+    await updateDoc(groupRef, {
+      pendingMembers: arrayUnion(auth.currentUser.uid)
+    });
+    showToast('⏳ Request submitted! Waiting for admin approval.', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast(err?.message || 'Failed to submit request', 'error');
+  }
+}
