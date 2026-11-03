@@ -640,7 +640,7 @@ window.publishTestimony = async () => {
       return;
     }
 
- const result = await submitTestimony({
+   const result = await submitTestimony({
       content,
       channel,
       imageFile,
@@ -660,30 +660,29 @@ window.publishTestimony = async () => {
       },
     });
 
-    // Support both old (string id) and new (object) return shapes
-    const id = typeof result === 'string' ? result : result?.id;
-    const fullPack = typeof result === 'object' ? result?.fullPack : null;
+    // submitTestimony returns { id, fullPack, ... } — not a plain string
+    const id =
+      typeof result === 'string'
+        ? result
+        : (result && result.id) || null;
+
+    if (!id || typeof id !== 'string') {
+      throw new Error('Secure submit returned no document id.');
+    }
 
     console.log('[publish] SUCCESS via submitTestimonySecure →', id, '| channel:', channel);
 
-    // Primary post-publish action: Evidence Pack download + share
-    try {
-      const { showPublishSuccessCard } = await import('./evidence-pack.js');
-      if (typeof showPublishSuccessCard === 'function' && id) {
-        showPublishSuccessCard({
+    window.dispatchEvent(
+      new CustomEvent('vocalWitness:posted', {
+        detail: {
           id,
-          fullPack,
-          channel: channel || 'citizen-talk',
-        });
-      }
-    } catch (cardErr) {
-      console.warn('[publish] Success card failed (non-fatal):', cardErr);
-    }
-
-    // Post-success UI
-    window.dispatchEvent(new CustomEvent('vocalWitness:posted', {
-      detail: { id, channel, fullPack }
-    }));
+          channel,
+          fullPack: result?.fullPack || null,
+          packCoreHash: result?.packCoreHash || null,
+          forensicHash: result?.forensicHash || null,
+        },
+      })
+    );
 
     try {
       const userRef = doc(db, 'users', currentUser.uid);
@@ -707,6 +706,8 @@ window.publishTestimony = async () => {
             downloadPackBtn.disabled = true;
             if (typeof handleDownloadEvidencePack === 'function') {
               await handleDownloadEvidencePack(id);
+            } else if (result?.fullPack && typeof downloadEvidencePack === 'function') {
+              downloadEvidencePack(result.fullPack, id);
             } else {
               showToast('Open the post to download the Evidence Pack', 'info');
             }
