@@ -370,6 +370,30 @@ service cloud.firestore {
       allow read, write: if false; // Admin SDK only (for server-side news ticker, etc.)
     }
 
+  // ==========================================
+    // ZK MEMBERSHIP (server-only — Admin SDK)
+    // ==========================================
+    match /zk_commitments/{uid} {
+      allow read: if isOwner(uid) || isModerator() || isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    match /zk_nullifiers/{nullifierId} {
+      allow read: if isModerator() || isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    match /zk_tree/{treeId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if false;
+
+      match /nodes/{nodeId} {
+        allow read: if isAuthenticated();
+        allow create, update, delete: if false;
+      }
+    }
+
+
     // ==========================================
     // USER PROFILES & SUBCOLLECTIONS
     // ==========================================
@@ -450,9 +474,8 @@ service cloud.firestore {
     match /testimonies/{testimonyId} {
       allow read: if true;
 
-      allow create: if isNotBanned()
-        && isNotThrottled()
-        && isSafeTestimonyCreate();
+      // Client create disabled — only Cloud Functions (Admin SDK) via submitTestimonySecure
+      allow create: if false;
 
       allow update: if isModerator()
         || (
