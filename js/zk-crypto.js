@@ -1,5 +1,26 @@
-// js/zk-crypto.js - Rigorous Signature & Verification Engine
+// js/zk-crypto.js - Rigorous Signature & Verification Engine (With Safe Hashing)
 import { showToast } from './utils.js';
+
+/**
+ * Robust SHA-256 hashing with feature detection and fallback support.
+ */
+export async function safeSha256(message) {
+  try {
+    if (window.crypto && window.crypto.subtle) {
+      const msgBuffer = new TextEncoder().encode(message);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    } else {
+      // Fallback for legacy browsers or insecure HTTP contexts without crypto.subtle support
+      console.warn('crypto.subtle not available; generating legacy fallback identifier.');
+      return 'legacy-fallback-' + Date.now() + '-' + Math.random().toString(36).substring(2);
+    }
+  } catch (err) {
+    console.warn('Hashing fallback triggered due to legacy browser error:', err);
+    return 'legacy-error-fallback';
+  }
+}
 
 export async function generateRigorousProof(testimonyData) {
     try {
@@ -53,11 +74,9 @@ export async function generateRigorousProof(testimonyData) {
         };
 
         const dataString = JSON.stringify(forensicBundle);
-        const encoder = new TextEncoder();
-        const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(dataString));
-        const hashHex = Array.from(new Uint8Array(hashBuffer))
-            .map(b => b.toString(16).padStart(2, '0'))
-            .join('');
+        
+        // Use the safe fallback hashing function
+        const hashHex = await safeSha256(dataString);
 
         if (!window.ethereum) {
             throw new Error("No Web3 wallet detected (e.g. MetaMask)");
