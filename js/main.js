@@ -820,9 +820,9 @@ async function loadEvidenceLedger() {
   }
 
   try {
-    const q = query(
+   const q = query(
       collection(db, "testimonies"),
-      orderBy("timestamp", "desc"),
+      orderBy("createdAt", "desc"),
       limit(25)
     );
 
