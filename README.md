@@ -43,3 +43,11 @@ Commercial use, redistribution, and derivative works require explicit written pe
 ## Contact / support
 
 admin@vocalwitness.com
+
+## Device & Browser Compatibility
+
+VocalWitness is engineered to support both modern and legacy hardware (tested across modern smartphones, laptops, legacy Android devices, and older iOS WebKit engines):
+
+- **Modern Browsers (Chrome, Firefox, Safari, Edge):** Full ES Modules, Web Crypto API, client-side SHA-256 hashing, ZK proofs, and live WebSocket/Firestore real-time streams.
+- **Legacy Browsers & Older Phones:** Automatic fallback handling. If advanced crypto or modern module features fail, the app falls back to basic form submission, standard server-authenticated routes, and safe error-bound states instead of hitting a blank white screen.
+- **Low-Bandwidth Optimization:** Compressed asset delivery, optional media re-attachment for offline drafts, and lightweight payload serialization.
