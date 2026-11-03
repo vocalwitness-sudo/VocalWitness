@@ -113,6 +113,7 @@ export async function prepareMediaForUpload(file, options = {}) {
   let processedBlob = file;
 
   // ========== IMAGE PATH ==========
+   // ========== IMAGE PATH ==========
   if (type.startsWith('image/') || type === 'image/heic' || type === 'image/heif') {
     try {
       // Convert HEIC first
@@ -121,21 +122,34 @@ export async function prepareMediaForUpload(file, options = {}) {
         type = 'image/jpeg';
       }
 
-      showToast('🛡️ Scrubbing image metadata...', 'info');
+      const dataSaverOn = localStorage.getItem('vw_data_saver') === 'true';
+
+      const maxWidth  = dataSaverOn ? 1280 : (options.maxWidth || 1920);
+      const maxHeight = dataSaverOn ? 1280 : (options.maxHeight || 1080);
+      const quality   = dataSaverOn ? 0.72 : (options.quality || 0.85);
+
+      showToast(
+        dataSaverOn
+          ? '🛡️ Data Saver: compressing image…'
+          : '🛡️ Scrubbing image metadata…',
+        'info'
+      );
 
       processedBlob = await scrubImageMetadata(file, {
-        maxWidth: options.maxWidth || 1920,
-        maxHeight: options.maxHeight || 1080,
+        maxWidth,
+        maxHeight,
         outputType: 'image/webp',
-        quality: 0.85,
+        quality,
         ...options
       });
 
-      if (processedBlob.size > 450 * 1024) {
+      // Extra compression pass if still large
+      const sizeLimit = dataSaverOn ? 220 * 1024 : 450 * 1024;
+      if (processedBlob.size > sizeLimit) {
         processedBlob = await compressImage(processedBlob, {
-          maxWidth: options.maxWidth || 1600,
-          maxHeight: options.maxHeight || 1600,
-          quality: 0.82
+          maxWidth: dataSaverOn ? 1024 : 1600,
+          maxHeight: dataSaverOn ? 1024 : 1600,
+          quality: dataSaverOn ? 0.68 : 0.82
         });
       }
 
