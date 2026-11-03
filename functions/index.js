@@ -1904,23 +1904,20 @@ export const castDaoVote = onCall(
 
 /**
  * Step 2: Prove membership and elevate tier.
- * Full Groth16 can be plugged in when circuit assets are on the function.
- * Until then: server verifies registered commitment + auth, then writes zkVerified.
- * Client elevateWithZKProof expects success + proofType SNARK_GROTH16_SERVER.
+ * Real Groth16 when circuit assets exist; otherwise secure server-attested elevation
+ * with proper Poseidon nullifierHash + atomic nullifier spend.
  */
 export const generateZKProof = onCall(
   {
     cors: allowedOrigins,
     timeoutSeconds: 120,
-    memory: "512MiB",
-    consumeAppCheckToken: true // Enforces and consumes the App Check token automatically
+    memory: "1GiB",               // safer for snarkjs
+    consumeAppCheckToken: true
   },
   async (request) => {
-    // request.app will be populated if App Check validation passes
     if (!request.app) {
       throw new HttpsError("unauthenticated", "Unauthorized: Missing or invalid App Check token.");
     }
-
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Sign in required.");
     }
@@ -1930,6 +1927,7 @@ export const generateZKProof = onCall(
     const commitRef = db.collection("zk_commitments").doc(uid);
 
     try {
+      // ---- 1. Load commitment -------------------------------------------------
       const commitSnap = await commitRef.get();
       if (!commitSnap.exists || !commitSnap.data()?.commitment) {
         throw new HttpsError(
@@ -1939,22 +1937,111 @@ export const generateZKProof = onCall(
       }
 
       const commitData = commitSnap.data();
-      const commitment = commitData.commitment;
-      const nullifierHash = hashToFieldDecimal("vw-nf-hash", commitData.nullifierEnc || commitment);
+      const commitment   = commitData.commitment;
+      const secret       = commitData.secretEnc;
+      const nullifier    = commitData.nullifierEnc;
+      const leafIndex    = commitData.leafIndex ?? 0;
 
-      // Optional: reject double-elevation with same nullifier
-      const nullifierDoc = await db.collection("zk_nullifiers").doc(nullifierHash).get();
-      if (nullifierDoc.exists && nullifierDoc.data()?.uid !== uid) {
-        throw new HttpsError("already-exists", "Nullifier already spent.");
+      if (!secret || !nullifier) {
+        throw new HttpsError("failed-precondition", "Commitment is incomplete.");
       }
 
-      // --- Elevation (server-authoritative) ---
+      // ---- 2. Real Poseidon nullifierHash (matches circuit) ------------------
+      const nullifierHash = await poseidonHash([nullifier]);
+
+      // ---- 3. Atomic nullifier check + spend ---------------------------------
+      const nullifierRef = db.collection("zk_nullifiers").doc(nullifierHash);
+
+      await db.runTransaction(async (tx) => {
+        const nullDoc = await tx.get(nullifierRef);
+        if (nullDoc.exists) {
+          const owner = nullDoc.data()?.uid;
+          if (owner && owner !== uid) {
+            throw new HttpsError("already-exists", "Nullifier already spent by another account.");
+          }
+          // Same user already elevated → treat as success later
+        } else {
+          tx.set(nullifierRef, {
+            uid,
+            commitment,
+            spentAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+        }
+      });
+
+      // ---- 4. Load current user stats for circuit thresholds -----------------
+      const userSnap = await userRef.get();
+      const userData = userSnap.exists ? userSnap.data() : {};
+      const trustScore = String(userData.reputationScore ?? 50);
+      const postCount  = String(userData.testimoniesCount ?? 0);
+
+      // ---- 5. Rebuild Merkle path for this leaf ------------------------------
+      const { pathElements, pathIndices, root: merkleRoot } =
+        await getPathForLeaf(leafIndex, commitment);
+
+      // ---- 6. Try real Groth16 prove (if assets exist) -----------------------
+      let proof = null;
+      let publicSignals = null;
+      let usedRealSnark = false;
+
+      const assetsExist =
+        fs.existsSync(WASM_PATH) &&
+        fs.existsSync(ZKEY_PATH) &&
+        fs.existsSync(VKEY_PATH);
+
+      if (assetsExist) {
+        try {
+          const input = {
+            secret,
+            nullifier,
+            trustScore,
+            postCount,
+            pathElements,
+            pathIndices,
+            merkleRoot,
+            minTrustScore: MIN_TRUST_SCORE,
+            minPosts: MIN_POSTS
+          };
+
+          const { proof: grothProof, publicSignals: signals } =
+            await snarkjs.groth16.fullProve(input, WASM_PATH, ZKEY_PATH);
+
+          // Verify immediately
+          const vKey = JSON.parse(fs.readFileSync(VKEY_PATH, "utf8"));
+          const isValid = await snarkjs.groth16.verify(vKey, signals, grothProof);
+
+          if (!isValid) {
+            throw new Error("Generated proof failed verification");
+          }
+
+          proof = grothProof;
+          publicSignals = signals;
+          usedRealSnark = true;
+        } catch (snarkErr) {
+          console.warn("[generateZKProof] Real SNARK failed, falling back to server-attested:", snarkErr.message);
+        }
+      }
+
+      // Fallback shape (still secure – we already spent the nullifier + auth)
+      if (!proof) {
+        proof = {
+          pi_a: ["server-attested"],
+          pi_b: [["server-attested"]],
+          pi_c: ["server-attested"],
+          protocol: "groth16",
+          curve: "bn128"
+        };
+        // Circuit public signals order: nullifierHash, commitment, ...
+        publicSignals = [nullifierHash, commitment, merkleRoot, MIN_TRUST_SCORE, MIN_POSTS];
+      }
+
+      // ---- 7. Elevate user (server-authoritative) ----------------------------
       await userRef.set(
         {
           zkVerified: true,
           tier: "witness_circle",
-          lastZkProofType: "SNARK_GROTH16_SERVER",
-          lastZkIsFallback: false,
+          lastZkProofType: usedRealSnark ? "SNARK_GROTH16" : "SNARK_GROTH16_SERVER",
+          lastZkIsFallback: !usedRealSnark,
           zkElevatedAt: admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
         },
@@ -1965,21 +2052,13 @@ export const generateZKProof = onCall(
         {
           status: "elevated",
           elevatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          nullifierHash,
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
         },
         { merge: true }
       );
 
-      await db.collection("zk_nullifiers").doc(nullifierHash).set(
-        {
-          uid,
-          commitment,
-          createdAt: admin.firestore.FieldValue.serverTimestamp()
-        },
-        { merge: true }
-      );
-
-      // Custom claims for rules helpers that read token.zkVerified / tier
+      // Custom claims
       try {
         const userRecord = await admin.auth().getUser(uid);
         const claims = userRecord.customClaims || {};
@@ -2000,24 +2079,19 @@ export const generateZKProof = onCall(
         details: {
           commitment,
           nullifierHash,
-          proofType: "SNARK_GROTH16_SERVER"
+          proofType: usedRealSnark ? "SNARK_GROTH16" : "SNARK_GROTH16_SERVER",
+          realSnark: usedRealSnark
         },
         severity: "info"
       });
 
-      // Shape expected by elevateWithZKProof / verifyZKProofAsync
       return {
         success: true,
-        proof: {
-          pi_a: ["server-attested"],
-          pi_b: [["server-attested"]],
-          pi_c: ["server-attested"],
-          protocol: "groth16",
-          curve: "bn128"
-        },
-        publicSignals: [commitment, nullifierHash],
-        merkleRoot: commitment,
-        proofType: "SNARK_GROTH16_SERVER"
+        proof,
+        publicSignals,
+        merkleRoot,
+        proofType: usedRealSnark ? "SNARK_GROTH16" : "SNARK_GROTH16_SERVER",
+        isFallback: !usedRealSnark
       };
     } catch (error) {
       console.error("generateZKProof error:", error);
@@ -2026,16 +2100,6 @@ export const generateZKProof = onCall(
     }
   }
 );
-
-// Initialize S3 client for Cloudflare R2
-const s3 = new S3Client({
-  region: "auto",
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-  },
-});
 
 // ======================================================
 // BATCH 2.1 — SECURE TESTIMONY SUBMIT
