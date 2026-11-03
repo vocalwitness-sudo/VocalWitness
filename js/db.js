@@ -183,6 +183,7 @@ export async function publishTestimonyOrQueue(prepared) {
 
   return publishTestimonyNow(publicData, privateData);
 }
+
 /**
  * @deprecated Prefer submitTestimony() from createPost.js
  * Thin wrapper so offline queue / old callers stay safe.
@@ -292,6 +293,7 @@ export async function publishTestimonyNow(publicData, privateData = null) {
     forensicHash: result?.forensicHash || null,
     channel,
   };
+} // <-- FIXED: Added missing closing curly brace here
 
 // ==================== USER PROFILE ====================
 export const updateUserProfile = async (userId, updates) => {
@@ -369,6 +371,7 @@ export const editPost = async (postId, userId, newContent, collectionName = 'tes
     updatedAt: serverTimestamp(),
   });
 };
+
 /**
  * Soft-hide only. Sealed hashes and media remain for verification.
  * Matches firestore.rules isSafeAuthorTestimonyUpdate hide path.
@@ -389,7 +392,7 @@ export const deletePost = async (postId, userId, collectionName = 'testimonies')
     hiddenReason: 'author_request',
     updatedAt: serverTimestamp(),
   });
-}
+};
 
 export const togglePinPost = async (postId, userId, collectionName = 'testimonies') => {
   const docRef = doc(db, collectionName, postId);
