@@ -1,7 +1,6 @@
-// js/group-detail.js
-// Complete Group Detail page with Invite Code, Approval,
+// js/group-detail.js - VocalWitness Group Detail System
+// Complete with Admin Member Moderation (Approve, Reject, Remove, Expel/Ban)
 // and the 3 Core Institutional Tools (Evidence Locker, Attestation Wall, Forensic Timeline)
-// Updated: Real file picker + client-side SHA-256 for Evidence Locker
 
 import { db, auth } from './firebase-config.js';
 import {
@@ -20,6 +19,13 @@ import {
 } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 
 import { showToast } from './utils.js';
+import { 
+  removeGroupMember, 
+  expelGroupMember, 
+  unbanGroupMember, 
+  approveGroupMember, 
+  rejectGroupMember 
+} from './groups.js';
 
 let currentGroupId = null;
 let currentGroupData = null;
@@ -60,7 +66,7 @@ export function initGroupDetail() {
     });
   });
 
-  // Deep-link tab support (?tab=locker | attestation | timeline | members | about)
+  // Deep-link tab support (?tab=locker | attestation | timeline | members | about | admin)
   const initialTab = params.get('tab');
   if (initialTab) {
     setTimeout(() => {
@@ -118,6 +124,7 @@ function loadGroup() {
       currentGroupData = { id: snap.id, ...snap.data() };
       renderGroupHeader(currentGroupData);
       renderMembers(currentGroupData);
+      renderAdminMemberPanel(currentGroupData); // 🛡️ Render Admin moderation panel
       renderInviteUI();
       loadGroupFeed();
       loadEvidenceLocker();
@@ -259,12 +266,131 @@ function renderMembers(group) {
     });
 
     list.querySelectorAll('[data-approve]').forEach((btn) => {
-      btn.addEventListener('click', () => approveMember(btn.dataset.approve));
+      btn.addEventListener('click', () => approveGroupMember(currentGroupId, btn.dataset.approve));
     });
     list.querySelectorAll('[data-reject]').forEach((btn) => {
-      btn.addEventListener('click', () => rejectMember(btn.dataset.reject));
+      btn.addEventListener('click', () => rejectGroupMember(currentGroupId, btn.dataset.reject));
     });
   }
+}
+
+/**
+ * 🛡️ Render Admin Member Management Panel (Remove, Expel & Ban, Unban)
+ */
+function renderAdminMemberPanel(groupData) {
+  const panel = document.getElementById('admin-members-panel');
+  if (!panel) return;
+
+  const currentUid = auth.currentUser?.uid;
+  const isAdmin = groupData.admins?.includes(currentUid) || groupData.creatorId === currentUid;
+
+  if (!isAdmin) {
+    panel.classList.add('hidden');
+    return;
+  }
+  panel.classList.remove('hidden');
+
+  // 1. Pending Members Queue
+  const pendingContainer = document.getElementById('pending-members-list');
+  const pendingCountEl = document.getElementById('pending-count');
+  const pending = groupData.pendingMembers || [];
+  if (pendingCountEl) pendingCountEl.textContent = pending.length;
+
+  if (pending.length === 0 && pendingContainer) {
+    pendingContainer.innerHTML = `<div class="p-3 text-center text-xs text-zinc-500 rounded-xl bg-zinc-900/40 border border-zinc-800/80">No pending join requests</div>`;
+  } else if (pendingContainer) {
+    pendingContainer.innerHTML = pending.map(uid => `
+      <div class="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/90 p-3 text-xs">
+        <span class="font-mono text-zinc-300">${uid.slice(0, 12)}...</span>
+        <div class="flex items-center gap-2">
+          <button type="button" class="approve-member-btn px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/40 font-semibold transition" data-uid="${uid}">
+            ✓ Approve
+          </button>
+          <button type="button" class="reject-member-btn px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-400 hover:bg-zinc-700 font-medium transition" data-uid="${uid}">
+            ✕ Decline
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // 2. Active Members List
+  const activeContainer = document.getElementById('active-members-list');
+  const activeCountEl = document.getElementById('active-count');
+  const members = groupData.members || [];
+  if (activeCountEl) activeCountEl.textContent = members.length;
+
+  if (activeContainer) {
+    activeContainer.innerHTML = members.map(uid => {
+      const isOwner = uid === groupData.creatorId;
+      return `
+        <div class="flex items-center justify-between rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-3 text-xs">
+          <div class="flex items-center gap-2">
+            <span class="font-mono text-zinc-300">${uid.slice(0, 12)}...</span>
+            ${isOwner ? '<span class="text-[10px] bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30">Owner</span>' : ''}
+          </div>
+          ${!isOwner && uid !== currentUid ? `
+            <div class="flex items-center gap-2">
+              <button type="button" class="remove-member-btn px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 font-medium transition" data-uid="${uid}">
+                Remove
+              </button>
+              <button type="button" class="expel-member-btn px-3 py-1.5 rounded-xl bg-red-500/15 text-red-400 hover:bg-red-500/25 border border-red-500/30 font-semibold transition" data-uid="${uid}">
+                🚫 Expel & Ban
+              </button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  // 3. Expelled / Banned List
+  const bannedContainer = document.getElementById('banned-members-list');
+  const bannedCountEl = document.getElementById('banned-count');
+  const banned = groupData.bannedMembers || [];
+  if (bannedCountEl) bannedCountEl.textContent = banned.length;
+
+  if (banned.length === 0 && bannedContainer) {
+    bannedContainer.innerHTML = `<div class="p-3 text-center text-xs text-zinc-500 rounded-xl bg-zinc-900/40 border border-zinc-800/80">No banned members</div>`;
+  } else if (bannedContainer) {
+    bannedContainer.innerHTML = banned.map(uid => `
+      <div class="flex items-center justify-between rounded-2xl border border-red-500/20 bg-red-950/20 p-3 text-xs">
+        <span class="font-mono text-red-300">${uid.slice(0, 12)}... (Banned)</span>
+        <button type="button" class="unban-member-btn px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 font-medium transition" data-uid="${uid}">
+          Unban
+        </button>
+      </div>
+    `).join('');
+  }
+
+  // Attach Listeners
+  pendingContainer?.querySelectorAll('.approve-member-btn').forEach(btn => {
+    btn.addEventListener('click', async () => await approveGroupMember(groupData.id, btn.dataset.uid));
+  });
+
+  pendingContainer?.querySelectorAll('.reject-member-btn').forEach(btn => {
+    btn.addEventListener('click', async () => await rejectGroupMember(groupData.id, btn.dataset.uid));
+  });
+
+  activeContainer?.querySelectorAll('.remove-member-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (confirm('Remove this member? They can re-join later via invite link.')) {
+        await removeGroupMember(groupData.id, btn.dataset.uid);
+      }
+    });
+  });
+
+  activeContainer?.querySelectorAll('.expel-member-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (confirm('🚫 EXPEL & BAN MEMBER?\n\nThis user will be permanently blocked from re-joining this group until unbanned.')) {
+        await expelGroupMember(groupData.id, btn.dataset.uid);
+      }
+    });
+  });
+
+  bannedContainer?.querySelectorAll('.unban-member-btn').forEach(btn => {
+    btn.addEventListener('click', async () => await unbanGroupMember(groupData.id, btn.dataset.uid));
+  });
 }
 
 function updatePendingBadge(group) {
@@ -421,7 +547,7 @@ async function promptDepositEvidence() {
         mimeType: file.type || 'application/octet-stream',
         hash: hashHex,
         hashAlg: 'SHA-256',
-        url: null, // file itself is never uploaded – only the hash
+        url: null,
         depositedBy: auth.currentUser.uid,
         status: 'Sealed (SHA-256)',
         createdAt: serverTimestamp()
@@ -594,10 +720,14 @@ async function handleJoinLeave() {
     if (isMember) {
       await updateDoc(doc(db, 'groups', currentGroupId), {
         members: arrayRemove(uid),
+        admins: arrayRemove(uid),
         memberCount: increment(-1)
       });
       showToast('Left the group', 'info');
     } else {
+      if (currentGroupData.bannedMembers?.includes(uid)) {
+        return showToast('❌ You have been expelled from this group and cannot join.', 'error');
+      }
       await updateDoc(doc(db, 'groups', currentGroupId), {
         members: arrayUnion(uid),
         memberCount: increment(1)
@@ -639,41 +769,16 @@ async function postToGroup() {
   }
 }
 
-async function approveMember(uid) {
-  try {
-    await updateDoc(doc(db, 'groups', currentGroupId), {
-      members: arrayUnion(uid),
-      pendingMembers: arrayRemove(uid),
-      memberCount: increment(1)
-    });
-    showToast('Member approved', 'success');
-  } catch (err) {
-    console.error(err);
-    showToast('Failed to approve', 'error');
-  }
-}
-
-async function rejectMember(uid) {
-  try {
-    await updateDoc(doc(db, 'groups', currentGroupId), {
-      pendingMembers: arrayRemove(uid)
-    });
-    showToast('Request rejected', 'info');
-  } catch (err) {
-    console.error(err);
-  }
-}
-
 function renderInviteUI() {
   const linkInput = document.getElementById('inviteLinkInput');
   const codeInput = document.getElementById('inviteCodeInput');
 
   if (linkInput) {
-    linkInput.value = `${window.location.origin}/group-detail.html?id=${currentGroupId}`;
+    linkInput.value = `${window.location.origin}/groups.html?join=${currentGroupId}`;
   }
 
   if (codeInput) {
-    codeInput.value = currentGroupData?.inviteCode || '————';
+    codeInput.value = currentGroupData?.inviteCode || currentGroupId.substring(0, 8).toUpperCase();
   }
 }
 
