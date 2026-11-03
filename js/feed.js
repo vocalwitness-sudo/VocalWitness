@@ -2,6 +2,8 @@
 import { 
     collection, 
     query, 
+    where,
+    orderBy,    
     onSnapshot, 
     limit, 
     doc, 
