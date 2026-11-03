@@ -37,8 +37,12 @@ export async function compressImage(file, optionsOrMaxWidth = 1200, quality = 0.
         return file;
     }
 
-    // Skip compression if the image is already tiny (< 150 KB)
-    if (file.size < 150 * 1024) {
+    // Skip compression if the image is already small
+    const dataSaverOn =
+      typeof localStorage !== 'undefined' &&
+      localStorage.getItem('vw_data_saver') === 'true';
+    const skipThreshold = dataSaverOn ? 90 * 1024 : 150 * 1024;
+    if (file.size < skipThreshold) {
         return file;
     }
 
