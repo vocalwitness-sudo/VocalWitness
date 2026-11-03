@@ -640,7 +640,7 @@ window.publishTestimony = async () => {
       return;
     }
 
-    const id = await submitTestimony({
+ const result = await submitTestimony({
       content,
       channel,
       imageFile,
@@ -660,10 +660,30 @@ window.publishTestimony = async () => {
       },
     });
 
+    // Support both old (string id) and new (object) return shapes
+    const id = typeof result === 'string' ? result : result?.id;
+    const fullPack = typeof result === 'object' ? result?.fullPack : null;
+
     console.log('[publish] SUCCESS via submitTestimonySecure →', id, '| channel:', channel);
 
+    // Primary post-publish action: Evidence Pack download + share
+    try {
+      const { showPublishSuccessCard } = await import('./evidence-pack.js');
+      if (typeof showPublishSuccessCard === 'function' && id) {
+        showPublishSuccessCard({
+          id,
+          fullPack,
+          channel: channel || 'citizen-talk',
+        });
+      }
+    } catch (cardErr) {
+      console.warn('[publish] Success card failed (non-fatal):', cardErr);
+    }
+
     // Post-success UI
-    window.dispatchEvent(new CustomEvent('vocalWitness:posted', { detail: { id, channel } }));
+    window.dispatchEvent(new CustomEvent('vocalWitness:posted', {
+      detail: { id, channel, fullPack }
+    }));
 
     try {
       const userRef = doc(db, 'users', currentUser.uid);
