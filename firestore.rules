@@ -23,6 +23,39 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+  function isGroupMember(groupId) {
+      return exists(/databases/$(database)/documents/groups/$(groupId))
+        && (
+          request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.get('members', [])
+          || get(/databases/$(database)/documents/groups/$(groupId)).data.creatorId == request.auth.uid
+        );
+    }
+
+    function isGroupBanned(groupId) {
+      return exists(/databases/$(database)/documents/groups/$(groupId))
+        && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.get('bannedMembers', []);
+    }
+
+    function isGroupAdmin(groupId) {
+      let g = get(/databases/$(database)/documents/groups/$(groupId)).data;
+      return g.creatorId == request.auth.uid
+        || request.auth.uid in g.get('admins', []);
+    }
+
+    function isValidSha256(h) {
+      return h is string && h.size() == 64;
+    }
+
+    // Coarse per-user write throttle using lastTestimonyAt-style field
+    // Prefer dedicated lastWriteAt fields long-term; reuse for now where present.
+    function isNotWriteThrottled() {
+      return !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        || !('lastTestimonyAt' in getUserData())
+        || !(getUserData().lastTestimonyAt is timestamp)
+        || request.time > getUserData().lastTestimonyAt + duration.value(15, 's');
+    }
+
+
     function isAdmin() {
       return isAuthenticated() && request.auth.token.admin == true;
     }
