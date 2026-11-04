@@ -45,7 +45,6 @@
     .scrollbar-hide::-webkit-scrollbar {
       display: none;
     }
-    /* Floating emoji reactions (spawned by JS) */
     .vw-float-react {
       position: fixed;
       pointer-events: none;
@@ -54,12 +53,10 @@
       transition: transform 1s ease-out, opacity 1s ease-out;
       will-change: transform, opacity;
     }
-    /* Push-to-talk active state helper */
     #pushToTalkBtn.ptt-live {
       box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.55), 0 0 40px rgba(239, 68, 68, 0.35);
       transform: scale(1.08);
     }
-    /* Safe area for notched phones when in room */
     #activeRoomView {
       padding-bottom: env(safe-area-inset-bottom, 0);
     }
@@ -170,10 +167,135 @@
     </div>
   </div>
 
-  <!-- ===================== ACTIVE ROOM (injected by live-arena.js) ===================== -->
+  <!-- ===================== ACTIVE ROOM VIEW ===================== -->
   <div id="activeRoomView" class="hidden" aria-live="polite"></div>
 
-  <!-- Boot -->
+  <!-- ===================== CREATE ROOM MODAL (WITH GROUP BINDING) ===================== -->
+  <div id="createRoomModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-md p-4">
+    <div class="glass max-w-md w-full rounded-3xl p-6 border border-sky-500/30 space-y-5">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <h3 class="text-xl font-bold text-sky-400 flex items-center gap-2">
+          <span>🎙️</span> Start a Live Arena Room
+        </h3>
+        <button id="closeCreateRoomModalBtn" class="text-zinc-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-zinc-400 mb-1">Room Title *</label>
+          <input id="roomTitleInput" type="text" placeholder="e.g., Live Witnessing: Ikeja Traffic Incident"
+                 class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm focus:border-sky-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-zinc-400 mb-1">Category / Topic</label>
+          <select id="roomCategoryInput" class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm focus:border-sky-500 focus:outline-none">
+            <option value="general">General Witnessing</option>
+            <option value="traffic">Traffic Alert</option>
+            <option value="safety">Public Safety</option>
+            <option value="protest">Protest & Assembly</option>
+            <option value="election">Election Integrity</option>
+            <option value="weather">Weather / Emergency</option>
+          </select>
+        </div>
+
+        <!-- 🔗 LINK TO TRUTH CIRCLE / GROUP -->
+        <div>
+          <label class="block text-xs font-medium text-sky-400 mb-1">Link to Truth Circle / Group (Optional)</label>
+          <select id="arenaGroupSelect" class="w-full rounded-2xl border border-sky-500/40 bg-zinc-900 px-4 py-3 text-sm focus:border-sky-500 focus:outline-none">
+            <option value="">🌐 None (Global Public Arena)</option>
+            <!-- Dynamically filled with joined groups in JS -->
+          </select>
+          <p class="text-[11px] text-zinc-500 mt-1">
+            Linking a group grants members instant access and seals session hashes into the group's Evidence Locker.
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-zinc-400 mb-1">Join Privacy</label>
+          <select id="roomPrivacyInput" class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm focus:border-sky-500 focus:outline-none">
+            <option value="open">Open (Anyone can join)</option>
+            <option value="approval">Restricted (Require Host Approval)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button id="cancelCreateRoomBtn" class="flex-1 rounded-2xl bg-zinc-800 py-3 text-sm font-semibold text-zinc-300 hover:bg-zinc-700">
+          Cancel
+        </button>
+        <button id="submitCreateRoomBtn" class="flex-1 rounded-2xl bg-gradient-to-r from-sky-500 to-cyan-500 py-3 text-sm font-bold text-black hover:brightness-110">
+          Launch Stage
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== IN-ROOM ADMIN & MEMBER MODERATION MODAL ===================== -->
+  <div id="roomAdminModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/85 backdrop-blur-md p-4">
+    <div class="glass max-w-lg w-full rounded-3xl p-6 border border-sky-500/40 space-y-5 max-h-[85vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <div>
+          <h3 class="text-lg font-bold text-sky-400 flex items-center gap-2">
+            <span>🛡️</span> Stage Moderation & Invite Controls
+          </h3>
+          <p class="text-xs text-zinc-400">Manage listeners, approve stage speakers, or expel rule breakers.</p>
+        </div>
+        <button id="closeRoomAdminModalBtn" class="text-zinc-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <!-- IN-ROOM INVITE LINK & CODE -->
+      <div class="glass rounded-2xl p-4 space-y-3 bg-zinc-900/60">
+        <h4 class="text-xs font-semibold text-sky-300 uppercase tracking-wider">🔗 Room Share & Invite</h4>
+        <div class="space-y-2">
+          <div>
+            <label class="block text-[11px] text-zinc-400">Invite Link</label>
+            <div class="flex gap-2 mt-0.5">
+              <input id="roomInviteLinkInput" type="text" readonly class="flex-1 rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-xs font-mono">
+              <button id="copyRoomInviteBtn" class="rounded-xl bg-sky-500/20 text-sky-300 border border-sky-500/30 px-3 py-1.5 text-xs font-medium hover:bg-sky-500/30">Copy</button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[11px] text-zinc-400">Room Passcode</label>
+            <div class="flex gap-2 mt-0.5">
+              <input id="roomInviteCodeInput" type="text" readonly class="flex-1 rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-xs font-mono">
+              <button id="copyRoomCodeBtn" class="rounded-xl bg-sky-500/20 text-sky-300 border border-sky-500/30 px-3 py-1.5 text-xs font-medium hover:bg-sky-500/30">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PENDING STAGE REQUESTS QUEUE -->
+      <div class="space-y-2">
+        <h4 class="text-xs font-semibold text-amber-400 uppercase tracking-wider">
+          ⏳ Pending Stage Requests (<span id="arenaPendingCount">0</span>)
+        </h4>
+        <div id="arenaPendingList" class="space-y-2">
+          <div class="p-3 text-center text-xs text-zinc-500 rounded-xl bg-zinc-900/40 border border-zinc-800">
+            No pending speak/join requests
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIVE PARTICIPANTS / SPEAKERS -->
+      <div class="space-y-2 pt-3 border-t border-zinc-800">
+        <h4 class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
+          🎙️ Active Room Participants (<span id="arenaActiveCount">0</span>)
+        </h4>
+        <div id="arenaActiveList" class="space-y-2"></div>
+      </div>
+
+      <!-- EXPELLED / BANNED LIST -->
+      <div class="space-y-2 pt-3 border-t border-zinc-800">
+        <h4 class="text-xs font-semibold text-red-400 uppercase tracking-wider">
+          🚫 Expelled & Banned Users (<span id="arenaBannedCount">0</span>)
+        </h4>
+        <div id="arenaBannedList" class="space-y-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Boot Engine -->
   <script type="module">
     import { initLiveArena } from '/js/live-arena.js?v=20261012';
 
@@ -182,7 +304,7 @@
       else window.location.href = '/';
     });
 
-    // Start engine (lobby list, filters, ?room= deep link)
+    // Initialize Live Arena
     initLiveArena();
   </script>
 </body>
