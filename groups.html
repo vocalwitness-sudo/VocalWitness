@@ -13,21 +13,20 @@
       border: 1px solid rgba(16, 185, 129, 0.22);
     }
 
-    /* Tab buttons */
     .tab-btn {
       background: transparent;
-      color: #a1a1aa; /* zinc-400 */
+      color: #a1a1aa;
       font-weight: 500;
       transition: all 0.2s ease;
     }
 
     .tab-btn:hover {
-      color: #e4e4e7; /* zinc-200 */
+      color: #e4e4e7;
       background: rgba(255, 255, 255, 0.05);
     }
 
     .tab-btn.active {
-      background: #10b981; /* emerald-500 */
+      background: #10b981;
       color: #000;
       font-weight: 600;
       box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
@@ -38,54 +37,53 @@
 
   <div class="mx-auto max-w-3xl px-4 py-6">
 
-    <!-- 1. Header (Now at the very top) -->
+    <!-- Header -->
     <div class="glass mb-6 flex items-center justify-between rounded-3xl p-4">
       <div class="flex items-center gap-3">
-        <a href="/" 
+        <a href="/"
            class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/15 text-lg transition hover:bg-emerald-500/25">
           ←
         </a>
         <div>
           <h1 class="text-2xl font-bold text-emerald-400">Groups</h1>
-          <p class="text-xs text-zinc-400">Truth communities & evidence circles</p>
+          <p class="text-xs text-zinc-400">Truth communities &amp; evidence circles</p>
         </div>
       </div>
 
-      <!-- Create Group Button (Text color changed to white, non-black styling) -->
       <button type="button" id="openCreateModalBtn"
               class="flex items-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white
-                     shadow-[0_0_15px_rgba(16,185,129,0.3)] 
+                     shadow-[0_0_15px_rgba(16,185,129,0.3)]
                      transition-all duration-200
-                     hover:bg-emerald-500 
-                     hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] 
+                     hover:bg-emerald-500
+                     hover:shadow-[0_0_25px_rgba(16,185,129,0.5)]
                      active:scale-95">
         <span class="text-lg">➕</span>
         Create Group
       </button>
     </div>
 
-    <!-- 2. Tabs + Language Selector -->
+    <!-- Tabs + Language -->
     <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div class="flex gap-1 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-1.5 overflow-x-auto">
-        <button type="button" 
-                class="tab-btn active flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm" 
+        <button type="button"
+                class="tab-btn active flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm"
                 data-tab="discover">
           Discover
         </button>
-        <button type="button" 
-                class="tab-btn flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm" 
+        <button type="button"
+                class="tab-btn flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm"
                 data-tab="my-groups">
           My Groups
         </button>
-        <button type="button" 
-                class="tab-btn flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm" 
+        <button type="button"
+                class="tab-btn flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm"
                 data-tab="trending">
           🔥 Trending
         </button>
       </div>
 
-      <select id="languageSelector" 
-              class="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white 
+      <select id="languageSelector"
+              class="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white
                      focus:border-emerald-500 focus:outline-none">
         <option value="en">English</option>
         <option value="pcm">Naija Pidgin</option>
@@ -96,45 +94,44 @@
       </select>
     </div>
 
-    <!-- 3. Filters (Moved directly below tabs) -->
-   <div class="mb-6 flex flex-wrap gap-2" id="visibilityFilters">
-  <button type="button" data-visibility="all"
-          class="visibility-filter active rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium text-emerald-400">
-    All
-  </button>
-  <button type="button" data-visibility="public"
-          class="visibility-filter rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50">
-    Public
-  </button>
-  <button type="button" data-visibility="citizen_circle"
-          class="visibility-filter rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50">
-    Citizen Circle
-  </button>
-  <button type="button" data-visibility="witness_circle"
-          class="visibility-filter rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-cyan-500/50">
-    Witness Circle
-  </button>
-</div>
+    <!-- Visibility filters -->
+    <div class="mb-6 flex flex-wrap gap-2" id="visibilityFilters">
+      <button type="button" data-visibility="all"
+              class="visibility-filter active rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium text-emerald-400">
+        All
+      </button>
+      <button type="button" data-visibility="public"
+              class="visibility-filter rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50">
+        Public
+      </button>
+      <button type="button" data-visibility="citizen_circle"
+              class="visibility-filter rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50">
+        Citizen Circle
+      </button>
+      <button type="button" data-visibility="witness_circle"
+              class="visibility-filter rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-cyan-500/50">
+        Witness Circle
+      </button>
+    </div>
 
-    <!-- 4. Search Bar -->
+    <!-- Search -->
     <div class="relative mb-8">
-      <input type="text" 
-             id="searchInput" 
+      <input type="text"
+             id="searchInput"
              placeholder="Search groups by name, topic or location..."
-             class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-4 pl-12 text-white placeholder-zinc-500 
+             class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-4 pl-12 text-white placeholder-zinc-500
                     focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/50">
-      
-      <svg class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" 
+      <svg class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500"
            fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
       </svg>
     </div>
 
-    <!-- Groups List -->
+    <!-- Groups list -->
     <div id="group-container" class="space-y-5"></div>
 
-    <!-- Empty State -->
+    <!-- Empty state -->
     <div id="empty-state" class="hidden py-16 text-center">
       <div class="mb-4 text-5xl">🛡️</div>
       <h3 class="mb-2 text-xl font-semibold">No groups yet</h3>
@@ -142,8 +139,9 @@
     </div>
   </div>
 
-  <!-- Create Group Modal -->
-  <div id="groupModal" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+  <!-- ====================== CREATE GROUP MODAL (single) ====================== -->
+  <div id="groupModal"
+       class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
     <div class="glass w-full max-w-md overflow-hidden rounded-3xl shadow-2xl">
       <div class="border-b border-zinc-700 p-6">
         <h2 class="text-xl font-bold">Create New Group</h2>
@@ -164,8 +162,9 @@
         </div>
         <div>
           <label class="mb-1.5 block text-sm text-zinc-400">Visibility</label>
-          <select id="groupVisibility" class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 focus:border-emerald-500 focus:outline-none">
-            <option value="public">🌍 Public – Anyone can discover & join</option>
+          <select id="groupVisibility"
+                  class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 focus:border-emerald-500 focus:outline-none">
+            <option value="public">🌍 Public – Anyone can discover &amp; join</option>
             <option value="network">🔗 Network Only</option>
             <option value="citizen_circle">🛡️ Citizen Circle Only</option>
             <option value="witness_circle">🔐 Witness Circle Only (Highest Trust)</option>
@@ -181,99 +180,32 @@
         </div>
       </div>
       <div class="flex gap-3 border-t border-zinc-700 p-6">
-        <button type="button" id="closeCreateModalBtn" class="flex-1 rounded-2xl bg-zinc-800 py-3.5 text-sm font-medium hover:bg-zinc-700">Cancel</button>
-        <button type="button" id="submitCreateGroupBtn" class="flex-1 rounded-2xl bg-emerald-600 py-3.5 text-sm font-semibold text-white hover:bg-emerald-500">Create Group</button>
+        <button type="button" id="closeCreateModalBtn"
+                class="flex-1 rounded-2xl bg-zinc-800 py-3.5 text-sm font-medium hover:bg-zinc-700">
+          Cancel
+        </button>
+        <button type="button" id="submitCreateGroupBtn"
+                class="flex-1 rounded-2xl bg-emerald-600 py-3.5 text-sm font-semibold text-white hover:bg-emerald-500">
+          Create Group
+        </button>
       </div>
     </div>
   </div>
 
-  <script type="module">
-    import { initGroups } from './js/groups.js';
-    import { initLanguage } from './js/i18n.js';
-
-    document.addEventListener('DOMContentLoaded', () => {
-      initLanguage();
-      initGroups('group-container');
-    });
-  </script>
-
-  <!-- Create Group Modal -->
-  <div id="groupModal" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-    <!-- (Your existing create group modal content remains untouched) -->
-  </div>
-  /**
- * Direct Join a public group
- */
-export async function joinGroup(groupId) {
-  if (!auth.currentUser) {
-    return showToast('Please sign in to join groups', 'error');
-  }
-
-  try {
-    const groupRef = doc(db, 'groups', groupId);
-    const snap = await getDoc(groupRef);
-    if (snap.exists()) {
-      const data = snap.data();
-      if (data.bannedMembers?.includes(auth.currentUser.uid)) {
-        return showToast('❌ You have been expelled from this group and cannot join.', 'error');
-      }
-    }
-
-    await updateDoc(groupRef, {
-      members: arrayUnion(auth.currentUser.uid),
-      memberCount: increment(1)
-    });
-    showToast('✅ Successfully joined the group!', 'success');
-  } catch (err) {
-    console.error(err);
-    showToast(err?.message || 'Failed to join group', 'error');
-  }
-}
-
-/**
- * Request to Join a restricted group (Approval Queue)
- */
-export async function requestToJoinGroup(groupId) {
-  if (!auth.currentUser) {
-    return showToast('Please sign in to request group access', 'error');
-  }
-
-  try {
-    const groupRef = doc(db, 'groups', groupId);
-    const snap = await getDoc(groupRef);
-    if (snap.exists()) {
-      const data = snap.data();
-      if (data.bannedMembers?.includes(auth.currentUser.uid)) {
-        return showToast('❌ You have been expelled from this group and cannot join.', 'error');
-      }
-    }
-
-    await updateDoc(groupRef, {
-      pendingMembers: arrayUnion(auth.currentUser.uid)
-    });
-    showToast('⏳ Request submitted! Waiting for admin approval.', 'success');
-  } catch (err) {
-    console.error(err);
-    showToast(err?.message || 'Failed to submit request', 'error');
-  }
-}
-  
-
-  <!-- ====================== GROUP INVITE & JOIN MODAL ====================== -->
+  <!-- ====================== GROUP INVITE / JOIN MODAL ====================== -->
   <div id="groupInviteModal"
        class="fixed inset-0 z-[10020] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md"
        role="dialog" aria-modal="true" aria-labelledby="groupModalTitle" aria-hidden="true">
-    
+
     <div class="glass relative w-full max-w-md rounded-3xl border border-emerald-500/25 p-5 sm:p-6 text-white shadow-2xl space-y-5">
-      
-      <!-- Close Button -->
+
       <button type="button" id="closeGroupModalBtn"
               class="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full text-xl text-zinc-400 transition hover:bg-zinc-800 hover:text-white active:scale-90"
               aria-label="Close modal">✕</button>
 
-      <!-- Header Icon & Title -->
       <div class="text-center">
-        <div id="groupModalIcon" class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/20 text-3xl">
+        <div id="groupModalIcon"
+             class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/20 text-3xl">
           👥
         </div>
         <h3 id="groupModalTitle" class="text-xl font-bold text-white">Group Invitation</h3>
@@ -282,86 +214,30 @@ export async function requestToJoinGroup(groupId) {
         </p>
       </div>
 
-      <!-- VIEW A: ADMIN / SHARE VIEW -->
+      <!-- VIEW A: Share invite -->
       <div id="groupInviteView" class="space-y-4">
         <div>
           <label class="mb-1.5 block text-xs font-medium text-zinc-400">Secure Invite Link</label>
           <div class="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900/90 p-2">
             <input type="text" id="groupInviteLinkInput" readonly
                    class="w-full bg-transparent px-2 font-mono text-xs text-emerald-400 focus:outline-none"
-                   value="https://vocalwitness.com/groups/join?code=loading...">
+                   value="https://vocalwitness.com/groups.html?join=loading...">
             <button type="button" id="copyGroupInviteBtn"
                     class="shrink-0 rounded-lg bg-emerald-500 px-3.5 py-2 text-xs font-bold text-zinc-950 transition hover:bg-emerald-400 active:scale-95">
               Copy
             </button>
           </div>
         </div>
-
         <div class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-3 text-center text-xs text-zinc-400">
-          Anyone with this link can view the group. Private groups require admin approval upon joining.
+          Anyone with this link can view the group. Restricted groups require admin approval upon joining.
         </div>
       </div>
 
-      <!-- ====================== ADMIN MEMBER MANAGEMENT PANEL ====================== -->
-<div id="admin-members-panel" class="glass hidden rounded-3xl border border-zinc-800 p-6 shadow-2xl space-y-6">
-  
-  <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
-    <div>
-      <h3 class="text-xl font-bold text-white flex items-center gap-2">
-        <span>🛡️</span> Admin & Member Management
-      </h3>
-      <p class="text-xs text-zinc-400 mt-0.5">Approve requests, manage active members, or expel policy violators.</p>
-    </div>
-    <span id="admin-role-badge" class="rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">
-      Group Admin
-    </span>
-  </div>
-
-  <!-- PENDING REQUESTS QUEUE -->
-  <div class="space-y-3">
-    <div class="flex items-center justify-between">
-      <h4 class="text-sm font-semibold text-amber-400 uppercase tracking-wider">
-        ⏳ Pending Approval Queue (<span id="pending-count">0</span>)
-      </h4>
-    </div>
-    <div id="pending-members-list" class="space-y-2.5">
-      <div class="p-4 text-center text-xs text-zinc-500 rounded-2xl bg-zinc-900/60 border border-zinc-800">
-        No pending requests at this time.
-      </div>
-    </div>
-  </div>
-
-  <!-- ACTIVE MEMBERS LIST -->
-  <div class="space-y-3 pt-4 border-t border-zinc-800">
-    <div class="flex items-center justify-between">
-      <h4 class="text-sm font-semibold text-emerald-400 uppercase tracking-wider">
-        👥 Active Members (<span id="active-count">0</span>)
-      </h4>
-    </div>
-    <div id="active-members-list" class="space-y-2.5">
-      <!-- Dynamically filled by JS -->
-    </div>
-  </div>
-
-  <!-- EXPELLED / BANNED LIST -->
-  <div class="space-y-3 pt-4 border-t border-zinc-800">
-    <div class="flex items-center justify-between">
-      <h4 class="text-sm font-semibold text-red-400 uppercase tracking-wider">
-        🚫 Expelled & Banned Users (<span id="banned-count">0</span>)
-      </h4>
-    </div>
-    <div id="banned-members-list" class="space-y-2.5">
-      <!-- Dynamically filled by JS -->
-    </div>
-  </div>
-
-</div>
-
-      <!-- VIEW B: VISITOR / JOIN VIEW -->
+      <!-- VIEW B: Join request -->
       <div id="groupJoinView" class="hidden space-y-4 text-center">
         <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
-          <h4 id="targetGroupName" class="text-base font-bold text-white">Civic Action Collective</h4>
-          <p id="targetGroupDesc" class="mt-1 text-xs text-zinc-400">Local investigative reporting and evidence sharing in Enugu.</p>
+          <h4 id="targetGroupName" class="text-base font-bold text-white">Citizen Group</h4>
+          <p id="targetGroupDesc" class="mt-1 text-xs text-zinc-400"></p>
         </div>
 
         <div id="joinActionArea">
@@ -371,49 +247,47 @@ export async function requestToJoinGroup(groupId) {
           </button>
         </div>
 
-        <div id="pendingStatusArea" class="hidden rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300">
-          ⏳ Your membership request has been sent to the group admin. You will be notified upon acceptance.
+        <div id="pendingStatusArea"
+             class="hidden rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300">
+          ⏳ Your membership request has been sent to the group admin.
         </div>
       </div>
-
     </div>
   </div>
 
+  <!-- Single module entry -->
   <script type="module">
-    import { initGroups } from './js/groups.js';
+    import { initGroups, requestToJoinGroup, joinGroup } from './js/groups.js';
     import { initLanguage } from './js/i18n.js';
+    import { showToast } from './js/utils.js';
 
-    // Global toast helper if not already loaded globally
-    window.showToast = window.showToast || function(msg, type = 'info') {
-      const t = document.createElement('div');
-      t.className = `fixed bottom-6 left-1/2 z-[11000] -translate-x-1/2 rounded-2xl px-6 py-3.5 text-sm font-medium text-white shadow-2xl ${
-        type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-600' : 'bg-zinc-800'
-      }`;
-      t.textContent = msg;
-      document.body.appendChild(t);
-      setTimeout(() => t.remove(), 3000);
-    };
-
-    // Modal Controllers
+    // Expose for card buttons / deep links
+    window.showToast = showToast;
     window.openGroupInviteModal = (groupData = null) => {
       const modal = document.getElementById('groupInviteModal');
       if (!modal) return;
+
       const inviteView = document.getElementById('groupInviteView');
       const joinView = document.getElementById('groupJoinView');
 
       if (groupData && groupData.isJoining) {
-        inviteView.classList.add('hidden');
-        joinView.classList.remove('hidden');
+        inviteView?.classList.add('hidden');
+        joinView?.classList.remove('hidden');
         document.getElementById('targetGroupName').textContent = groupData.name || 'Citizen Group';
         document.getElementById('targetGroupDesc').textContent = groupData.description || '';
-        document.getElementById('pendingStatusArea').classList.add('hidden');
-        document.getElementById('joinActionArea').classList.remove('hidden');
+        document.getElementById('pendingStatusArea')?.classList.add('hidden');
+        document.getElementById('joinActionArea')?.classList.remove('hidden');
+
+        // Store target id for the join button
+        modal.dataset.targetGroupId = groupData.id || groupData.code || '';
       } else {
-        joinView.classList.add('hidden');
-        inviteView.classList.remove('hidden');
-        const inviteCode = groupData?.code || Math.random().toString(36).substring(2, 10).toUpperCase();
+        joinView?.classList.add('hidden');
+        inviteView?.classList.remove('hidden');
+        const code = groupData?.code || groupData?.id || '';
         const linkInput = document.getElementById('groupInviteLinkInput');
-        if (linkInput) linkInput.value = `${window.location.origin}/groups/join?code=${inviteCode}`;
+        if (linkInput) {
+          linkInput.value = `${window.location.origin}/groups.html?join=${encodeURIComponent(code)}`;
+        }
       }
 
       modal.classList.remove('hidden');
@@ -435,33 +309,37 @@ export async function requestToJoinGroup(groupId) {
 
       document.getElementById('closeGroupModalBtn')?.addEventListener('click', window.closeGroupInviteModal);
 
-      // Copy Link Handler
       document.getElementById('copyGroupInviteBtn')?.addEventListener('click', async () => {
         const input = document.getElementById('groupInviteLinkInput');
         if (!input) return;
         try {
           await navigator.clipboard.writeText(input.value);
-          window.showToast('Invite link copied to clipboard!', 'success');
+          showToast('Invite link copied to clipboard!', 'success');
         } catch {
           input.select();
-          window.showToast('Copy failed — please select manually', 'error');
+          showToast('Copy failed — please select manually', 'error');
         }
       });
 
-      // Request to Join Handler
-      document.getElementById('confirmJoinGroupBtn')?.addEventListener('click', () => {
-        document.getElementById('joinActionArea').classList.add('hidden');
-        document.getElementById('pendingStatusArea').classList.remove('hidden');
-        window.showToast('Membership request sent to admins', 'success');
+      document.getElementById('confirmJoinGroupBtn')?.addEventListener('click', async () => {
+        const modal = document.getElementById('groupInviteModal');
+        const groupId = modal?.dataset?.targetGroupId;
+        if (!groupId) {
+          showToast('Missing group id', 'error');
+          return;
+        }
+        // Prefer request flow for restricted groups; joinGroup handles public
+        await requestToJoinGroup(groupId);
+        document.getElementById('joinActionArea')?.classList.add('hidden');
+        document.getElementById('pendingStatusArea')?.classList.remove('hidden');
       });
 
-      // Backdrop dismissal
       const modal = document.getElementById('groupInviteModal');
       modal?.addEventListener('click', (e) => {
         if (e.target === modal) window.closeGroupInviteModal();
       });
     });
   </script>
-  
+
 </body>
 </html>
