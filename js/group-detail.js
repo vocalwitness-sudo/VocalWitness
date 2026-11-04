@@ -39,6 +39,7 @@ let unsubscribeTimeline = null;
 /**
  * Main entry point
  */
+*/
 export function initGroupDetail() {
   const params = new URLSearchParams(window.location.search);
   currentGroupId = params.get('id');
@@ -49,7 +50,15 @@ export function initGroupDetail() {
     return;
   }
 
+  // 📦 Cryptographic Evidence Export Package
+  document.getElementById('exportEvidencePackageBtn')?.addEventListener('click', () => {
+    if (currentGroupId) {
+      exportGroupEvidencePackage(currentGroupId);
+    }
+  });
+
   loadGroup();
+}
 
   // Tab switching
   document.querySelectorAll('.tab-btn').forEach((btn) => {
