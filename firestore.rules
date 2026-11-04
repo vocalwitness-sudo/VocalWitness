@@ -359,6 +359,26 @@ service cloud.firestore {
            ]);
     }
 
+    // status string
+
+      await addDoc(collection(db, 'group_evidence'), {
+        groupId: currentGroupId,
+        name: file.name,
+        size: formatBytes(file.size),
+        sizeBytes: file.size,
+        mimeType: file.type || 'application/octet-stream',
+        hash: hashHex,
+        hashAlg: 'SHA-256',
+        url: publicUrl,
+        storagePath: publicUrl
+          ? publicUrl.replace('https://media.vocalwitness.com/', '')
+          : null,
+        depositedBy: auth.currentUser.uid,
+        status: 'Sealed (SHA-256 + media)',
+        createdAt: serverTimestamp()
+      });
+
+
     // ==========================================
     // SYSTEM COLLECTIONS & CACHE
     // ==========================================
