@@ -17,6 +17,7 @@ import {
   createLocalAudioTrack
 } from 'https://cdn.jsdelivr.net/npm/livekit-client@2.5.0/dist/livekit-client.esm.mjs';
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
+import { renderWitnessAuthorBadge } from './badges.js';
 
 const GOAL = 500;
 
@@ -638,7 +639,7 @@ async function showActiveRoom(roomId, room = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// Participants + speakers stage
+// Participants + speakers stage (Updated with Author/Tier Badges)
 // ---------------------------------------------------------------------------
 function renderParticipants(participants) {
   const list = document.getElementById('participantsList');
@@ -649,6 +650,12 @@ function renderParticipants(participants) {
     const isMe = p.uid === auth.currentUser?.uid;
     const showHostActions = isHost && !isMe;
     const uidSafe = escapeHTML(p.uid || p.id || '');
+    
+    // Generate badge HTML if your helper function is available, or fallback to styled tier tag
+    const tierName = p.tier || 'citizen';
+    const badgeHtml = typeof renderWitnessAuthorBadge === 'function' 
+      ? renderWitnessAuthorBadge(tierName, p.isVerified, p.isFounder)
+      : `<span class="text-[10px] uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-medium">${escapeHTML(tierName)}</span>`;
 
     return `
     <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-800/60 transition group">
@@ -663,7 +670,7 @@ function renderParticipants(participants) {
           ${p.isHost ? '<span class="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">HOST</span>' : ''}
           ${isMe ? '<span class="text-[10px] text-zinc-500">(you)</span>' : ''}
         </div>
-        <div class="text-[11px] text-zinc-500">${escapeHTML(p.tier || 'citizen')}</div>
+        <div class="mt-0.5 flex items-center gap-1.5">${badgeHtml}</div>
       </div>
 
       ${p.handRaised ? '<span class="text-amber-400 text-sm">✋</span>' : ''}
@@ -689,7 +696,13 @@ function renderParticipants(participants) {
         <p class="text-sm mt-1 text-zinc-600">Hold the mic to take the stage</p>
       </div>`;
   } else {
-    speakersArea.innerHTML = speakers.map(s => `
+    speakersArea.innerHTML = speakers.map(s => {
+      const speakerTier = s.tier || 'citizen';
+      const speakerBadgeHtml = typeof renderWitnessAuthorBadge === 'function'
+        ? renderWitnessAuthorBadge(speakerTier, s.isVerified, s.isFounder)
+        : `<span class="text-[10px] uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-medium">${escapeHTML(speakerTier)}</span>`;
+
+      return `
       <div class="flex flex-col items-center p-4 rounded-2xl bg-sky-500/10 border border-sky-500/30 stage-glow">
         <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-zinc-700 flex items-center justify-center text-xl font-bold mb-2 overflow-hidden speaking-ring">
           ${s.photoURL
@@ -697,13 +710,14 @@ function renderParticipants(participants) {
             : escapeHTML((s.displayName || '?')[0] || '?')}
         </div>
         <div class="font-medium text-sm text-center truncate w-full">${escapeHTML(s.displayName || 'Citizen')}</div>
+        <div class="mt-1">${speakerBadgeHtml}</div>
         <div class="text-xs text-sky-400 mt-1 font-medium">Speaking</div>
         ${s.isHost ? '<div class="text-[10px] text-amber-400 mt-0.5">HOST</div>' : ''}
       </div>
-    `).join('');
+    `;
+    }).join('');
   }
 }
-
 // ---------------------------------------------------------------------------
 // In-Room Moderation & Group Binding Extensions
 // ---------------------------------------------------------------------------
