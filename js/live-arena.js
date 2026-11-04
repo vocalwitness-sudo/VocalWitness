@@ -1,15 +1,14 @@
+// js/live-arena.js – World-Class Live Arena (Evidence-grade & Truth Circle Group Integrated)
+// Fixed: init guard, one-time UI wiring, participantCount on re-join/create, plus full group & room moderation.
 
-// js/live-arena.js – World-Class Live Arena (Evidence-grade)
-// Fixed: init guard, one-time UI wiring, participantCount on re-join/create
-
-import { listenToVerifiedCount, showToast } from './utils.js';
+import { listenToVerifiedCount, showToast, computeSHA256 } from './utils.js';
 import { requireAuth } from './auth.js';
 import { auth, db } from './firebase-config.js';
 import { getCurrentUserTier, TIERS } from './tier.js';
 import {
   collection, query, where, orderBy, limit, onSnapshot,
   addDoc, doc, updateDoc, serverTimestamp, getDoc,
-  deleteDoc, increment, getDocs, setDoc
+  deleteDoc, increment, getDocs, setDoc, arrayUnion, arrayRemove
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import {
   Room,
@@ -33,6 +32,8 @@ let isHost = false;
 let myParticipantDocId = null;
 let liveArenaInitialized = false;
 let beforeUnloadWired = false;
+let currentRoomData = null;
+let activeRoomUnsubscribe = null;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -57,7 +58,7 @@ export function initLiveArena() {
   }
   liveArenaInitialized = true;
 
-  console.log('[LiveArena] World-class engine starting…');
+  console.log('[LiveArena] World-class engine starting with Group & Moderation tools…');
 
   // Soft progress toward mega-stages
   listenToVerifiedCount((count) => {
@@ -105,20 +106,68 @@ export function initLiveArena() {
         grid.innerHTML = `
           <div class="col-span-full py-16 text-center text-red-400">
             <p class="font-medium">Could not load live rooms</p>
-            <p class="text-sm text-zinc-500 mt-1">Check connection or permissions, then refresh. If new, create the Firestore composite index for isLive + participantCount.</p>
+            <p class="text-sm text-zinc-500 mt-1">Check connection or permissions, then refresh.</p>
           </div>`;
       }
     }
   );
 
-  // Create room (wire once)
+  // Create room modal toggles & wiring
   const createBtn = document.getElementById('createRoomBtn');
+  const createModal = document.getElementById('createRoomModal');
+  const closeCreateModalBtn = document.getElementById('closeCreateRoomModalBtn');
+  const cancelCreateRoomBtn = document.getElementById('cancelCreateRoomBtn');
+  const submitCreateRoomBtn = document.getElementById('submitCreateRoomBtn');
+
   if (createBtn && !createBtn.dataset.wired) {
     createBtn.dataset.wired = '1';
-    createBtn.addEventListener('click', createRoom);
+    createBtn.addEventListener('click', async () => {
+      if (!requireAuth("Sign in to start a room")) return;
+      await populateArenaGroupDropdown();
+      createModal?.classList.remove('hidden');
+      createModal?.classList.add('flex');
+    });
   }
 
-  // Filters (wire once per button)
+  const closeCreateModal = () => {
+    createModal?.classList.add('hidden');
+    createModal?.classList.remove('flex');
+  };
+
+  closeCreateModalBtn?.addEventListener('click', closeCreateModal);
+  cancelCreateRoomBtn?.addEventListener('click', closeCreateModal);
+
+  submitCreateRoomBtn?.addEventListener('click', async () => {
+    const titleInput = document.getElementById('roomTitleInput');
+    const categoryInput = document.getElementById('roomCategoryInput');
+    const groupSelect = document.getElementById('arenaGroupSelect');
+    const privacyInput = document.getElementById('roomPrivacyInput');
+
+    const title = titleInput?.value || '';
+    if (title.trim().length < 6) {
+      showToast("Title too short (min 6 characters)", "warning");
+      return;
+    }
+
+    try {
+      const roomId = await createRoomWithOptions(
+        title,
+        categoryInput?.value || 'General',
+        groupSelect?.value || null,
+        privacyInput?.value || 'open'
+      );
+      if (roomId) {
+        closeCreateModal();
+        if (titleInput) titleInput.value = '';
+        joinLiveRoom(roomId);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to create room", "error");
+    }
+  });
+
+  // Filters
   document.querySelectorAll('[data-filter]').forEach(btn => {
     if (btn.dataset.wired) return;
     btn.dataset.wired = '1';
@@ -141,7 +190,7 @@ export function initLiveArena() {
     joinLiveRoom(roomId, true);
   }
 
-  // Cleanup on tab close (once)
+  // Cleanup on tab close
   if (!beforeUnloadWired) {
     beforeUnloadWired = true;
     window.addEventListener('beforeunload', () => {
@@ -233,54 +282,75 @@ function renderRooms(rooms) {
 }
 
 // ---------------------------------------------------------------------------
-// Create room
+// Group Binding & Room Creation
 // ---------------------------------------------------------------------------
-async function createRoom() {
-  if (!requireAuth("Sign in to start a room")) return;
-
-  const title = prompt("Room title (e.g. Lagos Traffic – Happening Right Now)");
-  if (!title || title.trim().length < 6) {
-    showToast("Title too short (min 6 characters)", "warning");
-    return;
-  }
-  const description = prompt("Short description (optional)") || "";
-  const category =
-    prompt("Category (Traffic, Safety, Protest, Weather, Election, General)") || "General";
+export async function populateArenaGroupDropdown() {
+  const select = document.getElementById('arenaGroupSelect');
+  if (!select || !auth.currentUser) return;
 
   try {
-    const userTier = await getCurrentUserTier();
-    const roomRef = await addDoc(collection(db, 'liveRooms'), {
-      title: title.trim().slice(0, 120),
-      description: description.trim().slice(0, 300),
-      category: category.trim().slice(0, 40),
-      createdBy: auth.currentUser.uid,
-      createdAt: serverTimestamp(),
-      isLive: true,
-      participantCount: 1,
-      speakingCount: 0,
-      reactions: { clap: 0, fire: 0, like: 0, dislike: 0 },
-      tierRequired: userTier === TIERS.CITIZEN ? 'Open' : userTier,
-      lastActivityAt: serverTimestamp()
-    });
+    const q = query(
+      collection(db, 'groups'),
+      where('members', 'array-contains', auth.currentUser.uid)
+    );
+    const snap = await getDocs(q);
 
-    await setDoc(doc(db, 'liveRooms', roomRef.id, 'participants', auth.currentUser.uid), {
-      uid: auth.currentUser.uid,
-      displayName: auth.currentUser.displayName || 'Citizen',
-      photoURL: auth.currentUser.photoURL || null,
-      tier: userTier,
-      joinedAt: serverTimestamp(),
-      isSpeaking: false,
-      isMuted: false,
-      isHost: true,
-      handRaised: false
+    select.innerHTML = `<option value="">🌐 None (Global Public Arena)</option>`;
+    snap.forEach((docSnap) => {
+      const group = docSnap.data();
+      const option = document.createElement('option');
+      option.value = docSnap.id;
+      option.textContent = `👥 ${group.name} (${group.visibility || 'Public'})`;
+      select.appendChild(option);
     });
-
-    showToast("Room created – you are the host", "success");
-    joinLiveRoom(roomRef.id);
   } catch (err) {
-    console.error(err);
-    showToast("Failed to create room", "error");
+    console.error('Failed to populate groups in Live Arena:', err);
   }
+}
+
+async function createRoomWithOptions(title, category, groupId, privacy) {
+  const userTier = await getCurrentUserTier();
+  const uid = auth.currentUser.uid;
+
+  const roomPayload = {
+    title: title.trim().slice(0, 120),
+    category: category.trim().slice(0, 40),
+    groupId: groupId || null,
+    isGroupOnly: !!groupId,
+    privacy: privacy || 'open',
+    createdBy: uid,
+    hostUid: uid,
+    coHosts: [uid],
+    speakers: [uid],
+    participants: [uid],
+    pendingRequests: [],
+    suspendedSpeakers: [],
+    bannedUsers: [],
+    createdAt: serverTimestamp(),
+    isLive: true,
+    participantCount: 1,
+    speakingCount: 0,
+    reactions: { clap: 0, fire: 0, like: 0, dislike: 0 },
+    tierRequired: userTier === TIERS.CITIZEN ? 'Open' : userTier,
+    lastActivityAt: serverTimestamp()
+  };
+
+  const roomRef = await addDoc(collection(db, 'liveRooms'), roomPayload);
+
+  await setDoc(doc(db, 'liveRooms', roomRef.id, 'participants', uid), {
+    uid: uid,
+    displayName: auth.currentUser.displayName || 'Citizen',
+    photoURL: auth.currentUser.photoURL || null,
+    tier: userTier,
+    joinedAt: serverTimestamp(),
+    isSpeaking: false,
+    isMuted: false,
+    isHost: true,
+    handRaised: false
+  });
+
+  showToast("Room created – you are the host", "success");
+  return roomRef.id;
 }
 
 // ---------------------------------------------------------------------------
@@ -291,27 +361,30 @@ window.joinLiveRoom = async function (roomId, alreadyInUrl = false) {
   if (!roomId || currentRoomId === roomId) return;
 
   try {
-    if (currentRoomId) await leaveCurrentRoom(true);
-
-    currentRoomId = roomId;
-
     const roomSnap = await getDoc(doc(db, 'liveRooms', roomId));
     if (!roomSnap.exists()) {
       showToast("This room no longer exists", "error");
-      currentRoomId = null;
       return;
     }
 
     const roomData = roomSnap.data() || {};
-    isHost = roomData.createdBy === auth.currentUser.uid;
+    const uid = auth.currentUser.uid;
+
+    if (roomData.bannedUsers?.includes(uid)) {
+      showToast("🚫 You have been expelled and banned from this room.", "error");
+      return;
+    }
+
+    if (currentRoomId) await leaveCurrentRoom(true);
+
+    currentRoomId = roomId;
+    isHost = roomData.createdBy === uid || roomData.hostUid === uid;
+    myParticipantDocId = uid;
 
     const userTier = await getCurrentUserTier();
-    myParticipantDocId = auth.currentUser.uid;
-
-    const partRef = doc(db, 'liveRooms', roomId, 'participants', auth.currentUser.uid);
+    const partRef = doc(db, 'liveRooms', roomId, 'participants', uid);
     const existingPart = await getDoc(partRef);
 
-    // Only bump count for first-time joiners (host already counted at create)
     if (!existingPart.exists()) {
       await updateDoc(doc(db, 'liveRooms', roomId), {
         participantCount: increment(1),
@@ -326,7 +399,7 @@ window.joinLiveRoom = async function (roomId, alreadyInUrl = false) {
     await setDoc(
       partRef,
       {
-        uid: auth.currentUser.uid,
+        uid: uid,
         displayName: auth.currentUser.displayName || 'Citizen',
         photoURL: auth.currentUser.photoURL || null,
         tier: userTier,
@@ -346,6 +419,7 @@ window.joinLiveRoom = async function (roomId, alreadyInUrl = false) {
     }
 
     showActiveRoom(roomId, roomData);
+    listenAndRenderRoomModeration(roomId);
   } catch (err) {
     console.error(err);
     currentRoomId = null;
@@ -388,6 +462,10 @@ async function showActiveRoom(roomId, room = {}) {
           </div>
         </div>
         <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap justify-end">
+          <button id="openRoomAdminBtn" type="button"
+                  class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-300 text-xs sm:text-sm font-medium hover:bg-sky-500/30 transition flex items-center gap-1">
+            🛡️ <span class="hidden sm:inline">Moderation</span>
+          </button>
           <button id="corroborateBtn" type="button"
                   class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 text-xs sm:text-sm font-medium hover:bg-emerald-500/25 transition flex items-center gap-1.5">
             ✅ <span class="hidden sm:inline">I saw this</span>
@@ -404,10 +482,6 @@ async function showActiveRoom(roomId, room = {}) {
           <button id="shareRoomBtnTop" type="button"
                   class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 text-xs sm:text-sm hover:bg-zinc-700 transition">
             🔗 Share
-          </button>
-          <button id="reportBtn" type="button"
-                  class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 text-xs sm:text-sm hover:bg-zinc-700 transition">
-            Report
           </button>
         </div>
       </div>
@@ -458,6 +532,7 @@ async function showActiveRoom(roomId, room = {}) {
             <div id="hostControls" class="hidden mt-2 flex flex-wrap justify-center gap-2">
               <button id="muteAllBtn" type="button" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-sm hover:bg-zinc-700">🔇 Mute All</button>
               <button id="lowerHandsBtn" type="button" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-sm hover:bg-zinc-700">✋ Lower All Hands</button>
+              <button id="closeStageBtn" type="button" class="px-3 py-1.5 rounded-lg bg-red-600/30 text-red-400 text-sm hover:bg-red-600/50">🔒 End Stage & Seal</button>
             </div>
           </div>
         </div>
@@ -599,6 +674,7 @@ function renderParticipants(participants) {
           <button type="button" onclick="window.hostAction('${uidSafe}', 'mute')" class="text-xs px-2 py-1 rounded bg-zinc-700 hover:bg-zinc-600">Mute</button>
           <button type="button" onclick="window.hostAction('${uidSafe}', 'promote')" class="text-xs px-2 py-1 rounded bg-sky-600/30 hover:bg-sky-600/50 text-sky-300">Promote</button>
           <button type="button" onclick="window.hostAction('${uidSafe}', 'remove')" class="text-xs px-2 py-1 rounded bg-red-600/20 hover:bg-red-600/40 text-red-400">Remove</button>
+          <button type="button" onclick="window.hostAction('${uidSafe}', 'ban')" class="text-xs px-2 py-1 rounded bg-red-900/40 hover:bg-red-900/60 text-red-300">Ban</button>
         </div>
       ` : ''}
     </div>`;
@@ -629,7 +705,138 @@ function renderParticipants(participants) {
 }
 
 // ---------------------------------------------------------------------------
-// Drop evidence modal
+// In-Room Moderation & Group Binding Extensions
+// ---------------------------------------------------------------------------
+function listenAndRenderRoomModeration(roomId) {
+  const roomRef = doc(db, 'liveRooms', roomId);
+  if (activeRoomUnsubscribe) activeRoomUnsubscribe();
+
+  activeRoomUnsubscribe = onSnapshot(roomRef, (snap) => {
+    if (!snap.exists()) return;
+    currentRoomData = { id: snap.id, ...snap.data() };
+
+    const currentUid = auth.currentUser?.uid;
+    if (currentUid && currentRoomData.bannedUsers?.includes(currentUid)) {
+      showToast('🚫 You have been expelled and banned from this stage', 'error');
+      window.leaveCurrentRoom();
+      return;
+    }
+
+    renderRoomAdminPanel(currentRoomData);
+    renderInRoomInviteUI(currentRoomData);
+  });
+
+  document.getElementById('openRoomAdminBtn')?.addEventListener('click', () => {
+    document.getElementById('roomAdminModal')?.classList.remove('hidden');
+    document.getElementById('roomAdminModal')?.classList.add('flex');
+  });
+
+  document.getElementById('closeRoomAdminModalBtn')?.addEventListener('click', () => {
+    document.getElementById('roomAdminModal')?.classList.add('hidden');
+    document.getElementById('roomAdminModal')?.classList.remove('flex');
+  });
+}
+
+function renderRoomAdminPanel(room) {
+  const currentUid = auth.currentUser?.uid;
+  const roomIsHost = isHost || room.hostUid === currentUid;
+
+  // Pending stage requests
+  const pendingContainer = document.getElementById('arenaPendingList');
+  const pendingCountEl = document.getElementById('arenaPendingCount');
+  const pending = room.pendingRequests || [];
+  if (pendingCountEl) pendingCountEl.textContent = pending.length;
+
+  if (pendingContainer) {
+    if (pending.length === 0) {
+      pendingContainer.innerHTML = `<div class="p-3 text-center text-xs text-zinc-500 rounded-xl bg-zinc-900/40 border border-zinc-800">No pending requests</div>`;
+    } else {
+      pendingContainer.innerHTML = pending.map(uid => `
+        <div class="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/90 p-2.5 text-xs">
+          <span class="font-mono text-zinc-300">${uid.slice(0, 10)}...</span>
+          ${roomIsHost ? `
+            <div class="flex gap-2">
+              <button type="button" class="approve-speak-btn px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 font-semibold" data-uid="${uid}">Grant Mic</button>
+              <button type="button" class="reject-speak-btn px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700" data-uid="${uid}">Decline</button>
+            </div>
+          ` : '<span class="text-zinc-500">Pending Host Approval</span>'}
+        </div>
+      `).join('');
+
+      pendingContainer.querySelectorAll('.approve-speak-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          await updateDoc(doc(db, 'liveRooms', room.id), {
+            pendingRequests: arrayRemove(btn.dataset.uid),
+            speakers: arrayUnion(btn.dataset.uid)
+          });
+          showToast('Mic granted', 'success');
+        });
+      });
+
+      pendingContainer.querySelectorAll('.reject-speak-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          await updateDoc(doc(db, 'liveRooms', room.id), {
+            pendingRequests: arrayRemove(btn.dataset.uid)
+          });
+          showToast('Request declined', 'info');
+        });
+      });
+    }
+  }
+
+  // Banned list
+  const bannedContainer = document.getElementById('arenaBannedList');
+  const bannedCountEl = document.getElementById('arenaBannedCount');
+  const banned = room.bannedUsers || [];
+  if (bannedCountEl) bannedCountEl.textContent = banned.length;
+
+  if (bannedContainer) {
+    if (banned.length === 0) {
+      bannedContainer.innerHTML = `<div class="p-3 text-center text-xs text-zinc-500 rounded-xl bg-zinc-900/40 border border-zinc-800">No banned users</div>`;
+    } else {
+      bannedContainer.innerHTML = banned.map(uid => `
+        <div class="flex items-center justify-between rounded-xl border border-red-500/20 bg-red-950/20 p-2.5 text-xs">
+          <span class="font-mono text-red-300">${uid.slice(0, 10)}... (Banned)</span>
+          ${roomIsHost ? `<button type="button" class="unban-user-btn px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700" data-uid="${uid}">Unban</button>` : ''}
+        </div>
+      `).join('');
+
+      bannedContainer.querySelectorAll('.unban-user-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          await updateDoc(doc(db, 'liveRooms', room.id), {
+            bannedUsers: arrayRemove(btn.dataset.uid)
+          });
+          showToast('User unbanned', 'success');
+        });
+      });
+    }
+  }
+}
+
+function renderInRoomInviteUI(room) {
+  const linkInput = document.getElementById('roomInviteLinkInput');
+  const codeInput = document.getElementById('roomInviteCodeInput');
+
+  if (linkInput) linkInput.value = `${window.location.origin}${window.location.pathname}?room=${room.id}`;
+  if (codeInput) codeInput.value = room.id.substring(0, 8).toUpperCase();
+
+  document.getElementById('copyRoomInviteBtn')?.addEventListener('click', async () => {
+    if (linkInput?.value) {
+      await navigator.clipboard.writeText(linkInput.value);
+      showToast('Invite link copied!', 'success');
+    }
+  });
+
+  document.getElementById('copyRoomCodeBtn')?.addEventListener('click', async () => {
+    if (codeInput?.value) {
+      await navigator.clipboard.writeText(codeInput.value);
+      showToast('Invite code copied!', 'success');
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Drop evidence modal & auto-sealing into linked group locker
 // ---------------------------------------------------------------------------
 function wireDropEvidenceModal(roomId) {
   const dropModal = document.getElementById('dropEvidenceModal');
@@ -705,6 +912,21 @@ function wireDropEvidenceModal(roomId) {
         roomId,
         createdAt: serverTimestamp()
       });
+
+      // If room is bound to a group, also deposit into group evidence locker
+      if (currentRoomData?.groupId) {
+        await addDoc(collection(db, 'group_evidence'), {
+          groupId: currentRoomData.groupId,
+          name: selectedDropFile ? selectedDropFile.name : `Arena Drop: ${note.substring(0, 20)}...`,
+          size: selectedDropFile ? `${selectedDropFile.size} B` : '0 B',
+          mimeType: selectedDropFile ? selectedDropFile.type : 'text/plain',
+          hash: mediaHash || 'NO_MEDIA_HASH',
+          hashAlg: 'SHA-256',
+          status: 'Live Arena Evidence Locker',
+          depositedBy: auth.currentUser.uid,
+          createdAt: serverTimestamp()
+        });
+      }
 
       await addDoc(collection(db, 'testimonies'), {
         content: note || `Live evidence dropped from room: ${roomId}`,
@@ -796,7 +1018,7 @@ async function connectToLiveKit(roomId) {
     showToast("Voice connected – ready to speak", "success");
   } catch (err) {
     console.error('LiveKit connect error:', err);
-    showToast("Could not connect voice channel (check LiveKit secrets / token)", "error");
+    showToast("Could not connect voice channel", "error");
   }
 }
 
@@ -897,14 +1119,8 @@ function wireActiveRoomControls(roomId) {
 
   const talkBtn = document.getElementById('pushToTalkBtn');
   if (talkBtn) {
-    talkBtn.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      startSpeaking();
-    });
-    talkBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      startSpeaking();
-    }, { passive: false });
+    talkBtn.addEventListener('mousedown', (e) => { e.preventDefault(); startSpeaking(); });
+    talkBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startSpeaking(); }, { passive: false });
     talkBtn.addEventListener('mouseup', stopSpeaking);
     talkBtn.addEventListener('mouseleave', stopSpeaking);
     talkBtn.addEventListener('touchend', stopSpeaking);
@@ -946,18 +1162,11 @@ function wireActiveRoomControls(roomId) {
 
   const shareHandler = async () => {
     const shareUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(roomId)}`;
-    const title =
-      document.querySelector('#activeRoomView h2')?.textContent?.trim() ||
-      'Live Arena – VocalWitness';
+    const title = document.querySelector('#activeRoomView h2')?.textContent?.trim() || 'Live Arena – VocalWitness';
     const text = `I'm in a live witness room on VocalWitness: ${title}`;
 
     if (navigator.share) {
-      try {
-        await navigator.share({ title, text, url: shareUrl });
-        return;
-      } catch (_) {
-        /* cancelled → menu */
-      }
+      try { await navigator.share({ title, text, url: shareUrl }); return; } catch (_) {}
     }
     openRoomShareMenu(shareUrl, title, text);
   };
@@ -965,46 +1174,17 @@ function wireActiveRoomControls(roomId) {
   document.getElementById('shareRoomBtn')?.addEventListener('click', shareHandler);
   document.getElementById('shareRoomBtnTop')?.addEventListener('click', shareHandler);
 
-  document.getElementById('reportBtn')?.addEventListener('click', async () => {
-    if (!requireAuth("Sign in to report")) return;
-    const reason = prompt(
-      "Why are you reporting this room? (spam, harassment, false claims, other)"
-    );
-    if (!reason || reason.trim().length < 3) return;
-
-    try {
-      await addDoc(collection(db, 'liveRooms', roomId, 'reports'), {
-        reportedBy: auth.currentUser.uid,
-        displayName: auth.currentUser.displayName || 'Citizen',
-        reason: reason.trim().slice(0, 500),
-        createdAt: serverTimestamp()
-      });
-      showToast("Report submitted to stewards", "success");
-    } catch (err) {
-      console.error(err);
-      showToast("Could not submit report (check Firestore rules)", "error");
-    }
-  });
-
   document.getElementById('corroborateBtn')?.addEventListener('click', async () => {
     if (!requireAuth()) return;
-
     try {
       const corrRef = doc(db, 'liveRooms', roomId, 'corroborations', auth.currentUser.uid);
       const existing = await getDoc(corrRef);
-
       if (existing.exists()) {
         showToast("You already corroborated this room", "info");
         return;
       }
-
-      await setDoc(corrRef, {
-        uid: auth.currentUser.uid,
-        displayName: auth.currentUser.displayName || 'Citizen',
-        createdAt: serverTimestamp()
-      });
-
-      showToast("✅ Corroboration recorded – strengthens the evidence", "success");
+      await setDoc(corrRef, { uid: auth.currentUser.uid, displayName: auth.currentUser.displayName || 'Citizen', createdAt: serverTimestamp() });
+      showToast("✅ Corroboration recorded", "success");
     } catch (err) {
       console.error(err);
       showToast("Could not record corroboration", "error");
@@ -1018,47 +1198,45 @@ function wireActiveRoomControls(roomId) {
         sealedBy: auth.currentUser.uid,
         displayName: auth.currentUser.displayName || 'Citizen',
         sealedAt: serverTimestamp(),
-        note: 'Segment sealed for public record',
-        participantCount: document.getElementById('liveListenerCount')?.textContent || 0
+        note: 'Segment sealed for public record'
       });
-      showToast("🛡️ Segment sealed – now part of the public evidence ledger", "success");
+      showToast("🛡️ Segment sealed to ledger", "success");
     } catch (err) {
       console.error(err);
       showToast("Could not seal segment", "error");
     }
   });
 
-  document.getElementById('muteAllBtn')?.addEventListener('click', async () => {
+  document.getElementById('closeStageBtn')?.addEventListener('click', async () => {
     if (!isHost) return;
-    try {
-      const snap = await getDocs(collection(db, 'liveRooms', roomId, 'participants'));
-      const ops = [];
-      snap.forEach(d => {
-        if (d.id !== auth.currentUser.uid) {
-          ops.push(updateDoc(d.ref, { isSpeaking: false, handRaised: false }));
-        }
-      });
-      await Promise.all(ops);
-      showToast("All participants muted", "info");
-    } catch (err) {
-      console.error(err);
-      showToast("Mute all failed", "error");
-    }
-  });
+    if (confirm("End stage session and seal transcript into linked group evidence locker?")) {
+      try {
+        if (currentRoomData?.groupId) {
+          const sessionSummary = `Stage Concluded: ${currentRoomData.title}\nHost: ${currentRoomData.hostUid}`;
+          const encoder = new TextEncoder();
+          const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(sessionSummary));
+          const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 
-  document.getElementById('lowerHandsBtn')?.addEventListener('click', async () => {
-    if (!isHost) return;
-    try {
-      const snap = await getDocs(collection(db, 'liveRooms', roomId, 'participants'));
-      const ops = [];
-      snap.forEach(d => {
-        ops.push(updateDoc(d.ref, { handRaised: false }));
-      });
-      await Promise.all(ops);
-      showToast("All hands lowered", "info");
-    } catch (err) {
-      console.error(err);
-      showToast("Could not lower hands", "error");
+          await addDoc(collection(db, 'group_evidence'), {
+            groupId: currentRoomData.groupId,
+            name: `Transcript: ${currentRoomData.title}`,
+            size: `${sessionSummary.length} B`,
+            mimeType: 'text/plain',
+            hash: hashHex,
+            hashAlg: 'SHA-256',
+            status: 'Live Arena Stage Record',
+            depositedBy: auth.currentUser.uid,
+            createdAt: serverTimestamp()
+          });
+        }
+
+        await updateDoc(doc(db, 'liveRooms', roomId), { isLive: false, status: 'ended' });
+        showToast("Stage ended & evidence sealed", "success");
+        window.leaveCurrentRoom();
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to close stage", "error");
+      }
     }
   });
 }
@@ -1066,7 +1244,6 @@ function wireActiveRoomControls(roomId) {
 // ========== HOST ACTIONS ==========
 window.hostAction = async function (uid, action) {
   if (!isHost || !currentRoomId || !uid) return;
-
   const ref = doc(db, 'liveRooms', currentRoomId, 'participants', uid);
 
   try {
@@ -1083,10 +1260,18 @@ window.hostAction = async function (uid, action) {
         lastActivityAt: serverTimestamp()
       });
       showToast("Participant removed", "info");
+    } else if (action === 'ban') {
+      await deleteDoc(ref);
+      await updateDoc(doc(db, 'liveRooms', currentRoomId), {
+        participantCount: increment(-1),
+        bannedUsers: arrayUnion(uid),
+        lastActivityAt: serverTimestamp()
+      });
+      showToast("🚫 User expelled and banned", "warning");
     }
   } catch (err) {
     console.error(err);
-    showToast("Action failed (permissions?)", "error");
+    showToast("Action failed", "error");
   }
 };
 
@@ -1094,34 +1279,16 @@ window.hostAction = async function (uid, action) {
 window.leaveCurrentRoom = async function (silent = false) {
   const leavingId = currentRoomId;
 
-  try {
-    if (isSpeaking) await stopSpeaking();
-  } catch (_) {}
-
-  if (livekitRoom) {
-    try { await livekitRoom.disconnect(); } catch (_) {}
-    livekitRoom = null;
-  }
-  if (localAudioTrack) {
-    try { localAudioTrack.stop(); } catch (_) {}
-    localAudioTrack = null;
-  }
+  try { if (isSpeaking) await stopSpeaking(); } catch (_) {}
+  if (livekitRoom) { try { await livekitRoom.disconnect(); } catch (_) {} livekitRoom = null; }
+  if (localAudioTrack) { try { localAudioTrack.stop(); } catch (_) {} localAudioTrack = null; }
   isSpeaking = false;
 
   document.querySelectorAll('[id^="audio-"]').forEach(el => el.remove());
-
-  if (participantsUnsubscribe) {
-    try { participantsUnsubscribe(); } catch (_) {}
-    participantsUnsubscribe = null;
-  }
-  if (window._corrUnsub) {
-    try { window._corrUnsub(); } catch (_) {}
-    window._corrUnsub = null;
-  }
-  if (window._reactUnsub) {
-    try { window._reactUnsub(); } catch (_) {}
-    window._reactUnsub = null;
-  }
+  if (participantsUnsubscribe) { try { participantsUnsubscribe(); } catch (_) {} participantsUnsubscribe = null; }
+  if (activeRoomUnsubscribe) { try { activeRoomUnsubscribe(); } catch (_) {} activeRoomUnsubscribe = null; }
+  if (window._corrUnsub) { try { window._corrUnsub(); } catch (_) {} window._corrUnsub = null; }
+  if (window._reactUnsub) { try { window._reactUnsub(); } catch (_) {} window._reactUnsub = null; }
 
   if (leavingId && auth.currentUser) {
     try {
@@ -1138,6 +1305,7 @@ window.leaveCurrentRoom = async function (silent = false) {
   currentRoomId = null;
   myParticipantDocId = null;
   isHost = false;
+  currentRoomData = null;
 
   document.getElementById('activeRoomView')?.classList.add('hidden');
   const active = document.getElementById('activeRoomView');
@@ -1168,7 +1336,6 @@ function spawnFloatingReaction(emoji) {
 
 function openRoomShareMenu(shareUrl, title, text) {
   document.getElementById('vw-room-share-menu')?.remove();
-
   const menu = document.createElement('div');
   menu.id = 'vw-room-share-menu';
   menu.className = 'fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4';
@@ -1183,71 +1350,33 @@ function openRoomShareMenu(shareUrl, title, text) {
         <button type="button" data-share-close class="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white">✕</button>
       </div>
       <div class="grid grid-cols-2 gap-3">
-        <button type="button" data-share="copy"
-                class="rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-sky-500/50 transition">
-          🔗 Copy link
-        </button>
-        <button type="button" data-share="whatsapp"
-                class="rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-sky-500/50 transition">
-          💬 WhatsApp
-        </button>
-        <button type="button" data-share="twitter"
-                class="rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-sky-500/50 transition">
-          𝕏 Twitter / X
-        </button>
-        <button type="button" data-share="telegram"
-                class="rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-sky-500/50 transition">
-          ✈️ Telegram
-        </button>
-        <button type="button" data-share="facebook"
-                class="rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-sky-500/50 transition">
-          📘 Facebook
-        </button>
-        <button type="button" data-share="linkedin"
-                class="rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-sky-500/50 transition">
-          💼 LinkedIn
-        </button>
+        <button type="button" data-share="copy" class="rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-sky-500/50 transition">🔗 Copy link</button>
+        <button type="button" data-share="whatsapp" class="rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-sky-500/50 transition">💬 WhatsApp</button>
+        <button type="button" data-share="twitter" class="rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-sky-500/50 transition">𝕏 Twitter / X</button>
+        <button type="button" data-share="telegram" class="rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-sky-500/50 transition">✈️ Telegram</button>
       </div>
-      <p class="mt-4 truncate rounded-lg bg-zinc-950 px-3 py-2 text-xs text-zinc-500" title="${escapeHTML(shareUrl)}">
-        ${escapeHTML(shareUrl)}
-      </p>
     </div>
   `;
 
   document.body.appendChild(menu);
-
   menu.addEventListener('click', (e) => {
-    if (e.target === menu || e.target.closest('[data-share-close]')) {
-      menu.remove();
-    }
+    if (e.target === menu || e.target.closest('[data-share-close]')) menu.remove();
   });
 
   menu.querySelectorAll('[data-share]').forEach(btn => {
     btn.addEventListener('click', async () => {
       const type = btn.getAttribute('data-share');
       menu.remove();
-
       if (type === 'copy') {
-        try {
-          await navigator.clipboard.writeText(shareUrl);
-          showToast('Room link copied', 'success');
-        } catch {
-          showToast('Could not copy link', 'error');
-        }
+        try { await navigator.clipboard.writeText(shareUrl); showToast('Room link copied', 'success'); } catch { showToast('Could not copy link', 'error'); }
         return;
       }
-
       const urls = {
         whatsapp: `https://wa.me/?text=${encodedText}%20${encodedUrl}`,
         twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`,
-        facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-        telegram: `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`,
-        linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`
+        telegram: `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`
       };
-
-      if (urls[type]) {
-        window.open(urls[type], '_blank', 'noopener,noreferrer');
-      }
+      if (urls[type]) window.open(urls[type], '_blank', 'noopener,noreferrer');
     });
   });
 }
