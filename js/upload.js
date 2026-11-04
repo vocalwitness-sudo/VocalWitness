@@ -314,6 +314,88 @@ export async function uploadSecureAudio(audioBlob, folderPath = 'evidence', onPr
   }
 }
 
+
+/**
+ * Upload non-media files (PDF, DOC, TXT, ZIP, etc.) to R2 without image/audio transforms.
+ * Used by Group Evidence Locker for documents.
+ * Max 80 MB. No EXIF scrub (not applicable).
+ */
+export async function uploadRawFile(file, folderPath = 'evidence', onProgress = null) {
+  if (!file) throw new Error('No file provided for upload.');
+
+  const MAX_RAW_BYTES = 80 * 1024 * 1024;
+  if (file.size > MAX_RAW_BYTES) {
+    throw new Error('File too large (max 80 MB).');
+  }
+
+  const ALLOWED =
+    /^(application\/(pdf|zip|x-zip-compressed|msword|vnd\.openxmlformats-officedocument\.wordprocessingml\.document|octet-stream)|text\/plain)$/i;
+  const ALLOWED_EXT = /\.(pdf|txt|zip|doc|docx)$/i;
+
+  const mime = (file.type || '').toLowerCase();
+  const name = file.name || 'document';
+
+  if (!ALLOWED.test(mime) && !ALLOWED_EXT.test(name)) {
+    throw new Error('Document type not allowed. Use PDF, TXT, ZIP, DOC, or DOCX.');
+  }
+
+  showToast('🛡️ Preparing secure document upload...', 'info');
+
+  const uid = auth.currentUser?.uid || 'anonymous';
+  const fileId = crypto.randomUUID();
+
+  // Preserve a safe extension
+  const extMatch = name.toLowerCase().match(/\.([a-z0-9]+)$/);
+  const ext = extMatch ? extMatch[1] : 'bin';
+  const safeExt = ['pdf', 'txt', 'zip', 'doc', 'docx'].includes(ext) ? ext : 'bin';
+
+  const keyPath = folderPath.includes(uid)
+    ? `${folderPath}/${fileId}.${safeExt}`
+    : `${folderPath}/${uid}/${fileId}.${safeExt}`;
+
+  const contentType =
+    mime && mime !== 'application/octet-stream'
+      ? mime
+      : safeExt === 'pdf'
+        ? 'application/pdf'
+        : safeExt === 'txt'
+          ? 'text/plain'
+          : safeExt === 'zip'
+            ? 'application/zip'
+            : safeExt === 'doc'
+              ? 'application/msword'
+              : safeExt === 'docx'
+                ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                : 'application/octet-stream';
+
+  try {
+    setUploadProgress(0, 'Uploading document...');
+    const publicUrl = await executeUpload(
+      file,
+      keyPath,
+      contentType,
+      (percent) => {
+        if (typeof onProgress === 'function') onProgress(percent);
+        setUploadProgress(percent, 'Uploading document...');
+      }
+    );
+
+    await logAuditEvent?.('MEDIA_UPLOADED', {
+      type: 'document',
+      path: keyPath,
+      size: file.size
+    });
+
+    return publicUrl;
+  } catch (err) {
+    console.error('[Upload] Raw file upload failed:', err);
+    showToast('❌ Document upload failed', 'error');
+    throw err;
+  } finally {
+    setUploadProgress(null);
+  }
+}
+
 /**
  * Uploads video evidence to Cloudflare R2
  */
