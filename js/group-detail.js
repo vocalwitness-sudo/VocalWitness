@@ -597,26 +597,13 @@ async function promptDepositEvidence() {
       const folderPath = `group-evidence/${currentGroupId}`;
       let publicUrl = null;
 
-      const isMedia =
-        (file.type || '').startsWith('image/') ||
-        (file.type || '').startsWith('audio/') ||
-        (file.type || '').startsWith('video/') ||
-        /\.(jpe?g|png|webp|gif|heic|heif|mp3|wav|ogg|m4a|webm|mp4|mov|mkv|m4v)$/i.test(
-          file.name || ''
-        );
-
-      if (isMedia) {
-        publicUrl = await uploadMedia(file, folderPath);
-      } else {
-        // Non-media (pdf/doc/txt/zip): upload raw via same R2 path pattern
-        // Reuse uploadMedia only for media; for documents we still need a path.
-        // Fallback: treat as generic blob through uploadSecure path if available.
-        // For now use uploadMedia's execute path by wrapping — upload.js only accepts media.
-        // Store hash-only for non-media until a generic upload helper is added.
-        publicUrl = null;
-        showToast('Document sealed by hash (media URL not available for this type yet)', 'info');
-      }
-
+       // 2. Upload to sealed path under group-evidence/{groupId}/
+      //    Hash above is of the original file bytes (before any image scrub).
+      showToast('Uploading sealed file…', 'info');
+      const folderPath = `group-evidence/${currentGroupId}`;
+      const publicUrl = await uploadMedia(file, folderPath);
+     
+      
       // 3. Immutable Firestore record
       await addDoc(collection(db, 'group_evidence'), {
         groupId: currentGroupId,
