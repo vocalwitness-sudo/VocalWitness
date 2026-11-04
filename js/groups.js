@@ -548,3 +548,80 @@ function closeGroupModal() {
 window.showGroupCreationModal = showGroupCreationModal;
 window.closeGroupModal = closeGroupModal;
 window.createGroup = createGroupFromForm;
+
+/**
+ * Voluntarily leave a group (For standard members)
+ */
+export async function leaveGroup(groupId) {
+  if (!auth.currentUser) return showToast('Please sign in first', 'error');
+
+  try {
+    const uid = auth.currentUser.uid;
+    const groupRef = doc(db, 'groups', groupId);
+
+    await updateDoc(groupRef, {
+      members: arrayRemove(uid),
+      admins: arrayRemove(uid),
+      moderators: arrayRemove(uid),
+      memberCount: increment(-1)
+    });
+
+    await logGroupAction(groupId, 'MEMBER_LEFT', { uid });
+    showToast('You have left the group.', 'info');
+  } catch (err) {
+    console.error('leaveGroup error:', err);
+    showToast('Failed to leave group', 'error');
+  }
+}
+
+/**
+ * Suspend a member from posting/depositing evidence (Temporary Mute/Restriction)
+ */
+export async function suspendGroupMember(groupId, memberUid) {
+  if (!auth.currentUser) return;
+  try {
+    const groupRef = doc(db, 'groups', groupId);
+    await updateDoc(groupRef, {
+      suspendedMembers: arrayUnion(memberUid)
+    });
+    await logGroupAction(groupId, 'MEMBER_SUSPENDED', { targetUid: memberUid, adminUid: auth.currentUser.uid });
+    showToast('Member suspended from group actions', 'warning');
+  } catch (err) {
+    console.error('suspendGroupMember error:', err);
+    showToast('Failed to suspend member', 'error');
+  }
+}
+
+/**
+ * Unsuspend a member
+ */
+export async function unsuspendGroupMember(groupId, memberUid) {
+  if (!auth.currentUser) return;
+  try {
+    const groupRef = doc(db, 'groups', groupId);
+    await updateDoc(groupRef, {
+      suspendedMembers: arrayRemove(memberUid)
+    });
+    await logGroupAction(groupId, 'MEMBER_UNSUSPENDED', { targetUid: memberUid, adminUid: auth.currentUser.uid });
+    showToast('Member suspension lifted', 'success');
+  } catch (err) {
+    console.error('unsuspendGroupMember error:', err);
+    showToast('Failed to lift suspension', 'error');
+  }
+}
+
+/**
+ * Log administrative actions to group audit trail
+ */
+export async function logGroupAction(groupId, actionType, details = {}) {
+  try {
+    await addDoc(collection(db, 'groups', groupId, 'audit_logs'), {
+      action: actionType,
+      performedBy: auth.currentUser?.uid || 'system',
+      details,
+      timestamp: serverTimestamp()
+    });
+  } catch (err) {
+    console.warn('Audit log write skipped:', err);
+  }
+}
