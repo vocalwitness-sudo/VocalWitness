@@ -830,15 +830,22 @@ service cloud.firestore {
         && request.resource.data.title.size() >= 6
         && request.resource.data.title.size() <= 120;
 
-      allow update: if isNotBanned() && isAuthenticated() && (
+     allow update: if isNotBanned() && isAuthenticated() && (
         resource.data.createdBy == request.auth.uid
+        || resource.data.hostUid == request.auth.uid
         || isModerator()
         || request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly([
                'participantCount',
                'speakingCount',
                'reactions',
-               'lastActivityAt'
+               'lastActivityAt',
+               'pendingRequests',
+               'bannedUsers',
+               'speakers',
+               'coHosts',
+               'isLive',
+               'status'
              ])
       );
 
