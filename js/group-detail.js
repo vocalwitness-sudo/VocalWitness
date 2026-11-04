@@ -26,6 +26,7 @@ import {
   approveGroupMember, 
   rejectGroupMember 
 } from './groups.js';
+import { exportGroupEvidencePackage } from './export-package.js';
 
 let currentGroupId = null;
 let currentGroupData = null;
