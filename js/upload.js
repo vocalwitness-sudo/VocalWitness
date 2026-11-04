@@ -454,30 +454,47 @@ export async function uploadSecureVideo(videoFile, folderPath = 'evidence', onPr
 }
 
 /**
- * Universal upload helper routing images, audio, and videos properly
+ * Universal upload helper — images, audio, video, and allowed documents.
  */
 export async function uploadMedia(file, folderPath = 'evidence', onProgress = null) {
   if (!file) throw new Error('No file provided for upload.');
 
-  // Normalize first
+  // Normalize first (helps mobile empty MIME types)
   file = normalizeMediaFile(file);
   const type = (file.type || '').toLowerCase();
+  const name = file.name || '';
 
-  if (type.startsWith('image/') || type === 'image/heic' || type === 'image/heif' ||
-      /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name || '')) {
+  if (
+    type.startsWith('image/') ||
+    type === 'image/heic' ||
+    type === 'image/heif' ||
+    /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(name)
+  ) {
     return await uploadSecurePhoto(file, folderPath, onProgress);
   }
 
-  if (type.startsWith('audio/') || /\.(mp3|wav|ogg|m4a|webm)$/i.test(file.name || '')) {
+  if (type.startsWith('audio/') || /\.(mp3|wav|ogg|m4a|webm)$/i.test(name)) {
     return await uploadSecureAudio(file, folderPath, onProgress);
   }
 
-  if (type.startsWith('video/') || /\.(mp4|webm|mov|mkv|m4v)$/i.test(file.name || '')) {
+  if (type.startsWith('video/') || /\.(mp4|webm|mov|mkv|m4v)$/i.test(name)) {
     return await uploadSecureVideo(file, folderPath, onProgress);
   }
 
-  throw new Error('Unsupported media type. Only image, audio, and video files are allowed.');
+  // Documents for Evidence Locker / sealed packs
+  if (
+    type.startsWith('application/') ||
+    type === 'text/plain' ||
+    /\.(pdf|txt|zip|doc|docx)$/i.test(name)
+  ) {
+    return await uploadRawFile(file, folderPath, onProgress);
+  }
+
+  throw new Error(
+    'Unsupported file type. Allowed: image, audio, video, PDF, TXT, ZIP, DOC, DOCX.'
+  );
 }
+
 
 /**
  * Low-level upload to R2 via XHR with progress tracking and authorization headers
