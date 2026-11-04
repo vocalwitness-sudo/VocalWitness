@@ -1,6 +1,5 @@
 // js/group-detail.js - VocalWitness Group Detail System
-// Complete with Admin Member Moderation (Approve, Reject, Remove, Expel/Ban)
-// and the 3 Core Institutional Tools (Evidence Locker, Attestation Wall, Forensic Timeline)
+// Fixed: init wiring, sealed evidence upload (hash + media), admin moderation
 
 import { db, auth } from './firebase-config.js';
 import {
@@ -18,15 +17,16 @@ import {
   serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 
-import { showToast } from './utils.js';
-import { 
-  removeGroupMember, 
-  expelGroupMember, 
-  unbanGroupMember, 
-  approveGroupMember, 
-  rejectGroupMember 
+import { showToast, computeSHA256 } from './utils.js';
+import {
+  removeGroupMember,
+  expelGroupMember,
+  unbanGroupMember,
+  approveGroupMember,
+  rejectGroupMember
 } from './groups.js';
 import { exportGroupEvidencePackage } from './export-package.js';
+import { uploadMedia } from './upload.js';
 
 let currentGroupId = null;
 let currentGroupData = null;
@@ -36,10 +36,12 @@ let unsubscribeEvidence = null;
 let unsubscribeAttestations = null;
 let unsubscribeTimeline = null;
 
+const MAX_EVIDENCE_BYTES = 80 * 1024 * 1024; // 80 MB
+const ALLOWED_EVIDENCE_EXT = /\.(jpe?g|png|webp|gif|heic|heif|mp3|wav|ogg|m4a|webm|mp4|mov|mkv|m4v|pdf|txt|zip|doc|docx)$/i;
+
 /**
- * Main entry point
+ * Main entry point — all wiring lives inside this function
  */
-*/
 export function initGroupDetail() {
   const params = new URLSearchParams(window.location.search);
   currentGroupId = params.get('id');
@@ -50,15 +52,10 @@ export function initGroupDetail() {
     return;
   }
 
-  // 📦 Cryptographic Evidence Export Package
+  // Export package
   document.getElementById('exportEvidencePackageBtn')?.addEventListener('click', () => {
-    if (currentGroupId) {
-      exportGroupEvidencePackage(currentGroupId);
-    }
+    if (currentGroupId) exportGroupEvidencePackage(currentGroupId);
   });
-
-  loadGroup();
-}
 
   // Tab switching
   document.querySelectorAll('.tab-btn').forEach((btn) => {
@@ -76,7 +73,7 @@ export function initGroupDetail() {
     });
   });
 
-  // Deep-link tab support (?tab=locker | attestation | timeline | members | about | admin)
+  // Deep-link tab support (?tab=locker | attestation | timeline | members | about)
   const initialTab = params.get('tab');
   if (initialTab) {
     setTimeout(() => {
@@ -96,7 +93,7 @@ export function initGroupDetail() {
   document.getElementById('openAttestationModalBtn')?.addEventListener('click', promptSignAttestation);
   document.getElementById('openTimelineModalBtn')?.addEventListener('click', promptAddTimelineNode);
 
-  // Invite buttons
+  // Invite copy buttons
   document.getElementById('copyInviteBtn')?.addEventListener('click', () => {
     const input = document.getElementById('inviteLinkInput');
     if (input?.value) {
@@ -112,6 +109,8 @@ export function initGroupDetail() {
       showToast('Invite code copied!', 'success');
     }
   });
+
+  loadGroup();
 }
 
 /**
@@ -134,7 +133,7 @@ function loadGroup() {
       currentGroupData = { id: snap.id, ...snap.data() };
       renderGroupHeader(currentGroupData);
       renderMembers(currentGroupData);
-      renderAdminMemberPanel(currentGroupData); // 🛡️ Render Admin moderation panel
+      renderAdminMemberPanel(currentGroupData);
       renderInviteUI();
       loadGroupFeed();
       loadEvidenceLocker();
@@ -201,7 +200,7 @@ function renderGroupHeader(group) {
 }
 
 /**
- * Render members + pending requests
+ * Render members + pending requests (standard list)
  */
 function renderMembers(group) {
   const list = document.getElementById('membersList');
@@ -285,7 +284,7 @@ function renderMembers(group) {
 }
 
 /**
- * 🛡️ Render Admin Member Management Panel (Remove, Expel & Ban, Unban)
+ * Admin Member Management Panel
  */
 function renderAdminMemberPanel(groupData) {
   const panel = document.getElementById('admin-members-panel');
@@ -300,7 +299,7 @@ function renderAdminMemberPanel(groupData) {
   }
   panel.classList.remove('hidden');
 
-  // 1. Pending Members Queue
+  // Pending
   const pendingContainer = document.getElementById('pending-members-list');
   const pendingCountEl = document.getElementById('pending-count');
   const pending = groupData.pendingMembers || [];
@@ -309,7 +308,9 @@ function renderAdminMemberPanel(groupData) {
   if (pending.length === 0 && pendingContainer) {
     pendingContainer.innerHTML = `<div class="p-3 text-center text-xs text-zinc-500 rounded-xl bg-zinc-900/40 border border-zinc-800/80">No pending join requests</div>`;
   } else if (pendingContainer) {
-    pendingContainer.innerHTML = pending.map(uid => `
+    pendingContainer.innerHTML = pending
+      .map(
+        (uid) => `
       <div class="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/90 p-3 text-xs">
         <span class="font-mono text-zinc-300">${uid.slice(0, 12)}...</span>
         <div class="flex items-center gap-2">
@@ -321,25 +322,30 @@ function renderAdminMemberPanel(groupData) {
           </button>
         </div>
       </div>
-    `).join('');
+    `
+      )
+      .join('');
   }
 
-  // 2. Active Members List
+  // Active
   const activeContainer = document.getElementById('active-members-list');
   const activeCountEl = document.getElementById('active-count');
   const members = groupData.members || [];
   if (activeCountEl) activeCountEl.textContent = members.length;
 
   if (activeContainer) {
-    activeContainer.innerHTML = members.map(uid => {
-      const isOwner = uid === groupData.creatorId;
-      return `
+    activeContainer.innerHTML = members
+      .map((uid) => {
+        const isOwner = uid === groupData.creatorId;
+        return `
         <div class="flex items-center justify-between rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-3 text-xs">
           <div class="flex items-center gap-2">
             <span class="font-mono text-zinc-300">${uid.slice(0, 12)}...</span>
             ${isOwner ? '<span class="text-[10px] bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30">Owner</span>' : ''}
           </div>
-          ${!isOwner && uid !== currentUid ? `
+          ${
+            !isOwner && uid !== currentUid
+              ? `
             <div class="flex items-center gap-2">
               <button type="button" class="remove-member-btn px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 font-medium transition" data-uid="${uid}">
                 Remove
@@ -348,13 +354,16 @@ function renderAdminMemberPanel(groupData) {
                 🚫 Expel & Ban
               </button>
             </div>
-          ` : ''}
+          `
+              : ''
+          }
         </div>
       `;
-    }).join('');
+      })
+      .join('');
   }
 
-  // 3. Expelled / Banned List
+  // Banned
   const bannedContainer = document.getElementById('banned-members-list');
   const bannedCountEl = document.getElementById('banned-count');
   const banned = groupData.bannedMembers || [];
@@ -363,42 +372,46 @@ function renderAdminMemberPanel(groupData) {
   if (banned.length === 0 && bannedContainer) {
     bannedContainer.innerHTML = `<div class="p-3 text-center text-xs text-zinc-500 rounded-xl bg-zinc-900/40 border border-zinc-800/80">No banned members</div>`;
   } else if (bannedContainer) {
-    bannedContainer.innerHTML = banned.map(uid => `
+    bannedContainer.innerHTML = banned
+      .map(
+        (uid) => `
       <div class="flex items-center justify-between rounded-2xl border border-red-500/20 bg-red-950/20 p-3 text-xs">
         <span class="font-mono text-red-300">${uid.slice(0, 12)}... (Banned)</span>
         <button type="button" class="unban-member-btn px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 font-medium transition" data-uid="${uid}">
           Unban
         </button>
       </div>
-    `).join('');
+    `
+      )
+      .join('');
   }
 
-  // Attach Listeners
-  pendingContainer?.querySelectorAll('.approve-member-btn').forEach(btn => {
+  // Listeners
+  pendingContainer?.querySelectorAll('.approve-member-btn').forEach((btn) => {
     btn.addEventListener('click', async () => await approveGroupMember(groupData.id, btn.dataset.uid));
   });
-
-  pendingContainer?.querySelectorAll('.reject-member-btn').forEach(btn => {
+  pendingContainer?.querySelectorAll('.reject-member-btn').forEach((btn) => {
     btn.addEventListener('click', async () => await rejectGroupMember(groupData.id, btn.dataset.uid));
   });
-
-  activeContainer?.querySelectorAll('.remove-member-btn').forEach(btn => {
+  activeContainer?.querySelectorAll('.remove-member-btn').forEach((btn) => {
     btn.addEventListener('click', async () => {
       if (confirm('Remove this member? They can re-join later via invite link.')) {
         await removeGroupMember(groupData.id, btn.dataset.uid);
       }
     });
   });
-
-  activeContainer?.querySelectorAll('.expel-member-btn').forEach(btn => {
+  activeContainer?.querySelectorAll('.expel-member-btn').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      if (confirm('🚫 EXPEL & BAN MEMBER?\n\nThis user will be permanently blocked from re-joining this group until unbanned.')) {
+      if (
+        confirm(
+          '🚫 EXPEL & BAN MEMBER?\n\nThis user will be permanently blocked from re-joining this group until unbanned.'
+        )
+      ) {
         await expelGroupMember(groupData.id, btn.dataset.uid);
       }
     });
   });
-
-  bannedContainer?.querySelectorAll('.unban-member-btn').forEach(btn => {
+  bannedContainer?.querySelectorAll('.unban-member-btn').forEach((btn) => {
     btn.addEventListener('click', async () => await unbanGroupMember(groupData.id, btn.dataset.uid));
   });
 }
@@ -419,7 +432,7 @@ function updatePendingBadge(group) {
 }
 
 /**
- * Load group feed
+ * Group discussion feed
  */
 function loadGroupFeed() {
   const feedContainer = document.getElementById('groupFeed');
@@ -466,11 +479,8 @@ function loadGroupFeed() {
   });
 }
 
-// ====================== 3 CORE INSTITUTIONAL TOOLS ======================
+// ====================== EVIDENCE LOCKER (SEALED) ======================
 
-/**
- * 1. Evidence Locker – Real file picker + client-side SHA-256
- */
 function loadEvidenceLocker() {
   const container = document.getElementById('evidenceList');
   if (!container) return;
@@ -502,6 +512,10 @@ function loadEvidenceLocker() {
       const card = document.createElement('div');
       card.className = 'glass p-4 rounded-2xl flex flex-col space-y-2';
 
+      const mediaLink = item.url
+        ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener" class="text-[11px] text-sky-400 hover:underline truncate">Open media →</a>`
+        : `<span class="text-[11px] text-zinc-600">Hash-only (no media URL)</span>`;
+
       card.innerHTML = `
         <div class="flex justify-between items-start gap-2">
           <span class="text-xs font-medium text-emerald-400 truncate">${escapeHtml(item.name)}</span>
@@ -516,15 +530,36 @@ function loadEvidenceLocker() {
         <div class="text-[10px] font-mono text-zinc-500 bg-zinc-900 p-1.5 rounded truncate">
           SHA-256: ${escapeHtml(item.hash)}
         </div>
+        ${mediaLink}
       `;
       container.appendChild(card);
     });
   });
 }
 
+/**
+ * Deposit evidence:
+ * 1. Client-side SHA-256 of the original file
+ * 2. Upload media to sealed R2 path (group-evidence/{groupId}/...)
+ * 3. Write immutable Firestore record (create-only under rules)
+ */
 async function promptDepositEvidence() {
   if (!auth.currentUser) {
     showToast('Please sign in to deposit evidence', 'error');
+    return;
+  }
+
+  // Must be a member (or creator)
+  const uid = auth.currentUser.uid;
+  const isMember =
+    currentGroupData?.members?.includes(uid) || currentGroupData?.creatorId === uid;
+  if (!isMember) {
+    showToast('Join the group before depositing evidence', 'error');
+    return;
+  }
+
+  if (currentGroupData?.bannedMembers?.includes(uid)) {
+    showToast('You are banned from this group', 'error');
     return;
   }
 
@@ -537,36 +572,73 @@ async function promptDepositEvidence() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 80 * 1024 * 1024) {
+    if (file.size > MAX_EVIDENCE_BYTES) {
       showToast('File too large (max 80 MB)', 'error');
+      return;
+    }
+
+    if (!ALLOWED_EVIDENCE_EXT.test(file.name || '')) {
+      showToast('File type not allowed for group evidence', 'error');
       return;
     }
 
     try {
       showToast('Hashing evidence on your device…', 'info');
 
-      const buffer = await file.arrayBuffer();
-      const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+      // 1. Client-side SHA-256 of the original bytes (before any transform)
+      const hashHex = await computeSHA256(file);
+      if (!hashHex || hashHex.length !== 64) {
+        throw new Error('Failed to compute SHA-256 hash');
+      }
 
+      // 2. Upload to sealed path under group-evidence/{groupId}/
+      //    Images get EXIF scrub via uploadMedia; hash above is of original file.
+      showToast('Uploading sealed media…', 'info');
+      const folderPath = `group-evidence/${currentGroupId}`;
+      let publicUrl = null;
+
+      const isMedia =
+        (file.type || '').startsWith('image/') ||
+        (file.type || '').startsWith('audio/') ||
+        (file.type || '').startsWith('video/') ||
+        /\.(jpe?g|png|webp|gif|heic|heif|mp3|wav|ogg|m4a|webm|mp4|mov|mkv|m4v)$/i.test(
+          file.name || ''
+        );
+
+      if (isMedia) {
+        publicUrl = await uploadMedia(file, folderPath);
+      } else {
+        // Non-media (pdf/doc/txt/zip): upload raw via same R2 path pattern
+        // Reuse uploadMedia only for media; for documents we still need a path.
+        // Fallback: treat as generic blob through uploadSecure path if available.
+        // For now use uploadMedia's execute path by wrapping — upload.js only accepts media.
+        // Store hash-only for non-media until a generic upload helper is added.
+        publicUrl = null;
+        showToast('Document sealed by hash (media URL not available for this type yet)', 'info');
+      }
+
+      // 3. Immutable Firestore record
       await addDoc(collection(db, 'group_evidence'), {
         groupId: currentGroupId,
         name: file.name,
         size: formatBytes(file.size),
+        sizeBytes: file.size,
         mimeType: file.type || 'application/octet-stream',
         hash: hashHex,
         hashAlg: 'SHA-256',
-        url: null,
+        url: publicUrl,
+        storagePath: publicUrl
+          ? publicUrl.replace('https://media.vocalwitness.com/', '')
+          : null,
         depositedBy: auth.currentUser.uid,
-        status: 'Sealed (SHA-256)',
+        status: publicUrl ? 'Sealed (SHA-256 + media)' : 'Sealed (SHA-256 hash only)',
         createdAt: serverTimestamp()
       });
 
       showToast('Evidence deposited & sealed', 'success');
     } catch (err) {
       console.error(err);
-      showToast('Failed to deposit evidence', 'error');
+      showToast(err?.message || 'Failed to deposit evidence', 'error');
     }
   };
 
@@ -581,9 +653,8 @@ function formatBytes(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
-/**
- * 2. Attestation Wall
- */
+// ====================== ATTESTATION WALL ======================
+
 function loadAttestationWall() {
   const container = document.getElementById('attestationList');
   if (!container) return;
@@ -650,9 +721,8 @@ async function promptSignAttestation() {
   }
 }
 
-/**
- * 3. Forensic Timeline
- */
+// ====================== FORENSIC TIMELINE ======================
+
 function loadForensicTimeline() {
   const container = document.getElementById('forensicTimelineStream');
   if (!container) return;
