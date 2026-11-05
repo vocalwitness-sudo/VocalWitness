@@ -210,6 +210,9 @@ export async function uploadSecurePhoto(file, folderPath = 'evidence', onProgres
     throw new Error('Invalid input: Please select a valid image file.');
   }
 
+  // Enforce rate limit before proceeding
+  assertRateLimit('upload', RL.upload);
+
   // Normalize early
   file = normalizeMediaFile(file);
 
@@ -246,12 +249,6 @@ export async function uploadSecurePhoto(file, folderPath = 'evidence', onProgres
         if (typeof onProgress === 'function') onProgress(percent);
         setUploadProgress(percent, 'Uploading photo...');
       }
-      try {
-  assertRateLimit('upload', RL.upload);
-} catch (e) {
-  reject(e);
-  return;
-}
     );
 
     await logAuditEvent?.('MEDIA_UPLOADED', {
@@ -275,6 +272,8 @@ export async function uploadSecurePhoto(file, folderPath = 'evidence', onProgres
  */
 export async function uploadSecureAudio(audioBlob, folderPath = 'evidence', onProgress = null) {
   if (!audioBlob) throw new Error('Invalid audio file');
+
+  assertRateLimit('upload', RL.upload);
 
   // Normalize
   const file = normalizeMediaFile(audioBlob instanceof File ? audioBlob : new File([audioBlob], 'audio.webm', { type: audioBlob.type || 'audio/webm' }));
@@ -330,6 +329,8 @@ export async function uploadSecureAudio(audioBlob, folderPath = 'evidence', onPr
  */
 export async function uploadRawFile(file, folderPath = 'evidence', onProgress = null) {
   if (!file) throw new Error('No file provided for upload.');
+
+  assertRateLimit('upload', RL.upload);
 
   const MAX_RAW_BYTES = 80 * 1024 * 1024;
   if (file.size > MAX_RAW_BYTES) {
@@ -411,6 +412,8 @@ export async function uploadSecureVideo(videoFile, folderPath = 'evidence', onPr
   if (!videoFile) {
     throw new Error('Invalid input: Please select a valid video file.');
   }
+
+  assertRateLimit('upload', RL.upload);
 
   // Normalize
   videoFile = normalizeMediaFile(videoFile);
@@ -539,8 +542,6 @@ function executeUpload(blob, keyPath, mimeType, onProgress) {
       }
     } catch (err) {
       console.warn('[Upload] App Check token unavailable:', err?.message || err);
-      // In production the worker must reject missing tokens.
-      // Do not soft-fail here if you have enforced App Check on the worker.
     }
 
     if (xhr.upload && typeof onProgress === 'function') {
