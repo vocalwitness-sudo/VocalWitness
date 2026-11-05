@@ -168,6 +168,9 @@ function listenToUserProfile(userId) {
                 window.currentUserData = currentUserData;
                 renderProfileUI(currentUserData);
                 if (typeof refreshTierAndUI === "function") refreshTierAndUI();
+                
+                // Keep publicProfiles in sync for member lists / attestations
+                syncPublicProfile(userId, currentUserData).catch(() => {});
             } else {
                 renderProfileError(new Error("Profile document not found"));
             }
@@ -177,6 +180,31 @@ function listenToUserProfile(userId) {
             renderProfileError(error);
         }
     );
+}
+
+/**
+ * Helper to sync user data into the publicProfiles collection
+ */
+async function syncPublicProfile(uid, u) {
+  if (!uid || !u) return;
+  
+  await setDoc(
+    doc(db, "publicProfiles", uid),
+    {
+      uid: uid,
+      displayName: u.displayName || "Citizen",
+      photoURL: u.photoURL || null,
+      username: u.username || null,
+      tierBadge:
+        u.tier === "citizen_circle" ||
+        u.isPhoneVerified ||
+        u.hasVerifiedPhone
+          ? "citizen_circle"
+          : "citizen",
+      updatedAt: serverTimestamp()
+    },
+    { merge: true }
+  );
 }
 
 function renderProfileError(err) {
