@@ -1,6 +1,7 @@
 // js/storage.js - Advanced Reactive Global State & R2 Media Handling
 import { getTier, calculateTrustScore } from './utils.js';
-import { db, auth } from './firebase-config.js';   // Correct relative path
+import { db, auth, appCheck } from './firebase-config.js';   // Correct relative path + appCheck
+import { getToken } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app-check.js';
 
 // Configuration for Cloudflare R2 proxy worker / custom domain endpoint
 const R2_PUBLIC_BASE_URL = "https://media.vocalwitness.com";
@@ -107,6 +108,29 @@ export function initStorage() {
 }
 
 /**
+ * Builds authentication and App Check headers for R2 requests.
+ */
+async function buildAuthHeaders(contentType) {
+  if (!auth.currentUser) {
+    throw new Error('Authentication required for media uploads.');
+  }
+  const headers = {
+    Authorization: `Bearer ${await auth.currentUser.getIdToken()}`,
+  };
+  if (contentType) headers['Content-Type'] = contentType;
+
+  try {
+    if (appCheck) {
+      const { token } = await getToken(appCheck, false);
+      if (token) headers['X-Firebase-AppCheck'] = token;
+    }
+  } catch (e) {
+    console.warn('[storage] App Check token unavailable:', e?.message || e);
+  }
+  return headers;
+}
+
+/**
  * Uploads media blobs (images/audio) to Cloudflare R2 storage bucket.
  * 
  * @param {Blob|File} fileBlob - Clean, scrubbed, compressed media file payload.
@@ -114,28 +138,23 @@ export function initStorage() {
  * @param {string} folder - Destination subfolder (e.g. 'posts', 'avatars', 'testimonies').
  * @returns {Promise<string>} The canonical HTTPS Cloudflare R2 public CDN URL.
  */
-export async function uploadToR2(fileBlob, fileName = "media.webp", folder = "posts") {
-    if (!auth.currentUser) {
-        throw new Error("Authentication required for media uploads.");
-    }
-    const token = await auth.currentUser.getIdToken();
-    const fileExt = fileName.split('.').pop() || 'webp';
-    const timestamp = Date.now();
-    const uniqueKey = `${folder}/${auth.currentUser.uid}_${timestamp}.${fileExt}`;
-    const response = await fetch(`${R2_UPLOAD_ENDPOINT}/${uniqueKey}`, {
-        method: 'PUT',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': fileBlob.type || 'application/octet-stream'
-        },
-        body: fileBlob
-    });
-    if (!response.ok) {
-        const errText = await response.text().catch(() => 'Upload failed');
-        throw new Error(`Cloudflare R2 Upload Failed [${response.status}]: ${errText}`);
-    }
-    // Return direct, secure CDN URL matching Firestore Security Rules pattern
-    return `${R2_PUBLIC_BASE_URL}/${uniqueKey}`;
+export async function uploadToR2(fileBlob, fileName = 'media.webp', folder = 'posts') {
+  const fileExt = fileName.split('.').pop() || 'webp';
+  const timestamp = Date.now();
+  const uniqueKey = `${folder}/${auth.currentUser.uid}_${timestamp}.${fileExt}`;
+  const headers = await buildAuthHeaders(fileBlob.type || 'application/octet-stream');
+
+  const response = await fetch(`${R2_UPLOAD_ENDPOINT}/${uniqueKey}`, {
+    method: 'PUT',
+    headers,
+    body: fileBlob,
+  });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => 'Upload failed');
+    throw new Error(`Cloudflare R2 Upload Failed [${response.status}]: ${errText}`);
+  }
+  return `${R2_PUBLIC_BASE_URL}/${uniqueKey}`;
 }
 
 /**
@@ -145,21 +164,19 @@ export async function uploadToR2(fileBlob, fileName = "media.webp", folder = "po
  * @returns {Promise<boolean>}
  */
 export async function deleteFromR2(mediaUrl) {
-    if (!auth.currentUser || !mediaUrl) return false;
-    try {
-        const token = await auth.currentUser.getIdToken();
-        const objectKey = mediaUrl.replace(`${R2_PUBLIC_BASE_URL}/`, '');
-        const response = await fetch(`${R2_UPLOAD_ENDPOINT}/${objectKey}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        return response.ok;
-    } catch (err) {
-        console.warn("Failed to delete media from R2:", err);
-        return false;
-    }
+  if (!auth.currentUser || !mediaUrl) return false;
+  try {
+    const objectKey = mediaUrl.replace(`${R2_PUBLIC_BASE_URL}/`, '');
+    const headers = await buildAuthHeaders();
+    const response = await fetch(`${R2_UPLOAD_ENDPOINT}/${objectKey}`, {
+      method: 'DELETE',
+      headers,
+    });
+    return response.ok;
+  } catch (err) {
+    console.warn('Failed to delete media from R2:', err);
+    return false;
+  }
 }
 
 /**
