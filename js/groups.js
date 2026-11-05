@@ -19,6 +19,8 @@ import {
 import { showToast } from './utils.js';
 import { getCurrentUserTier, TIERS } from './tier.js';
 import { startZKVerification } from './verification.js';
+import { assertRateLimit, RL } from './rate-limit.js';
+
 
 let currentTab = 'discover';
 let allGroups = [];
@@ -459,6 +461,8 @@ export async function createNewGroup(name, description, visibility) {
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   };
+  
+  assertRateLimit('group_create', RL.group_create);
 
   try {
     const ref = await addDoc(collection(db, 'groups'), payload);
