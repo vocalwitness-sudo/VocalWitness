@@ -2836,3 +2836,45 @@ export const warmCuratedNews = onSchedule(
     }
   }
 );
+
+/**
+ * Keep liveRooms.participantCount in sync from the participants subcollection.
+ * Clients must NOT increment/decrement participantCount.
+ */
+export const onLiveRoomParticipantWrite = onDocumentWritten(
+  {
+    document: "liveRooms/{roomId}/participants/{participantId}",
+    region: "us-central1",
+  },
+  async (event) => {
+    const roomId = event.params.roomId;
+    if (!roomId) return;
+
+    try {
+      const partsSnap = await db
+        .collection("liveRooms")
+        .doc(roomId)
+        .collection("participants")
+        .get();
+
+      const count = partsSnap.size;
+      const speakingCount = partsSnap.docs.filter(
+        (d) => d.data()?.isSpeaking === true
+      ).length;
+
+      await db.collection("liveRooms").doc(roomId).set(
+        {
+          participantCount: count,
+          speakingCount,
+          lastActivityAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    } catch (err) {
+      logger.error("onLiveRoomParticipantWrite failed", {
+        roomId,
+        message: err?.message,
+      });
+    }
+  }
+);
