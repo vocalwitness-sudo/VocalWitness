@@ -52,7 +52,6 @@ function refreshTierUI() {
     console.warn("Tier UI refresh skipped:", e);
   }
 }
-
 /**
  * Creates or updates the users/{uid} document.
  * Must satisfy isSafeUserCreation() on first write.
@@ -105,7 +104,51 @@ async function createOrUpdateUser(user) {
           console.warn("[auth] Minimal create also failed (likely race with CF):", minErr);
         }
       }
+    } else {
+      // Optional: update basic fields for existing users if needed
+      try {
+        await updateDoc(userRef, {
+          email: safeEmail,
+          updatedAt: serverTimestamp()
+        });
+      } catch (updateErr) {
+        console.warn("[auth] User document update skipped:", updateErr);
+      }
+    }
 
+    // Upsert publicProfiles so group/arena UIs can show names (not raw UIDs)
+    try {
+      const pub = await getDoc(userRef);
+      const u = pub.exists() ? pub.data() : {};
+      await setDoc(
+        doc(db, "publicProfiles", user.uid),
+        {
+          uid: user.uid,
+          displayName:
+            u.displayName ||
+            safeDisplayName ||
+            (user.isAnonymous ? "Anonymous Citizen" : "Citizen"),
+          photoURL: u.photoURL || safePhotoURL || null,
+          username: u.username || null,
+          tierBadge:
+            u.tier === "citizen_circle" ||
+            u.isPhoneVerified ||
+            u.hasVerifiedPhone
+              ? "citizen_circle"
+              : "citizen",
+          updatedAt: serverTimestamp()
+        },
+        { merge: true }
+      );
+      console.log("[auth] publicProfiles upserted successfully for:", user.uid);
+    } catch (pubErr) {
+      console.warn("[auth] publicProfiles upsert skipped:", pubErr?.message || pubErr);
+    }
+
+  } catch (outerErr) {
+    console.error("[auth] createOrUpdateUser outer error:", outerErr);
+  }
+}
       updateVerificationUI(false);
       if (!user.isAnonymous) {
         showToast("Account created! Welcome to the Public Square.", "success");
