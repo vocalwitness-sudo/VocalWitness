@@ -23,7 +23,7 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-  function isGroupMember(groupId) {
+    function isGroupMember(groupId) {
       return exists(/databases/$(database)/documents/groups/$(groupId))
         && (
           request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.get('members', [])
@@ -46,18 +46,11 @@ service cloud.firestore {
       return h is string && h.size() == 64;
     }
 
-    // Coarse per-user write throttle using lastTestimonyAt-style field
-    // Prefer dedicated lastWriteAt fields long-term; reuse for now where present.
     function isNotWriteThrottled() {
       return !exists(/databases/$(database)/documents/users/$(request.auth.uid))
         || !('lastTestimonyAt' in getUserData())
         || !(getUserData().lastTestimonyAt is timestamp)
         || request.time > getUserData().lastTestimonyAt + duration.value(15, 's');
-    }
-
-
-    function isAdmin() {
-      return isAuthenticated() && request.auth.token.admin == true;
     }
 
     function getUserData() {
@@ -71,6 +64,10 @@ service cloud.firestore {
         || !('lastTestimonyAt' in getUserData())
         || !(getUserData().lastTestimonyAt is timestamp)
         || request.time > getUserData().lastTestimonyAt + duration.value(30, 's');
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.admin == true;
     }
 
     function isWitnessCircle() {
@@ -172,37 +169,36 @@ service cloud.firestore {
           && (!('lastCycleStart' in request.resource.data)
               || request.resource.data.lastCycleStart is timestamp
               || request.resource.data.lastCycleStart == request.time);
-  }
+    }
 
-  // Support log rule
-  match /support_log/{logId} {
-    allow read: if isAuthenticated() &&
-      (resource.data.giverId == request.auth.uid ||
-       resource.data.targetId == request.auth.uid);
-    allow create: if isAuthenticated()
-      && isNotBanned()
-      && request.resource.data.giverId == request.auth.uid
-      && request.resource.data.targetId is string
-      && request.resource.data.targetId != request.auth.uid
-      && request.resource.data.strength is number
-      && request.resource.data.strength >= 1
-      && request.resource.data.strength <= 5
-      && request.resource.data.cost is number
-      && request.resource.data.reputationGiven is number
-      && request.resource.data.keys().hasAll([
-        'giverId', 'targetId', 'strength', 'cost',
-        'reputationGiven', 'createdAt'
-      ]);
-    allow update, delete: if false;
-  }
+    // Support log rule
+    match /support_log/{logId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.giverId == request.auth.uid ||
+         resource.data.targetId == request.auth.uid);
+      allow create: if isAuthenticated()
+        && isNotBanned()
+        && request.resource.data.giverId == request.auth.uid
+        && request.resource.data.targetId is string
+        && request.resource.data.targetId != request.auth.uid
+        && request.resource.data.strength is number
+        && request.resource.data.strength >= 1
+        && request.resource.data.strength <= 5
+        && request.resource.data.cost is number
+        && request.resource.data.reputationGiven is number
+        && request.resource.data.keys().hasAll([
+          'giverId', 'targetId', 'strength', 'cost',
+          'reputationGiven', 'createdAt'
+        ]);
+      allow update, delete: if false;
+    }
 
-  // Supporters collection rule
-  match /supporters/{supportId} {
-    allow read: if isAuthenticated() && (
-      resource.data.userId == request.auth.uid || isAdmin() || isModerator()
-    );
-    allow create, update, delete: if false;
-  }
+    match /supporters/{supportId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || isAdmin() || isModerator()
+      );
+      allow create, update, delete: if false;
+    }
 
     function isValidNotification() {
       return request.resource.data.keys().hasAll(['type', 'createdAt'])
@@ -319,113 +315,16 @@ service cloud.firestore {
       return isSteward() || isModerator() || isAdmin() || isPhoneVerifiedUser();
     }
 
-    function isSafeTestimonyCreate() {
-      let d = request.resource.data;
-
-      let allowedKeys = [
-        'content', 'hashtags', 'mentions', 'channel',
-        'postingStyle', 'fieldNoteRole', 'fieldNoteOrg',
-        'authorId', 'isAnonymous', 'author',
-        'forensicHash', 'imageUrl', 'videoUrl', 'audioUrl',
-        'mediaUrl', 'mediaUrls',
-        'evidencePack', 'packCoreHash',
-        'reactions', 'commentsCount', 'isPinned', 'isDeleted',
-        'createdAt', 'updatedAt',
-        'feedVisibility', 'profileMode',
-        'visibility', 'hiddenAt', 'hiddenBy', 'hiddenReason'
-      ];
-
-      let citizenChannels = [
-        'citizen-talk', 'citizen_talk', 'citizen-circle'
-      ];
-      let witnessChannels = [
-        'witness-voice', 'witness_voice', 'witness-circle'
-      ];
-      let allChannels = citizenChannels.concat(witnessChannels);
-
-      return d.keys().hasOnly(allowedKeys)
-        && d.keys().hasAll(['content', 'createdAt', 'authorId', 'channel'])
-        && d.authorId == request.auth.uid
-        && d.content is string
-        && d.content.size() > 0
-        && d.content.size() <= 3000
-        && d.channel is string
-        && d.channel in allChannels
-        && (
-             d.channel in citizenChannels
-             || isWitnessCircle()
-           )
-        && (d.createdAt is timestamp || d.createdAt == request.time)
-        && (!('forensicHash' in d) || (
-              d.forensicHash is string && d.forensicHash.size() == 64
-            ))
-        && (!('imageUrl' in d) || d.imageUrl == null || isValidMediaUrl(d.imageUrl))
-        && (!('videoUrl' in d) || d.videoUrl == null || isValidMediaUrl(d.videoUrl))
-        && (!('audioUrl' in d) || d.audioUrl == null || isValidMediaUrl(d.audioUrl))
-        && (!('mediaUrl' in d) || d.mediaUrl == null || isValidMediaUrl(d.mediaUrl))
-        && (!('mediaUrls' in d) || d.mediaUrls is list)
-        && (!('reactions' in d) || (
-              d.reactions.keys().hasOnly(['respect', 'truth', 'solidarity', 'impact'])
-              && d.reactions.respect == 0
-              && d.reactions.truth == 0
-              && d.reactions.solidarity == 0
-              && d.reactions.impact == 0
-            ))
-        && (!('commentsCount' in d) || d.commentsCount == 0)
-        && (!('isPinned' in d) || d.isPinned == false)
-        && (!('isDeleted' in d) || d.isDeleted == false)
-        && (!('visibility' in d) || d.visibility == 'public')
-        && (!('hashtags' in d) || d.hashtags is list)
-        && (!('mentions' in d) || d.mentions is list)
-        && (!('isAnonymous' in d) || d.isAnonymous is bool)
-        && (!('author' in d) || d.author is string)
-        && (!('postingStyle' in d) || d.postingStyle in ['citizen', 'field-note'])
-        && (!('feedVisibility' in d) || d.feedVisibility in allChannels
-            || d.feedVisibility == 'review_queue')
-        && !d.keys().hasAny([
-             'authorTier', 'reputation', 'zkVerified',
-             'moderationStatus', 'moderationFlags', 'aiCategory',
-             'toxicityScore', 'autoFlaggedReasons', 'isSynthetic',
-             'syntheticScore', 'reviewedBy', 'reviewedAt', 'reviewNotes',
-             'c2paStatus', 'c2paManifest',
-             'corroborationCount', 'corroborationScore', 'lastCorroboratedAt'
-           ]);
-    }
-
-    // status string
-
-      await addDoc(collection(db, 'group_evidence'), {
-        groupId: currentGroupId,
-        name: file.name,
-        size: formatBytes(file.size),
-        sizeBytes: file.size,
-        mimeType: file.type || 'application/octet-stream',
-        hash: hashHex,
-        hashAlg: 'SHA-256',
-        url: publicUrl,
-        storagePath: publicUrl
-          ? publicUrl.replace('https://media.vocalwitness.com/', '')
-          : null,
-        depositedBy: auth.currentUser.uid,
-        status: 'Sealed (SHA-256 + media)',
-        createdAt: serverTimestamp()
-      });
-
-
-    // ==========================================
     // SYSTEM COLLECTIONS & CACHE
-    // ==========================================
     match /rateLimits/{rateLimitId} {
       allow read, write: if false;
     }
 
     match /cache/{docId} {
-      allow read, write: if false; // Admin SDK only (for server-side news ticker, etc.)
+      allow read, write: if false;
     }
 
-  // ==========================================
-    // ZK MEMBERSHIP (server-only — Admin SDK)
-    // ==========================================
+    // ZK MEMBERSHIP
     match /zk_commitments/{uid} {
       allow read: if isOwner(uid) || isModerator() || isAdmin();
       allow create, update, delete: if false;
@@ -446,10 +345,7 @@ service cloud.firestore {
       }
     }
 
-
-    // ==========================================
     // USER PROFILES & SUBCOLLECTIONS
-    // ==========================================
     match /users/{userId} {
       allow read: if isOwner(userId) || isModerator() || isAdmin();
       allow create: if isOwner(userId) && isSafeUserCreation();
@@ -490,9 +386,7 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // ==========================================
     // CHANNELS & TESTIMONIES
-    // ==========================================
     match /witness_voice/{postId} {
       allow read: if true;
       allow create: if isNotBanned()
@@ -526,8 +420,6 @@ service cloud.firestore {
 
     match /testimonies/{testimonyId} {
       allow read: if true;
-
-      // Client create disabled — only Cloud Functions (Admin SDK) via submitTestimonySecure
       allow create: if false;
 
       allow update: if isModerator()
@@ -601,63 +493,105 @@ service cloud.firestore {
         allow update, delete: if false;
       }
     }
-
-   match /groups/{groupId} {
+match /groups/{groupId} {
       allow read: if true;
+
       allow create: if isNotBanned()
+        && isAuthenticated()
         && request.resource.data.creatorId == request.auth.uid
-        && request.resource.data.keys().hasAll(['name', 'creatorId', 'visibility', 'createdAt', 'members', 'memberCount'])
+        && request.resource.data.keys().hasAll([
+             'name', 'creatorId', 'visibility', 'createdAt', 'members', 'memberCount'
+           ])
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 60
+        && request.resource.data.visibility in [
+             'public', 'network', 'citizen_circle', 'witness_circle'
+           ]
         && request.resource.data.members is list
+        && request.resource.data.members.size() == 1
+        && request.auth.uid in request.resource.data.members
         && request.resource.data.memberCount is number
-        && request.resource.data.memberCount == request.resource.data.members.size();
-      
-      allow update: if isNotBanned() && (
-        resource.data.creatorId == request.auth.uid
-        || request.auth.uid in resource.data.get('admins', [])
-        || (
-          request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['members', 'memberCount', 'pendingMembers', 'bannedMembers', 'admins'])
+        && request.resource.data.memberCount == 1
+        && (!('bannedMembers' in request.resource.data)
+            || request.resource.data.bannedMembers.size() == 0)
+        && (!('pendingMembers' in request.resource.data)
+            || request.resource.data.pendingMembers.size() == 0);
+
+      allow update: if isNotBanned() && isAuthenticated() && (
+        (
+          (resource.data.creatorId == request.auth.uid
+            || request.auth.uid in resource.data.get('admins', []))
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly([
+                 'members', 'memberCount', 'pendingMembers', 'bannedMembers',
+                 'admins', 'suspendedMembers', 'inviteCode', 'updatedAt',
+                 'description', 'name'
+               ])
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 60
+          && request.resource.data.memberCount is number
+          && request.resource.data.members is list
+          && request.resource.data.memberCount == request.resource.data.members.size()
+        )
+        ||
+        (
+          !isGroupBanned(groupId)
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['members', 'memberCount', 'pendingMembers'])
+          && request.resource.data.members is list
+          && request.resource.data.memberCount is number
+          && request.resource.data.memberCount == request.resource.data.members.size()
           && (
-            // Case A: Self join/leave
-            (request.resource.data.members is list
-             && request.resource.data.memberCount is number
-             && request.resource.data.memberCount == request.resource.data.members.size()
-             && (
-               (request.auth.uid in request.resource.data.members && !(request.auth.uid in resource.data.members))
-               || (!(request.auth.uid in request.resource.data.members) && request.auth.uid in resource.data.members)
-               || (request.auth.uid in request.resource.data.get('pendingMembers', []))
-             ))
+            (request.auth.uid in request.resource.data.members
+              && !(request.auth.uid in resource.data.get('members', [])))
             ||
-            // Case B: Admin moderation (Approving, banning, removing)
-            (resource.data.creatorId == request.auth.uid || request.auth.uid in resource.data.get('admins', []))
+            (!(request.auth.uid in request.resource.data.members)
+              && request.auth.uid in resource.data.get('members', []))
+            ||
+            (request.auth.uid in request.resource.data.get('pendingMembers', [])
+              && !(request.auth.uid in resource.data.get('pendingMembers', [])))
           )
         )
       );
-      
+
       allow delete: if isNotBanned()
         && resource.data.creatorId == request.auth.uid;
     }
+
     match /group_attestations/{docId} {
-      allow read: if request.auth != null;
-      allow create: if isNotBanned() && request.auth != null
-        && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isNotBanned()
-        && request.auth != null
-        && (resource.data.userId == request.auth.uid
-            || resource.data.creatorId == request.auth.uid);
+      allow read: if isAuthenticated();
+      allow create: if isNotBanned()
+        && isAuthenticated()
+        && request.resource.data.groupId is string
+        && isGroupMember(request.resource.data.groupId)
+        && !isGroupBanned(request.resource.data.groupId)
+        && request.resource.data.signedBy == request.auth.uid
+        && request.resource.data.statement is string
+        && request.resource.data.statement.size() > 0
+        && request.resource.data.statement.size() <= 1000
+        && (request.resource.data.createdAt is timestamp
+            || request.resource.data.createdAt == request.time);
+      allow update, delete: if false;
     }
 
     match /group_timeline/{docId} {
-      allow read: if request.auth != null;
-      allow create: if isNotBanned() && request.auth != null
-        && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isNotBanned()
-        && request.auth != null
-        && (resource.data.userId == request.auth.uid
-            || resource.data.creatorId == request.auth.uid);
+      allow read: if isAuthenticated();
+      allow create: if isNotBanned()
+        && isAuthenticated()
+        && request.resource.data.groupId is string
+        && isGroupMember(request.resource.data.groupId)
+        && !isGroupBanned(request.resource.data.groupId)
+        && request.resource.data.addedBy == request.auth.uid
+        && request.resource.data.description is string
+        && request.resource.data.description.size() > 0
+        && request.resource.data.description.size() <= 500
+        && (request.resource.data.eventTime is timestamp
+            || request.resource.data.eventTime == request.time)
+        && (request.resource.data.createdAt is timestamp
+            || request.resource.data.createdAt == request.time);
+      allow update, delete: if false;
     }
 
     match /witnessCycles/{cycleId} {
@@ -678,12 +612,27 @@ service cloud.firestore {
 
     match /group_evidence/{evidenceId} {
       allow read: if true;
+
       allow create: if isAuthenticated()
         && isNotBanned()
         && request.resource.data.groupId is string
+        && isGroupMember(request.resource.data.groupId)
+        && !isGroupBanned(request.resource.data.groupId)
         && request.resource.data.depositedBy == request.auth.uid
-        && request.resource.data.hash is string
-        && request.resource.data.hash.size() == 64;
+        && isValidSha256(request.resource.data.hash)
+        && request.resource.data.hashAlg == 'SHA-256'
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 240
+        && request.resource.data.keys().hasAll([
+             'groupId', 'name', 'hash', 'hashAlg', 'depositedBy', 'createdAt'
+           ])
+        && (!('url' in request.resource.data)
+            || request.resource.data.url == null
+            || isValidMediaUrl(request.resource.data.url))
+        && (request.resource.data.createdAt is timestamp
+            || request.resource.data.createdAt == request.time);
+
       allow update, delete: if false;
     }
 
@@ -715,9 +664,7 @@ service cloud.firestore {
 
     match /ledger_anchors/{date} {
       allow read: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     match /verifiable_docs/{docId} {
@@ -745,9 +692,7 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // ==========================================
     // POSTS, DAO, LIVE ROOMS & AUDIT LOGS
-    // ==========================================
     match /posts/{postId} {
       allow read: if resource.data.visibilityDoor == 'public_square' ||
                     (resource.data.visibilityDoor == 'citizen_circle' && isAuthenticated()) ||
@@ -793,19 +738,17 @@ service cloud.firestore {
     }
 
     match /audit_logs/{auditId} {
-      allow read: if isAuthenticated();
+      allow read: if isModerator() || isAdmin()
+        || (isAuthenticated() && resource.data.uid == request.auth.uid);
       allow create: if isAuthenticated()
         && request.resource.data.keys().hasAll(['actionType', 'clientTimestamp', 'uid'])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.actionType is string
         && request.resource.data.actionType.size() > 0
         && request.resource.data.actionType.size() <= 64
-        && request.resource.data.clientTimestamp is number
-        && (!('action' in request.resource.data) || request.resource.data.action is string);
+        && request.resource.data.clientTimestamp is number;
       allow update, delete: if false;
     }
-
-
 
     match /dao_proposals/{proposalId} {
       allow read: if true;
@@ -883,23 +826,19 @@ service cloud.firestore {
         && request.resource.data.title.size() >= 6
         && request.resource.data.title.size() <= 120;
 
-     allow update: if isNotBanned() && isAuthenticated() && (
+      allow update: if isNotBanned() && isAuthenticated() && (
         resource.data.createdBy == request.auth.uid
         || resource.data.hostUid == request.auth.uid
         || isModerator()
         || request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly([
-               'participantCount',
-               'speakingCount',
-               'reactions',
-               'lastActivityAt',
-               'pendingRequests',
-               'bannedUsers',
-               'speakers',
-               'coHosts',
-               'isLive',
-               'status'
-             ])
+             .hasOnly(['lastActivityAt', 'reactions'])
+        || (
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['participantCount', 'lastActivityAt'])
+          && request.resource.data.participantCount is number
+          && resource.data.participantCount is number
+          && request.resource.data.participantCount == resource.data.participantCount + 1
+        )
       );
 
       allow delete: if isNotBanned() && isAuthenticated() && (
