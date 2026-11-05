@@ -6,9 +6,10 @@
  */
 import { scrubImageMetadata } from './imageScrubber.js';
 import { compressImage } from './media-compression.js';
-import { auth } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { logAuditEvent } from './audit.js';
+import { auth, appCheck } from './firebase-config.js';
+import { getToken } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app-check.js';
 
 const R2_UPLOAD_ENDPOINT = 'https://media.vocalwitness.com/upload';
 const R2_PUBLIC_BASE = 'https://media.vocalwitness.com';
@@ -497,23 +498,42 @@ export async function uploadMedia(file, folderPath = 'evidence', onProgress = nu
 
 
 /**
- * Low-level upload to R2 via XHR with progress tracking and authorization headers
+ * Low-level upload to R2 via XHR.
+ * Requires Firebase Auth + App Check tokens when available.
  */
 function executeUpload(blob, keyPath, mimeType, onProgress) {
   return new Promise(async (resolve, reject) => {
+    if (!auth.currentUser) {
+      reject(new Error('Sign in required to upload media.'));
+      return;
+    }
+
     const xhr = new XMLHttpRequest();
     const targetUrl = `${R2_UPLOAD_ENDPOINT}?key=${encodeURIComponent(keyPath)}`;
 
     xhr.open('PUT', targetUrl, true);
     xhr.setRequestHeader('Content-Type', mimeType || 'application/octet-stream');
 
-    if (auth.currentUser) {
-      try {
-        const token = await auth.currentUser.getIdToken();
-        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-      } catch (err) {
-        console.warn('[Upload] Could not get ID token:', err);
+    try {
+      const idToken = await auth.currentUser.getIdToken();
+      xhr.setRequestHeader('Authorization', `Bearer ${idToken}`);
+    } catch (err) {
+      reject(new Error('Could not get auth token for upload.'));
+      return;
+    }
+
+    // App Check — required in production; worker should reject if missing
+    try {
+      if (appCheck) {
+        const { token } = await getToken(appCheck, /* forceRefresh */ false);
+        if (token) {
+          xhr.setRequestHeader('X-Firebase-AppCheck', token);
+        }
       }
+    } catch (err) {
+      console.warn('[Upload] App Check token unavailable:', err?.message || err);
+      // In production the worker must reject missing tokens.
+      // Do not soft-fail here if you have enforced App Check on the worker.
     }
 
     if (xhr.upload && typeof onProgress === 'function') {
@@ -528,6 +548,8 @@ function executeUpload(blob, keyPath, mimeType, onProgress) {
       if (xhr.status >= 200 && xhr.status < 300) {
         if (typeof onProgress === 'function') onProgress(100);
         resolve(`${R2_PUBLIC_BASE}/${keyPath}`);
+      } else if (xhr.status === 401 || xhr.status === 403) {
+        reject(new Error('Upload denied (auth or App Check). Refresh and try again.'));
       } else {
         reject(new Error(`Upload failed with status ${xhr.status}`));
       }
