@@ -14,7 +14,8 @@ import {
   where,
   orderBy,
   addDoc,
-  serverTimestamp
+  serverTimestamp,
+  limit, startAfter, getDocs
 } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 
 import { showToast, computeSHA256 } from './utils.js';
@@ -42,6 +43,11 @@ const EVIDENCE_PAGE = 20;
 let evidenceCursor = null;       // last DocumentSnapshot
 let evidenceHasMore = false;
 let evidenceLoadingMore = false;
+
+const FEED_PAGE = 15;
+let feedCursor = null;
+let feedHasMore = false;
+let feedLoadingMore = false;
 
 const MAX_EVIDENCE_BYTES = 80 * 1024 * 1024; // 80 MB
 const ALLOWED_EVIDENCE_EXT = /\.(jpe?g|png|webp|gif|heic|heif|mp3|wav|ogg|m4a|webm|mp4|mov|mkv|m4v|pdf|txt|zip|doc|docx)$/i;
@@ -965,4 +971,29 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function ensureLoadMoreBtn({ id, parent, label, onClick }) {
+  if (!parent) return;
+  let btn = document.getElementById(id);
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.id = id;
+    btn.type = 'button';
+    btn.className =
+      'mt-4 w-full rounded-2xl border border-zinc-700 bg-zinc-900/80 py-3 text-sm text-zinc-300 hover:bg-zinc-800 transition';
+    btn.textContent = label;
+    btn.addEventListener('click', onClick);
+    parent.appendChild(btn);
+  }
+}
+
+function setLoadMoreVisible(id, visible) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.classList.toggle('hidden', !visible);
+}
+
+function removeLoadMoreBtn(id) {
+  document.getElementById(id)?.remove();
 }
