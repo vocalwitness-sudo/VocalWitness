@@ -38,6 +38,11 @@ let unsubscribeEvidence = null;
 let unsubscribeAttestations = null;
 let unsubscribeTimeline = null;
 
+const EVIDENCE_PAGE = 20;
+let evidenceCursor = null;       // last DocumentSnapshot
+let evidenceHasMore = false;
+let evidenceLoadingMore = false;
+
 const MAX_EVIDENCE_BYTES = 80 * 1024 * 1024; // 80 MB
 const ALLOWED_EVIDENCE_EXT = /\.(jpe?g|png|webp|gif|heic|heif|mp3|wav|ogg|m4a|webm|mp4|mov|mkv|m4v|pdf|txt|zip|doc|docx)$/i;
 
@@ -521,12 +526,18 @@ function loadEvidenceLocker() {
   const container = document.getElementById('evidenceList');
   if (!container) return;
 
-  if (unsubscribeEvidence) unsubscribeEvidence();
+  if (unsubscribeEvidence) {
+    unsubscribeEvidence();
+    unsubscribeEvidence = null;
+  }
+  evidenceCursor = null;
+  evidenceHasMore = false;
 
   const q = query(
     collection(db, 'group_evidence'),
     where('groupId', '==', currentGroupId),
-    orderBy('createdAt', 'desc')
+    orderBy('createdAt', 'desc'),
+    limit(EVIDENCE_PAGE)
   );
 
   unsubscribeEvidence = onSnapshot(q, (snapshot) => {
@@ -540,39 +551,87 @@ function loadEvidenceLocker() {
           <p class="mt-1 text-xs text-zinc-500">Click "+ Deposit Evidence" to seal a file with SHA-256</p>
         </div>
       `;
+      removeLoadMoreBtn('evidenceLoadMore');
       return;
     }
 
+    evidenceCursor = snapshot.docs[snapshot.docs.length - 1] || null;
+    evidenceHasMore = snapshot.docs.length >= EVIDENCE_PAGE;
+
     snapshot.forEach((docSnap) => {
-      const item = docSnap.data();
-      const card = document.createElement('div');
-      card.className = 'glass p-4 rounded-2xl flex flex-col space-y-2';
-
-      const mediaLink = item.url
-        ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener" class="text-[11px] text-sky-400 hover:underline truncate">Open media →</a>`
-        : `<span class="text-[11px] text-zinc-600">Hash-only (no media URL)</span>`;
-
-      card.innerHTML = `
-        <div class="flex justify-between items-start gap-2">
-          <span class="text-xs font-medium text-emerald-400 truncate">${escapeHtml(item.name)}</span>
-          <span class="text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded border border-emerald-800 shrink-0">
-            ${escapeHtml(item.status || 'Sealed')}
-          </span>
-        </div>
-        <div class="text-[11px] text-zinc-400 flex justify-between">
-          <span>${escapeHtml(item.size || 'Unknown')}</span>
-          <span>${item.createdAt?.toDate ? item.createdAt.toDate().toLocaleString() : ''}</span>
-        </div>
-        <div class="text-[10px] font-mono text-zinc-500 bg-zinc-900 p-1.5 rounded truncate">
-          SHA-256: ${escapeHtml(item.hash)}
-        </div>
-        ${mediaLink}
-      `;
-      container.appendChild(card);
+      container.appendChild(buildEvidenceCard(docSnap.data()));
     });
+
+    ensureLoadMoreBtn({
+      id: 'evidenceLoadMore',
+      parent: container.parentElement || container,
+      label: 'Load more evidence',
+      onClick: () => loadMoreEvidence()
+    });
+    setLoadMoreVisible('evidenceLoadMore', evidenceHasMore);
   });
 }
 
+function buildEvidenceCard(item) {
+  const card = document.createElement('div');
+  card.className = 'glass p-4 rounded-2xl flex flex-col space-y-2';
+  const mediaLink = item.url
+    ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener" class="text-[11px] text-sky-400 hover:underline truncate">Open media →</a>`
+    : `<span class="text-[11px] text-zinc-600">Hash-only (no media URL)</span>`;
+  card.innerHTML = `
+    <div class="flex justify-between items-start gap-2">
+      <span class="text-xs font-medium text-emerald-400 truncate">${escapeHtml(item.name)}</span>
+      <span class="text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded border border-emerald-800 shrink-0">
+        ${escapeHtml(item.status || 'Sealed')}
+      </span>
+    </div>
+    <div class="text-[11px] text-zinc-400 flex justify-between">
+      <span>${escapeHtml(item.size || 'Unknown')}</span>
+      <span>${item.createdAt?.toDate ? item.createdAt.toDate().toLocaleString() : ''}</span>
+    </div>
+    <div class="text-[10px] font-mono text-zinc-500 bg-zinc-900 p-1.5 rounded truncate">
+      SHA-256: ${escapeHtml(item.hash)}
+    </div>
+    ${mediaLink}
+  `;
+  return card;
+}
+
+async function loadMoreEvidence() {
+  if (!evidenceHasMore || evidenceLoadingMore || !evidenceCursor) return;
+  evidenceLoadingMore = true;
+  const btn = document.getElementById('evidenceLoadMore');
+  if (btn) btn.textContent = 'Loading…';
+
+  try {
+    const q = query(
+      collection(db, 'group_evidence'),
+      where('groupId', '==', currentGroupId),
+      orderBy('createdAt', 'desc'),
+      startAfter(evidenceCursor),
+      limit(EVIDENCE_PAGE)
+    );
+    const snap = await getDocs(q);
+    const container = document.getElementById('evidenceList');
+    if (!container) return;
+
+    snap.docs.forEach((docSnap) => {
+      container.appendChild(buildEvidenceCard(docSnap.data()));
+    });
+
+    if (snap.docs.length > 0) {
+      evidenceCursor = snap.docs[snap.docs.length - 1];
+    }
+    evidenceHasMore = snap.docs.length >= EVIDENCE_PAGE;
+    setLoadMoreVisible('evidenceLoadMore', evidenceHasMore);
+  } catch (err) {
+    console.error(err);
+    showToast('Could not load more evidence', 'error');
+  } finally {
+    evidenceLoadingMore = false;
+    if (btn && evidenceHasMore) btn.textContent = 'Load more evidence';
+  }
+}
 /**
  * Deposit evidence:
  * 1. Client-side SHA-256 of the original file
