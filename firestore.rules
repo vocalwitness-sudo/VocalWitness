@@ -817,7 +817,7 @@ match /groups/{groupId} {
       allow delete: if false;
     }
 
-    match /liveRooms/{roomId} {
+   match /liveRooms/{roomId} {
       allow read: if true;
 
       allow create: if isNotBanned() && isAuthenticated()
@@ -827,17 +827,18 @@ match /groups/{groupId} {
         && request.resource.data.title.size() <= 120;
 
       allow update: if isNotBanned() && isAuthenticated() && (
-        resource.data.createdBy == request.auth.uid
-        || resource.data.hostUid == request.auth.uid
-        || isModerator()
-        || request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['lastActivityAt', 'reactions'])
-        || (
+        // Host / creator / moderator full control
+        (
+          resource.data.createdBy == request.auth.uid
+          || resource.data.hostUid == request.auth.uid
+          || isModerator()
+        )
+        ||
+        // Any authenticated user: reactions and lastActivity updates only
+        // (participantCount, speakingCount, isLive, and bannedUsers are strictly protected)
+        (
           request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['participantCount', 'lastActivityAt'])
-          && request.resource.data.participantCount is number
-          && resource.data.participantCount is number
-          && request.resource.data.participantCount == resource.data.participantCount + 1
+            .hasOnly(['reactions', 'lastActivityAt'])
         )
       );
 
@@ -861,7 +862,7 @@ match /groups/{groupId} {
           || isModerator()
         );
       }
-
+    }
       match /corroborations/{corrId} {
         allow read: if true;
         allow create: if isNotBanned() && isAuthenticated()
