@@ -28,6 +28,7 @@ import {
 import { exportGroupEvidencePackage } from './export-package.js';
 import { uploadMedia } from './upload.js';
 import { assertRateLimit, RL } from './rate-limit.js';
+import { getPublicProfiles, profileChipHtml } from './profile-cache.js';
 
 let currentGroupId = null;
 let currentGroupData = null;
@@ -205,16 +206,21 @@ function renderGroupHeader(group) {
 /**
  * Render members + pending requests (standard list)
  */
-function renderMembers(group) {
+async function renderMembers(group) {
   const list = document.getElementById('membersList');
   if (!list) return;
 
   updatePendingBadge(group);
-  list.innerHTML = '';
+  list.innerHTML = `<p class="text-sm text-zinc-500 py-4 text-center">Loading members…</p>`;
 
   const members = group.members || [];
   const admins = group.admins || [group.creatorId];
   const pending = group.pendingMembers || [];
+
+  const allUids = [...new Set([...members, ...pending])];
+  const profiles = await getPublicProfiles(allUids);
+
+  list.innerHTML = '';
 
   if (members.length === 0) {
     list.innerHTML = `<p class="text-sm text-zinc-500 py-6 text-center">No members yet</p>`;
@@ -222,26 +228,29 @@ function renderMembers(group) {
     members.forEach((uid) => {
       const isAdmin = admins.includes(uid);
       const isCreator = uid === group.creatorId;
+      const profile = profiles[uid] || { displayName: uid.substring(0, 8) + '…', photoURL: null };
+      const chip = profileChipHtml(profile, escapeHtml);
 
       const row = document.createElement('div');
       row.className =
         'flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-3';
 
       row.innerHTML = `
-        <div class="flex items-center gap-3">
-          <div class="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-700 text-sm font-medium">
-            ${uid.substring(0, 2).toUpperCase()}
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-700 text-sm font-medium">
+            ${chip.avatarInner}
           </div>
-          <div>
-            <p class="text-sm font-medium text-white">${uid.substring(0, 8)}…</p>
+          <div class="min-w-0">
+            <p class="truncate text-sm font-medium text-white">${chip.name}</p>
             <p class="text-xs text-zinc-500">
               ${isCreator ? 'Creator' : isAdmin ? 'Admin' : 'Member'}
+              ${chip.username ? ` · ${chip.username}` : ''}
             </p>
           </div>
         </div>
         ${
           isCreator || isAdmin
-            ? `<span class="text-[10px] rounded-full bg-amber-500/15 text-amber-400 px-2 py-0.5">Admin</span>`
+            ? `<span class="shrink-0 text-[10px] rounded-full bg-amber-500/15 text-amber-400 px-2 py-0.5">Admin</span>`
             : ''
         }
       `;
@@ -250,22 +259,30 @@ function renderMembers(group) {
   }
 
   const uid = auth.currentUser?.uid;
-  const isAdmin = uid && (group.creatorId === uid || (group.admins || []).includes(uid));
+  const isAdminUser = uid && (group.creatorId === uid || (group.admins || []).includes(uid));
 
-  if (isAdmin && pending.length > 0) {
+  if (isAdminUser && pending.length > 0) {
     const title = document.createElement('h4');
     title.className = 'mt-6 mb-3 text-sm font-medium text-amber-400';
     title.textContent = `Pending Requests (${pending.length})`;
     list.appendChild(title);
 
     pending.forEach((pendingUid) => {
+      const profile = profiles[pendingUid] || { displayName: pendingUid.substring(0, 10) + '…' };
+      const chip = profileChipHtml(profile, escapeHtml);
+
       const row = document.createElement('div');
       row.className =
-        'flex items-center justify-between rounded-2xl border border-amber-500/30 bg-amber-500/5 px-4 py-3';
+        'flex items-center justify-between rounded-2xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 gap-2';
 
       row.innerHTML = `
-        <div class="text-sm text-zinc-300">${pendingUid.substring(0, 10)}…</div>
-        <div class="flex gap-2">
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-700 text-xs">
+            ${chip.avatarInner}
+          </div>
+          <span class="truncate text-sm text-zinc-300">${chip.name}</span>
+        </div>
+        <div class="flex gap-2 shrink-0">
           <button data-approve="${pendingUid}" class="rounded-lg bg-emerald-600 px-3 py-1 text-xs text-black hover:bg-emerald-500">
             Approve
           </button>
@@ -285,11 +302,10 @@ function renderMembers(group) {
     });
   }
 }
-
 /**
  * Admin Member Management Panel
  */
-function renderAdminMemberPanel(groupData) {
+async function renderAdminMemberPanel(groupData) {
   const panel = document.getElementById('admin-members-panel');
   if (!panel) return;
 
@@ -302,33 +318,50 @@ function renderAdminMemberPanel(groupData) {
   }
   panel.classList.remove('hidden');
 
+  // Extract lists
+  const pending = groupData.pendingMembers || [];
+  const members = groupData.members || [];
+  const banned = groupData.bannedMembers || [];
+
+  // Fetch profiles for all unique UIDs across pending, members, and banned lists
+  const allUids = [...new Set([...pending, ...members, ...banned])];
+  const profiles = await getPublicProfiles(allUids);
+
   // Pending
   const pendingContainer = document.getElementById('pending-members-list');
   const pendingCountEl = document.getElementById('pending-count');
-  const pending = groupData.pendingMembers || [];
   if (pendingCountEl) pendingCountEl.textContent = pending.length;
 
   if (pending.length === 0 && pendingContainer) {
     pendingContainer.innerHTML = `<div class="p-3 text-center text-xs text-zinc-500 rounded-xl bg-zinc-900/40 border border-zinc-800/80">No pending join requests</div>`;
   } else if (pendingContainer) {
     pendingContainer.innerHTML = pending
-      .map(
-        (uid) => `
-      <div class="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/90 p-3 text-xs">
-        <span class="font-mono text-zinc-300">${uid.slice(0, 12)}...</span>
-        <div class="flex items-center gap-2">
-          <button type="button" class="approve-member-btn px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/40 font-semibold transition" data-uid="${uid}">
-            ✓ Approve
-          </button>
-          <button type="button" class="reject-member-btn px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-400 hover:bg-zinc-700 font-medium transition" data-uid="${uid}">
-            ✕ Decline
-          </button>
+      .map((uid) => {
+        const p = profiles[uid] || { displayName: uid.slice(0, 12) + '...', photoURL: null };
+        const chip = profileChipHtml(p, escapeHtml);
+        
+        return `
+        <div class="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/90 p-3 text-xs">
+          <div class="flex items-center gap-2 min-w-0">
+            <div class="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-700 text-xs">
+              ${chip.avatarInner}
+            </div>
+            <span class="truncate text-zinc-300 font-medium">${chip.name}</span>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button type="button" class="approve-member-btn px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/40 font-semibold transition" data-uid="${uid}">
+              ✓ Approve
+            </button>
+            <button type="button" class="reject-member-btn px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-400 hover:bg-zinc-700 font-medium transition" data-uid="${uid}">
+              ✕ Decline
+            </button>
+          </div>
         </div>
-      </div>
-    `
-      )
+      `;
+      })
       .join('');
   }
+}
 
   // Active
   const activeContainer = document.getElementById('active-members-list');
@@ -658,7 +691,7 @@ function loadAttestationWall() {
   );
   assertRateLimit('group_attestation', RL.group_attestation);
 
-  unsubscribeAttestations = onSnapshot(q, (snapshot) => {
+  unsubscribeAttestations = onSnapshot(q, async (snapshot) => {
     container.innerHTML = '';
 
     if (snapshot.empty) {
@@ -672,16 +705,26 @@ function loadAttestationWall() {
       return;
     }
 
-    snapshot.forEach((docSnap) => {
-      const item = docSnap.data();
+    const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const profiles = await getPublicProfiles(docs.map((d) => d.signedBy));
+
+    docs.forEach((item) => {
+      const profile = profiles[item.signedBy] || { displayName: (item.signedBy || '').substring(0, 8) + '…', photoURL: null };
+      const chip = profileChipHtml(profile, escapeHtml);
+      
       const card = document.createElement('div');
       card.className = 'glass p-4 rounded-2xl';
 
       card.innerHTML = `
         <p class="text-sm text-zinc-200 leading-relaxed whitespace-pre-wrap">${escapeHtml(item.statement)}</p>
-        <div class="mt-3 flex justify-between items-center text-[11px] text-zinc-500">
+        <div class="mt-3 flex justify-between items-center text-[11px] text-zinc-500 gap-2">
           <span>${item.createdAt?.toDate ? item.createdAt.toDate().toLocaleString() : ''}</span>
-          <span class="font-mono">${(item.signedBy || '').substring(0, 8)}…</span>
+          <div class="flex items-center gap-2 min-w-0">
+            <div class="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-700 text-[10px]">
+              ${chip.avatarInner}
+            </div>
+            <span class="truncate font-medium text-zinc-400">${chip.name}</span>
+          </div>
         </div>
       `;
       container.appendChild(card);
