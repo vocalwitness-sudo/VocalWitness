@@ -601,19 +601,12 @@ async function promptDepositEvidence() {
         throw new Error('Failed to compute SHA-256 hash');
       }
 
-      // 2. Upload to sealed path under group-evidence/{groupId}/
-      //    Images get EXIF scrub via uploadMedia; hash above is of original file.
-      showToast('Uploading sealed media…', 'info');
-      const folderPath = `group-evidence/${currentGroupId}`;
-      let publicUrl = null;
-
        // 2. Upload to sealed path under group-evidence/{groupId}/
       //    Hash above is of the original file bytes (before any image scrub).
       showToast('Uploading sealed file…', 'info');
       const folderPath = `group-evidence/${currentGroupId}`;
       const publicUrl = await uploadMedia(file, folderPath);
-     
-      
+
       // 3. Immutable Firestore record
       await addDoc(collection(db, 'group_evidence'), {
         groupId: currentGroupId,
@@ -628,7 +621,7 @@ async function promptDepositEvidence() {
           ? publicUrl.replace('https://media.vocalwitness.com/', '')
           : null,
         depositedBy: auth.currentUser.uid,
-        status: publicUrl ? 'Sealed (SHA-256 + media)' : 'Sealed (SHA-256 hash only)',
+        status: 'Sealed (SHA-256 + media)',
         createdAt: serverTimestamp()
       });
 
