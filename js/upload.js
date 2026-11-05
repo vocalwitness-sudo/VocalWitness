@@ -10,6 +10,7 @@ import { showToast } from './utils.js';
 import { logAuditEvent } from './audit.js';
 import { auth, appCheck } from './firebase-config.js';
 import { getToken } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app-check.js';
+import { assertRateLimit, RL } from './rate-limit.js';
 
 const R2_UPLOAD_ENDPOINT = 'https://media.vocalwitness.com/upload';
 const R2_PUBLIC_BASE = 'https://media.vocalwitness.com';
@@ -245,6 +246,12 @@ export async function uploadSecurePhoto(file, folderPath = 'evidence', onProgres
         if (typeof onProgress === 'function') onProgress(percent);
         setUploadProgress(percent, 'Uploading photo...');
       }
+      try {
+  assertRateLimit('upload', RL.upload);
+} catch (e) {
+  reject(e);
+  return;
+}
     );
 
     await logAuditEvent?.('MEDIA_UPLOADED', {
