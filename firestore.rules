@@ -78,6 +78,12 @@ service cloud.firestore {
           (getUserData().tier == 'witness_circle' || getUserData().zkVerified == true))
       );
     }
+function isNotSensitiveWriteThrottled(seconds) {
+      let u = getUserData();
+      return !('lastSensitiveWriteAt' in u)
+        || !(u.lastSensitiveWriteAt is timestamp)
+        || request.time > u.lastSensitiveWriteAt + duration.value(seconds, 's');
+    }
 
     function isSteward() {
       return isAuthenticated() && (
