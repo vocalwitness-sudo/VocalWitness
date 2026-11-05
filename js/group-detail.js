@@ -27,6 +27,7 @@ import {
 } from './groups.js';
 import { exportGroupEvidencePackage } from './export-package.js';
 import { uploadMedia } from './upload.js';
+import { assertRateLimit, RL } from './rate-limit.js';
 
 let currentGroupId = null;
 let currentGroupData = null;
@@ -81,7 +82,9 @@ export function initGroupDetail() {
       if (btn) btn.click();
     }, 150);
   }
-
+  
+assertRateLimit('group_timeline', RL.group_timeline);
+  
   // Join / Leave
   document.getElementById('joinLeaveBtn')?.addEventListener('click', handleJoinLeave);
 
@@ -584,6 +587,13 @@ async function promptDepositEvidence() {
 
     try {
       showToast('Hashing evidence on your device…', 'info');
+      
+        try {
+      assertRateLimit('group_evidence', RL.group_evidence);
+    } catch (e) {
+      showToast(e.message || 'Slow down', 'warning');
+      return;
+    }
 
       // 1. Client-side SHA-256 of the original bytes (before any transform)
       const hashHex = await computeSHA256(file);
@@ -653,6 +663,7 @@ function loadAttestationWall() {
     where('groupId', '==', currentGroupId),
     orderBy('createdAt', 'desc')
   );
+  assertRateLimit('group_attestation', RL.group_attestation);
 
   unsubscribeAttestations = onSnapshot(q, (snapshot) => {
     container.innerHTML = '';
