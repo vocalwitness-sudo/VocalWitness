@@ -355,7 +355,7 @@ async function createRoomWithOptions(title, category, groupId, privacy) {
 }
 
 // ---------------------------------------------------------------------------
-// Join room
+// Join room — client count bump removed (handled by Cloud Functions / triggers)
 // ---------------------------------------------------------------------------
 window.joinLiveRoom = async function (roomId, alreadyInUrl = false) {
   if (!requireAuth("Sign in to join")) return;
@@ -386,15 +386,12 @@ window.joinLiveRoom = async function (roomId, alreadyInUrl = false) {
     const partRef = doc(db, 'liveRooms', roomId, 'participants', uid);
     const existingPart = await getDoc(partRef);
 
-    if (!existingPart.exists()) {
-      await updateDoc(doc(db, 'liveRooms', roomId), {
-        participantCount: increment(1),
-        lastActivityAt: serverTimestamp()
-      });
-    } else {
+    try {
       await updateDoc(doc(db, 'liveRooms', roomId), {
         lastActivityAt: serverTimestamp()
       });
+    } catch (e) {
+      console.warn('[LiveArena] lastActivityAt update skipped:', e?.message || e);
     }
 
     await setDoc(
@@ -651,7 +648,6 @@ function renderParticipants(participants) {
     const showHostActions = isHost && !isMe;
     const uidSafe = escapeHTML(p.uid || p.id || '');
     
-    // Generate badge HTML if your helper function is available, or fallback to styled tier tag
     const tierName = p.tier || 'citizen';
     const badgeHtml = typeof renderWitnessAuthorBadge === 'function' 
       ? renderWitnessAuthorBadge(tierName, p.isVerified, p.isFounder)
@@ -718,6 +714,7 @@ function renderParticipants(participants) {
     }).join('');
   }
 }
+
 // ---------------------------------------------------------------------------
 // In-Room Moderation & Group Binding Extensions
 // ---------------------------------------------------------------------------
@@ -755,7 +752,6 @@ function renderRoomAdminPanel(room) {
   const currentUid = auth.currentUser?.uid;
   const roomIsHost = isHost || room.hostUid === currentUid;
 
-  // Pending stage requests
   const pendingContainer = document.getElementById('arenaPendingList');
   const pendingCountEl = document.getElementById('arenaPendingCount');
   const pending = room.pendingRequests || [];
@@ -798,7 +794,6 @@ function renderRoomAdminPanel(room) {
     }
   }
 
-  // Banned list
   const bannedContainer = document.getElementById('arenaBannedList');
   const bannedCountEl = document.getElementById('arenaBannedCount');
   const banned = room.bannedUsers || [];
@@ -927,7 +922,6 @@ function wireDropEvidenceModal(roomId) {
         createdAt: serverTimestamp()
       });
 
-      // If room is bound to a group, also deposit into group evidence locker
       if (currentRoomData?.groupId) {
         await addDoc(collection(db, 'group_evidence'), {
           groupId: currentRoomData.groupId,
@@ -1059,10 +1053,11 @@ async function startSpeaking() {
       await updateDoc(doc(db, 'liveRooms', currentRoomId, 'participants', myParticipantDocId), {
         isSpeaking: true
       });
-      await updateDoc(doc(db, 'liveRooms', currentRoomId), {
-        speakingCount: increment(1),
-        lastActivityAt: serverTimestamp()
-      });
+      try {
+        await updateDoc(doc(db, 'liveRooms', currentRoomId), {
+          lastActivityAt: serverTimestamp()
+        });
+      } catch (_) {}
     }
 
     const talkBtn = document.getElementById('pushToTalkBtn');
@@ -1107,10 +1102,11 @@ async function stopSpeaking() {
       await updateDoc(doc(db, 'liveRooms', currentRoomId, 'participants', myParticipantDocId), {
         isSpeaking: false
       });
-      await updateDoc(doc(db, 'liveRooms', currentRoomId), {
-        speakingCount: increment(-1),
-        lastActivityAt: serverTimestamp()
-      });
+      try {
+        await updateDoc(doc(db, 'liveRooms', currentRoomId), {
+          lastActivityAt: serverTimestamp()
+        });
+      } catch (_) {}
     } catch (e) {
       console.warn(e);
     }
@@ -1269,15 +1265,15 @@ window.hostAction = async function (uid, action) {
       showToast("Participant promoted to speak", "success");
     } else if (action === 'remove') {
       await deleteDoc(ref);
-      await updateDoc(doc(db, 'liveRooms', currentRoomId), {
-        participantCount: increment(-1),
-        lastActivityAt: serverTimestamp()
-      });
+      try {
+        await updateDoc(doc(db, 'liveRooms', currentRoomId), {
+          lastActivityAt: serverTimestamp()
+        });
+      } catch (_) {}
       showToast("Participant removed", "info");
     } else if (action === 'ban') {
       await deleteDoc(ref);
       await updateDoc(doc(db, 'liveRooms', currentRoomId), {
-        participantCount: increment(-1),
         bannedUsers: arrayUnion(uid),
         lastActivityAt: serverTimestamp()
       });
@@ -1307,10 +1303,11 @@ window.leaveCurrentRoom = async function (silent = false) {
   if (leavingId && auth.currentUser) {
     try {
       await deleteDoc(doc(db, 'liveRooms', leavingId, 'participants', auth.currentUser.uid));
-      await updateDoc(doc(db, 'liveRooms', leavingId), {
-        participantCount: increment(-1),
-        lastActivityAt: serverTimestamp()
-      });
+      try {
+        await updateDoc(doc(db, 'liveRooms', leavingId), {
+          lastActivityAt: serverTimestamp()
+        });
+      } catch (_) {}
     } catch (e) {
       console.warn('leave cleanup:', e);
     }
