@@ -18,6 +18,7 @@ import {
 } from 'https://cdn.jsdelivr.net/npm/livekit-client@2.5.0/dist/livekit-client.esm.mjs';
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 import { renderWitnessAuthorBadge } from './badges.js';
+import { assertRateLimit, RL } from './rate-limit.js';
 
 const GOAL = 500;
 
@@ -166,6 +167,13 @@ export function initLiveArena() {
       console.error(err);
       showToast("Failed to create room", "error");
     }
+    
+     try {
+    assertRateLimit('live_join', RL.live_join);
+  } catch (e) {
+    showToast(e.message, 'warning');
+    return;
+  }
   });
 
   // Filters
@@ -242,6 +250,13 @@ function renderRooms(rooms) {
     const reactions = room.reactions || {};
     const likes = reactions.like || 0;
     const claps = reactions.clap || 0;
+    
+     try {
+    assertRateLimit('live_reaction', RL.live_reaction);
+  } catch (e) {
+    showToast(e.message, 'warning');
+    return;
+  }
 
     return `
     <div class="glass rounded-2xl border border-sky-500/20 p-5 hover:border-sky-400/50 hover:scale-[1.01] transition-all cursor-pointer group relative overflow-hidden"
