@@ -823,7 +823,7 @@ match /groups/{groupId} {
       allow delete: if false;
     }
 
-   match /liveRooms/{roomId} {
+    match /liveRooms/{roomId} {
       allow read: if true;
 
       allow create: if isNotBanned() && isAuthenticated()
@@ -833,18 +833,29 @@ match /groups/{groupId} {
         && request.resource.data.title.size() <= 120;
 
       allow update: if isNotBanned() && isAuthenticated() && (
-        // Host / creator / moderator full control
+        // Host / creator / moderator
         (
           resource.data.createdBy == request.auth.uid
           || resource.data.hostUid == request.auth.uid
           || isModerator()
         )
         ||
-        // Any authenticated user: reactions and lastActivity updates only
-        // (participantCount, speakingCount, isLive, and bannedUsers are strictly protected)
+        // Anyone: reactions + activity only
         (
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['reactions', 'lastActivityAt'])
+        )
+        ||
+        // Self: add/remove only own uid on safe arrays (join / leave / raise hand)
+        (
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['participants', 'pendingRequests', 'speakers', 'lastActivityAt'])
+          && request.resource.data.bannedUsers == resource.data.bannedUsers
+          && request.resource.data.isLive == resource.data.isLive
+          && request.resource.data.participantCount == resource.data.participantCount
+          && request.resource.data.speakingCount == resource.data.speakingCount
+          && request.resource.data.createdBy == resource.data.createdBy
+          && request.resource.data.hostUid == resource.data.hostUid
         )
       );
 
@@ -861,14 +872,18 @@ match /groups/{groupId} {
             ||
             (get(/databases/$(database)/documents/liveRooms/$(roomId)).data.createdBy == request.auth.uid
              && request.resource.data.uid == participantId)
+            ||
+            (get(/databases/$(database)/documents/liveRooms/$(roomId)).data.hostUid == request.auth.uid
+             && request.resource.data.uid == participantId)
           );
         allow delete: if isAuthenticated() && (
           request.auth.uid == participantId
           || get(/databases/$(database)/documents/liveRooms/$(roomId)).data.createdBy == request.auth.uid
+          || get(/databases/$(database)/documents/liveRooms/$(roomId)).data.hostUid == request.auth.uid
           || isModerator()
         );
       }
-    }
+
       match /corroborations/{corrId} {
         allow read: if true;
         allow create: if isNotBanned() && isAuthenticated()
@@ -890,9 +905,10 @@ match /groups/{groupId} {
       match /evidenceDrops/{dropId} {
         allow read: if true;
         allow create: if isNotBanned() && isAuthenticated()
-          && request.resource.data.depositedBy == request.auth.uid;
+          && request.resource.data.droppedBy == request.auth.uid;
         allow update, delete: if isModerator();
       }
+    }
 
       match /reports/{reportId} {
         allow read: if isModerator() || isAdmin();
