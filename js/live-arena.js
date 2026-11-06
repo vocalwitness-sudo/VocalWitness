@@ -1,5 +1,5 @@
-// js/live-arena.js – World-Class Live Arena (Evidence-grade & Truth Circle Group Integrated)
-// Fixed: init guard, one-time UI wiring, participantCount on re-join/create, plus full group & room moderation.
+// js/live-arena.js – VocalWitness Live Arena (production)
+// Sealed evidence, group binding, moderation, LiveKit PTT, client rate limits
 
 import { listenToVerifiedCount, showToast, computeSHA256 } from './utils.js';
 import { requireAuth } from './auth.js';
@@ -9,14 +9,14 @@ import {
   collection, query, where, orderBy, limit, onSnapshot,
   addDoc, doc, updateDoc, serverTimestamp, getDoc,
   deleteDoc, increment, getDocs, setDoc, arrayUnion, arrayRemove
-} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+} from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 import {
   Room,
   RoomEvent,
   Track,
   createLocalAudioTrack
 } from 'https://cdn.jsdelivr.net/npm/livekit-client@2.5.0/dist/livekit-client.esm.mjs';
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js';
 import { renderWitnessAuthorBadge } from './badges.js';
 import { assertRateLimit, RL } from './rate-limit.js';
 import { getPublicProfiles, profileChipHtml } from './profile-cache.js';
@@ -37,10 +37,8 @@ let liveArenaInitialized = false;
 let beforeUnloadWired = false;
 let currentRoomData = null;
 let activeRoomUnsubscribe = null;
+let roomAdminChromeWired = false;
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 function escapeHTML(str) {
   if (!str) return '';
   return String(str)
@@ -49,6 +47,16 @@ function escapeHTML(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function safeRateLimit(action, opts) {
+  try {
+    assertRateLimit(action, opts);
+    return true;
+  } catch (e) {
+    showToast(e?.message || 'Please slow down', 'warning');
+    return false;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -61,9 +69,8 @@ export function initLiveArena() {
   }
   liveArenaInitialized = true;
 
-  console.log('[LiveArena] World-class engine starting with Group & Moderation tools…');
+  console.log('[LiveArena] production engine starting…');
 
-  // Soft progress toward mega-stages
   listenToVerifiedCount((count) => {
     const n = typeof count === 'number' && count >= 0 ? count : 0;
     const countEl = document.getElementById('verifiedCount');
@@ -81,14 +88,13 @@ export function initLiveArena() {
     if (progressText) {
       progressText.textContent =
         n >= GOAL
-          ? "🎉 Full global stages unlocked!"
+          ? '🎉 Full global stages unlocked!'
           : n === 0
-            ? "0 verified · be among the first 500"
+            ? '0 verified · be among the first 500'
             : `${(GOAL - n).toLocaleString()} more citizens needed for mega-stages`;
     }
   });
 
-  // Live rooms list
   if (roomsUnsubscribe) roomsUnsubscribe();
   const roomsQuery = query(
     collection(db, 'liveRooms'),
@@ -99,7 +105,7 @@ export function initLiveArena() {
   roomsUnsubscribe = onSnapshot(
     roomsQuery,
     (snap) => {
-      allRoomsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      allRoomsCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       applyFilterAndRender();
     },
     (err) => {
@@ -115,68 +121,76 @@ export function initLiveArena() {
     }
   );
 
-  // Create room modal toggles & wiring
   const createBtn = document.getElementById('createRoomBtn');
   const createModal = document.getElementById('createRoomModal');
   const closeCreateModalBtn = document.getElementById('closeCreateRoomModalBtn');
   const cancelCreateRoomBtn = document.getElementById('cancelCreateRoomBtn');
   const submitCreateRoomBtn = document.getElementById('submitCreateRoomBtn');
 
+  const closeCreateModal = () => {
+    createModal?.classList.add('hidden');
+    createModal?.classList.remove('flex');
+  };
+
   if (createBtn && !createBtn.dataset.wired) {
     createBtn.dataset.wired = '1';
     createBtn.addEventListener('click', async () => {
-      if (!requireAuth("Sign in to start a room")) return;
+      if (!requireAuth('Sign in to start a room')) return;
       await populateArenaGroupDropdown();
       createModal?.classList.remove('hidden');
       createModal?.classList.add('flex');
     });
   }
 
-  const closeCreateModal = () => {
-    createModal?.classList.add('hidden');
-    createModal?.classList.remove('flex');
-  };
+  if (closeCreateModalBtn && !closeCreateModalBtn.dataset.wired) {
+    closeCreateModalBtn.dataset.wired = '1';
+    closeCreateModalBtn.addEventListener('click', closeCreateModal);
+  }
+  if (cancelCreateRoomBtn && !cancelCreateRoomBtn.dataset.wired) {
+    cancelCreateRoomBtn.dataset.wired = '1';
+    cancelCreateRoomBtn.addEventListener('click', closeCreateModal);
+  }
 
-  closeCreateModalBtn?.addEventListener('click', closeCreateModal);
-  cancelCreateRoomBtn?.addEventListener('click', closeCreateModal);
+  if (submitCreateRoomBtn && !submitCreateRoomBtn.dataset.wired) {
+    submitCreateRoomBtn.dataset.wired = '1';
+    submitCreateRoomBtn.addEventListener('click', async () => {
+      const titleInput = document.getElementById('roomTitleInput');
+      const categoryInput = document.getElementById('roomCategoryInput');
+      const groupSelect = document.getElementById('arenaGroupSelect');
+      const privacyInput = document.getElementById('roomPrivacyInput');
 
-  submitCreateRoomBtn?.addEventListener('click', async () => {
-    const titleInput = document.getElementById('roomTitleInput');
-    const categoryInput = document.getElementById('roomCategoryInput');
-    const groupSelect = document.getElementById('arenaGroupSelect');
-    const privacyInput = document.getElementById('roomPrivacyInput');
-
-    const title = titleInput?.value || '';
-    if (title.trim().length < 6) {
-      showToast("Title too short (min 6 characters)", "warning");
-      return;
-    }
-
-    try {
-      const roomId = await createRoomWithOptions(
-        title,
-        categoryInput?.value || 'General',
-        groupSelect?.value || null,
-        privacyInput?.value || 'open'
-      );
-      if (roomId) {
-        closeCreateModal();
-        if (titleInput) titleInput.value = '';
-        joinLiveRoom(roomId);
+      const title = titleInput?.value || '';
+      if (title.trim().length < 6) {
+        showToast('Title too short (min 6 characters)', 'warning');
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to create room", "error");
-    }
-  });
 
-  // Filters
-  document.querySelectorAll('[data-filter]').forEach(btn => {
+      try {
+        const roomId = await createRoomWithOptions(
+          title,
+          categoryInput?.value || 'General',
+          groupSelect?.value || null,
+          privacyInput?.value || 'open'
+        );
+        if (roomId) {
+          closeCreateModal();
+          if (titleInput) titleInput.value = '';
+          joinLiveRoom(roomId);
+        }
+      } catch (err) {
+        if (err?.code === 'rate-limited') return;
+        console.error(err);
+        showToast('Failed to create room', 'error');
+      }
+    });
+  }
+
+  document.querySelectorAll('[data-filter]').forEach((btn) => {
     if (btn.dataset.wired) return;
     btn.dataset.wired = '1';
     btn.addEventListener('click', () => {
       currentFilter = btn.dataset.filter || 'all';
-      document.querySelectorAll('[data-filter]').forEach(b => {
+      document.querySelectorAll('[data-filter]').forEach((b) => {
         b.classList.remove('bg-sky-500/20', 'text-sky-300', 'border-sky-500/40', 'border');
         b.classList.add('bg-zinc-800', 'text-zinc-400');
       });
@@ -186,14 +200,12 @@ export function initLiveArena() {
     });
   });
 
-  // Deep link: ?room=ROOM_ID
   const urlParams = new URLSearchParams(window.location.search);
   const roomId = urlParams.get('room');
   if (roomId) {
     joinLiveRoom(roomId, true);
   }
 
-  // Cleanup on tab close
   if (!beforeUnloadWired) {
     beforeUnloadWired = true;
     window.addEventListener('beforeunload', () => {
@@ -202,22 +214,20 @@ export function initLiveArena() {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Lobby list
-// ---------------------------------------------------------------------------
 function applyFilterAndRender() {
   let rooms = [...allRoomsCache];
 
   if (currentFilter === 'near') {
-    rooms = rooms.filter(r => r.city);
+    rooms = rooms.filter((r) => r.city);
   } else if (currentFilter === 'circle') {
-    rooms = rooms.filter(r => r.tierRequired && r.tierRequired !== 'Open');
+    rooms = rooms.filter((r) => r.tierRequired && r.tierRequired !== 'Open');
   } else if (currentFilter !== 'all') {
     const f = currentFilter.toLowerCase();
-    rooms = rooms.filter(r =>
-      (r.category || '').toLowerCase() === f ||
-      (r.title || '').toLowerCase().includes(f) ||
-      (r.description || '').toLowerCase().includes(f)
+    rooms = rooms.filter(
+      (r) =>
+        (r.category || '').toLowerCase() === f ||
+        (r.title || '').toLowerCase().includes(f) ||
+        (r.description || '').toLowerCase().includes(f)
     );
   }
 
@@ -238,13 +248,15 @@ function renderRooms(rooms) {
     return;
   }
 
-  grid.innerHTML = rooms.map(room => {
-    const category = room.category || 'General';
-    const speaking = room.speakingCount || 0;
-    const reactions = room.reactions || {};
-    const likes = reactions.like || 0;
-    const claps = reactions.clap || 0;
+  grid.innerHTML = rooms
+    .map((room) => {
+      const category = room.category || 'General';
+      const speaking = room.speakingCount || 0;
+      const reactions = room.reactions || {};
+      const likes = reactions.like || 0;
+      const claps = reactions.clap || 0;
 
+      return `
     <div class="glass rounded-2xl border border-sky-500/20 p-5 hover:border-sky-400/50 hover:scale-[1.01] transition-all cursor-pointer group relative overflow-hidden"
          onclick="window.joinLiveRoom('${escapeHTML(room.id)}')"
          role="button"
@@ -280,12 +292,10 @@ function renderRooms(rooms) {
         <span class="px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-400 font-medium">${escapeHTML(room.tierRequired || 'Open')}</span>
       </div>
     </div>`;
-  }).join('');
+    })
+    .join('');
 }
 
-// ---------------------------------------------------------------------------
-// Group Binding & Room Creation
-// ---------------------------------------------------------------------------
 export async function populateArenaGroupDropdown() {
   const select = document.getElementById('arenaGroupSelect');
   if (!select || !auth.currentUser) return;
@@ -311,18 +321,18 @@ export async function populateArenaGroupDropdown() {
 }
 
 async function createRoomWithOptions(title, category, groupId, privacy) {
-  try {
-    assertRateLimit('live_join', RL.live_join);
-  } catch (e) {
-    showToast(e.message || 'Slow down', 'warning');
+  if (!safeRateLimit('live_join', RL.live_join)) {
+    const e = new Error('rate limited');
+    e.code = 'rate-limited';
     throw e;
   }
 
   const userTier = await getCurrentUserTier();
   const uid = auth.currentUser.uid;
+
   const roomPayload = {
     title: title.trim().slice(0, 120),
-    category: category.trim().slice(0, 40),
+    category: (category || 'General').trim().slice(0, 40),
     groupId: groupId || null,
     isGroupOnly: !!groupId,
     privacy: privacy || 'open',
@@ -346,7 +356,7 @@ async function createRoomWithOptions(title, category, groupId, privacy) {
   const roomRef = await addDoc(collection(db, 'liveRooms'), roomPayload);
 
   await setDoc(doc(db, 'liveRooms', roomRef.id, 'participants', uid), {
-    uid: uid,
+    uid,
     displayName: auth.currentUser.displayName || 'Citizen',
     photoURL: auth.currentUser.photoURL || null,
     tier: userTier,
@@ -357,28 +367,21 @@ async function createRoomWithOptions(title, category, groupId, privacy) {
     handRaised: false
   });
 
-  showToast("Room created – you are the host", "success");
+  showToast('Room created – you are the host', 'success');
   return roomRef.id;
 }
 
-// ---------------------------------------------------------------------------
-// Join room — client count bump removed (handled by Cloud Functions / triggers)
-// ---------------------------------------------------------------------------
+// Join — no client participantCount increment (CF/trigger owns count if present)
 window.joinLiveRoom = async function (roomId, alreadyInUrl = false) {
-  if (!requireAuth("Sign in to join")) return;
+  if (!requireAuth('Sign in to join')) return;
   if (!roomId || currentRoomId === roomId) return;
 
-  try {
-    assertRateLimit('live_join', RL.live_join);
-  } catch (e) {
-    showToast(e.message || 'Slow down', 'warning');
-    return;
-  }
+  if (!safeRateLimit('live_join', RL.live_join)) return;
 
   try {
     const roomSnap = await getDoc(doc(db, 'liveRooms', roomId));
     if (!roomSnap.exists()) {
-      showToast("This room no longer exists", "error");
+      showToast('This room no longer exists', 'error');
       return;
     }
 
@@ -386,7 +389,12 @@ window.joinLiveRoom = async function (roomId, alreadyInUrl = false) {
     const uid = auth.currentUser.uid;
 
     if (roomData.bannedUsers?.includes(uid)) {
-      showToast("🚫 You have been expelled and banned from this room.", "error");
+      showToast('🚫 You have been expelled and banned from this room.', 'error');
+      return;
+    }
+
+    if (roomData.isLive === false) {
+      showToast('This stage has ended', 'error');
       return;
     }
 
@@ -402,25 +410,26 @@ window.joinLiveRoom = async function (roomId, alreadyInUrl = false) {
 
     try {
       await updateDoc(doc(db, 'liveRooms', roomId), {
-        lastActivityAt: serverTimestamp()
+        lastActivityAt: serverTimestamp(),
+        participants: arrayUnion(uid)
       });
     } catch (e) {
-      console.warn('[LiveArena] lastActivityAt update skipped:', e?.message || e);
+      console.warn('[LiveArena] room touch skipped:', e?.message || e);
     }
 
     await setDoc(
       partRef,
       {
-        uid: uid,
+        uid,
         displayName: auth.currentUser.displayName || 'Citizen',
         photoURL: auth.currentUser.photoURL || null,
         tier: userTier,
         joinedAt: existingPart.exists()
-          ? (existingPart.data()?.joinedAt || serverTimestamp())
+          ? existingPart.data()?.joinedAt || serverTimestamp()
           : serverTimestamp(),
         isSpeaking: false,
         isMuted: false,
-        isHost: isHost,
+        isHost,
         handRaised: false
       },
       { merge: true }
@@ -430,12 +439,12 @@ window.joinLiveRoom = async function (roomId, alreadyInUrl = false) {
       history.pushState({}, '', `?room=${encodeURIComponent(roomId)}`);
     }
 
-    showActiveRoom(roomId, roomData);
+    showActiveRoom(roomId, { id: roomId, ...roomData });
     listenAndRenderRoomModeration(roomId);
   } catch (err) {
     console.error(err);
     currentRoomId = null;
-    showToast("Could not join room", "error");
+    showToast('Could not join room', 'error');
   }
 };
 
@@ -453,14 +462,11 @@ async function showActiveRoom(roomId, room = {}) {
 
   stage.innerHTML = `
     <div class="fixed inset-0 z-50 bg-[#0a0f1c] flex flex-col">
-      <!-- Top bar -->
       <div class="flex items-center justify-between px-3 sm:px-4 py-3 border-b border-zinc-800/80 bg-zinc-900/70 backdrop-blur-xl gap-2">
         <div class="flex items-center gap-2 sm:gap-3 min-w-0">
           <button type="button" onclick="window.leaveCurrentRoom()"
                   class="p-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition shrink-0"
-                  aria-label="Leave room">
-            ←
-          </button>
+                  aria-label="Leave room">←</button>
           <div class="min-w-0">
             <h2 class="font-bold text-white truncate text-base sm:text-lg">${escapeHTML(room.title || 'Live Room')}</h2>
             <p class="text-xs text-red-400 flex items-center gap-1.5 mt-0.5 flex-wrap">
@@ -498,7 +504,6 @@ async function showActiveRoom(roomId, room = {}) {
         </div>
       </div>
 
-      <!-- Main stage -->
       <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
         <div class="flex-1 p-4 lg:p-6 flex flex-col min-h-0">
           <div class="flex-1 flex items-center justify-center min-h-0 overflow-y-auto">
@@ -514,24 +519,18 @@ async function showActiveRoom(roomId, room = {}) {
           <div class="mt-4 flex flex-col items-center gap-3 pb-2 shrink-0">
             <button id="pushToTalkBtn" type="button"
                     class="w-24 h-24 rounded-full bg-gradient-to-br from-sky-500 to-cyan-500 text-white text-3xl shadow-2xl shadow-sky-500/30 active:scale-95 transition-all flex items-center justify-center select-none"
-                    aria-label="Hold to speak">
-              🎤
-            </button>
+                    aria-label="Hold to speak">🎤</button>
             <p class="text-sm text-zinc-400" id="talkStatus">Hold to speak • Release to stop</p>
 
             <div class="flex flex-wrap justify-center gap-2 mt-1">
               <button id="raiseHandBtn" type="button"
-                      class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition">
-                ✋ Raise Hand
-              </button>
+                      class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition">✋ Raise Hand</button>
               <button type="button" data-reaction="clap" class="room-react-btn px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition" title="Clap">👏</button>
               <button type="button" data-reaction="fire" class="room-react-btn px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition" title="Fire">🔥</button>
               <button type="button" data-reaction="like" class="room-react-btn px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition" title="Agree">👍</button>
               <button type="button" data-reaction="dislike" class="room-react-btn px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition" title="Disagree">👎</button>
               <button type="button" id="shareRoomBtn"
-                      class="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition" title="Share room">
-                🔗 Share
-              </button>
+                      class="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition" title="Share room">🔗 Share</button>
             </div>
 
             <div id="liveReactionCounts" class="flex flex-wrap justify-center gap-3 text-xs text-zinc-400 mt-0.5">
@@ -549,7 +548,6 @@ async function showActiveRoom(roomId, room = {}) {
           </div>
         </div>
 
-        <!-- Sidebar -->
         <div class="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-zinc-800 bg-zinc-900/40 flex flex-col max-h-[40vh] lg:max-h-none">
           <div class="p-4 border-b border-zinc-800 font-medium text-sm text-zinc-300 flex justify-between">
             <span>In this room</span>
@@ -560,18 +558,15 @@ async function showActiveRoom(roomId, room = {}) {
       </div>
     </div>
 
-    <!-- Drop Evidence Modal -->
     <div id="dropEvidenceModal" class="hidden fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 p-4">
       <div class="w-full max-w-md rounded-2xl bg-zinc-900 border border-zinc-700 p-5 shadow-2xl">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-bold text-white">📎 Drop Evidence</h3>
           <button id="closeDropEvidenceBtn" type="button" class="text-zinc-400 hover:text-white text-xl" aria-label="Close">✕</button>
         </div>
-
         <textarea id="dropEvidenceNote" rows="3" maxlength="500"
           placeholder="What are you witnessing right now? (optional note)"
           class="w-full rounded-xl border border-zinc-700 bg-zinc-800 p-3 text-sm text-white placeholder-zinc-500 focus:border-sky-500 focus:outline-none mb-3"></textarea>
-
         <div class="flex gap-2 mb-4">
           <label class="flex-1 cursor-pointer rounded-xl border border-zinc-700 bg-zinc-800 py-3 text-center text-sm text-zinc-300 hover:border-sky-500 hover:text-sky-300 transition">
             📷 Photo
@@ -582,9 +577,7 @@ async function showActiveRoom(roomId, room = {}) {
             <input type="file" id="dropEvidenceAudio" accept="audio/*" class="hidden">
           </label>
         </div>
-
         <p id="dropEvidenceFileName" class="text-xs text-zinc-500 mb-3 min-h-[1rem]"></p>
-
         <button id="confirmDropEvidenceBtn" type="button"
           class="w-full rounded-xl bg-sky-500 py-3 text-sm font-bold text-black hover:bg-sky-400 active:scale-[0.98] transition">
           🛡️ Seal & Drop Evidence
@@ -599,6 +592,7 @@ async function showActiveRoom(roomId, room = {}) {
     document.getElementById('hostControls')?.classList.remove('hidden');
   }
 
+  // Fresh DOM each join → safe to wire once per showActiveRoom
   wireActiveRoomControls(roomId);
   wireDropEvidenceModal(roomId);
 
@@ -606,7 +600,7 @@ async function showActiveRoom(roomId, room = {}) {
   participantsUnsubscribe = onSnapshot(
     collection(db, 'liveRooms', roomId, 'participants'),
     (snap) => {
-      const participants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const participants = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       renderParticipants(participants);
       const count = participants.length;
       const liveCount = document.getElementById('liveListenerCount');
@@ -618,61 +612,60 @@ async function showActiveRoom(roomId, room = {}) {
   );
 
   if (window._corrUnsub) {
-    try { window._corrUnsub(); } catch (_) {}
+    try {
+      window._corrUnsub();
+    } catch (_) {}
   }
-  window._corrUnsub = onSnapshot(
-    collection(db, 'liveRooms', roomId, 'corroborations'),
-    (snap) => {
-      const el = document.getElementById('corroborationCount');
-      if (el) {
-        el.textContent = snap.size;
-        if (snap.size > 0) {
-          el.classList.add('animate-pulse');
-          setTimeout(() => el.classList.remove('animate-pulse'), 800);
-        }
+  window._corrUnsub = onSnapshot(collection(db, 'liveRooms', roomId, 'corroborations'), (snap) => {
+    const el = document.getElementById('corroborationCount');
+    if (el) {
+      el.textContent = snap.size;
+      if (snap.size > 0) {
+        el.classList.add('animate-pulse');
+        setTimeout(() => el.classList.remove('animate-pulse'), 800);
       }
     }
-  );
+  });
 
   if (window._reactUnsub) {
-    try { window._reactUnsub(); } catch (_) {}
+    try {
+      window._reactUnsub();
+    } catch (_) {}
   }
-  window._reactUnsub = onSnapshot(
-    doc(db, 'liveRooms', roomId),
-    (snap) => {
-      const r = snap.data()?.reactions || {};
-      ['clap', 'fire', 'like', 'dislike'].forEach((k) => {
-        const el = document.getElementById(`count-${k}`);
-        if (el) el.textContent = r[k] || 0;
-      });
-    }
-  );
+  window._reactUnsub = onSnapshot(doc(db, 'liveRooms', roomId), (snap) => {
+    const r = snap.data()?.reactions || {};
+    ['clap', 'fire', 'like', 'dislike'].forEach((k) => {
+      const el = document.getElementById(`count-${k}`);
+      if (el) el.textContent = r[k] || 0;
+    });
+  });
 }
 
-// ---------------------------------------------------------------------------
-// Participants + speakers stage (Updated with Author/Tier Badges)
-// ---------------------------------------------------------------------------
 function renderParticipants(participants) {
   const list = document.getElementById('participantsList');
   const speakersArea = document.getElementById('speakersArea');
   if (!list || !speakersArea) return;
 
-  list.innerHTML = participants.map(p => {
-    const isMe = p.uid === auth.currentUser?.uid;
-    const showHostActions = isHost && !isMe;
-    const uidSafe = escapeHTML(p.uid || p.id || '');
-    
-    const tierName = p.tier || 'citizen';
-    const badgeHtml = typeof renderWitnessAuthorBadge === 'function' 
-      ? renderWitnessAuthorBadge(tierName, p.isVerified, p.isFounder)
-      : `<span class="text-[10px] uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-medium">${escapeHTML(tierName)}</span>`;
+  list.innerHTML = participants
+    .map((p) => {
+      const isMe = p.uid === auth.currentUser?.uid;
+      const showHostActions = isHost && !isMe;
+      const uidSafe = escapeHTML(p.uid || p.id || '');
 
-    return `
+      const tierName = p.tier || 'citizen';
+      const badgeHtml =
+        typeof renderWitnessAuthorBadge === 'function'
+          ? renderWitnessAuthorBadge(tierName, p.isVerified, p.isFounder)
+          : `<span class="text-[10px] uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-medium">${escapeHTML(tierName)}</span>`;
+
+      return `
     <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-800/60 transition group">
       <div class="w-9 h-9 rounded-full bg-zinc-700 flex items-center justify-center text-sm font-bold overflow-hidden shrink-0">
-        ${p.photoURL
-          ? `<img src="${escapeHTML(p.photoURL)}" class="w-full h-full object-cover" alt="">`
-          : escapeHTML((p.displayName || '?')[0] || '?')}
+        ${
+          p.photoURL
+            ? `<img src="${escapeHTML(p.photoURL)}" class="w-full h-full object-cover" alt="">`
+            : escapeHTML((p.displayName || '?')[0] || '?')
+        }
       </div>
       <div class="min-w-0 flex-1">
         <div class="text-sm font-medium truncate flex items-center gap-1.5">
@@ -682,23 +675,25 @@ function renderParticipants(participants) {
         </div>
         <div class="mt-0.5 flex items-center gap-1.5">${badgeHtml}</div>
       </div>
-
       ${p.handRaised ? '<span class="text-amber-400 text-sm">✋</span>' : ''}
       ${p.isSpeaking ? '<span class="text-sky-400 text-xs font-medium">Speaking</span>' : ''}
-
-      ${showHostActions ? `
-        <div class="hidden group-hover:flex gap-1">
-          <button type="button" onclick="window.hostAction('${uidSafe}', 'mute')" class="text-xs px-2 py-1 rounded bg-zinc-700 hover:bg-zinc-600">Mute</button>
-          <button type="button" onclick="window.hostAction('${uidSafe}', 'promote')" class="text-xs px-2 py-1 rounded bg-sky-600/30 hover:bg-sky-600/50 text-sky-300">Promote</button>
-          <button type="button" onclick="window.hostAction('${uidSafe}', 'remove')" class="text-xs px-2 py-1 rounded bg-red-600/20 hover:bg-red-600/40 text-red-400">Remove</button>
-          <button type="button" onclick="window.hostAction('${uidSafe}', 'ban')" class="text-xs px-2 py-1 rounded bg-red-900/40 hover:bg-red-900/60 text-red-300">Ban</button>
-        </div>
-      ` : ''}
+      ${
+        showHostActions
+          ? `
+        <div class="hidden group-hover:flex gap-1 shrink-0">
+          <button type="button" class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-700" onclick="window.hostAction('${uidSafe}','mute')">Mute</button>
+          <button type="button" class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-700" onclick="window.hostAction('${uidSafe}','promote')">Mic</button>
+          <button type="button" class="text-[10px] px-1.5 py-0.5 rounded bg-red-900/50 text-red-300" onclick="window.hostAction('${uidSafe}','remove')">✕</button>
+          <button type="button" class="text-[10px] px-1.5 py-0.5 rounded bg-red-900/80 text-red-200" onclick="window.hostAction('${uidSafe}','ban')">Ban</button>
+        </div>`
+          : ''
+      }
     </div>`;
-  }).join('');
+    })
+    .join('');
 
-  const speakers = participants.filter(p => p.isSpeaking);
-  if (speakers.length === 0) {
+  const speakers = participants.filter((p) => p.isSpeaking);
+  if (!speakers.length) {
     speakersArea.innerHTML = `
       <div class="col-span-full text-center text-zinc-500 py-16">
         <div class="text-5xl mb-3 opacity-60">🎤</div>
@@ -706,31 +701,35 @@ function renderParticipants(participants) {
         <p class="text-sm mt-1 text-zinc-600">Hold the mic to take the stage</p>
       </div>`;
   } else {
-    speakersArea.innerHTML = speakers.map(s => {
-      const speakerTier = s.tier || 'citizen';
-      const speakerBadgeHtml = typeof renderWitnessAuthorBadge === 'function'
-        ? renderWitnessAuthorBadge(speakerTier, s.isVerified, s.isFounder)
-        : `<span class="text-[10px] uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-medium">${escapeHTML(speakerTier)}</span>`;
+    speakersArea.innerHTML = speakers
+      .map((s) => {
+        const speakerTier = s.tier || 'citizen';
+        const speakerBadgeHtml =
+          typeof renderWitnessAuthorBadge === 'function'
+            ? renderWitnessAuthorBadge(speakerTier, s.isVerified, s.isFounder)
+            : `<span class="text-[10px] uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-medium">${escapeHTML(speakerTier)}</span>`;
 
-      return `
+        return `
       <div class="flex flex-col items-center p-4 rounded-2xl bg-sky-500/10 border border-sky-500/30 stage-glow">
         <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-zinc-700 flex items-center justify-center text-xl font-bold mb-2 overflow-hidden speaking-ring">
-          ${s.photoURL
-            ? `<img src="${escapeHTML(s.photoURL)}" class="w-full h-full object-cover" alt="">`
-            : escapeHTML((s.displayName || '?')[0] || '?')}
+          ${
+            s.photoURL
+              ? `<img src="${escapeHTML(s.photoURL)}" class="w-full h-full object-cover" alt="">`
+              : escapeHTML((s.displayName || '?')[0] || '?')
+          }
         </div>
         <div class="font-medium text-sm text-center truncate w-full">${escapeHTML(s.displayName || 'Citizen')}</div>
         <div class="mt-1">${speakerBadgeHtml}</div>
         <div class="text-xs text-sky-400 mt-1 font-medium">Speaking</div>
         ${s.isHost ? '<div class="text-[10px] text-amber-400 mt-0.5">HOST</div>' : ''}
-      </div>
-    `;
-    }).join('');
+      </div>`;
+      })
+      .join('');
   }
 }
 
 // ---------------------------------------------------------------------------
-// In-Room Moderation & Group Binding Extensions
+// In-room moderation (profiles for pending / banned)
 // ---------------------------------------------------------------------------
 function listenAndRenderRoomModeration(roomId) {
   const roomRef = doc(db, 'liveRooms', roomId);
@@ -751,20 +750,29 @@ function listenAndRenderRoomModeration(roomId) {
     renderInRoomInviteUI(currentRoomData);
   });
 
+  // Wire admin modal open/close once (DOM for these may live in live-arena.html)
+  if (!roomAdminChromeWired) {
+    roomAdminChromeWired = true;
+    document.getElementById('openRoomAdminBtn')?.addEventListener('click', () => {
+      document.getElementById('roomAdminModal')?.classList.remove('hidden');
+      document.getElementById('roomAdminModal')?.classList.add('flex');
+    });
+    document.getElementById('closeRoomAdminModalBtn')?.addEventListener('click', () => {
+      document.getElementById('roomAdminModal')?.classList.add('hidden');
+      document.getElementById('roomAdminModal')?.classList.remove('flex');
+    });
+  }
+
+  // Stage UI rebuilds each join — re-bind open button on the new DOM
   document.getElementById('openRoomAdminBtn')?.addEventListener('click', () => {
     document.getElementById('roomAdminModal')?.classList.remove('hidden');
     document.getElementById('roomAdminModal')?.classList.add('flex');
-  });
-
-  document.getElementById('closeRoomAdminModalBtn')?.addEventListener('click', () => {
-    document.getElementById('roomAdminModal')?.classList.add('hidden');
-    document.getElementById('roomAdminModal')?.classList.remove('flex');
   });
 }
 
 async function renderRoomAdminPanel(room) {
   const currentUid = auth.currentUser?.uid;
-  const roomIsHost = isHost || room.hostUid === currentUid;
+  const roomIsHost = isHost || room.hostUid === currentUid || room.createdBy === currentUid;
 
   const pendingContainer = document.getElementById('arenaPendingList');
   const pendingCountEl = document.getElementById('arenaPendingCount');
@@ -802,12 +810,10 @@ async function renderRoomAdminPanel(room) {
           </div>
           ${
             roomIsHost
-              ? `
-            <div class="flex gap-2 shrink-0">
-              <button type="button" class="approve-speak-btn px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 font-semibold" data-uid="${uid}">Grant Mic</button>
-              <button type="button" class="reject-speak-btn px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700" data-uid="${uid}">Decline</button>
-            </div>
-          `
+              ? `<div class="flex gap-2 shrink-0">
+              <button type="button" class="approve-speak-btn px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 font-semibold" data-uid="${escapeHTML(uid)}">Grant Mic</button>
+              <button type="button" class="reject-speak-btn px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700" data-uid="${escapeHTML(uid)}">Decline</button>
+            </div>`
               : '<span class="text-zinc-500 shrink-0">Pending Host Approval</span>'
           }
         </div>`;
@@ -816,20 +822,37 @@ async function renderRoomAdminPanel(room) {
 
       pendingContainer.querySelectorAll('.approve-speak-btn').forEach((btn) => {
         btn.addEventListener('click', async () => {
-          await updateDoc(doc(db, 'liveRooms', room.id), {
-            pendingRequests: arrayRemove(btn.dataset.uid),
-            speakers: arrayUnion(btn.dataset.uid)
-          });
-          showToast('Mic granted', 'success');
+          const targetUid = btn.dataset.uid;
+          try {
+            await updateDoc(doc(db, 'liveRooms', room.id), {
+              pendingRequests: arrayRemove(targetUid),
+              speakers: arrayUnion(targetUid)
+            });
+            try {
+              await updateDoc(doc(db, 'liveRooms', room.id, 'participants', targetUid), {
+                handRaised: false,
+                isMuted: false
+              });
+            } catch (_) {}
+            showToast('Mic granted', 'success');
+          } catch (err) {
+            console.error(err);
+            showToast('Could not grant mic', 'error');
+          }
         });
       });
 
       pendingContainer.querySelectorAll('.reject-speak-btn').forEach((btn) => {
         btn.addEventListener('click', async () => {
-          await updateDoc(doc(db, 'liveRooms', room.id), {
-            pendingRequests: arrayRemove(btn.dataset.uid)
-          });
-          showToast('Request declined', 'info');
+          try {
+            await updateDoc(doc(db, 'liveRooms', room.id), {
+              pendingRequests: arrayRemove(btn.dataset.uid)
+            });
+            showToast('Request declined', 'info');
+          } catch (err) {
+            console.error(err);
+            showToast('Could not decline', 'error');
+          }
         });
       });
     }
@@ -853,7 +876,7 @@ async function renderRoomAdminPanel(room) {
           </div>
           ${
             roomIsHost
-              ? `<button type="button" class="unban-user-btn px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 shrink-0" data-uid="${uid}">Unban</button>`
+              ? `<button type="button" class="unban-user-btn px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 shrink-0" data-uid="${escapeHTML(uid)}">Unban</button>`
               : ''
           }
         </div>`;
@@ -862,10 +885,15 @@ async function renderRoomAdminPanel(room) {
 
       bannedContainer.querySelectorAll('.unban-user-btn').forEach((btn) => {
         btn.addEventListener('click', async () => {
-          await updateDoc(doc(db, 'liveRooms', room.id), {
-            bannedUsers: arrayRemove(btn.dataset.uid)
-          });
-          showToast('User unbanned', 'success');
+          try {
+            await updateDoc(doc(db, 'liveRooms', room.id), {
+              bannedUsers: arrayRemove(btn.dataset.uid)
+            });
+            showToast('User unbanned', 'success');
+          } catch (err) {
+            console.error(err);
+            showToast('Could not unban', 'error');
+          }
         });
       });
     }
@@ -876,26 +904,40 @@ function renderInRoomInviteUI(room) {
   const linkInput = document.getElementById('roomInviteLinkInput');
   const codeInput = document.getElementById('roomInviteCodeInput');
 
-  if (linkInput) linkInput.value = `${window.location.origin}${window.location.pathname}?room=${room.id}`;
-  if (codeInput) codeInput.value = room.id.substring(0, 8).toUpperCase();
+  if (linkInput) {
+    linkInput.value = `${window.location.origin}${window.location.pathname}?room=${room.id}`;
+  }
+  if (codeInput) {
+    codeInput.value = (room.id || '').substring(0, 8).toUpperCase();
+  }
 
-  document.getElementById('copyRoomInviteBtn')?.addEventListener('click', async () => {
-    if (linkInput?.value) {
-      await navigator.clipboard.writeText(linkInput.value);
-      showToast('Invite link copied!', 'success');
-    }
-  });
+  const copyLinkBtn = document.getElementById('copyRoomInviteBtn');
+  const copyCodeBtn = document.getElementById('copyRoomCodeBtn');
 
-  document.getElementById('copyRoomCodeBtn')?.addEventListener('click', async () => {
-    if (codeInput?.value) {
-      await navigator.clipboard.writeText(codeInput.value);
-      showToast('Invite code copied!', 'success');
-    }
-  });
+  if (copyLinkBtn && !copyLinkBtn.dataset.wired) {
+    copyLinkBtn.dataset.wired = '1';
+    copyLinkBtn.addEventListener('click', async () => {
+      const v = document.getElementById('roomInviteLinkInput')?.value;
+      if (v) {
+        await navigator.clipboard.writeText(v);
+        showToast('Invite link copied!', 'success');
+      }
+    });
+  }
+  if (copyCodeBtn && !copyCodeBtn.dataset.wired) {
+    copyCodeBtn.dataset.wired = '1';
+    copyCodeBtn.addEventListener('click', async () => {
+      const v = document.getElementById('roomInviteCodeInput')?.value;
+      if (v) {
+        await navigator.clipboard.writeText(v);
+        showToast('Invite code copied!', 'success');
+      }
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------
-// Drop evidence modal & auto-sealing into linked group locker
+// Drop evidence → room + optional group locker + testimony
 // ---------------------------------------------------------------------------
 function wireDropEvidenceModal(roomId) {
   const dropModal = document.getElementById('dropEvidenceModal');
@@ -910,7 +952,7 @@ function wireDropEvidenceModal(roomId) {
   let selectedDropFile = null;
 
   dropBtn?.addEventListener('click', () => {
-    if (!requireAuth("Sign in to drop evidence")) return;
+    if (!requireAuth('Sign in to drop evidence')) return;
     dropModal?.classList.remove('hidden');
   });
 
@@ -935,25 +977,18 @@ function wireDropEvidenceModal(roomId) {
     if (photoInput) photoInput.value = '';
   });
 
- confirmDropBtn?.addEventListener('click', async () => {
+  confirmDropBtn?.addEventListener('click', async () => {
     if (!requireAuth()) return;
-
-    try {
-      assertRateLimit('upload', RL.upload);
-    } catch (e) {
-      showToast(e.message || 'Slow down', 'warning');
-      return;
-    }
+    if (!safeRateLimit('upload', RL.upload)) return;
 
     const note = (noteInput?.value || '').trim();
-   
     if (!note && !selectedDropFile) {
-      showToast("Add a note or attach a photo/audio", "warning");
+      showToast('Add a note or attach a photo/audio', 'warning');
       return;
     }
 
     confirmDropBtn.disabled = true;
-    confirmDropBtn.textContent = "Sealing…";
+    confirmDropBtn.textContent = 'Sealing…';
 
     try {
       let mediaUrl = null;
@@ -962,8 +997,6 @@ function wireDropEvidenceModal(roomId) {
 
       if (selectedDropFile) {
         const { uploadEvidenceMedia } = await import('./storage.js');
-        const { computeSHA256 } = await import('./utils.js');
-
         mediaHash = await computeSHA256(selectedDropFile);
         mediaType = selectedDropFile.type.startsWith('audio/') ? 'audio' : 'image';
         mediaUrl = await uploadEvidenceMedia(selectedDropFile, mediaType);
@@ -1004,7 +1037,7 @@ function wireDropEvidenceModal(roomId) {
           createdAt: serverTimestamp()
         });
       }
-      
+
       await addDoc(collection(db, 'testimonies'), {
         content: note || `Live evidence dropped from room: ${roomId}`,
         title: 'Live Evidence – Arena',
@@ -1025,7 +1058,7 @@ function wireDropEvidenceModal(roomId) {
         status: 'published'
       });
 
-      showToast("🛡️ Evidence sealed and dropped", "success");
+      showToast('🛡️ Evidence sealed and dropped', 'success');
       dropModal?.classList.add('hidden');
       selectedDropFile = null;
       if (noteInput) noteInput.value = '';
@@ -1034,10 +1067,10 @@ function wireDropEvidenceModal(roomId) {
       if (audioInput) audioInput.value = '';
     } catch (err) {
       console.error('[Drop Evidence]', err);
-      showToast("Failed to drop evidence", "error");
+      showToast('Failed to drop evidence', 'error');
     } finally {
       confirmDropBtn.disabled = false;
-      confirmDropBtn.textContent = "🛡️ Seal & Drop Evidence";
+      confirmDropBtn.textContent = '🛡️ Seal & Drop Evidence';
     }
   });
 }
@@ -1046,7 +1079,9 @@ function wireDropEvidenceModal(roomId) {
 async function connectToLiveKit(roomId) {
   try {
     if (livekitRoom) {
-      try { await livekitRoom.disconnect(); } catch (_) {}
+      try {
+        await livekitRoom.disconnect();
+      } catch (_) {}
       livekitRoom = null;
     }
 
@@ -1083,7 +1118,7 @@ async function connectToLiveKit(roomId) {
     });
 
     livekitRoom.on(RoomEvent.TrackUnsubscribed, (track) => {
-      track.detach().forEach(el => el.remove());
+      track.detach().forEach((el) => el.remove());
     });
 
     livekitRoom.on(RoomEvent.Disconnected, () => {
@@ -1092,10 +1127,10 @@ async function connectToLiveKit(roomId) {
 
     await livekitRoom.connect(url, token);
     console.log('Connected to LiveKit:', roomId);
-    showToast("Voice connected – ready to speak", "success");
+    showToast('Voice connected – ready to speak', 'success');
   } catch (err) {
     console.error('LiveKit connect error:', err);
-    showToast("Could not connect voice channel", "error");
+    showToast('Could not connect voice channel', 'error');
   }
 }
 
@@ -1103,7 +1138,7 @@ async function startSpeaking() {
   if (!livekitRoom || isSpeaking) return;
 
   if (livekitRoom.state !== 'connected') {
-    showToast("Voice channel not ready yet – wait a moment", "warning");
+    showToast('Voice channel not ready yet – wait a moment', 'warning');
     return;
   }
 
@@ -1135,12 +1170,12 @@ async function startSpeaking() {
       talkBtn.classList.add('ring-4', 'ring-red-500', 'scale-110', 'shadow-red-500/40', 'ptt-live');
     }
     if (status) {
-      status.textContent = "🔴 YOU ARE LIVE – Speak clearly";
+      status.textContent = '🔴 YOU ARE LIVE – Speak clearly';
       status.classList.add('text-red-400');
     }
   } catch (err) {
     console.error('Failed to start speaking:', err);
-    showToast("Microphone access denied or failed", "error");
+    showToast('Microphone access denied or failed', 'error');
     try {
       if (localAudioTrack) {
         localAudioTrack.stop();
@@ -1187,19 +1222,29 @@ async function stopSpeaking() {
     talkBtn.classList.remove('ring-4', 'ring-red-500', 'scale-110', 'shadow-red-500/40', 'ptt-live');
   }
   if (status) {
-    status.textContent = "Hold to speak • Release to stop";
+    status.textContent = 'Hold to speak • Release to stop';
     status.classList.remove('text-red-400');
   }
 }
 
-// ========== WIRE ALL IN-ROOM CONTROLS ==========
+// ========== WIRE IN-ROOM CONTROLS (fresh DOM each join) ==========
 function wireActiveRoomControls(roomId) {
   connectToLiveKit(roomId);
 
   const talkBtn = document.getElementById('pushToTalkBtn');
   if (talkBtn) {
-    talkBtn.addEventListener('mousedown', (e) => { e.preventDefault(); startSpeaking(); });
-    talkBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startSpeaking(); }, { passive: false });
+    talkBtn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      startSpeaking();
+    });
+    talkBtn.addEventListener(
+      'touchstart',
+      (e) => {
+        e.preventDefault();
+        startSpeaking();
+      },
+      { passive: false }
+    );
     talkBtn.addEventListener('mouseup', stopSpeaking);
     talkBtn.addEventListener('mouseleave', stopSpeaking);
     talkBtn.addEventListener('touchend', stopSpeaking);
@@ -1213,25 +1258,32 @@ function wireActiveRoomControls(roomId) {
       const snap = await getDoc(ref);
       const currentlyRaised = snap.data()?.handRaised || false;
       await updateDoc(ref, { handRaised: !currentlyRaised });
-      showToast(currentlyRaised ? "Hand lowered" : "Hand raised – waiting for host", "info");
+      if (!currentlyRaised) {
+        try {
+          await updateDoc(doc(db, 'liveRooms', currentRoomId), {
+            pendingRequests: arrayUnion(auth.currentUser.uid)
+          });
+        } catch (_) {}
+      } else {
+        try {
+          await updateDoc(doc(db, 'liveRooms', currentRoomId), {
+            pendingRequests: arrayRemove(auth.currentUser.uid)
+          });
+        } catch (_) {}
+      }
+      showToast(currentlyRaised ? 'Hand lowered' : 'Hand raised – waiting for host', 'info');
     } catch (err) {
       console.error(err);
-      showToast("Could not update hand", "error");
+      showToast('Could not update hand', 'error');
     }
   });
 
-  document.querySelectorAll('.room-react-btn').forEach(btn => {
+  document.querySelectorAll('.room-react-btn').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      if (!requireAuth("Sign in to react")) return;
+      if (!requireAuth('Sign in to react')) return;
       const type = btn.dataset.reaction;
       if (!type) return;
-
-      try {
-        assertRateLimit('live_reaction', RL.live_reaction);
-      } catch (e) {
-        showToast(e.message || 'Slow down', 'warning');
-        return;
-      }
+      if (!safeRateLimit('live_reaction', RL.live_reaction)) return;
 
       try {
         await updateDoc(doc(db, 'liveRooms', roomId), {
@@ -1241,18 +1293,22 @@ function wireActiveRoomControls(roomId) {
         spawnFloatingReaction(btn.textContent.trim());
       } catch (err) {
         console.error(err);
-        showToast("Could not send reaction", "error");
+        showToast('Could not send reaction', 'error');
       }
     });
   });
 
   const shareHandler = async () => {
     const shareUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(roomId)}`;
-    const title = document.querySelector('#activeRoomView h2')?.textContent?.trim() || 'Live Arena – VocalWitness';
+    const title =
+      document.querySelector('#activeRoomView h2')?.textContent?.trim() || 'Live Arena – VocalWitness';
     const text = `I'm in a live witness room on VocalWitness: ${title}`;
 
     if (navigator.share) {
-      try { await navigator.share({ title, text, url: shareUrl }); return; } catch (_) {}
+      try {
+        await navigator.share({ title, text, url: shareUrl });
+        return;
+      } catch (_) {}
     }
     openRoomShareMenu(shareUrl, title, text);
   };
@@ -1266,14 +1322,18 @@ function wireActiveRoomControls(roomId) {
       const corrRef = doc(db, 'liveRooms', roomId, 'corroborations', auth.currentUser.uid);
       const existing = await getDoc(corrRef);
       if (existing.exists()) {
-        showToast("You already corroborated this room", "info");
+        showToast('You already corroborated this room', 'info');
         return;
       }
-      await setDoc(corrRef, { uid: auth.currentUser.uid, displayName: auth.currentUser.displayName || 'Citizen', createdAt: serverTimestamp() });
-      showToast("✅ Corroboration recorded", "success");
+      await setDoc(corrRef, {
+        uid: auth.currentUser.uid,
+        displayName: auth.currentUser.displayName || 'Citizen',
+        createdAt: serverTimestamp()
+      });
+      showToast('✅ Corroboration recorded', 'success');
     } catch (err) {
       console.error(err);
-      showToast("Could not record corroboration", "error");
+      showToast('Could not record corroboration', 'error');
     }
   });
 
@@ -1286,43 +1346,86 @@ function wireActiveRoomControls(roomId) {
         sealedAt: serverTimestamp(),
         note: 'Segment sealed for public record'
       });
-      showToast("🛡️ Segment sealed to ledger", "success");
+      showToast('🛡️ Segment sealed to ledger', 'success');
     } catch (err) {
       console.error(err);
-      showToast("Could not seal segment", "error");
+      showToast('Could not seal segment', 'error');
+    }
+  });
+
+  document.getElementById('muteAllBtn')?.addEventListener('click', async () => {
+    if (!isHost || !currentRoomId) return;
+    try {
+      const snap = await getDocs(collection(db, 'liveRooms', currentRoomId, 'participants'));
+      await Promise.all(
+        snap.docs.map((d) =>
+          updateDoc(d.ref, { isSpeaking: false, handRaised: false }).catch(() => {})
+        )
+      );
+      showToast('All muted', 'info');
+    } catch (err) {
+      console.error(err);
+      showToast('Mute all failed', 'error');
+    }
+  });
+
+  document.getElementById('lowerHandsBtn')?.addEventListener('click', async () => {
+    if (!isHost || !currentRoomId) return;
+    try {
+      await updateDoc(doc(db, 'liveRooms', currentRoomId), { pendingRequests: [] });
+      const snap = await getDocs(collection(db, 'liveRooms', currentRoomId, 'participants'));
+      await Promise.all(
+        snap.docs.map((d) => updateDoc(d.ref, { handRaised: false }).catch(() => {}))
+      );
+      showToast('All hands lowered', 'info');
+    } catch (err) {
+      console.error(err);
+      showToast('Could not lower hands', 'error');
     }
   });
 
   document.getElementById('closeStageBtn')?.addEventListener('click', async () => {
     if (!isHost) return;
-    if (confirm("End stage session and seal transcript into linked group evidence locker?")) {
-      try {
-        if (currentRoomData?.groupId) {
-          const sessionSummary = `Stage Concluded: ${currentRoomData.title}\nHost: ${currentRoomData.hostUid}`;
-          const encoder = new TextEncoder();
-          const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(sessionSummary));
-          const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    if (!confirm('End stage session and seal a record into the linked group evidence locker (if any)?')) {
+      return;
+    }
+    try {
+      if (currentRoomData?.groupId) {
+        const sessionSummary = `Stage Concluded: ${currentRoomData.title || roomId}\nHost: ${currentRoomData.hostUid || ''}\nRoom: ${roomId}`;
+        const encoder = new TextEncoder();
+        const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(sessionSummary));
+        const hashHex = Array.from(new Uint8Array(hashBuffer))
+          .map((b) => b.toString(16).padStart(2, '0'))
+          .join('');
 
-          await addDoc(collection(db, 'group_evidence'), {
-            groupId: currentRoomData.groupId,
-            name: `Transcript: ${currentRoomData.title}`,
-            size: `${sessionSummary.length} B`,
-            mimeType: 'text/plain',
-            hash: hashHex,
-            hashAlg: 'SHA-256',
-            status: 'Live Arena Stage Record',
-            depositedBy: auth.currentUser.uid,
-            createdAt: serverTimestamp()
-          });
-        }
-
-        await updateDoc(doc(db, 'liveRooms', roomId), { isLive: false, status: 'ended' });
-        showToast("Stage ended & evidence sealed", "success");
-        window.leaveCurrentRoom();
-      } catch (err) {
-        console.error(err);
-        showToast("Failed to close stage", "error");
+        await addDoc(collection(db, 'group_evidence'), {
+          groupId: currentRoomData.groupId,
+          name: `Transcript: ${currentRoomData.title || roomId}`,
+          size: `${sessionSummary.length} B`,
+          sizeBytes: sessionSummary.length,
+          mimeType: 'text/plain',
+          hash: hashHex,
+          hashAlg: 'SHA-256',
+          url: null,
+          storagePath: null,
+          status: 'Live Arena Stage Record',
+          depositedBy: auth.currentUser.uid,
+          source: 'live-arena-stage-end',
+          liveRoomId: roomId,
+          createdAt: serverTimestamp()
+        });
       }
+
+      await updateDoc(doc(db, 'liveRooms', roomId), {
+        isLive: false,
+        status: 'ended',
+        lastActivityAt: serverTimestamp()
+      });
+      showToast('Stage ended & evidence sealed', 'success');
+      window.leaveCurrentRoom();
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to close stage', 'error');
     }
   });
 }
@@ -1335,11 +1438,14 @@ window.hostAction = async function (uid, action) {
   try {
     if (action === 'mute') {
       await updateDoc(ref, { isSpeaking: false, handRaised: false });
-      showToast("Participant muted", "info");
+      showToast('Participant muted', 'info');
     } else if (action === 'promote') {
       await updateDoc(ref, { isMuted: false, handRaised: false });
-      showToast("Participant promoted to speak", "success");
-      
+      await updateDoc(doc(db, 'liveRooms', currentRoomId), {
+        speakers: arrayUnion(uid),
+        pendingRequests: arrayRemove(uid)
+      });
+      showToast('Participant promoted to speak', 'success');
     } else if (action === 'remove') {
       await deleteDoc(ref);
       try {
@@ -1362,27 +1468,68 @@ window.hostAction = async function (uid, action) {
       });
       showToast('🚫 User expelled and banned', 'warning');
     }
+  } catch (err) {
+    console.error(err);
+    showToast('Action failed', 'error');
+  }
+};
 
 // ========== LEAVE ROOM ==========
 window.leaveCurrentRoom = async function (silent = false) {
   const leavingId = currentRoomId;
 
-  try { if (isSpeaking) await stopSpeaking(); } catch (_) {}
-  if (livekitRoom) { try { await livekitRoom.disconnect(); } catch (_) {} livekitRoom = null; }
-  if (localAudioTrack) { try { localAudioTrack.stop(); } catch (_) {} localAudioTrack = null; }
+  try {
+    if (isSpeaking) await stopSpeaking();
+  } catch (_) {}
+  if (livekitRoom) {
+    try {
+      await livekitRoom.disconnect();
+    } catch (_) {}
+    livekitRoom = null;
+  }
+  if (localAudioTrack) {
+    try {
+      localAudioTrack.stop();
+    } catch (_) {}
+    localAudioTrack = null;
+  }
   isSpeaking = false;
 
-  document.querySelectorAll('[id^="audio-"]').forEach(el => el.remove());
-  if (participantsUnsubscribe) { try { participantsUnsubscribe(); } catch (_) {} participantsUnsubscribe = null; }
-  if (activeRoomUnsubscribe) { try { activeRoomUnsubscribe(); } catch (_) {} activeRoomUnsubscribe = null; }
-  if (window._corrUnsub) { try { window._corrUnsub(); } catch (_) {} window._corrUnsub = null; }
-  if (window._reactUnsub) { try { window._reactUnsub(); } catch (_) {} window._reactUnsub = null; }
+  document.querySelectorAll('[id^="audio-"]').forEach((el) => el.remove());
+  if (participantsUnsubscribe) {
+    try {
+      participantsUnsubscribe();
+    } catch (_) {}
+    participantsUnsubscribe = null;
+  }
+  if (activeRoomUnsubscribe) {
+    try {
+      activeRoomUnsubscribe();
+    } catch (_) {}
+    activeRoomUnsubscribe = null;
+  }
+  if (window._corrUnsub) {
+    try {
+      window._corrUnsub();
+    } catch (_) {}
+    window._corrUnsub = null;
+  }
+  if (window._reactUnsub) {
+    try {
+      window._reactUnsub();
+    } catch (_) {}
+    window._reactUnsub = null;
+  }
 
   if (leavingId && auth.currentUser) {
     try {
-      await deleteDoc(doc(db, 'liveRooms', leavingId, 'participants', auth.currentUser.uid));
+      const uid = auth.currentUser.uid;
+      await deleteDoc(doc(db, 'liveRooms', leavingId, 'participants', uid));
       try {
         await updateDoc(doc(db, 'liveRooms', leavingId), {
+          speakers: arrayRemove(uid),
+          pendingRequests: arrayRemove(uid),
+          participants: arrayRemove(uid),
           lastActivityAt: serverTimestamp()
         });
       } catch (_) {}
@@ -1403,7 +1550,7 @@ window.leaveCurrentRoom = async function (silent = false) {
   document.getElementById('lobbyView')?.classList.remove('hidden');
   history.pushState({}, '', window.location.pathname);
 
-  if (!silent) showToast("Left the room", "info");
+  if (!silent) showToast('Left the room', 'info');
 };
 
 // ========== SHARE + FLOATING REACTIONS ==========
@@ -1411,6 +1558,8 @@ function spawnFloatingReaction(emoji) {
   const el = document.createElement('div');
   el.textContent = emoji;
   el.className = 'vw-float-react';
+  el.style.cssText =
+    'position:fixed;z-index:9998;font-size:28px;pointer-events:none;transition:transform 1s ease,opacity 1s ease;';
   el.style.left = `${35 + Math.random() * 30}%`;
   el.style.bottom = '18%';
   el.style.opacity = '1';
@@ -1452,12 +1601,17 @@ function openRoomShareMenu(shareUrl, title, text) {
     if (e.target === menu || e.target.closest('[data-share-close]')) menu.remove();
   });
 
-  menu.querySelectorAll('[data-share]').forEach(btn => {
+  menu.querySelectorAll('[data-share]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const type = btn.getAttribute('data-share');
       menu.remove();
       if (type === 'copy') {
-        try { await navigator.clipboard.writeText(shareUrl); showToast('Room link copied', 'success'); } catch { showToast('Could not copy link', 'error'); }
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          showToast('Room link copied', 'success');
+        } catch {
+          showToast('Could not copy link', 'error');
+        }
         return;
       }
       const urls = {
