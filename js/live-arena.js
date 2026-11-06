@@ -168,13 +168,6 @@ export function initLiveArena() {
       console.error(err);
       showToast("Failed to create room", "error");
     }
-    
-     try {
-    assertRateLimit('live_join', RL.live_join);
-  } catch (e) {
-    showToast(e.message, 'warning');
-    return;
-  }
   });
 
   // Filters
@@ -251,15 +244,7 @@ function renderRooms(rooms) {
     const reactions = room.reactions || {};
     const likes = reactions.like || 0;
     const claps = reactions.clap || 0;
-    
-     try {
-    assertRateLimit('live_reaction', RL.live_reaction);
-  } catch (e) {
-    showToast(e.message, 'warning');
-    return;
-  }
 
-    return `
     <div class="glass rounded-2xl border border-sky-500/20 p-5 hover:border-sky-400/50 hover:scale-[1.01] transition-all cursor-pointer group relative overflow-hidden"
          onclick="window.joinLiveRoom('${escapeHTML(room.id)}')"
          role="button"
@@ -326,9 +311,15 @@ export async function populateArenaGroupDropdown() {
 }
 
 async function createRoomWithOptions(title, category, groupId, privacy) {
+  try {
+    assertRateLimit('live_join', RL.live_join);
+  } catch (e) {
+    showToast(e.message || 'Slow down', 'warning');
+    throw e;
+  }
+
   const userTier = await getCurrentUserTier();
   const uid = auth.currentUser.uid;
-
   const roomPayload = {
     title: title.trim().slice(0, 120),
     category: category.trim().slice(0, 40),
@@ -376,6 +367,13 @@ async function createRoomWithOptions(title, category, groupId, privacy) {
 window.joinLiveRoom = async function (roomId, alreadyInUrl = false) {
   if (!requireAuth("Sign in to join")) return;
   if (!roomId || currentRoomId === roomId) return;
+
+  try {
+    assertRateLimit('live_join', RL.live_join);
+  } catch (e) {
+    showToast(e.message || 'Slow down', 'warning');
+    return;
+  }
 
   try {
     const roomSnap = await getDoc(doc(db, 'liveRooms', roomId));
@@ -937,10 +935,18 @@ function wireDropEvidenceModal(roomId) {
     if (photoInput) photoInput.value = '';
   });
 
-  confirmDropBtn?.addEventListener('click', async () => {
+ confirmDropBtn?.addEventListener('click', async () => {
     if (!requireAuth()) return;
 
+    try {
+      assertRateLimit('upload', RL.upload);
+    } catch (e) {
+      showToast(e.message || 'Slow down', 'warning');
+      return;
+    }
+
     const note = (noteInput?.value || '').trim();
+   
     if (!note && !selectedDropFile) {
       showToast("Add a note or attach a photo/audio", "warning");
       return;
@@ -1221,6 +1227,13 @@ function wireActiveRoomControls(roomId) {
       if (!type) return;
 
       try {
+        assertRateLimit('live_reaction', RL.live_reaction);
+      } catch (e) {
+        showToast(e.message || 'Slow down', 'warning');
+        return;
+      }
+
+      try {
         await updateDoc(doc(db, 'liveRooms', roomId), {
           [`reactions.${type}`]: increment(1),
           lastActivityAt: serverTimestamp()
@@ -1326,27 +1339,29 @@ window.hostAction = async function (uid, action) {
     } else if (action === 'promote') {
       await updateDoc(ref, { isMuted: false, handRaised: false });
       showToast("Participant promoted to speak", "success");
+      
     } else if (action === 'remove') {
       await deleteDoc(ref);
       try {
         await updateDoc(doc(db, 'liveRooms', currentRoomId), {
+          speakers: arrayRemove(uid),
+          pendingRequests: arrayRemove(uid),
+          participants: arrayRemove(uid),
           lastActivityAt: serverTimestamp()
         });
       } catch (_) {}
-      showToast("Participant removed", "info");
+      showToast('Participant removed', 'info');
     } else if (action === 'ban') {
       await deleteDoc(ref);
       await updateDoc(doc(db, 'liveRooms', currentRoomId), {
         bannedUsers: arrayUnion(uid),
+        speakers: arrayRemove(uid),
+        pendingRequests: arrayRemove(uid),
+        participants: arrayRemove(uid),
         lastActivityAt: serverTimestamp()
       });
-      showToast("🚫 User expelled and banned", "warning");
+      showToast('🚫 User expelled and banned', 'warning');
     }
-  } catch (err) {
-    console.error(err);
-    showToast("Action failed", "error");
-  }
-};
 
 // ========== LEAVE ROOM ==========
 window.leaveCurrentRoom = async function (silent = false) {
