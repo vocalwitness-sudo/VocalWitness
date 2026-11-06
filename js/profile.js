@@ -185,28 +185,6 @@ function listenToUserProfile(userId) {
 /**
  * Helper to sync user data into the publicProfiles collection
  */
-async function syncPublicProfile(uid, u) {
-  if (!uid || !u) return;
-  
-  await setDoc(
-    doc(db, "publicProfiles", uid),
-    {
-      uid: uid,
-      displayName: u.displayName || "Citizen",
-      photoURL: u.photoURL || null,
-      username: u.username || null,
-      tierBadge:
-        u.tier === "citizen_circle" ||
-        u.isPhoneVerified ||
-        u.hasVerifiedPhone
-          ? "citizen_circle"
-          : "citizen",
-      updatedAt: serverTimestamp()
-    },
-    { merge: true }
-  );
-}
-
 function renderProfileError(err) {
     const content =
         document.getElementById("mainProfileContent") ||
