@@ -56,6 +56,10 @@ function refreshTierUI() {
  * Creates or updates the users/{uid} document.
  * Must satisfy isSafeUserCreation() on first write.
  */
+/**
+ * Creates or updates the users/{uid} document.
+ * Must satisfy isSafeUserCreation() on first write.
+ */
 async function createOrUpdateUser(user) {
   if (!user?.uid) return;
 
@@ -94,64 +98,20 @@ async function createOrUpdateUser(user) {
           updatedAt: serverTimestamp()
         });
         console.log("[auth] Full user document created for:", user.uid);
+        updateVerificationUI(false);
+        if (!user.isAnonymous) {
+          showToast("Account created! Welcome to the Public Square.", "success");
+        }
       } catch (createErr) {
         console.warn("[auth] Full create failed, falling back to minimal payload:", createErr);
         try {
           await setDoc(userRef, minimal);
           console.log("[auth] Minimal user document created for:", user.uid);
+          updateVerificationUI(false);
         } catch (minErr) {
           // beforeUserCreated Cloud Function may have already written the doc
           console.warn("[auth] Minimal create also failed (likely race with CF):", minErr);
         }
-      }
-    } else {
-      // Optional: update basic fields for existing users if needed
-      try {
-        await updateDoc(userRef, {
-          email: safeEmail,
-          updatedAt: serverTimestamp()
-        });
-      } catch (updateErr) {
-        console.warn("[auth] User document update skipped:", updateErr);
-      }
-    }
-
-    // Upsert publicProfiles so group/arena UIs can show names (not raw UIDs)
-    try {
-      const pub = await getDoc(userRef);
-      const u = pub.exists() ? pub.data() : {};
-      await setDoc(
-        doc(db, "publicProfiles", user.uid),
-        {
-          uid: user.uid,
-          displayName:
-            u.displayName ||
-            safeDisplayName ||
-            (user.isAnonymous ? "Anonymous Citizen" : "Citizen"),
-          photoURL: u.photoURL || safePhotoURL || null,
-          username: u.username || null,
-          tierBadge:
-            u.tier === "citizen_circle" ||
-            u.isPhoneVerified ||
-            u.hasVerifiedPhone
-              ? "citizen_circle"
-              : "citizen",
-          updatedAt: serverTimestamp()
-        },
-        { merge: true }
-      );
-      console.log("[auth] publicProfiles upserted successfully for:", user.uid);
-    } catch (pubErr) {
-      console.warn("[auth] publicProfiles upsert skipped:", pubErr?.message || pubErr);
-    }
-
-  } catch (outerErr) {
-    console.error("[auth] createOrUpdateUser outer error:", outerErr);
-  }
-}
-      updateVerificationUI(false);
-      if (!user.isAnonymous) {
-        showToast("Account created! Welcome to the Public Square.", "success");
       }
     } else {
       // Existing user
@@ -185,6 +145,36 @@ async function createOrUpdateUser(user) {
       );
       updateVerificationUI(isVerified);
     }
+
+    // Upsert publicProfiles so group/arena UIs can show names (not raw UIDs)
+    try {
+      const pub = await getDoc(userRef);
+      const u = pub.exists() ? pub.data() : {};
+      await setDoc(
+        doc(db, "publicProfiles", user.uid),
+        {
+          uid: user.uid,
+          displayName:
+            u.displayName ||
+            safeDisplayName ||
+            (user.isAnonymous ? "Anonymous Citizen" : "Citizen"),
+          photoURL: u.photoURL || safePhotoURL || null,
+          username: u.username || null,
+          tierBadge:
+            u.tier === "citizen_circle" ||
+            u.isPhoneVerified ||
+            u.hasVerifiedPhone
+              ? "citizen_circle"
+              : "citizen",
+          updatedAt: serverTimestamp()
+        },
+        { merge: true }
+      );
+      console.log("[auth] publicProfiles upserted successfully for:", user.uid);
+    } catch (pubErr) {
+      console.warn("[auth] publicProfiles upsert skipped:", pubErr?.message || pubErr);
+    }
+
   } catch (e) {
     console.error("[auth] User document error:", e);
     showToast(
