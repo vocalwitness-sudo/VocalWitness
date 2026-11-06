@@ -4,26 +4,20 @@
  *
  * functions/anchor.js
  */
+
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onCall } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import admin from "firebase-admin";
-import OpenTimestamps from "opentimestamps";
 import { MerkleTree } from "merkletreejs";
 import crypto from "crypto";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { defineSecret } from "firebase-functions/params";
-
-// Secrets
-const r2AccessKeyId = defineSecret("R2_ACCESS_KEY_ID");
-const r2SecretAccessKey = defineSecret("R2_SECRET_ACCESS_KEY");
 
 // Initialize Firebase Admin only once
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-const db = admin.firestore();   // ← only one declaration
+const db = admin.firestore();
 
 // --------------------------------------------------
 // Helpers
@@ -38,26 +32,37 @@ function buildMerkleRoot(leaves) {
   return tree.getRoot().toString("hex");
 }
 
-function getR2Client() {
-  return new S3Client({
-    region: "auto",
-    endpoint:
-      process.env.R2_ENDPOINT ||
-      "https://b282f46ef0831c8af75bfe52120bbac6.r2.cloudflarestorage.com",
-    credentials: {
-      accessKeyId: r2AccessKeyId.value(),
-      secretAccessKey: r2SecretAccessKey.value(),
-    },
-  });
-}
+// --------------------------------------------------
+// Scheduled daily anchor (stub for now)
+// --------------------------------------------------
+export const dailyAnchor = onSchedule(
+  {
+    schedule: "0 0 * * *",
+    region: "us-central1",
+    memory: "512MiB",
+    timeoutSeconds: 120
+  },
+  async (event) => {
+    logger.info("Running daily anchor...", { structuredData: true });
+    // TODO: Real Merkle tree + OpenTimestamps logic will be added later
+  }
+);
 
-export const dailyAnchor = onSchedule("0 0 * * *", async (event) => {
-  logger.info("Running daily anchor...", { structuredData: true });
-  // Place your daily Merkle tree and OpenTimestamps logic here
-});
-
-export const triggerAnchorNow = onCall({ secrets: [r2AccessKeyId, r2SecretAccessKey] }, async (request) => {
-  logger.info("Triggering manual anchor...", { structuredData: true });
-  // Place your manual anchor logic here
-  return { success: true, message: "Anchor triggered successfully." };
-});
+// --------------------------------------------------
+// Manual trigger (deployable version – no secrets for now)
+// --------------------------------------------------
+export const triggerAnchorNow = onCall(
+  {
+    region: "us-central1",
+    memory: "256MiB",
+    timeoutSeconds: 60
+  },
+  async (request) => {
+    logger.info("Triggering manual anchor...", { structuredData: true });
+    // TODO: Real Merkle + OpenTimestamps logic will be added later
+    return { 
+      success: true, 
+      message: "Anchor triggered successfully (stub)." 
+    };
+  }
+);
