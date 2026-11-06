@@ -1,24 +1,35 @@
-name: CI - Smoke Tests
+
+name: CI - Smoke + Integrity Tests
+
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
 jobs:
-  smoke:
+  smoke-and-integrity:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
+
       - name: Install dependencies
         run: npm install
+
       - name: Lint (non-blocking)
         run: npm run lint || echo "Lint warnings present – continuing"
+
       - name: Phone Verification Smoke Test
         run: node tests/phone-smoke.js
+
+      - name: Production Integrity Test (real code)
+        run: npm run test:integrity
+
       - name: Build CSS
         run: |
           npm install -D tailwindcss @tailwindcss/cli
