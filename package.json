@@ -1,16 +1,20 @@
+
 {
   "name": "vocalwitness",
   "version": "1.0.0",
   "description": "VocalWitness - Truth • Evidence • Public Square",
   "private": true,
   "type": "module",
- "scripts": {
+  "scripts": {
     "build:css": "npx @tailwindcss/cli -i ./input.css -o ./style.css --minify",
     "watch:css": "npx @tailwindcss/cli -i ./input.css -o ./style.css --watch",
     "lint": "eslint js functions --no-error-on-unmatched-pattern",
     "lint:fix": "eslint js functions --fix --no-error-on-unmatched-pattern",
     "audit:i18n": "node scripts/audit-i18n.js",
     "emulators": "firebase emulators:start",
+    "test": "npx playwright test",
+    "test:integrity": "node tests/integrity-core.js",
+    "test:ci": "npm run test:integrity && npx playwright test --project=chromium",
     "deploy": "npm run audit:i18n && firebase deploy",
     "deploy:hosting": "npm run audit:i18n && npm run build:css && firebase deploy --only hosting",
     "deploy:functions": "firebase deploy --only functions",
@@ -18,10 +22,11 @@
     "install:all": "npm install && npm --prefix functions install"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": "22"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "@playwright/test": "^1.48.0",
     "@tailwindcss/cli": "^4.0.0",
     "eslint": "^9.0.0",
     "firebase-tools": "^13.0.0",
