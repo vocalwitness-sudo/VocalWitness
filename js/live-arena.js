@@ -19,6 +19,7 @@ import {
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 import { renderWitnessAuthorBadge } from './badges.js';
 import { assertRateLimit, RL } from './rate-limit.js';
+import { getPublicProfiles, profileChipHtml } from './profile-cache.js';
 
 const GOAL = 500;
 
@@ -763,7 +764,7 @@ function listenAndRenderRoomModeration(roomId) {
   });
 }
 
-function renderRoomAdminPanel(room) {
+async function renderRoomAdminPanel(room) {
   const currentUid = auth.currentUser?.uid;
   const roomIsHost = isHost || room.hostUid === currentUid;
 
@@ -772,23 +773,50 @@ function renderRoomAdminPanel(room) {
   const pending = room.pendingRequests || [];
   if (pendingCountEl) pendingCountEl.textContent = pending.length;
 
+  const bannedContainer = document.getElementById('arenaBannedList');
+  const bannedCountEl = document.getElementById('arenaBannedCount');
+  const banned = room.bannedUsers || [];
+  if (bannedCountEl) bannedCountEl.textContent = banned.length;
+
+  const allUids = [...new Set([...pending, ...banned])];
+  let profiles = {};
+  try {
+    profiles = await getPublicProfiles(allUids);
+  } catch (e) {
+    console.warn('[LiveArena] profile fetch failed', e);
+  }
+
   if (pendingContainer) {
     if (pending.length === 0) {
       pendingContainer.innerHTML = `<div class="p-3 text-center text-xs text-zinc-500 rounded-xl bg-zinc-900/40 border border-zinc-800">No pending requests</div>`;
     } else {
-      pendingContainer.innerHTML = pending.map(uid => `
-        <div class="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/90 p-2.5 text-xs">
-          <span class="font-mono text-zinc-300">${uid.slice(0, 10)}...</span>
-          ${roomIsHost ? `
-            <div class="flex gap-2">
+      pendingContainer.innerHTML = pending
+        .map((uid) => {
+          const p = profiles[uid] || { displayName: uid.slice(0, 10) + '…', photoURL: null };
+          const chip = profileChipHtml(p, escapeHTML);
+          return `
+        <div class="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/90 p-2.5 text-xs gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <div class="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-700 text-[10px]">
+              ${chip.avatarInner}
+            </div>
+            <span class="truncate text-zinc-300 font-medium">${chip.name}</span>
+          </div>
+          ${
+            roomIsHost
+              ? `
+            <div class="flex gap-2 shrink-0">
               <button type="button" class="approve-speak-btn px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 font-semibold" data-uid="${uid}">Grant Mic</button>
               <button type="button" class="reject-speak-btn px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700" data-uid="${uid}">Decline</button>
             </div>
-          ` : '<span class="text-zinc-500">Pending Host Approval</span>'}
-        </div>
-      `).join('');
+          `
+              : '<span class="text-zinc-500 shrink-0">Pending Host Approval</span>'
+          }
+        </div>`;
+        })
+        .join('');
 
-      pendingContainer.querySelectorAll('.approve-speak-btn').forEach(btn => {
+      pendingContainer.querySelectorAll('.approve-speak-btn').forEach((btn) => {
         btn.addEventListener('click', async () => {
           await updateDoc(doc(db, 'liveRooms', room.id), {
             pendingRequests: arrayRemove(btn.dataset.uid),
@@ -798,7 +826,7 @@ function renderRoomAdminPanel(room) {
         });
       });
 
-      pendingContainer.querySelectorAll('.reject-speak-btn').forEach(btn => {
+      pendingContainer.querySelectorAll('.reject-speak-btn').forEach((btn) => {
         btn.addEventListener('click', async () => {
           await updateDoc(doc(db, 'liveRooms', room.id), {
             pendingRequests: arrayRemove(btn.dataset.uid)
@@ -809,23 +837,32 @@ function renderRoomAdminPanel(room) {
     }
   }
 
-  const bannedContainer = document.getElementById('arenaBannedList');
-  const bannedCountEl = document.getElementById('arenaBannedCount');
-  const banned = room.bannedUsers || [];
-  if (bannedCountEl) bannedCountEl.textContent = banned.length;
-
   if (bannedContainer) {
     if (banned.length === 0) {
       bannedContainer.innerHTML = `<div class="p-3 text-center text-xs text-zinc-500 rounded-xl bg-zinc-900/40 border border-zinc-800">No banned users</div>`;
     } else {
-      bannedContainer.innerHTML = banned.map(uid => `
-        <div class="flex items-center justify-between rounded-xl border border-red-500/20 bg-red-950/20 p-2.5 text-xs">
-          <span class="font-mono text-red-300">${uid.slice(0, 10)}... (Banned)</span>
-          ${roomIsHost ? `<button type="button" class="unban-user-btn px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700" data-uid="${uid}">Unban</button>` : ''}
-        </div>
-      `).join('');
+      bannedContainer.innerHTML = banned
+        .map((uid) => {
+          const p = profiles[uid] || { displayName: uid.slice(0, 10) + '…', photoURL: null };
+          const chip = profileChipHtml(p, escapeHTML);
+          return `
+        <div class="flex items-center justify-between rounded-xl border border-red-500/20 bg-red-950/20 p-2.5 text-xs gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <div class="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-700 text-[10px]">
+              ${chip.avatarInner}
+            </div>
+            <span class="truncate text-red-300 font-medium">${chip.name} <span class="text-red-500/80">(Banned)</span></span>
+          </div>
+          ${
+            roomIsHost
+              ? `<button type="button" class="unban-user-btn px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 shrink-0" data-uid="${uid}">Unban</button>`
+              : ''
+          }
+        </div>`;
+        })
+        .join('');
 
-      bannedContainer.querySelectorAll('.unban-user-btn').forEach(btn => {
+      bannedContainer.querySelectorAll('.unban-user-btn').forEach((btn) => {
         btn.addEventListener('click', async () => {
           await updateDoc(doc(db, 'liveRooms', room.id), {
             bannedUsers: arrayRemove(btn.dataset.uid)
