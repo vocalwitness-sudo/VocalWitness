@@ -94,19 +94,44 @@ export function initGroupDetail() {
       if (btn) btn.click();
     }, 150);
   }
-  
-assertRateLimit('group_timeline', RL.group_timeline);
-  
+
   // Join / Leave
   document.getElementById('joinLeaveBtn')?.addEventListener('click', handleJoinLeave);
 
   // Post to group feed
   document.getElementById('postToGroupBtn')?.addEventListener('click', postToGroup);
 
-  // Core Tool buttons
-  document.getElementById('openEvidenceModalBtn')?.addEventListener('click', promptDepositEvidence);
-  document.getElementById('openAttestationModalBtn')?.addEventListener('click', promptSignAttestation);
-  document.getElementById('openTimelineModalBtn')?.addEventListener('click', promptAddTimelineNode);
+  // Core Tool buttons → open modals (not browser prompt)
+  document.getElementById('openAttestationModalBtn')?.addEventListener('click', openAttestationModal);
+  document.getElementById('openTimelineModalBtn')?.addEventListener('click', openTimelineModal);
+  document.getElementById('openEvidenceModalBtn')?.addEventListener('click', openEvidenceModal);
+
+  // Modal chrome (✕ + backdrop click)
+  wireModalChrome('attestationModal', 'closeAttestationModalBtn');
+  wireModalChrome('timelineModal', 'closeTimelineModalBtn');
+  wireModalChrome('evidenceModal', 'closeEvidenceModalBtn');
+
+  // Attestation char counter
+  document.getElementById('attestationStatementInput')?.addEventListener('input', (e) => {
+    const n = (e.target.value || '').length;
+    const el = document.getElementById('attestationCharCount');
+    if (el) el.textContent = `${n} / 1000`;
+  });
+
+  // Modal confirm actions
+  document.getElementById('confirmAttestationBtn')?.addEventListener('click', submitAttestationFromModal);
+  document.getElementById('confirmTimelineBtn')?.addEventListener('click', submitTimelineFromModal);
+  document.getElementById('confirmEvidenceBtn')?.addEventListener('click', submitEvidenceFromModal);
+
+  // Evidence file picker
+  document.getElementById('evidenceFileInput')?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0] || null;
+    window.__pendingEvidenceFile = file;
+    const nameEl = document.getElementById('evidenceFileName');
+    const btn = document.getElementById('confirmEvidenceBtn');
+    if (nameEl) nameEl.textContent = file ? file.name : '';
+    if (btn) btn.disabled = !file;
+  });
 
   // Invite copy buttons
   document.getElementById('copyInviteBtn')?.addEventListener('click', () => {
@@ -127,7 +152,6 @@ assertRateLimit('group_timeline', RL.group_timeline);
 
   loadGroup();
 }
-
 /**
  * Load group in real-time
  */
