@@ -126,14 +126,15 @@ async function writeAnchorRecord({ root, leafCount, hashesSample }) {
 }
 
 // --------------------------------------------------
-// Scheduled daily anchor
+// Scheduled daily anchor (lighter resources)
 // --------------------------------------------------
 export const dailyAnchor = onSchedule(
   {
-    schedule: "0 0 * * *", // every day at 00:00 UTC
+    schedule: "0 0 * * *",
     region: "us-central1",
-    memory: "512MiB",
-    timeoutSeconds: 180,
+    memory: "256MiB",          // reduced
+    timeoutSeconds: 120,
+    maxInstances: 1
   },
   async () => {
     logger.info("Starting daily VocalWitness anchor...");
@@ -165,9 +166,6 @@ export const dailyAnchor = onSchedule(
         leafCount: hashes.length,
         merkleRoot: root,
       });
-
-      // Future: send root to OpenTimestamps here
-      // and update the document with the .ots proof
     } catch (err) {
       logger.error("dailyAnchor failed", {
         message: err.message,
@@ -179,20 +177,16 @@ export const dailyAnchor = onSchedule(
 );
 
 // --------------------------------------------------
-// Manual trigger (callable)
+// Manual trigger (lighter resources)
 // --------------------------------------------------
 export const triggerAnchorNow = onCall(
   {
     region: "us-central1",
-    memory: "512MiB",
-    timeoutSeconds: 120,
+    memory: "256MiB",          // reduced
+    timeoutSeconds: 90,
+    maxInstances: 2
   },
   async (request) => {
-    // Optional: restrict to admins later
-    // if (!request.auth?.token?.admin) {
-    //   throw new HttpsError("permission-denied", "Admin only");
-    // }
-
     logger.info("Manual anchor triggered", {
       uid: request.auth?.uid || "unauthenticated",
     });
