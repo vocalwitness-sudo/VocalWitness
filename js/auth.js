@@ -52,10 +52,7 @@ function refreshTierUI() {
     console.warn("Tier UI refresh skipped:", e);
   }
 }
-/**
- * Creates or updates the users/{uid} document.
- * Must satisfy isSafeUserCreation() on first write.
- */
+
 /**
  * Creates or updates the users/{uid} document.
  * Must satisfy isSafeUserCreation() on first write.
@@ -146,33 +143,33 @@ async function createOrUpdateUser(user) {
       updateVerificationUI(isVerified);
     }
 
-    // Upsert publicProfiles so group/arena UIs can show names (not raw UIDs)
+    // Upsert publicProfiles so Groups / Live Arena can show names
     try {
-      const pub = await getDoc(userRef);
-      const u = pub.exists() ? pub.data() : {};
+      const pubSnap = await getDoc(userRef);
+      const u = pubSnap.exists() ? pubSnap.data() : {};
       await setDoc(
-        doc(db, "publicProfiles", user.uid),
+        doc(db, 'publicProfiles', user.uid),
         {
           uid: user.uid,
           displayName:
             u.displayName ||
             safeDisplayName ||
-            (user.isAnonymous ? "Anonymous Citizen" : "Citizen"),
+            (user.isAnonymous ? 'Anonymous Citizen' : 'Citizen'),
           photoURL: u.photoURL || safePhotoURL || null,
           username: u.username || null,
           tierBadge:
-            u.tier === "citizen_circle" ||
+            u.tier === 'citizen_circle' ||
             u.isPhoneVerified ||
             u.hasVerifiedPhone
-              ? "citizen_circle"
-              : "citizen",
+              ? 'citizen_circle'
+              : 'citizen',
           updatedAt: serverTimestamp()
         },
         { merge: true }
       );
       console.log("[auth] publicProfiles upserted successfully for:", user.uid);
     } catch (pubErr) {
-      console.warn("[auth] publicProfiles upsert skipped:", pubErr?.message || pubErr);
+      console.warn('[auth] publicProfiles upsert skipped:', pubErr?.message || pubErr);
     }
 
   } catch (e) {
@@ -185,7 +182,6 @@ async function createOrUpdateUser(user) {
     );
   }
 }
-
 export { createOrUpdateUser };
 window.createOrUpdateUser = createOrUpdateUser;
 
