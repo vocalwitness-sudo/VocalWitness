@@ -977,17 +977,28 @@ function wireDropEvidenceModal(roomId) {
       if (currentRoomData?.groupId) {
         await addDoc(collection(db, 'group_evidence'), {
           groupId: currentRoomData.groupId,
-          name: selectedDropFile ? selectedDropFile.name : `Arena Drop: ${note.substring(0, 20)}...`,
+          name: selectedDropFile
+            ? selectedDropFile.name
+            : `Arena Drop: ${(note || 'note').substring(0, 40)}`,
           size: selectedDropFile ? `${selectedDropFile.size} B` : '0 B',
+          sizeBytes: selectedDropFile ? selectedDropFile.size : 0,
           mimeType: selectedDropFile ? selectedDropFile.type : 'text/plain',
-          hash: mediaHash || 'NO_MEDIA_HASH',
-          hashAlg: 'SHA-256',
-          status: 'Live Arena Evidence Locker',
+          hash: mediaHash || null,
+          hashAlg: mediaHash ? 'SHA-256' : null,
+          url: mediaUrl || null,
+          storagePath: mediaUrl
+            ? mediaUrl.replace('https://media.vocalwitness.com/', '')
+            : null,
+          status: mediaUrl
+            ? 'Sealed (Live Arena → group locker)'
+            : 'Live Arena note (no media)',
           depositedBy: auth.currentUser.uid,
+          source: 'live-arena',
+          liveRoomId: roomId,
           createdAt: serverTimestamp()
         });
       }
-
+      
       await addDoc(collection(db, 'testimonies'), {
         content: note || `Live evidence dropped from room: ${roomId}`,
         title: 'Live Evidence – Arena',
