@@ -1506,11 +1506,28 @@ export const getLiveKitToken = onCall(
       throw new HttpsError("unauthenticated", "You must be signed in to join a live room.");
     }
 
+    const uid = request.auth.uid;
     const roomName = request.data?.roomName;
-    const participantName = request.data?.participantName || request.auth.token.name || "Citizen";
+    const participantName =
+      request.data?.participantName || request.auth.token.name || "Citizen";
 
-    if (!roomName || typeof roomName !== "string") {
+    if (!roomName || typeof roomName !== "string" || roomName.length > 128) {
       throw new HttpsError("invalid-argument", "roomName is required");
+    }
+
+    // Server-side throttle (client limits are not security)
+    await enforceRateLimit(uid, "livekit_token", { windowMs: 60_000, max: 12 });
+
+    const roomSnap = await db.collection("liveRooms").doc(roomName).get();
+    if (!roomSnap.exists) {
+      throw new HttpsError("not-found", "Room does not exist");
+    }
+    const room = roomSnap.data() || {};
+    if (room.isLive === false || room.status === "ended") {
+      throw new HttpsError("failed-precondition", "Stage has ended");
+    }
+    if (Array.isArray(room.bannedUsers) && room.bannedUsers.includes(uid)) {
+      throw new HttpsError("permission-denied", "Banned from this room");
     }
 
     try {
@@ -1518,8 +1535,8 @@ export const getLiveKitToken = onCall(
         livekitApiKey.value(),
         livekitApiSecret.value(),
         {
-          identity: request.auth.uid,
-          name: participantName,
+          identity: uid,
+          name: String(participantName).slice(0, 64),
           ttl: "2h",
         }
       );
@@ -1539,6 +1556,7 @@ export const getLiveKitToken = onCall(
         url: "wss://vocal-witness-0qwfaorm.livekit.cloud",
       };
     } catch (error) {
+      if (error instanceof HttpsError) throw error;
       console.error("LiveKit token error:", error);
       throw new HttpsError("internal", "Failed to generate LiveKit token");
     }
