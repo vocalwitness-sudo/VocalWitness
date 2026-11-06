@@ -1,7 +1,7 @@
 /**
  * tests/integrity-core.js
  * Production integrity test – tests the real algorithms used by VocalWitness.
- * No mocks of the hashing or pack logic.
+ * No mocks of the hashing or pack logic. 
  * Self-contained so it runs cleanly in Node / CI.
  */
 
