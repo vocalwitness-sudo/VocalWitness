@@ -18,7 +18,12 @@ import { initBookmarks, initBookmarksView } from './bookmarks.js';
 import { loadWeeklyLeaderboard, refreshTierAndUI } from './tier.js';
 import { wireIndexPage } from './ui-events.js';
 import { initComposer } from './composer.js';
-import { createEvidencePack } from './evidence-pack.js';
+import {
+  createEvidencePack,
+  downloadEvidencePack,
+  shareTestimony,
+  buildShareUrl,
+} from './evidence-pack.js';
 import { generateSha256Hash } from './utils.js';
 import { getAudioForPublish, uploadForensicMedia } from './media.js';
 import { initLiveArena } from './live-arena.js';
@@ -692,9 +697,19 @@ window.publishTestimony = async () => {
     if (typeof window.loadEvidenceLedger === 'function') window.loadEvidenceLedger();
     if (typeof window.loadForensicLedger === 'function') window.loadForensicLedger();
 
-    const successEl = document.getElementById('publish-success');
+  const successEl = document.getElementById('publish-success');
     const downloadPackBtn = document.getElementById('download-pack-after-publish');
+    const shareAfterBtn = document.getElementById('share-after-publish');
     const viewSquareBtn = document.getElementById('view-in-square-btn');
+
+    const sharePayload = {
+      id,
+      testimonyId: id,
+      packCoreHash: result?.packCoreHash || null,
+      forensicHash: result?.forensicHash || result?.packCoreHash || null,
+      channel,
+      targetFeed: channel,
+    };
 
     if (successEl) {
       successEl.classList.remove('hidden');
@@ -704,10 +719,13 @@ window.publishTestimony = async () => {
         downloadPackBtn.onclick = async () => {
           try {
             downloadPackBtn.disabled = true;
-            if (typeof handleDownloadEvidencePack === 'function') {
-              await handleDownloadEvidencePack(id);
-            } else if (result?.fullPack && typeof downloadEvidencePack === 'function') {
+            downloadPackBtn.innerHTML = 'Preparing…';
+            // Prefer in-memory pack from submitTestimony (fast, no extra fetch)
+            if (result?.fullPack) {
               downloadEvidencePack(result.fullPack, id);
+              showToast('Evidence Pack downloaded', 'success');
+            } else if (typeof handleDownloadEvidencePack === 'function') {
+              await handleDownloadEvidencePack(id);
             } else {
               showToast('Open the post to download the Evidence Pack', 'info');
             }
@@ -721,16 +739,45 @@ window.publishTestimony = async () => {
         };
       }
 
-      if (viewSquareBtn) {
-        viewSquareBtn.onclick = () => {
-          if (typeof window.switchTab === 'function') window.switchTab('square');
-          document.getElementById('feed-container')?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start',
-          });
+      if (shareAfterBtn) {
+        shareAfterBtn.onclick = async () => {
+          try {
+            shareAfterBtn.disabled = true;
+            const r = await shareTestimony(sharePayload);
+            if (r?.ok) {
+              showToast(
+                r.method === 'native' ? 'Shared' : 'Verifiable link copied',
+                'success'
+              );
+            } else if (r?.method !== 'cancelled') {
+              const url = buildShareUrl(sharePayload);
+              try {
+                await navigator.clipboard.writeText(url);
+                showToast('Verifiable link copied', 'success');
+              } catch (_) {
+                showToast(url, 'info');
+              }
+            }
+          } catch (err) {
+            console.error('[publish] Share failed:', err);
+            showToast('Could not share', 'error');
+          } finally {
+            shareAfterBtn.disabled = false;
+          }
         };
       }
 
+      if (viewSquareBtn) {
+        viewSquareBtn.onclick = () => {
+          if (typeof window.switchTab === 'function') window.switchTab('square');
+          (
+            document.getElementById('testimonies-feed') ||
+            document.getElementById('feed-container')
+          )?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+      }
+
+      // Give users time to download + share
       setTimeout(() => {
         successEl.classList.add('hidden');
         if (postBtn) postBtn.classList.remove('hidden');
@@ -738,7 +785,7 @@ window.publishTestimony = async () => {
         if (textarea) textarea.value = '';
         if (typeof mediaModule?.resetMediaState === 'function') mediaModule.resetMediaState();
         window.dispatchEvent(new CustomEvent('media-changed'));
-      }, 12000);
+      }, 45000);
     } else {
       if (titleInput) titleInput.value = '';
       if (textarea) textarea.value = '';
