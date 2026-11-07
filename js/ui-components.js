@@ -58,10 +58,11 @@ export function updateTierBadge(containerId, tier, reputation) {
  */
 export function renderForensicChips(post = {}) {
     const isWitness = post.targetFeed === 'witness_voice' || post.channel === 'witness_voice' || post.isWitnessVoice === true;
-    const hash = post.forensicHash || post.imageHash || post.audioHash || null;
-    const isZk = post.zkVerified || post.hasZkProof || false;
+    const hash = post.forensicHash || post.packCoreHash || post.imageHash || post.videoHash || post.audioHash || post.bodyHash || null;
+    const hasRealZK = post.zkProofVerified === true || post.zkVerified === true;
+    const hasHash = !!hash;
 
-    if (!isWitness && !hash && !isZk) return '';
+    if (!isWitness && !hasHash && !hasRealZK) return '';
 
     const truncatedHash = hash ? `${hash.substring(0, 8)}...${hash.substring(hash.length - 8)}` : null;
 
@@ -73,9 +74,13 @@ export function renderForensicChips(post = {}) {
                     Witness Voice
                 </span>
             ` : ''}
-            ${isZk ? `
+            ${hasRealZK ? `
                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md font-medium bg-purple-500/10 text-purple-300 border border-purple-500/30">
                     <span class="text-xs">🔐</span> ZK-Verified
+                </span>
+            ` : hasHash ? `
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                    <span class="text-xs">🛡️</span> Client-sealed
                 </span>
             ` : ''}
             ${hash ? `
@@ -298,16 +303,21 @@ if (typeof window !== 'undefined') {
  * Shows a small trust badge on each post
  */
 function renderTrustBadge(post) {
-  // Check different possible ways the post can be marked as verified
-  const isVerified = post.isZkVerified === true || 
-                     post.zkVerified === true || 
-                     post.hasZkProof === true ||
-                     post.channel === 'witness-voice';
+  const hasRealZK = post.zkProofVerified === true || post.zkVerified === true;
+  const hasHash = !!(post.forensicHash || post.packCoreHash || post.imageHash || post.videoHash || post.audioHash || post.bodyHash);
+  const isWitnessChannel = post.channel === 'witness-voice' || post.targetFeed === 'witness_voice';
 
-  if (isVerified) {
+  if (hasRealZK) {
+    return `
+      <span class="inline-flex items-center gap-1 rounded-full bg-violet-500/15 border border-violet-500/40 px-2.5 py-0.5 text-[11px] font-bold text-violet-300">
+        ✓ ZK Verified
+      </span>
+    `;
+  }
+  if (hasHash || isWitnessChannel) {
     return `
       <span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 px-2.5 py-0.5 text-[11px] font-bold text-emerald-400">
-        ✓ ZK Verified
+        🛡️ Client-sealed
       </span>
     `;
   }
@@ -318,7 +328,6 @@ function renderTrustBadge(post) {
     </span>
   `;
 }
-
 /**
  * Small "Field Note" badge for professional / org-attributed posts.
  * Shows only when postingStyle === 'field-note'.
