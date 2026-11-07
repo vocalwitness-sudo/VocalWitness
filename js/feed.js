@@ -68,6 +68,28 @@ function showNewPostsBanner(count) {
   // Auto-dismiss after 12s
   setTimeout(() => banner.remove(), 12000);
 }
+/**
+ * Accurate seal badge – only shows "ZK Sealed" when a real verified proof exists
+ */
+function getSealBadge(data = {}) {
+  const hasRealZK = data.zkProofVerified === true || data.zkVerified === true;
+  const hasHash = !!(
+    data.forensicHash ||
+    data.packCoreHash ||
+    data.imageHash ||
+    data.videoHash ||
+    data.audioHash ||
+    data.bodyHash
+  );
+
+  if (hasRealZK) {
+    return `<span class="inline-flex items-center gap-1 rounded-full border border-violet-500/40 bg-violet-500/10 px-2 py-0.5 text-[10px] font-semibold text-violet-300">🛡️ ZK Sealed</span>`;
+  }
+  if (hasHash) {
+    return `<span class="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">🛡️ Client-sealed</span>`;
+  }
+  return `<span class="inline-flex items-center gap-1 rounded-full border border-zinc-600 bg-zinc-800/80 px-2 py-0.5 text-[10px] font-medium text-zinc-400">Unsealed</span>`;
+}
 
 /**
  * Returns a quiet relative time string (e.g. "2h ago", "3d ago")
