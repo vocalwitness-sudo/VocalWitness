@@ -115,34 +115,36 @@ export async function executeAction(actionFn, buttonEl, loadingText = "Processin
 /* ====================== CRYPTO & FORENSICS ====================== */
 
 /**
- * Computes SHA-256 hash for raw strings, Blob, or ArrayBuffer inputs.
+ * Computes SHA-256 hash for raw strings, Blob, File, or ArrayBuffer.
+ * Returns lowercase hex string or null on failure.
  */
 export async function generateSha256Hash(input) {
-    try {
-        let data;
-        if (typeof input === 'string') {
-            data = new TextEncoder().encode(input);
-        } else if (input instanceof ArrayBuffer) {
-            data = input;
-        } else if (input && typeof input.arrayBuffer === 'function') {
-            data = await input.arrayBuffer();
-        } else {
-            data = new TextEncoder().encode(String(input));
-        }
-
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        return Array.from(new Uint8Array(hashBuffer))
-            .map(b => b.toString(16).padStart(2, '0'))
-            .join('');
-    } catch (e) {
-        console.error("Hash generation failed:", e);
-        return null;
+  try {
+    let data;
+    if (typeof input === 'string') {
+      data = new TextEncoder().encode(input);
+    } else if (input instanceof ArrayBuffer) {
+      data = input;
+    } else if (input && typeof input.arrayBuffer === 'function') {
+      data = await input.arrayBuffer();
+    } else {
+      data = new TextEncoder().encode(String(input));
     }
+
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hashBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  } catch (e) {
+    console.error('[utils] Hash generation failed:', e);
+    return null;
+  }
 }
 
-// ALIAS EXPORTS FOR COMPATIBILITY (Fixes corroboration.js named import crash)
+// Canonical aliases – use these everywhere
 export const computeSHA256 = generateSha256Hash;
 export const computeSha256 = generateSha256Hash;
+
 
 /* ====================== SANITIZATION & DOM UTILS ====================== */
 export function escapeHTML(str) {
