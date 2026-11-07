@@ -1,32 +1,14 @@
 // js/createPost.js - Single secure testimony submission (Cloud Function only)
+// Unified seal path: one hash function + processed-media hash only
+
 import { getFunctions, httpsCallable } from
   "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 import { auth } from './firebase-config.js';
-import { showToast } from './utils.js';
+import { showToast, computeSHA256 } from './utils.js';
 import { analyzeReportContent } from './moderation.js';
 import { processAndUploadMedia } from './media-pipeline.js';
 import { parsePostMetadata } from './utils/parser.js';
 import { createEvidencePack } from './evidence-pack.js';
-
-/**
- * SHA-256 of file / text (Web Crypto)
- */
-export async function computeSHA256(data) {
-  let buffer;
-  if (data instanceof ArrayBuffer) {
-    buffer = data;
-  } else if (data instanceof Blob || data instanceof File) {
-    buffer = await data.arrayBuffer();
-  } else if (typeof data === 'string') {
-    buffer = new TextEncoder().encode(data);
-  } else {
-    throw new Error("Invalid data format for cryptographic hashing.");
-  }
-  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-  return Array.from(new Uint8Array(hashBuffer))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
 
 function normalizeChannel(channel) {
   const allowed = [
@@ -42,20 +24,7 @@ function normalizeChannel(channel) {
 
 /**
  * Canonical publish entry — ALWAYS goes through submitTestimonySecure.
- *
- * @param {Object} params
- * @param {string} params.content
- * @param {string} [params.channel]
- * @param {File|Blob|null} [params.mediaFile] - single file (legacy)
- * @param {File|Blob|null} [params.imageFile]
- * @param {File|Blob|null} [params.videoFile]
- * @param {File|Blob|null} [params.audioFile]
- * @param {boolean} [params.isAnonymous]
- * @param {Function} [params.onProgress]
- * @param {string} [params.postingStyle] - 'citizen' | 'field-note'
- * @param {string|null} [params.fieldNoteRole]
- * @param {string|null} [params.fieldNoteOrg]
- * @returns {Promise<string>} document id
+ * Hash is always of the processed bytes that were actually uploaded.
  */
 export async function submitTestimony({
   content = '',
@@ -76,7 +45,7 @@ export async function submitTestimony({
     throw new Error("Unauthorized submission attempt.");
   }
 
-  // Resolve media (legacy single file → typed slots)
+  // Resolve legacy single file → typed slots
   if (mediaFile && !imageFile && !videoFile && !audioFile) {
     const mime = (mediaFile.type || '').toLowerCase();
     if (mime.startsWith('image/')) imageFile = mediaFile;
@@ -135,37 +104,51 @@ export async function submitTestimony({
     if (typeof onProgress === 'function') onProgress(p);
   };
 
+  // ===== UNIFIED MEDIA SEAL =====
+  // processAndUploadMedia MUST return { publicUrl, hash } where hash is of the processed bytes
   if (imageFile) {
     showToast("🛡️ Sealing image...", "info");
     const up = await processAndUploadMedia(imageFile, folder, reportProgress);
-    imageUrl = typeof up === 'string' ? up : up?.publicUrl;
-    imageHash = typeof up === 'object' ? up?.hash : await computeSHA256(imageFile);
-    if (!imageUrl || !imageHash) throw new Error("Image upload or hash failed.");
+    imageUrl = up?.publicUrl;
+    imageHash = up?.hash;
+    if (!imageUrl || !imageHash) {
+      throw new Error("Image upload or hash failed. Seal aborted.");
+    }
   }
+
   if (videoFile) {
     showToast("🛡️ Sealing video...", "info");
     const up = await processAndUploadMedia(videoFile, folder, reportProgress);
-    videoUrl = typeof up === 'string' ? up : up?.publicUrl;
-    videoHash = typeof up === 'object' ? up?.hash : await computeSHA256(videoFile);
-    if (!videoUrl || !videoHash) throw new Error("Video upload or hash failed.");
+    videoUrl = up?.publicUrl;
+    videoHash = up?.hash;
+    if (!videoUrl || !videoHash) {
+      throw new Error("Video upload or hash failed. Seal aborted.");
+    }
   }
+
   if (audioFile) {
     showToast("🛡️ Sealing audio...", "info");
     const up = await processAndUploadMedia(audioFile, folder, reportProgress);
-    audioUrl = typeof up === 'string' ? up : up?.publicUrl;
-    audioHash = typeof up === 'object' ? up?.hash : await computeSHA256(audioFile);
-    if (!audioUrl || !audioHash) throw new Error("Audio upload or hash failed.");
+    audioUrl = up?.publicUrl;
+    audioHash = up?.hash;
+    if (!audioUrl || !audioHash) {
+      throw new Error("Audio upload or hash failed. Seal aborted.");
+    }
   }
 
   const bodyHash = content.trim()
     ? await computeSHA256(content.trim())
     : null;
 
-  const forensicHash =
-    imageHash || videoHash || audioHash || bodyHash || null;
+  if (content.trim() && !bodyHash) {
+    throw new Error("Body hash failed. Seal aborted.");
+  }
+
+  const forensicHash = imageHash || videoHash || audioHash || bodyHash || null;
 
   const { hashtags, mentions, cleanedContent } = parsePostMetadata(content);
 
+  // ===== EVIDENCE PACK (required for integrity) =====
   let firestorePack = null;
   let packCoreHash = null;
   let fullPack = null;
@@ -173,7 +156,7 @@ export async function submitTestimony({
   try {
     const packResult = await createEvidencePack({
       content: cleanedContent || '',
-      bodyHash: bodyHash || forensicHash,
+      bodyHash: bodyHash || null,
       media: {
         imageUrl,
         imageHash,
@@ -195,7 +178,9 @@ export async function submitTestimony({
     packCoreHash = packResult.packCoreHash;
     fullPack = packResult.fullPack;
   } catch (packErr) {
-    console.warn("Evidence pack generation issue, proceeding without pack:", packErr);
+    console.error("Evidence pack generation failed:", packErr);
+    showToast("Could not build Evidence Pack. Please try again.", "error");
+    throw new Error("Evidence Pack required for sealed testimony.");
   }
 
   showToast("Sealing on server...", "info");
@@ -212,6 +197,10 @@ export async function submitTestimony({
     imageUrl,
     videoUrl,
     audioUrl,
+    imageHash,
+    videoHash,
+    audioHash,
+    bodyHash,
     hashtags: hashtags || [],
     mentions: mentions || [],
     postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
@@ -226,20 +215,20 @@ export async function submitTestimony({
     throw new Error("Secure submit returned no document id.");
   }
 
-  // Attach the real id to the full pack
+  // Attach real ID to the full pack for download
   if (fullPack) {
     fullPack.packId = id;
-    fullPack.verifyUrl = fullPack.verifyUrl || 
+    fullPack.verifyUrl =
+      fullPack.verifyUrl ||
       `https://vocalwitness.com/verify.html?id=${id}&h=${packCoreHash || forensicHash || ''}`;
   }
 
   if (moderationResult.status === 'pending_review') {
-    showToast("⚠️ Testimony submitted (server sealed).", "warning");
+    showToast("⚠️ Testimony submitted (server sealed – pending review).", "warning");
   } else {
     showToast("🛡️ Testimony cryptographically sealed and published!", "success");
   }
 
-  // Return rich object so the UI can show download + share
   return {
     id,
     fullPack,
