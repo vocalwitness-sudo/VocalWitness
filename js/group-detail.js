@@ -355,7 +355,6 @@ async function renderAdminMemberPanel(groupData) {
 
   // Extract lists (declare once — used below for pending / active / banned)
   const pending = groupData.pendingMembers || [];
-  const members = groupData.members || [];
   const banned = groupData.bannedMembers || [];
 
   // Fetch profiles for all unique UIDs across pending, members, and banned lists
