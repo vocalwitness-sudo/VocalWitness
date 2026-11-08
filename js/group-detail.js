@@ -353,7 +353,7 @@ async function renderAdminMemberPanel(groupData) {
   }
   panel.classList.remove('hidden');
 
-  // Extract lists
+  // Extract lists (declare once — used below for pending / active / banned)
   const pending = groupData.pendingMembers || [];
   const members = groupData.members || [];
   const banned = groupData.bannedMembers || [];
@@ -374,7 +374,7 @@ async function renderAdminMemberPanel(groupData) {
       .map((uid) => {
         const p = profiles[uid] || { displayName: uid.slice(0, 12) + '...', photoURL: null };
         const chip = profileChipHtml(p, escapeHtml);
-        
+
         return `
         <div class="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/90 p-3 text-xs">
           <div class="flex items-center gap-2 min-w-0">
@@ -396,8 +396,6 @@ async function renderAdminMemberPanel(groupData) {
       })
       .join('');
   }
-}
-
   // Active
   const activeContainer = document.getElementById('active-members-list');
   const activeCountEl = document.getElementById('active-count');
