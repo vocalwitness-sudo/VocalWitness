@@ -662,6 +662,138 @@ async function loadMoreEvidence() {
     if (btn && evidenceHasMore) btn.textContent = 'Load more evidence';
   }
 }
+
+function openEvidenceModal() {
+  const modal = document.getElementById('evidenceModal');
+  if (!modal) return;
+  window.__pendingEvidenceFile = null;
+  const nameEl = document.getElementById('evidenceFileName');
+  const btn = document.getElementById('confirmEvidenceBtn');
+  const input = document.getElementById('evidenceFileInput');
+  if (nameEl) nameEl.textContent = '';
+  if (btn) btn.disabled = true;
+  if (input) input.value = '';
+  modal.classList.remove('hidden');
+}
+
+/**
+ * Modal deposit:
+ * 1) Validate member
+ * 2) Upload first (may scrub/compress images)
+ * 3) Hash the bytes that were actually stored when possible
+ *    — for raw/docs: hash original (same as uploaded)
+ *    — for images: prefer hashing after pipeline; until upload.js returns blob,
+ *      store hash of original and flag transform risk in status
+ */
+async function submitEvidenceFromModal() {
+  if (!auth.currentUser) {
+    showToast('Please sign in to deposit evidence', 'error');
+    return;
+  }
+
+  const uid = auth.currentUser.uid;
+  const isMember =
+    currentGroupData?.members?.includes(uid) || currentGroupData?.creatorId === uid;
+  if (!isMember) {
+    showToast('Join the group before depositing evidence', 'error');
+    return;
+  }
+  if (currentGroupData?.bannedMembers?.includes(uid)) {
+    showToast('You are banned from this group', 'error');
+    return;
+  }
+
+  const file = window.__pendingEvidenceFile;
+  if (!file) {
+    showToast('Choose a file first', 'error');
+    return;
+  }
+
+  if (file.size > MAX_EVIDENCE_BYTES) {
+    showToast('File too large (max 80 MB)', 'error');
+    return;
+  }
+  if (!ALLOWED_EVIDENCE_EXT.test(file.name || '')) {
+    showToast('File type not allowed for group evidence', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('confirmEvidenceBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Sealing…';
+  }
+
+  try {
+    assertRateLimit('group_evidence', RL.group_evidence);
+  } catch (e) {
+    showToast(e.message || 'Slow down', 'warning');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '🛡️ Seal & Deposit';
+    }
+    return;
+  }
+
+  try {
+    showToast('Hashing evidence on your device…', 'info');
+    // Hash original (always). Note: images may be transformed on upload.
+    const hashOriginal = await computeSHA256(file);
+    if (!hashOriginal || hashOriginal.length !== 64) {
+      throw new Error('Failed to compute SHA-256 hash');
+    }
+
+    showToast('Uploading sealed file…', 'info');
+    const folderPath = `group-evidence/${currentGroupId}`;
+    const publicUrl = await uploadMedia(file, folderPath);
+
+    const isImage =
+      (file.type || '').startsWith('image/') ||
+      /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name || '');
+    const isRawDoc =
+      /\.(pdf|txt|zip|doc|docx)$/i.test(file.name || '') ||
+      (file.type || '').startsWith('application/') ||
+      file.type === 'text/plain';
+
+    // For docs/audio/video we treat original hash as stored hash.
+    // For images, mark that privacy pipeline may alter bytes (honest status).
+    const hashHex = hashOriginal;
+    const status = isImage
+      ? 'Sealed (SHA-256 of capture; image may be scrubbed/compressed on upload)'
+      : isRawDoc
+        ? 'Sealed (SHA-256 + document)'
+        : 'Sealed (SHA-256 + media)';
+
+    await addDoc(collection(db, 'group_evidence'), {
+      groupId: currentGroupId,
+      name: file.name,
+      size: formatBytes(file.size),
+      sizeBytes: file.size,
+      mimeType: file.type || 'application/octet-stream',
+      hash: hashHex,
+      hashAlg: 'SHA-256',
+      url: publicUrl,
+      storagePath: publicUrl
+        ? publicUrl.replace('https://media.vocalwitness.com/', '')
+        : null,
+      depositedBy: auth.currentUser.uid,
+      status,
+      createdAt: serverTimestamp(),
+    });
+
+    showToast('Evidence deposited & sealed', 'success');
+    document.getElementById('evidenceModal')?.classList.add('hidden');
+    window.__pendingEvidenceFile = null;
+  } catch (err) {
+    console.error(err);
+    showToast(err?.message || 'Failed to deposit evidence', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = !window.__pendingEvidenceFile;
+      btn.textContent = '🛡️ Seal & Deposit';
+    }
+  }
+}
 /**
  * Deposit evidence:
  * 1. Client-side SHA-256 of the original file
