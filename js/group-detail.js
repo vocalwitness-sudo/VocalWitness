@@ -355,6 +355,7 @@ async function renderAdminMemberPanel(groupData) {
 
   // Extract lists (declare once — used below for pending / active / banned)
   const pending = groupData.pendingMembers || [];
+  const members = groupData.members || [];
   const banned = groupData.bannedMembers || [];
 
   // Fetch profiles for all unique UIDs across pending, members, and banned lists
@@ -395,39 +396,52 @@ async function renderAdminMemberPanel(groupData) {
       })
       .join('');
   }
+
   // Active
   const activeContainer = document.getElementById('active-members-list');
   const activeCountEl = document.getElementById('active-count');
   if (activeCountEl) activeCountEl.textContent = members.length;
 
   if (activeContainer) {
-    activeContainer.innerHTML = members
-      .map((uid) => {
-        const isOwner = uid === groupData.creatorId;
-        return `
-        <div class="flex items-center justify-between rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-3 text-xs">
-          <div class="flex items-center gap-2">
-            <span class="font-mono text-zinc-300">${uid.slice(0, 12)}...</span>
-            ${isOwner ? '<span class="text-[10px] bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30">Owner</span>' : ''}
-          </div>
-          ${
-            !isOwner && uid !== currentUid
-              ? `
-            <div class="flex items-center gap-2">
-              <button type="button" class="remove-member-btn px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 font-medium transition" data-uid="${uid}">
-                Remove
-              </button>
-              <button type="button" class="expel-member-btn px-3 py-1.5 rounded-xl bg-red-500/15 text-red-400 hover:bg-red-500/25 border border-red-500/30 font-semibold transition" data-uid="${uid}">
-                🚫 Expel & Ban
-              </button>
+    if (members.length === 0) {
+      activeContainer.innerHTML = `<div class="p-3 text-center text-xs text-zinc-500 rounded-xl bg-zinc-900/40 border border-zinc-800/80">No active members</div>`;
+    } else {
+      activeContainer.innerHTML = members
+        .map((uid) => {
+          const isOwner = uid === groupData.creatorId;
+          const p = profiles[uid] || { displayName: uid.slice(0, 12) + '...', photoURL: null };
+          const chip = profileChipHtml(p, escapeHtml);
+
+          return `
+          <div class="flex items-center justify-between rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-3 text-xs">
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-700 text-xs">
+                ${chip.avatarInner}
+              </div>
+              <div class="min-w-0">
+                <span class="truncate text-zinc-300 font-medium block">${chip.name}</span>
+                ${isOwner ? '<span class="text-[10px] bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30">Owner</span>' : ''}
+              </div>
             </div>
-          `
-              : ''
-          }
-        </div>
-      `;
-      })
-      .join('');
+            ${
+              !isOwner && uid !== currentUid
+                ? `
+              <div class="flex items-center gap-2 shrink-0">
+                <button type="button" class="remove-member-btn px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 font-medium transition" data-uid="${uid}">
+                  Remove
+                </button>
+                <button type="button" class="expel-member-btn px-3 py-1.5 rounded-xl bg-red-500/15 text-red-400 hover:bg-red-500/25 border border-red-500/30 font-semibold transition" data-uid="${uid}">
+                  🚫 Expel & Ban
+                </button>
+              </div>
+            `
+                : ''
+            }
+          </div>
+        `;
+        })
+        .join('');
+    }
   }
 
   // Banned
@@ -439,16 +453,24 @@ async function renderAdminMemberPanel(groupData) {
     bannedContainer.innerHTML = `<div class="p-3 text-center text-xs text-zinc-500 rounded-xl bg-zinc-900/40 border border-zinc-800/80">No banned members</div>`;
   } else if (bannedContainer) {
     bannedContainer.innerHTML = banned
-      .map(
-        (uid) => `
+      .map((uid) => {
+        const p = profiles[uid] || { displayName: uid.slice(0, 12) + '...', photoURL: null };
+        const chip = profileChipHtml(p, escapeHtml);
+
+        return `
       <div class="flex items-center justify-between rounded-2xl border border-red-500/20 bg-red-950/20 p-3 text-xs">
-        <span class="font-mono text-red-300">${uid.slice(0, 12)}... (Banned)</span>
-        <button type="button" class="unban-member-btn px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 font-medium transition" data-uid="${uid}">
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-700 text-xs">
+            ${chip.avatarInner}
+          </div>
+          <span class="truncate text-red-300 font-medium">${chip.name} (Banned)</span>
+        </div>
+        <button type="button" class="unban-member-btn px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 font-medium transition shrink-0" data-uid="${uid}">
           Unban
         </button>
       </div>
-    `
-      )
+    `;
+      })
       .join('');
   }
 
@@ -481,7 +503,6 @@ async function renderAdminMemberPanel(groupData) {
     btn.addEventListener('click', async () => await unbanGroupMember(groupData.id, btn.dataset.uid));
   });
 }
-
 function updatePendingBadge(group) {
   const badge = document.getElementById('pendingBadge');
   if (!badge) return;
