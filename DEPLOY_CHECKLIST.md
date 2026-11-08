@@ -1,42 +1,39 @@
-DEPLOY_CHECKLIST.md
+# VocalWitness — Production Deployment Checklist
+**Version:** 2.0 · 2026-11-08  
+**Project:** vocalwitness-3affa
 
-# VocalWitness Deployment Checklist
+> Tick every box. Never deploy from memory.
 
-## Pre-Deploy Checks (Must Do Every Time)
+---
 
-### 1. Code & Syntax Check
-- [ ] No JavaScript errors in console (`Ctrl + Shift + R` hard refresh)
-- [ ] All buttons are clickable and working (Photo, Voice, Profile, Feed tabs)
-- [ ] `js/main.js`, `js/feed.js`, `js/media.js`, `js/auth.js` are clean
-- [ ] No duplicate imports or `Identifier already declared` errors
+## 0. Pre-Flight
 
-### 2. Firebase Rules Check (Security)
-- [ ] Rules are updated in **Firebase Console** (not just GitHub file)
-- [ ] Testimonies are publicly readable
-- [ ] Only authenticated users can create posts
-- [ ] Users can only edit their own data
+- [ ] On `main`, working tree clean
+- [ ] Latest `main` pulled
+- [ ] No `.env`, service-account keys, or secrets in the repo
+- [ ] You understand this is application-level sealing + OpenTimestamps (not a public blockchain)
 
-**Current Secure Rules** (copy to Firebase Console):
-```js
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    function isSignedIn() { return request.auth != null; }
-    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+---
 
-    match /users/{userId} {
-      allow read, create, update: if isOwner(userId);
-    }
+## 1. Code Health
 
-    match /testimonies/{postId} {
-      allow read: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if isOwner(resource.data.authorId);
-    }
+- [ ] Hard refresh on https://vocalwitness.com and https://vocalwitness-3affa.web.app
+- [ ] Zero critical console errors
+- [ ] Core flows work: post (text/voice/photo), Evidence Pack download, verify page
+- [ ] Media pipeline hashes the **final uploaded bytes** consistently
 
-    match /testimonies/{postId}/votes/{voteId} {
-      allow read: if true;
-      allow create: if isSignedIn();
-    }
-  }
-}
+---
+
+## 2. Security Rules (Critical)
+
+- [ ] `firestore.rules` and `storage.rules` in the repo are the source of truth
+- [ ] Rules deployed to live project
+- [ ] Live rules in Firebase Console match the repo (do **not** use any old weak sample rules)
+- [ ] Invariants confirmed:
+  - Sealed core fields cannot be changed by ordinary users
+  - Authors may only soft-hide or edit text inside the 30-minute window
+  - Hard delete of sealed evidence is forbidden for owners
+  - Tier / phone / admin / reputation fields are server-controlled
+
+```bash
+firebase deploy --only firestore:rules,storage --project vocalwitness-3affa
