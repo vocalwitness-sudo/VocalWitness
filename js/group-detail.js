@@ -659,6 +659,158 @@ async function loadMoreEvidence() {
   }
 }
 
+// ====================== MODAL HELPERS ======================
+
+function wireModalChrome(modalId, closeBtnId) {
+  const modal = document.getElementById(modalId);
+  const closeBtn = document.getElementById(closeBtnId);
+  if (!modal) return;
+
+  closeBtn?.addEventListener('click', () => modal.classList.add('hidden'));
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.classList.add('hidden');
+  });
+}
+
+function openAttestationModal() {
+  const modal = document.getElementById('attestationModal');
+  if (!modal) return;
+  const input = document.getElementById('attestationStatementInput');
+  const count = document.getElementById('attestationCharCount');
+  if (input) input.value = '';
+  if (count) count.textContent = '0 / 1000';
+  modal.classList.remove('hidden');
+  input?.focus();
+}
+
+async function submitAttestationFromModal() {
+  if (!auth.currentUser) {
+    showToast('Please sign in', 'error');
+    return;
+  }
+  const uid = auth.currentUser.uid;
+  const isMember =
+    currentGroupData?.members?.includes(uid) || currentGroupData?.creatorId === uid;
+  if (!isMember) {
+    showToast('Join the group before signing an attestation', 'error');
+    return;
+  }
+
+  const input = document.getElementById('attestationStatementInput');
+  const statement = (input?.value || '').trim();
+  if (!statement) {
+    showToast('Write a statement first', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('confirmAttestationBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Signing…';
+  }
+
+  try {
+    try {
+      assertRateLimit('group_attestation', RL.group_attestation);
+    } catch (e) {
+      showToast(e.message || 'Slow down', 'warning');
+      return;
+    }
+
+    await addDoc(collection(db, 'group_attestations'), {
+      groupId: currentGroupId,
+      statement: statement.slice(0, 1000),
+      signedBy: auth.currentUser.uid,
+      createdAt: serverTimestamp(),
+    });
+    showToast('Attestation signed', 'success');
+    document.getElementById('attestationModal')?.classList.add('hidden');
+    if (input) input.value = '';
+  } catch (err) {
+    console.error(err);
+    showToast(err?.message || 'Failed to sign attestation', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Sign Attestation';
+    }
+  }
+}
+
+function openTimelineModal() {
+  const modal = document.getElementById('timelineModal');
+  if (!modal) return;
+  const desc = document.getElementById('timelineDescriptionInput');
+  const time = document.getElementById('timelineEventTimeInput');
+  if (desc) desc.value = '';
+  if (time) time.value = '';
+  modal.classList.remove('hidden');
+  desc?.focus();
+}
+
+async function submitTimelineFromModal() {
+  if (!auth.currentUser) {
+    showToast('Please sign in', 'error');
+    return;
+  }
+  const uid = auth.currentUser.uid;
+  const isMember =
+    currentGroupData?.members?.includes(uid) || currentGroupData?.creatorId === uid;
+  if (!isMember) {
+    showToast('Join the group before adding timeline events', 'error');
+    return;
+  }
+
+  const descEl = document.getElementById('timelineDescriptionInput');
+  const timeEl = document.getElementById('timelineEventTimeInput');
+  const description = (descEl?.value || '').trim();
+  if (!description) {
+    showToast('Describe the event first', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('confirmTimelineBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Adding…';
+  }
+
+  try {
+    try {
+      assertRateLimit('group_timeline', RL.group_timeline);
+    } catch (e) {
+      showToast(e.message || 'Slow down', 'warning');
+      return;
+    }
+
+    let eventTime = serverTimestamp();
+    if (timeEl?.value) {
+      const d = new Date(timeEl.value);
+      if (!Number.isNaN(d.getTime())) eventTime = d;
+    }
+
+    await addDoc(collection(db, 'group_timeline'), {
+      groupId: currentGroupId,
+      description: description.slice(0, 500),
+      eventTime,
+      addedBy: auth.currentUser.uid,
+      createdAt: serverTimestamp(),
+    });
+    showToast('Timeline node added', 'success');
+    document.getElementById('timelineModal')?.classList.add('hidden');
+    if (descEl) descEl.value = '';
+    if (timeEl) timeEl.value = '';
+  } catch (err) {
+    console.error(err);
+    showToast(err?.message || 'Failed to add timeline node', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Add to Timeline';
+    }
+  }
+}
+
 function openEvidenceModal() {
   const modal = document.getElementById('evidenceModal');
   if (!modal) return;
