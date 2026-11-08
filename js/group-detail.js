@@ -398,7 +398,6 @@ async function renderAdminMemberPanel(groupData) {
   // Active
   const activeContainer = document.getElementById('active-members-list');
   const activeCountEl = document.getElementById('active-count');
-  const members = groupData.members || [];
   if (activeCountEl) activeCountEl.textContent = members.length;
 
   if (activeContainer) {
