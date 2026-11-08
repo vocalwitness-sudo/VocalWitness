@@ -435,7 +435,6 @@ async function renderAdminMemberPanel(groupData) {
   // Banned
   const bannedContainer = document.getElementById('banned-members-list');
   const bannedCountEl = document.getElementById('banned-count');
-  const banned = groupData.bannedMembers || [];
   if (bannedCountEl) bannedCountEl.textContent = banned.length;
 
   if (banned.length === 0 && bannedContainer) {
