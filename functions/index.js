@@ -2177,6 +2177,11 @@ export const submitTestimonySecure = onCall(
     const imageUrl = data.imageUrl || null;
     const videoUrl = data.videoUrl || null;
     const audioUrl = data.audioUrl || null;
+    // Batch C — individual hashes from client
+    const imageHash = data.imageHash || null;
+    const videoHash = data.videoHash || null;
+    const audioHash = data.audioHash || null;
+    const bodyHash = data.bodyHash || null;
     const hashtags = Array.isArray(data.hashtags) ? data.hashtags.slice(0, 30) : [];
     const mentions = Array.isArray(data.mentions) ? data.mentions.slice(0, 30) : [];
     const postingStyle = data.postingStyle === "field-note" ? "field-note" : "citizen";
@@ -2217,15 +2222,27 @@ export const submitTestimonySecure = onCall(
       );
     }
 
+    function isValidSha256Hex(h) {
+      return h == null || (typeof h === "string" && /^[a-f0-9]{64}$/i.test(h));
+    }
+
     if (!isValidMediaUrl(imageUrl) || !isValidMediaUrl(videoUrl) || !isValidMediaUrl(audioUrl)) {
       throw new HttpsError("invalid-argument", "Invalid media URL.");
     }
 
-    if (
-      forensicHash != null &&
-      (typeof forensicHash !== "string" || !/^[a-f0-9]{64}$/i.test(forensicHash))
-    ) {
+    if (!isValidSha256Hex(forensicHash)) {
       throw new HttpsError("invalid-argument", "Invalid forensic hash (expect 64 hex chars).");
+    }
+    if (
+      !isValidSha256Hex(imageHash) ||
+      !isValidSha256Hex(videoHash) ||
+      !isValidSha256Hex(audioHash) ||
+      !isValidSha256Hex(bodyHash)
+    ) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Invalid media/body hash (expect 64 hex chars or null)."
+      );
     }
 
     if (
@@ -2307,6 +2324,12 @@ export const submitTestimonySecure = onCall(
       imageUrl: imageUrl || null,
       videoUrl: videoUrl || null,
       audioUrl: audioUrl || null,
+      // Batch C — persist individual hashes
+      imageHash: imageHash || null,
+      videoHash: videoHash || null,
+      audioHash: audioHash || null,
+      bodyHash: bodyHash || null,
+
       evidencePack,
       packCoreHash: packCoreHash || null,
 
