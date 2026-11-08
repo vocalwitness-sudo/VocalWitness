@@ -7,6 +7,7 @@ import {
     onSnapshot, 
     limit, 
     doc, 
+    getDoc,
     updateDoc, 
     increment, 
     deleteDoc, 
@@ -19,7 +20,7 @@ import { renderDownloadPackButton } from './evidence-ui.js';
 import { toFullEvidencePack, downloadEvidencePack } from './evidence-pack.js';
 import { db, auth } from './firebase-config.js?v=2';
 import { showToast } from './utils.js';
-import { renderTierCircle, renderFieldNoteBadge } from './ui-components.js';   // ← single import
+import { renderTierCircle, renderFieldNoteBadge } from './ui-components.js';
 import { hasStewardAccess, canCorroborate } from './tier.js';
 import { toggleReaction } from './reactions.js';
 import { applyPostDoorDecorations } from './door-ui.js';
@@ -37,6 +38,7 @@ let allPostsCache = [];
 let currentChannel = 'citizen-talk';
 let searchDebounceTimer = null;
 let isStewardUserCache = false;
+
 function escapeHTML(str) {
     if (!str) return '';
     return String(str)
@@ -46,8 +48,8 @@ function escapeHTML(str) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
 }
+
 function showNewPostsBanner(count) {
-  // Remove existing banner
   document.getElementById('new-posts-banner')?.remove();
 
   const banner = document.createElement('div');
@@ -57,7 +59,6 @@ function showNewPostsBanner(count) {
   banner.onclick = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     banner.remove();
-    // Re-render so newest is visible
     applySearchAndFilter(
       document.getElementById('testimonies-feed') ||
       document.getElementById('feed-container')
@@ -65,30 +66,7 @@ function showNewPostsBanner(count) {
   };
   document.body.appendChild(banner);
 
-  // Auto-dismiss after 12s
   setTimeout(() => banner.remove(), 12000);
-}
-/**
- * Accurate seal badge – only shows "ZK Sealed" when a real verified proof exists
- */
-function getSealBadge(data = {}) {
-  const hasRealZK = data.zkProofVerified === true || data.zkVerified === true;
-  const hasHash = !!(
-    data.forensicHash ||
-    data.packCoreHash ||
-    data.imageHash ||
-    data.videoHash ||
-    data.audioHash ||
-    data.bodyHash
-  );
-
-  if (hasRealZK) {
-    return `<span class="inline-flex items-center gap-1 rounded-full border border-violet-500/40 bg-violet-500/10 px-2 py-0.5 text-[10px] font-semibold text-violet-300">🛡️ ZK Sealed</span>`;
-  }
-  if (hasHash) {
-    return `<span class="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">🛡️ Client-sealed</span>`;
-  }
-  return `<span class="inline-flex items-center gap-1 rounded-full border border-zinc-600 bg-zinc-800/80 px-2 py-0.5 text-[10px] font-medium text-zinc-400">Unsealed</span>`;
 }
 
 /**
@@ -169,14 +147,12 @@ function openShareMenu(shareUrl, title, text) {
 
     document.body.appendChild(menu);
 
-    // Close on backdrop or ✕
     menu.addEventListener('click', (e) => {
         if (e.target === menu || e.target.closest('[data-share-close]')) {
             menu.remove();
         }
     });
 
-    // Handle each button
     menu.querySelectorAll('[data-share]').forEach(btn => {
         btn.addEventListener('click', async () => {
             const type = btn.getAttribute('data-share');
@@ -235,7 +211,6 @@ function getEditedLabel(data) {
   return `<span class="text-[11px] text-zinc-500 ml-1.5">· Edited ${timeAgo(data.editedAt)}</span>`;
 }
 
-
 /**
  * Checks and caches the user's steward status to prevent unhandled promises in sync renderers.
  */
@@ -269,14 +244,12 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
     }
     ensureSearchAndFilterUI(feedContainer);
 
-    // Initial loading
     feedContainer.innerHTML = `
     <div class="text-center py-16 text-zinc-500" id="feed-loading">
         <div class="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent"></div>
         <p class="text-sm">Loading reports from the Square...</p>
     </div>`;
 
-    // Global event listener setup for set-sort
     window.addEventListener('feed-set-sort', (e) => {
         const sort = e.detail?.sort;
         if (!sort) return;
@@ -284,7 +257,6 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
         btn?.click();
     });
 
-    // Event delegation (attached only once)
     if (!feedContainer.dataset.listenerAttached) {
         feedContainer.dataset.listenerAttached = 'true';
         feedContainer.addEventListener('click', async (e) => {
@@ -294,14 +266,13 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
             const action = btn.getAttribute('data-action');
             const id = btn.getAttribute('data-id');
 
-                      // Quick toggle for UI expansion panels
             if (action === 'toggle-translate') {
                 const box = document.getElementById(`translate-box-${id}`);
                 if (box) box.classList.toggle('hidden');
                 return;
             }
 
-                       if (action === 'toggle-more') {
+            if (action === 'toggle-more') {
                 const textEl = document.getElementById(`post-text-${id}`);
                 if (!textEl) return;
                 const expanded = textEl.getAttribute('data-expanded') === 'true';
@@ -360,7 +331,6 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                             ? (post.content.length > 120 ? post.content.slice(0, 117) + '…' : post.content)
                             : 'Witness report shared via VocalWitness';
 
-                        // Native share on real mobile devices
                         if (navigator.share && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
                             navigator.share({ title, text, url: shareUrl })
                                 .then(() => showToast('Shared successfully', 'success'))
@@ -371,7 +341,6 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                                     }
                                 });
                         } else {
-                            // Desktop → clean button menu
                             openShareMenu(shareUrl, title, text);
                         }
                     } catch (err) {
@@ -386,9 +355,9 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                 } else if (action === 'edit') {
                     await handleEditPost(id);
                 } else if (action === 'hide') {
-                    await handleHidePost(id, false);          // revocable
+                    await handleHidePost(id, false);
                 } else if (action === 'permanent-hide') {
-                    await handleHidePost(id, true);           // permanent
+                    await handleHidePost(id, true);
                 } else if (action === 'menu') {
                     if (typeof showPostMenu === 'function') showPostMenu(id);
                     else console.warn('showPostMenu is not defined');
@@ -405,7 +374,6 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                     showToast('Something went wrong. Please try again.', 'error');
                 }
             } finally {
-                // Only re-enable if it wasn't permanently disabled by successful corroboration
                 if (action !== 'corroborate' || !btn.classList.contains('cursor-default')) {
                     btn.disabled = false;
                     btn.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -416,7 +384,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
     
 const q = query(
     collection(db, 'testimonies'),
-    where('channel', '==', currentChannel),  // or feedVisibility
+    where('channel', '==', currentChannel),
     orderBy('createdAt', 'desc'),
     limit(50)
 );
@@ -425,7 +393,6 @@ let previousIds = new Set();
 let isFirstSnapshot = true;
 
 activeFeedListener = onSnapshot(q, (snapshot) => {
-    const previousCache = [...allPostsCache];
     allPostsCache = [];
     
         if (snapshot.empty) {
@@ -443,7 +410,7 @@ activeFeedListener = onSnapshot(q, (snapshot) => {
             }
         });
 
-        // Newest first (pinned stay on top)
+        // Cache order: pinned first, then newest (final display rank is signal-based)
         allPostsCache.sort((a, b) => {
             if (a.isPinned && !b.isPinned) return -1;
             if (!a.isPinned && b.isPinned) return 1;
@@ -460,7 +427,6 @@ activeFeedListener = onSnapshot(q, (snapshot) => {
             return timeB - timeA;
         });
 
-        // Detect truly new posts (after first load)
         const currentIds = new Set(allPostsCache.map(p => p.id));
         let newCount = 0;
         if (!isFirstSnapshot) {
@@ -473,7 +439,6 @@ activeFeedListener = onSnapshot(q, (snapshot) => {
 
         applySearchAndFilter(feedContainer);
 
-        // Show "New reports" banner if user is scrolled down and new posts arrived
         if (newCount > 0) {
             const feedTop = feedContainer.getBoundingClientRect().top;
             const isNearTop = feedTop > -80 && window.scrollY < 200;
@@ -481,7 +446,6 @@ activeFeedListener = onSnapshot(q, (snapshot) => {
             if (!isNearTop) {
                 showNewPostsBanner(newCount);
             } else {
-                // Subtle highlight for the newest card
                 const firstCard = feedContainer.querySelector('[data-post-id]');
                 if (firstCard) {
                     firstCard.classList.add('ring-2', 'ring-emerald-500/50');
@@ -515,7 +479,7 @@ function ensureSearchAndFilterUI(container) {
         </div>
         <div class="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0" id="filterBtnGroup">
             <button data-filter="all" data-active="true" class="filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition">All</button>
-            <button data-filter="verified" data-active="false" class="filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">🛡️ Verified</button>
+            <button data-filter="verified" data-active="false" class="filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">🛡️ Circle</button>
             <button data-filter="media" data-active="false" class="filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">📷 Media</button>
             <button data-filter="corroborated" data-active="false" class="filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">👁️ Corroborated</button>
         </div>
@@ -550,24 +514,68 @@ function ensureSearchAndFilterUI(container) {
     });
 }
 
+function scorePost(post) {
+    let s = 0;
+    const hasMedia = !!(post.imageUrl || post.audioUrl || post.videoUrl);
+    const corr = Number(post.corroborationCount || post.corroborationScore || 0);
+    const tier = String(post.authorTier || '').toLowerCase();
+    const sealed = !!(
+        post.packCoreHash ||
+        post.forensicHash ||
+        post.evidencePack ||
+        post.imageHash ||
+        post.audioHash ||
+        post.videoHash ||
+        post.bodyHash
+    );
+
+    if (post.isPinned) s += 200;
+    if (hasMedia) s += 100;
+    if (corr >= 1) s += 50 + Math.min(corr, 10) * 5;
+    if (tier && tier !== 'citizen' && tier !== 'unverified') s += 30;
+    if (sealed) s += 20;
+
+    const t =
+        (post.createdAt && typeof post.createdAt.toMillis === 'function'
+            ? post.createdAt.toMillis()
+            : post.createdAt?.seconds
+              ? post.createdAt.seconds * 1000
+              : 0) || 0;
+    s += Math.min(20, Math.floor(t / 3.6e6) % 20);
+
+    return s;
+}
+
+function postTimeMs(post) {
+    if (post.createdAt && typeof post.createdAt.toMillis === 'function') {
+        return post.createdAt.toMillis();
+    }
+    if (post.createdAt?.seconds) return post.createdAt.seconds * 1000;
+    if (post.timestamp?.toMillis) return post.timestamp.toMillis();
+    return 0;
+}
+
 function applySearchAndFilter(container) {
     const searchInput = document.getElementById('feedSearchInput');
-    const queryText = searchInput ? searchInput.value.toLowerCase().trim() : "";
+    const queryText = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
     const activeFilterBtn = document.querySelector('#filterBtnGroup .filter-btn[data-active="true"]');
     const filterType = activeFilterBtn ? activeFilterBtn.getAttribute('data-filter') : 'all';
 
-    const filtered = allPostsCache.filter(post => {
-       if (
-         post.moderationStatus === "removed" ||
-         post.isDeleted === true ||
-         post.isHidden === true ||
-         post.isPermanentlyHidden === true ||
-         post.visibility === 'author_hidden' ||
-         post.visibility === 'moderator_hidden'
-       ) return false;
-        
-        const matchesSearch = !queryText || 
+    const filtered = allPostsCache.filter((post) => {
+        if (
+            post.moderationStatus === 'removed' ||
+            post.isDeleted === true ||
+            post.isHidden === true ||
+            post.isPermanentlyHidden === true ||
+            post.visibility === 'author_hidden' ||
+            post.visibility === 'moderator_hidden'
+        ) {
+            return false;
+        }
+
+        const matchesSearch =
+            !queryText ||
             (post.headline && post.headline.toLowerCase().includes(queryText)) ||
             (post.title && post.title.toLowerCase().includes(queryText)) ||
             (post.content && post.content.toLowerCase().includes(queryText)) ||
@@ -578,20 +586,100 @@ function applySearchAndFilter(container) {
 
         if (filterType === 'verified') {
             return post.authorTier && post.authorTier !== 'citizen' && post.authorTier !== 'unverified';
-        } else if (filterType === 'media') {
+        }
+        if (filterType === 'media') {
             return !!(post.imageUrl || post.audioUrl || post.videoUrl);
-        } else if (filterType === 'corroborated') {
+        }
+        if (filterType === 'corroborated') {
             return (post.corroborationCount || 0) >= 1;
         }
         return true;
+    });
+
+    // Signal-first ranking (media → corroboration → circle → sealed → recency)
+    filtered.sort((a, b) => {
+        const diff = scorePost(b) - scorePost(a);
+        if (diff !== 0) return diff;
+        return postTimeMs(b) - postTimeMs(a);
     });
 
     renderFilteredPosts(filtered, container);
 }
 window.applySearchAndFilter = applySearchAndFilter;
 
+const SQUARE_PROMPTS = [
+    {
+        label: 'Power outage',
+        text: 'Power outage in [area] started around [time]. Light not restored as of [time].',
+    },
+    {
+        label: 'Water / borehole',
+        text: 'Water scarcity in [area]. Borehole/tap has been dry for [days]. Residents queuing at [place].',
+    },
+    {
+        label: 'Traffic / breakdown',
+        text: 'Heavy traffic on [road] near [landmark] due to [reason]. Drivers advised to use alternative routes.',
+    },
+    {
+        label: 'Checkpoint / road',
+        text: 'Police/checkpoint at [junction] is active this evening. Drivers being stopped for routine checks.',
+    },
+    {
+        label: 'Market / shortage',
+        text: 'At [market], [item] is scarce / price is about [amount]. Observed [time/date].',
+    },
+];
+
+function fillComposerFromPrompt(text) {
+    const input = document.getElementById('mainInput');
+    if (input) {
+        input.value = text;
+        input.focus();
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    if (typeof showToast === 'function') {
+        showToast('Edit the [brackets], then Publish Report', 'info');
+    }
+}
+
+function renderPromptButtonsHTML() {
+    return SQUARE_PROMPTS.map(
+        (p, i) => `
+      <button type="button" data-square-prompt="${i}"
+        class="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-zinc-200 hover:border-emerald-500/50 hover:text-white transition">
+        ${p.label}
+      </button>`
+    ).join('');
+}
+
+function wirePromptButtons(root) {
+    if (!root) return;
+    root.querySelectorAll('[data-square-prompt]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const p = SQUARE_PROMPTS[Number(btn.getAttribute('data-square-prompt'))];
+            if (p) fillComposerFromPrompt(p.text);
+        });
+    });
+}
+
+function buildPromptStripEl() {
+    const wrap = document.createElement('div');
+    wrap.id = 'square-prompt-strip';
+    wrap.className = 'mb-4 rounded-2xl border border-emerald-500/25 bg-zinc-900/60 p-4';
+    wrap.innerHTML = `
+    <p class="text-sm font-semibold text-white mb-1">Be the next sealed report</p>
+    <p class="text-xs text-zinc-400 mb-3">One-tap prompts — edit facts, then seal &amp; publish.</p>
+    <div class="flex flex-wrap gap-2">
+      ${renderPromptButtonsHTML()}
+    </div>`;
+    wirePromptButtons(wrap);
+    return wrap;
+}
+
 function renderFilteredPosts(posts, container) {
-    const feedContainer = container || 
+    const feedContainer =
+        container ||
         document.getElementById('testimonies-feed') ||
         document.getElementById('feed-container') ||
         document.getElementById('feedContainer');
@@ -600,93 +688,98 @@ function renderFilteredPosts(posts, container) {
 
     feedContainer.innerHTML = '';
 
+    const searchInput = document.getElementById('feedSearchInput');
+    const hasSearch = searchInput && searchInput.value.trim().length > 0;
+    const activeFilterBtn = document.querySelector('#filterBtnGroup .filter-btn[data-active="true"]');
+    const filterType = activeFilterBtn ? activeFilterBtn.getAttribute('data-filter') : 'all';
+
     if (posts.length === 0) {
-        // Detect if this is a filtered/search result or truly empty Square
-        const searchInput = document.getElementById('feedSearchInput');
-        const hasSearch = searchInput && searchInput.value.trim().length > 0;
-        const activeFilterBtn = document.querySelector('#filterBtnGroup .filter-btn[data-active="true"]');
-        const filterType = activeFilterBtn ? activeFilterBtn.getAttribute('data-filter') : 'all';
         const isFiltered = hasSearch || (filterType && filterType !== 'all');
 
         if (isFiltered) {
-            // Case 1: User searched or filtered and got zero results
             feedContainer.innerHTML = `
                 <div class="rounded-3xl border border-dashed border-zinc-700 bg-zinc-900/40 px-6 py-14 text-center">
-                    <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-800 text-2xl">
-                        🔍
-                    </div>
+                    <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-800 text-2xl">🔍</div>
                     <h4 class="text-lg font-semibold text-white">No matching reports found</h4>
                     <p class="mx-auto mt-2 max-w-sm text-sm text-zinc-400">
                         Try different keywords or clear your filters to see more reports.
                     </p>
-                    <button type="button" 
-                            onclick="
-                                const input = document.getElementById('feedSearchInput');
-                                if (input) input.value = '';
-                                document.querySelectorAll('#filterBtnGroup .filter-btn').forEach(btn => {
-                                    btn.setAttribute('data-active', 'false');
-                                    btn.className = 'filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition';
-                                });
-                                const allBtn = document.querySelector('#filterBtnGroup .filter-btn[data-filter=\\'all\\']');
-                                if (allBtn) {
-                                    allBtn.setAttribute('data-active', 'true');
-                                    allBtn.className = 'filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition';
-                                }
-                                applySearchAndFilter(document.getElementById('testimonies-feed'));
-                            "
+                    <button type="button" id="clear-feed-filters-btn"
                             class="mt-6 inline-flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 px-5 py-2.5 text-sm font-medium text-zinc-200 transition hover:bg-zinc-700">
-                        Clear search & filters
+                        Clear search &amp; filters
                     </button>
-                </div>
-            `;
+                </div>`;
+            const clearBtn = document.getElementById('clear-feed-filters-btn');
+            if (clearBtn) {
+                clearBtn.onclick = () => {
+                    const input = document.getElementById('feedSearchInput');
+                    if (input) input.value = '';
+                    document.querySelectorAll('#filterBtnGroup .filter-btn').forEach((btn) => {
+                        btn.setAttribute('data-active', 'false');
+                        btn.className =
+                            'filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition';
+                    });
+                    const allBtn = document.querySelector('#filterBtnGroup .filter-btn[data-filter="all"]');
+                    if (allBtn) {
+                        allBtn.setAttribute('data-active', 'true');
+                        allBtn.className =
+                            'filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition';
+                    }
+                    applySearchAndFilter(document.getElementById('testimonies-feed'));
+                };
+            }
         } else {
-            // Case 2: Truly empty Public Square
-            const isZk = window.currentUserData?.zkVerified === true ||
-                         window.currentUserData?.tier === 'witness_circle';
+            const isZk =
+                window.currentUserData?.zkVerified === true ||
+                window.currentUserData?.tier === 'witness_circle';
 
             feedContainer.innerHTML = `
                 <div id="empty-feed-state" class="rounded-3xl border border-dashed border-emerald-500/30 bg-zinc-900/50 px-6 py-16 text-center">
-                    <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl">
-                        🗣️
-                    </div>
+                    <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl">🗣️</div>
                     <h4 class="text-xl font-bold text-white">The Square is waiting for sealed reports</h4>
                     <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400">
                         Be among the first citizens to publish a cryptographically sealed report.
                         Your voice becomes part of the permanent public record.
                     </p>
-
+                    <div class="mt-6 flex flex-wrap justify-center gap-2">
+                      ${renderPromptButtonsHTML()}
+                    </div>
                     <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-                        <button type="button"
-                                onclick="document.getElementById('mainInput')?.focus(); document.getElementById('btn-voice')?.scrollIntoView({behavior:'smooth', block:'center'});"
+                        <button type="button" id="empty-speak-citizen-btn"
                                 class="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
-                            </svg>
                             Speak as a Citizen
                         </button>
-
-                        ${isZk ? `
-                        <button type="button"
-                                onclick="if(typeof window.switchTab==='function') window.switchTab('witness'); document.getElementById('btn-voice')?.scrollIntoView({behavior:'smooth', block:'center'});"
-                                class="inline-flex items-center gap-2 rounded-2xl border border-amber-500/50 bg-amber-950/40 px-6 py-3.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-900/40 active:scale-[0.98]">
-                            🔬 Publish Witness Voice
-                        </button>` : ''}
+                        ${
+                          isZk
+                            ? `<button type="button" id="empty-witness-voice-btn"
+                                class="inline-flex items-center gap-2 rounded-2xl border border-amber-500/50 bg-amber-950/40 px-6 py-3.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-900/40">
+                                🔬 Publish Witness Voice
+                              </button>`
+                            : ''
+                        }
                     </div>
+                    <p class="mt-5 text-xs text-zinc-500">Live voice carries stronger weight as evidence</p>
+                </div>`;
 
-                    <p class="mt-5 text-xs text-zinc-500">
-                        Live voice carries stronger weight as evidence
-                    </p>
-                </div>
-            `;
+            wirePromptButtons(feedContainer);
+            document.getElementById('empty-speak-citizen-btn')?.addEventListener('click', () => {
+                document.getElementById('mainInput')?.focus();
+                document.getElementById('btn-voice')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+            document.getElementById('empty-witness-voice-btn')?.addEventListener('click', () => {
+                if (typeof window.switchTab === 'function') window.switchTab('witness');
+            });
         }
-
         return;
     }
 
-    posts.forEach(post => renderSinglePostDOM(post.id, post, feedContainer));
+    // Sparse Square: invite more reports without looking dead
+    if (!hasSearch && filterType === 'all' && posts.length > 0 && posts.length < 8) {
+        feedContainer.appendChild(buildPromptStripEl());
+    }
+
+    posts.forEach((post) => renderSinglePostDOM(post.id, post, feedContainer));
 }
-  
 function renderSinglePostDOM(id, data, container) {
     const currentUser = auth.currentUser || state.currentUser;
     const isOwner = currentUser && currentUser.uid === data.authorId;
@@ -695,7 +788,6 @@ function renderSinglePostDOM(id, data, container) {
     postEl.className = 'post-card group relative mb-5 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 transition-all duration-200 hover:border-emerald-500/30 hover:bg-zinc-900/80 sm:p-6';
     postEl.setAttribute('data-post-id', id);
 
-    // Prefer headline (what composer writes), then title, then truncated content
     const preferredTitle = (data.headline && data.headline.trim() !== '')
         ? data.headline
         : data.title;
@@ -711,56 +803,83 @@ function renderSinglePostDOM(id, data, container) {
 
     let trustBadgesHTML = '';
 
-    if (data.authorTier && data.authorTier !== 'unverified') {
-        trustBadgesHTML += `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Verified Witness">📱 Verified</span>`;
-    } else {
-        trustBadgesHTML += `<span class="bg-zinc-800 text-zinc-400 border border-zinc-700/50 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Unverified Author Profile">⚠️ Unverified Source</span>`;
+    // 1) Sealed (primary)
+    const isSealed = !!(
+        data.packCoreHash ||
+        data.forensicHash ||
+        data.evidencePack ||
+        data.imageHash ||
+        data.audioHash ||
+        data.videoHash ||
+        data.bodyHash
+    );
+    if (isSealed) {
+        trustBadgesHTML += `
+        <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 text-[10px] px-2 py-0.5 rounded flex items-center gap-1"
+              title="Cryptographically sealed. Proves bits did not change after publish — not real-world truth.">
+          🛡️ Sealed
+        </span>`;
     }
 
-    // Origin Claim & Synthetic Advisory — matches composer mediaOriginClaim values
-    const claim = data.mediaOriginClaim || data.originType || data.provenanceType || 'unknown';
-    const isSynthetic =
-        claim === 'synthetic' ||
-        claim === 'synthetic-ai' ||
-        data.isSynthetic === true ||
-        data.aiGenerated === true ||
-        (data.syntheticScore != null && Number(data.syntheticScore) >= 70);
-
-    if (isSynthetic) {
-        trustBadgesHTML += `<span class="bg-amber-500/10 text-amber-300 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Author or system flagged synthetic / AI-assisted media">🤖 Synthetic Advisory</span>`;
-    } else if (claim === 'received' || claim === 'reposted') {
-        trustBadgesHTML += `<span class="bg-purple-500/10 text-purple-300 border border-purple-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Received or forwarded media">🔄 Received / Forwarded</span>`;
-    } else if (claim === 'filmed_by_me') {
-        trustBadgesHTML += `<span class="bg-emerald-950/40 text-emerald-400 border border-emerald-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Author claims direct capture">✍️ Direct Capture</span>`;
-    } else {
-        trustBadgesHTML += `<span class="bg-zinc-800 text-zinc-400 border border-zinc-700/50 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Origin not declared">❓ Unverified Origin</span>`;
+    // 2) Media
+    if (data.audioUrl || data.videoUrl || data.imageUrl) {
+        const kind = data.audioUrl ? 'Voice' : data.videoUrl ? 'Video' : 'Photo';
+        trustBadgesHTML += `
+        <span class="bg-sky-500/10 text-sky-300 border border-sky-500/25 text-[10px] px-2 py-0.5 rounded flex items-center gap-1"
+              title="Includes ${kind.toLowerCase()} evidence">
+          📷 ${kind}
+        </span>`;
     }
 
-    const activeHash = data.forensicHash || data.imageHash || data.audioHash || data.videoHash;
-    if (activeHash) {
-        trustBadgesHTML += `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Hash: ${escapeHTML(activeHash)}">🛡️ ZK Sealed</span>`;
+    // 3) Corroborated
+    const corrCountBadge = Number(data.corroborationCount || 0);
+    if (corrCountBadge >= 1) {
+        trustBadgesHTML += `
+        <span class="bg-amber-500/10 text-amber-300 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded flex items-center gap-1"
+              title="Others marked I witnessed this">
+          👁️ Corroborated${corrCountBadge > 1 ? ` · ${corrCountBadge}` : ''}
+        </span>`;
     }
 
-    if (data.ipfsCid) {
-        trustBadgesHTML += `<a href="https://ipfs.io/ipfs/${escapeHTML(data.ipfsCid)}" target="_blank" rel="noopener noreferrer" class="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1 hover:bg-purple-500/20 transition">📦 IPFS</a>`;
+    // 4) Circle only if elevated (no more "Unverified Source" noise)
+    const tier = String(data.authorTier || '').toLowerCase();
+    if (tier && tier !== 'citizen' && tier !== 'unverified') {
+        trustBadgesHTML += `
+        <span class="bg-blue-500/10 text-blue-300 border border-blue-500/25 text-[10px] px-2 py-0.5 rounded flex items-center gap-1"
+              title="Phone-verified or higher trust tier">
+          📱 Circle
+        </span>`;
     }
-            // Field Note badge (professional / org-attributed posts)
+
+    // Field Note (optional)
     if (data.postingStyle === 'field-note') {
         if (typeof renderFieldNoteBadge === 'function') {
             trustBadgesHTML += renderFieldNoteBadge(data);
         } else {
-            // Fallback so it still works if the import is missing
             const role = data.fieldNoteRole ? String(data.fieldNoteRole).trim() : '';
-            const org  = data.fieldNoteOrg  ? String(data.fieldNoteOrg).trim()  : '';
+            const org = data.fieldNoteOrg ? String(data.fieldNoteOrg).trim() : '';
             const title = [role, org].filter(Boolean).join(' · ') || 'Field Note';
             trustBadgesHTML += `
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold
                              bg-sky-500/10 text-sky-400 border border-sky-500/30"
                       title="${escapeHTML(title)}">
                     📋 Field Note
-                </span>
-            `;
+                </span>`;
         }
+    }
+
+    // Synthetic advisory only when flagged
+    const claim = data.mediaOriginClaim || data.originType || data.provenanceType || '';
+    const isSynthetic =
+        claim === 'synthetic' ||
+        claim === 'synthetic-ai' ||
+        data.isSynthetic === true ||
+        data.aiGenerated === true ||
+        (data.syntheticScore != null && Number(data.syntheticScore) >= 70);
+    if (isSynthetic) {
+        trustBadgesHTML += `
+        <span class="bg-amber-500/10 text-amber-300 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded flex items-center gap-1"
+              title="Synthetic / AI-assisted advisory">🤖 Advisory</span>`;
     }
 
     const trustContainer = trustBadgesHTML
@@ -777,7 +896,6 @@ function renderSinglePostDOM(id, data, container) {
         data.forensicHash
     );
 
-    // Mutually exclusive media rendering block
     let mediaHTML = '';
     if (data.videoUrl) {
         mediaHTML = `
@@ -811,8 +929,7 @@ function renderSinglePostDOM(id, data, container) {
     (data.authorId ? `Citizen` : 'Citizen')
 );
 
-  // Owner controls: Edit + Hide options
-let ownerControlsHTML = '';
+  let ownerControlsHTML = '';
 if (isOwner) {
   ownerControlsHTML = `
     <button data-action="edit" data-id="${id}" title="Edit Report"
@@ -837,7 +954,6 @@ if (isOwner) {
   `;
 }
     const corrCount = data.corroborationCount || 0;
-    const corrScore = data.corroborationScore || corrCount;
     const corrScoreHTML = corrCount > 0
     ? `<span class="corr-score text-[11px] text-emerald-400/90 font-medium tracking-tight">
             Witnessed by ${corrCount} Citizen${corrCount === 1 ? '' : 's'}
@@ -970,7 +1086,6 @@ if (isOwner) {
       </button>
 
                ${(() => {
-          // isOwner is already computed at the top of renderSinglePostDOM
           if (isOwner) {
               return `
                 <button disabled
@@ -1058,7 +1173,6 @@ async function handleUpvote(postId) {
       const data = snap.data() || {};
       const likedBy = data.likedBy || {};
 
-      // Already liked → do nothing (or toggle off if you prefer)
       if (likedBy[uid] === true) {
         throw new Error("ALREADY_LIKED");
       }
@@ -1242,6 +1356,7 @@ async function handleHidePost(postId, permanent = false) {
     showToast('Failed to hide report', 'error');
   }
 }
+
 async function handlePinPost(postId) {
   if (!auth.currentUser) {
     showToast("Sign in to pin a report.", "error");
@@ -1251,10 +1366,8 @@ async function handlePinPost(postId) {
   const post = allPostsCache.find(p => p.id === postId);
   if (!post) return;
 
-  // Unpin is always allowed for people who can pin (and stewards can unpin anything)
   const currentlyPinned = !!post.isPinned;
 
-  // Resolve tier / phone verification
   let isSteward = false;
   let isPhoneVerified = false;
   try {
@@ -1273,7 +1386,6 @@ async function handlePinPost(postId) {
     );
   } catch (_) {}
 
-  // Also honour auth token claims if present
   try {
     const token = await auth.currentUser.getIdTokenResult();
     if (token.claims?.steward || token.claims?.tier === "steward") isSteward = true;
@@ -1290,17 +1402,9 @@ async function handlePinPost(postId) {
   const maxPins = isSteward ? 2 : 1;
 
   if (!currentlyPinned) {
-    // Count how many posts are already pinned (global square pins)
-    const pinnedNow = allPostsCache.filter(p => p.isPinned).length;
-    // Prefer a live count if cache is incomplete
-    let pinnedCount = pinnedNow;
+    let pinnedCount = allPostsCache.filter(p => p.isPinned).length;
     try {
-      const { getDocs: gDocs, query: q, where: w, collection: col, limit: lim } = await import(
-        "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js"
-      );
-      // lightweight: use cache first; optional server count
-      const pinnedInCache = allPostsCache.filter(p => p.isPinned).length;
-      pinnedCount = pinnedInCache;
+      pinnedCount = allPostsCache.filter(p => p.isPinned).length;
     } catch (_) {
       pinnedCount = allPostsCache.filter(p => p.isPinned).length;
     }
@@ -1342,7 +1446,6 @@ async function handleCorroborate(postId, btnEl) {
         return;
     }
 
-    // Extra safety: block self-corroboration in the UI layer too
     const post = allPostsCache.find(p => p.id === postId);
     if (post && post.authorId === auth.currentUser.uid) {
         showToast(
@@ -1369,7 +1472,7 @@ async function handleCorroborate(postId, btnEl) {
     }
 
     const note = prompt("Optional short note (max 280 chars):\nWhat did you also see / hear?");
-    if (note === null) return; // user cancelled
+    if (note === null) return;
 
     try {
         btnEl.disabled = true;
@@ -1379,7 +1482,6 @@ async function handleCorroborate(postId, btnEl) {
             note: (note || "").trim().slice(0, 280)
         });
 
-        // Optimistic UI update
         if (post) {
             post.corroborationCount = (post.corroborationCount || 0) + 1;
         }
@@ -1415,10 +1517,10 @@ async function handleCorroborate(postId, btnEl) {
         btnEl.textContent = "👁️ I witnessed this";
     }
 }
+
 function showPostMenu(postId) {
     showToast(`Post options menu for: ${postId.substring(0, 8)}...`, "info");
 }
-
 
 async function handleDownloadEvidencePack(postId) {
     try {
@@ -1506,7 +1608,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   pills.forEach(button => {
     button.addEventListener('click', () => {
-      // 1. Reset all pills to inactive style
       pills.forEach(btn => {
         btn.classList.remove(
           'active',
@@ -1519,7 +1620,6 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.classList.add('border', 'border-zinc-800', 'bg-zinc-900', 'text-zinc-300');
       });
 
-      // 2. Style the clicked pill
       button.classList.remove('border', 'border-zinc-800', 'bg-zinc-900', 'text-zinc-300');
       button.classList.add('active');
 
@@ -1529,11 +1629,9 @@ document.addEventListener('DOMContentLoaded', () => {
         button.classList.add('bg-emerald-500', 'text-black');
       }
 
-      // 3. Filter the feed
       const filter = button.dataset.filter;
       console.log('Filtering feed by:', filter);
 
-      // Call your existing feed function
       if (typeof initFeed === 'function') {
         initFeed(db, filter === 'all' ? 'all' : filter);
       }
