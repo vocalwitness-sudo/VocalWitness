@@ -1,28 +1,175 @@
-const admin = require('firebase-admin');
-const serviceAccount = require('./serviceAccountKey.json');
+/**
+ * scripts/seed-genesis.js
+ * Seeds the Public Square with real sealed-looking Genesis reports.
+ * Collection: testimonies (exactly what feed.js queries)
+ *
+ * Usage:
+ *   1. Put serviceAccountKey.json in /scripts (or set GOOGLE_APPLICATION_CREDENTIALS)
+ *   2. node scripts/seed-genesis.js
+ *
+ * Safe to re-run: uses fixed doc IDs so it overwrites the same Genesis set.
+ */
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+const admin = require('firebase-admin');
+const path = require('path');
+const crypto = require('crypto');
+
+// ---------- Auth ----------
+if (!admin.apps.length) {
+  try {
+    // Prefer explicit key next to the script
+    const keyPath = path.join(__dirname, 'serviceAccountKey.json');
+    const serviceAccount = require(keyPath);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+  } catch {
+    // Fallback to Application Default Credentials
+    admin.initializeApp({
+      credential: admin.credential.applicationDefault(),
+    });
+  }
+}
 
 const db = admin.firestore();
 
-async function seedGenesisReports() {
-  const batch = db.batch();
-  const genesisRef = db.collection('reports').doc('genesis-report-01');
-  
-  batch.set(genesisRef, {
-    title: "Genesis Public Record Anchor",
-    summary: "First cryptographic anchor establishing immutable state logging for VocalWitness.",
-    authorTier: "Witness",
-    mediaHash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    timestamp: admin.firestore.FieldValue.serverTimestamp(),
-    sealed: true,
-    blockNumber: 1
-  });
-
-  await batch.commit();
-  console.log("Genesis report successfully seeded into Firestore ledger.");
+// ---------- Helpers ----------
+function sha256(text) {
+  return crypto.createHash('sha256').update(String(text), 'utf8').digest('hex');
 }
 
-seedGenesisReports();
+function packCoreHash(content, channel, bodyHash) {
+  // Minimal stable core matching evidence-pack shape (enough for display + verify link)
+  const core = {
+    schemaVersion: 'vocalwitness.evidence-pack.v1',
+    content: { body: content, bodyHash, channel },
+    media: [],
+    identity: { mode: 'IDENTIFIED', phoneOnPublicRecord: false },
+    timestamps: { clientCaptureMs: Date.now() },
+    environment: { app: 'VocalWitness', hashApi: 'WebCrypto.subtle.digest SHA-256' },
+  };
+  const canonical = JSON.stringify(core, Object.keys(core).sort());
+  return sha256(canonical);
+}
+
+// ---------- Genesis content (edit freely) ----------
+const GENESIS = [
+  {
+    id: 'genesis-001',
+    content:
+      'Genesis Seal 001. VocalWitness public record is open. First-hand reports will be cryptographically sealed on device. Media and seal cannot be quietly rewritten by ordinary users. This entry marks the start of the sealed ledger.',
+  },
+  {
+    id: 'genesis-002',
+    content:
+      'Genesis Seal 002. Integrity is not the same as truth. A seal proves the bits did not change after publish. It does not prove real-world events. Anyone can download an Evidence Pack and re-check the hashes.',
+  },
+  {
+    id: 'genesis-003',
+    content:
+      'Genesis Seal 003. Built for low bandwidth and real phones. Speak, record, or attach a photo. The hash is taken of the processed bytes that are actually uploaded. Soft-hide is allowed; hard delete of the sealed core is not.',
+  },
+  {
+    id: 'genesis-004',
+    content:
+      'Genesis Seal 004. Citizen reports start open. Phone verification unlocks Citizen Circle for stronger anti-spam. Higher Trust is earned, never bought. The Square stays free to read and free to verify.',
+  },
+  {
+    id: 'genesis-005',
+    content:
+      'Genesis Seal 005. Africa-first. Rooted in Nigeria and growing outward. Everyday observations, civic notes, and first-hand field reports belong here when they are sealed and attributable to a real session.',
+  },
+  {
+    id: 'genesis-006',
+    content:
+      'Genesis Seal 006. Daily external anchors and Evidence Packs exist so third parties do not have to trust the operator. Application-level sealing + checkable roots. That is the design.',
+  },
+  {
+    id: 'genesis-007',
+    content:
+      'Genesis Seal 007. Corroboration will matter more than volume. Multiple independent sealed reports of the same event raise confidence. Reputation follows honest use, not payment.',
+  },
+  {
+    id: 'genesis-008',
+    content:
+      'Genesis Seal 008. The Square is waiting for real sealed voices. These Genesis entries are permanent markers only. From here, every new citizen seal becomes part of the living public record.',
+  },
+];
+
+async function seed() {
+  const batch = db.batch();
+  const channel = 'citizen-talk';
+  const now = admin.firestore.FieldValue.serverTimestamp();
+
+  for (const item of GENESIS) {
+    const bodyHash = sha256(item.content.trim());
+    const forensicHash = bodyHash;
+    const pHash = packCoreHash(item.content.trim(), channel, bodyHash);
+
+    const ref = db.collection('testimonies').doc(item.id);
+
+    batch.set(
+      ref,
+      {
+        content: item.content.trim(),
+        hashtags: ['Genesis', 'SealedRecord'],
+        mentions: [],
+        channel,
+        feedVisibility: channel,
+        postingStyle: 'citizen',
+        fieldNoteRole: null,
+        fieldNoteOrg: null,
+
+        authorId: 'system-genesis',
+        isAnonymous: false,
+        author: 'VocalWitness Genesis',
+
+        // Server-style fields (match submitTestimonySecure)
+        authorTier: 'citizen',
+        reputation: 100,
+        zkVerified: false,
+        moderationStatus: 'approved',
+        moderationFlags: [],
+        aiCategory: 'system',
+        isPinned: item.id === 'genesis-001',
+        isDeleted: false,
+
+        forensicHash,
+        bodyHash,
+        imageUrl: null,
+        videoUrl: null,
+        audioUrl: null,
+        imageHash: null,
+        videoHash: null,
+        audioHash: null,
+
+        evidencePack: {
+          schemaVersion: 'vocalwitness.evidence-pack.v1',
+          packCoreHash: pHash,
+          clientCaptureMs: Date.now(),
+          rfc3161: null,
+        },
+        packCoreHash: pHash,
+
+        reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
+        commentsCount: 0,
+        corroborationCount: 0,
+
+        createdAt: now,
+        updatedAt: now,
+        genesis: true,
+        genesisIndex: Number(item.id.replace('genesis-', '')),
+      },
+      { merge: true }
+    );
+  }
+
+  await batch.commit();
+  console.log(`✅ Seeded ${GENESIS.length} Genesis reports into testimonies/`);
+  console.log('   Open https://vocalwitness.com and check Public Square (citizen-talk).');
+}
+
+seed().catch((err) => {
+  console.error('Seed failed:', err);
+  process.exit(1);
+});
