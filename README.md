@@ -1,53 +1,41 @@
-# VocalWitness
+# VocalWitness — Production Deployment Checklist
+**Version:** 2.0 · Last updated: 2026-11-08  
+**Goal:** Zero-surprise, auditable, production-safe deploys
 
-**Your Voice. Your Truth. Protected.**
+> Never deploy from memory. Tick every box.
 
-Privacy-first public square for sealed citizen reports and evidence.
+---
 
-- Live: https://vocalwitness.com  
-- Also: https://www.vocalwitness.com · https://vocalwitness-3affa.web.app  
-- Africa-first (Nigeria → continent → world)
+## 0. Pre-Flight (Do Once Per Session)
 
-## What it does
+- [ ] You are on the `main` branch and it is clean (`git status`)
+- [ ] Latest `main` pulled
+- [ ] No `.env`, service account keys, or secrets in the working tree
+- [ ] You understand the difference between **application-level sealing** and a public blockchain
 
-- First-hand reports: text, live voice, photo, video  
-- Client-side SHA-256 hashing + EXIF scrubbing before upload  
-- Evidence Packs anyone can verify (online or offline)  
-- Trust tiers: Citizen → Circle → Witness  
-- Application-level sealing: ordinary users cannot hard-delete or rewrite sealed cores  
-- Soft-hide only (author / moderator); record and hashes remain
+---
 
-## Tech stack
+## 1. Code Health
 
-- Frontend: vanilla JS modules, Tailwind  
-- Backend: Firebase (Auth, Firestore, Functions)  
-- Media: Cloudflare R2  
-- Crypto: Web Crypto; optional Circom / snarkjs (ZK evolving)  
-- External time: OpenTimestamps (daily Merkle roots)
+- [ ] Hard refresh test on https://vocalwitness.com and https://vocalwitness-3affa.web.app
+- [ ] Browser console shows zero critical errors
+- [ ] Core flows work: anonymous post, signed-in post, photo/voice upload, Evidence Pack download, verify page
+- [ ] No duplicate module / identifier errors
+- [ ] `js/media-pipeline.js` and `js/upload.js` produce consistent SHA-256 of the **final uploaded bytes**
 
-## Status
+---
 
-Public deployment in progress. Core report + verify flows are live.
+## 2. Security Rules (Critical)
 
-## License
+- [ ] `firestore.rules` and `storage.rules` in the repo are the **source of truth**
+- [ ] Rules have been deployed to the live project (`vocalwitness-3affa`)
+- [ ] Confirmed in Firebase Console that the live rules match the repo (do **not** paste the old weak sample rules)
+- [ ] Key invariants verified:
+  - Sealed core fields (hashes, media URLs, authorId, createdAt, evidencePack, etc.) cannot be changed by ordinary users
+  - Authors may only soft-hide or edit text inside the 30-minute correction window
+  - Hard delete of sealed evidence is forbidden for owners
+  - User tier / phone / admin / reputation fields are server-controlled only
 
-All rights reserved © 2026 VocalWitness.  
-Source is visible for transparency and auditability.  
-Commercial use, redistribution, and derivative works require explicit written permission.
-
-## Important notes
-
-- Integrity ≠ truth: hashes prove bits did not change after sealing; they do not prove real-world events.  
-- Immutability is application-level (Firestore rules + client hashes + audit), not a public blockchain.
-
-## Contact / support
-
-admin@vocalwitness.com
-
-## Device & Browser Compatibility
-
-VocalWitness is engineered to support both modern and legacy hardware (tested across modern smartphones, laptops, legacy Android devices, and older iOS WebKit engines):
-
-- **Modern Browsers (Chrome, Firefox, Safari, Edge):** Full ES Modules, Web Crypto API, client-side SHA-256 hashing, ZK proofs, and live WebSocket/Firestore real-time streams.
-- **Legacy Browsers & Older Phones:** Automatic fallback handling. If advanced crypto or modern module features fail, the app falls back to basic form submission, standard server-authenticated routes, and safe error-bound states instead of hitting a blank white screen.
-- **Low-Bandwidth Optimization:** Compressed asset delivery, optional media re-attachment for offline drafts, and lightweight payload serialization.
+**Command (preferred):**
+```bash
+firebase deploy --only firestore:rules,storage --project vocalwitness-3affa
