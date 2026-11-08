@@ -27,6 +27,9 @@ import { onObjectFinalized } from "firebase-functions/v2/storage";
 import { dailyAnchor, triggerAnchorNow } from "./anchor.js";
 import Parser from "rss-parser";
 import { onSchedule } from "firebase-functions/v2/scheduler";
+import { writeAuditLog } from "./lib/audit.js";
+import { enforceRateLimit } from "./lib/rate-limit.js";
+import { getR2Client, createUploadSignedUrl } from "./lib/r2.js";
 
 
 // ESM __dirname equivalent
@@ -69,22 +72,6 @@ const allowedOrigins = [
   "https://vocalwitness.com",
   "https://www.vocalwitness.com"
 ];
-
-// Reusable S3 / R2 Client Instance
-let r2ClientInstance = null;
-function getR2Client(accessKeyId, secretAccessKey) {
-  if (!r2ClientInstance) {
-    r2ClientInstance = new S3Client({
-      region: "auto",
-      endpoint: process.env.R2_ENDPOINT || "https://b282f46ef0831c8af75bfe52120bbac6.r2.cloudflarestorage.com",
-      credentials: {
-        accessKeyId,
-        secretAccessKey
-      }
-    });
-  }
-  return r2ClientInstance;
-}
 
 // Reusable Paystack Client Instance
 function getPaystackClient() {
@@ -132,64 +119,6 @@ async function enqueueBackgroundTask(functionName, payload, delaySeconds = 0) {
 
   const [response] = await tasksClient.createTask({ parent, task });
   return response.name;
-}
-
-async function writeAuditLog({
-  action,
-  performedBy,
-  targetId = null,
-  targetType = null,
-  details = {},
-  severity = "info"
-}) {
-  try {
-    await db.collection("audit_logs").add({
-      action: String(action),
-      performedBy: String(performedBy),
-      targetId: targetId ? String(targetId) : null,
-      targetType: targetType ? String(targetType) : null,
-      details,
-      severity: String(severity),
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      createdAt: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error("Failed to write audit log:", error);
-  }
-}
-
-/**
- * Per-uid action throttle using rateLimits/{uid}_{action}
- * @returns {Promise<void>} throws HttpsError resource-exhausted
- */
-async function enforceRateLimit(uid, action, { windowMs = 60_000, max = 5 } = {}) {
-  const ref = db.collection("rateLimits").doc(`${uid}_${action}`);
-  const now = Date.now();
-
-  await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    const data = snap.exists ? snap.data() : {};
-    let windowStart = data.windowStart || 0;
-    let count = data.count || 0;
-
-    if (now - windowStart >= windowMs) {
-      windowStart = now;
-      count = 0;
-    }
-
-    if (count >= max) {
-      throw new HttpsError(
-        "resource-exhausted",
-        `Rate limit: max ${max} ${action} per ${Math.round(windowMs / 1000)}s.`
-      );
-    }
-
-    tx.set(
-      ref,
-      { windowStart, count: count + 1, lastRequest: now, action },
-      { merge: true }
-    );
-  });
 }
 
 // ======================================================
