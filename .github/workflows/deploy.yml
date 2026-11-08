@@ -41,12 +41,12 @@ jobs:
       - name: Install Firebase Tools
         run: npm install -g firebase-tools@latest
 
-      - name: Deploy Firestore + Storage + Anchor Functions only
+      - name: Deploy Firestore + Storage + All Functions
         env:
           NODE_OPTIONS: "--experimental-vm-modules"
         run: |
           firebase deploy \
-            --only firestore,storage,functions:dailyAnchor,functions:triggerAnchorNow \
+            --only firestore,storage,functions \
             --project vocalwitness-3affa \
             --force \
             --non-interactive
