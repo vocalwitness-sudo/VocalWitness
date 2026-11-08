@@ -736,11 +736,11 @@ function renderFilteredPosts(posts, container) {
             feedContainer.innerHTML = `
                 <div id="empty-feed-state" class="rounded-3xl border border-dashed border-emerald-500/30 bg-zinc-900/50 px-6 py-16 text-center">
                     <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl">🗣️</div>
-                    <h4 class="text-xl font-bold text-white">The Square is waiting for sealed reports</h4>
-                    <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400">
-                        Be among the first citizens to publish a cryptographically sealed report.
-                        Your voice becomes part of the permanent public record.
-                    </p>
+                    <h4 class="text-xl font-bold text-white">The Square is ready for sealed reports</h4>
+<p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400">
+    Genesis markers hold the ledger open. Be among the first citizens to publish a real sealed report.
+    Media and seal cannot be quietly changed after publish.
+</p>
                     <div class="mt-6 flex flex-wrap justify-center gap-2">
                       ${renderPromptButtonsHTML()}
                     </div>
@@ -1193,7 +1193,11 @@ async function handleUpvote(postId) {
     showToast("Failed to record upvote.", "error");
   }
 }
-
+${post.genesis ? `
+  <span class="ml-2 inline-flex rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+    Genesis Seal
+  </span>
+` : ''
 /**
  * Edit post (title + content only)
  */
