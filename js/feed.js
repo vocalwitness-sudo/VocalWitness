@@ -1185,16 +1185,6 @@ async function handleUpvote(postId) {
   }
 }
 
-const html = `
-    <div class="post-card">
-        <h3>${escapeHTML(post.title)}</h3>
-        ${post.genesis ? `
-            <span class="ml-2 inline-flex rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400">
-                Genesis Seal
-            </span>
-        ` : ''}
-    </div>
-`;
 // * Edit post (title + content only)
  
 async function handleEditPost(postId) {
