@@ -40,16 +40,6 @@ let currentChannel = 'citizen-talk';
 let searchDebounceTimer = null;
 let isStewardUserCache = false;
 
-function escapeHTML(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
 function showNewPostsBanner(count) {
   document.getElementById('new-posts-banner')?.remove();
 
