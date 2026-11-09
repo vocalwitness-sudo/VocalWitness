@@ -30,14 +30,55 @@ jobs:
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
-      - name: Deploy Firestore, Storage & All Functions
+      - name: Deploy Firestore and Storage Rules
+        run: |
+          npm install -g firebase-tools@latest
+          firebase deploy \
+            --only firestore,storage \
+            --project vocalwitness-3affa \
+            --force \
+            --non-interactive
+
+      - name: Deploy Functions Batch 1 (Security, ZK Proofs & Media Uploads)
         env:
           NODE_OPTIONS: "--experimental-vm-modules"
           FUNCTIONS_DISCOVERY_TIMEOUT: "60"
         run: |
-          npm install -g firebase-tools@latest
           firebase deploy \
-            --only firestore,storage,functions \
+            --only functions:submittestimonysecure,functions:generatezkproof,functions:verifyandtimestampmedia,functions:getuploadurl,functions:getpresignedurl,functions:verifyandelevatezkproof,functions:registerzkcommitment \
+            --project vocalwitness-3affa \
+            --force \
+            --non-interactive
+
+      - name: Deploy Functions Batch 2 (Governance, Moderation & DAO)
+        env:
+          NODE_OPTIONS: "--experimental-vm-modules"
+          FUNCTIONS_DISCOVERY_TIMEOUT: "60"
+        run: |
+          firebase deploy \
+            --only functions:analyzetoxicity,functions:scoretoxicity,functions:banuser,functions:unbanuser,functions:castdaovote,functions:evaluatetrusttier,functions:moderateddelete,functions:restorehiddencontent,functions:setuserclaims \
+            --project vocalwitness-3affa \
+            --force \
+            --non-interactive
+
+      - name: Deploy Functions Batch 3 (Webhooks, Payments & News)
+        env:
+          NODE_OPTIONS: "--experimental-vm-modules"
+          FUNCTIONS_DISCOVERY_TIMEOUT: "60"
+        run: |
+          firebase deploy \
+            --only functions:paystackwebhook,functions:initializepaystack,functions:nowpaymentswebhook,functions:dailyanchor,functions:triggeranchornow,functions:getcuratednews,functions:warmcuratednews,functions:tickerheadlines \
+            --project vocalwitness-3affa \
+            --force \
+            --non-interactive
+
+      - name: Deploy Remaining Functions & Complete Function Sweep
+        env:
+          NODE_OPTIONS: "--experimental-vm-modules"
+          FUNCTIONS_DISCOVERY_TIMEOUT: "60"
+        run: |
+          firebase deploy \
+            --only functions \
             --project vocalwitness-3affa \
             --force \
             --non-interactive
