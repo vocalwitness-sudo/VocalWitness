@@ -2,9 +2,9 @@
  * functions/callable/moderatedDelete.js
  *
  * VocalWitness policy:
- * - Default action is SOFT HIDE (revocable).
- * - Optional permanent hide still keeps the document (integrity).
- * - Physical hard-delete is disabled for sealed/public-square content.
+ * - soft_hide = hidden from Square, can restore
+ * - permanent_hide = never return to public Square, record kept
+ * - no physical delete for Square / sealed content
  */
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import admin from "firebase-admin";
@@ -84,19 +84,19 @@ export function createModeratedDelete({ allowedOrigins, db }) {
       const isSquareContent = SQUARE_COLLECTIONS.has(collection);
       const isSealed = Boolean(
         originalData.packCoreHash ||
-          dev_cipher ||
+          originalData.forensicHash ||
           originalData.evidencePack?.packCoreHash ||
           originalData.bodyHash
       );
 
-      // Square / sealed content: NEVER physical delete
-      if (isSquareContent || isSealed) {
-        const permanent = mode === "permanent_hide";
+      const permanent = mode === "permanent_hide";
 
+      // Always soft state — never erase Square/sealed content
+      if (isSquareContent || isSealed || true) {
         await docRef.set(
           {
             visibility: "moderator_hidden",
-            isDeleted: true, // means "hidden from Square", not erased
+            isDeleted: true, // means hidden from Square, not erased
             isPermanentlyHidden: permanent,
             hiddenAt: admin.firestore.FieldValue.serverTimestamp(),
             hiddenBy: request.auth.uid,
@@ -130,45 +130,11 @@ export function createModeratedDelete({ allowedOrigins, db }) {
           success: true,
           mode: permanent ? "permanent_hide" : "soft_hide",
           message: permanent
-            ? "Content permanently hidden from the Square. Sealed record preserved."
-            : "Content hidden from the Square. Can be restored by moderators/admins.",
+            ? "Content permanently hidden from the Square. Record preserved."
+            : "Content hidden from the Square. Can be restored.",
           physicalDelete: false,
         };
       }
-
-      // Non-square operational docs only (e.g. some reports): still prefer soft state
-      await docRef.set(
-        {
-          visibility: "moderator_hidden",
-          isDeleted: true,
-          isPermanentlyHidden: mode === "permanent_hide",
-          hiddenAt: admin.firestore.FieldValue.serverTimestamp(),
-          hiddenBy: request.auth.uid,
-          hiddenReason: String(reason).slice(0, 500),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        },
-        { merge: true }
-      );
-
-      await writeAuditLog({
-        action: "moderator_soft_hide",
-        performedBy: request.auth.uid,
-        targetId: docId,
-        targetType: collection,
-        details: {
-          reason: String(reason).slice(0, 500),
-          mode,
-          physicalDelete: false,
-        },
-        severity: "high",
-      });
-
-      return {
-        success: true,
-        mode: "soft_hide",
-        message: "Document hidden (not physically deleted).",
-        physicalDelete: false,
-      };
     } catch (error) {
       console.error("Moderated hide error:", error);
       if (error instanceof HttpsError) throw error;
