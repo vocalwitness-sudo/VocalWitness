@@ -1008,6 +1008,12 @@ export const initializePaystack = onCall(
       throw new HttpsError("unauthenticated", "Sign in required to support the Square.");
     }
 
+    // 1. Enforce rate limit (max 8 requests per 60 seconds per user)
+    await enforceRateLimit(request.auth.uid, "initializePaystack", {
+      windowMs: 60_000,
+      max: 8,
+    });
+
     const { amount, currency = "NGN", note = "" } = request.data || {};
     const major = Number(amount);
     const cur = String(currency || "NGN").toUpperCase();
@@ -1030,16 +1036,17 @@ export const initializePaystack = onCall(
     const amountSubunit = Math.round(major * 100);
 
     try {
+      // 2. Firestore document containing all required fields
       await db.collection("supporters").doc(reference).set({
         reference,
         userId: uid,
+        status: "pending",
+        provider: "paystack",
+        type: "one_time",
         email,
         amount: major,
         amountSubunit,
         currency: cur,
-        provider: "paystack",
-        type: "one_time",
-        status: "pending",
         note: String(note || "").slice(0, 200),
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         completedAt: null,
@@ -1072,14 +1079,15 @@ export const initializePaystack = onCall(
     }
   }
 );
-
 export const paystackWebhook = onRequest(
   {
     cors: false,
     secrets: [paystackSecretKey],
   },
   async (req, res) => {
-    if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+    if (req.method !== "POST") {
+      return res.status(405).send("Method Not Allowed");
+    }
 
     const secret = paystackSecretKey.value();
     const signature = req.headers["x-paystack-signature"];
@@ -1091,6 +1099,7 @@ export const paystackWebhook = onRequest(
       return res.status(400).send("Missing raw body");
     }
 
+    // Verify signature (timing-safe)
     const expectedHash = crypto
       .createHmac("sha512", secret)
       .update(req.rawBody)
@@ -1123,8 +1132,18 @@ export const paystackWebhook = onRequest(
     }
 
     try {
-      await db.collection("supporters").doc(reference).set(
+      const supportRef = db.collection("supporters").doc(String(reference));
+
+      // Idempotency: do not re-process completed payments
+      const existing = await supportRef.get();
+      if (existing.exists && existing.data()?.status === "completed") {
+        return res.status(200).send("Already processed");
+      }
+
+      await supportRef.set(
         {
+          reference: String(reference),
+          userId: String(userId),
           status: "completed",
           paymentId: String(data.id || data.reference),
           amount: amountMajor,
@@ -1138,21 +1157,21 @@ export const paystackWebhook = onRequest(
         { merge: true }
       );
 
-      await db.collection("users").doc(userId).set(
+      await db.collection("users").doc(String(userId)).set(
         {
           isSupporter: true,
           supporterTier: "supporter",
           supporterSince: admin.firestore.FieldValue.serverTimestamp(),
           totalContributed: admin.firestore.FieldValue.increment(amountMajor),
           lastSupportAt: admin.firestore.FieldValue.serverTimestamp(),
-          lastSupportRef: reference,
+          lastSupportRef: String(reference),
         },
         { merge: true }
       );
 
-      const userRecord = await admin.auth().getUser(userId);
+      const userRecord = await admin.auth().getUser(String(userId));
       const currentClaims = userRecord.customClaims || {};
-      await admin.auth().setCustomUserClaims(userId, {
+      await admin.auth().setCustomUserClaims(String(userId), {
         ...currentClaims,
         supporter: true,
       });
@@ -1160,12 +1179,12 @@ export const paystackWebhook = onRequest(
       await writeAuditLog({
         action: "supporter_granted",
         performedBy: "system",
-        targetId: userId,
+        targetId: String(userId),
         targetType: "user",
         details: {
           amount: amountMajor,
           currency,
-          reference,
+          reference: String(reference),
           provider: "paystack",
         },
         severity: "info",
@@ -1186,6 +1205,10 @@ export const paystackWebhook = onRequest(
 export const nowPaymentsWebhook = onRequest(
   { secrets: [nowpaymentsIpnSecret] },
   async (req, res) => {
+    if (req.method !== "POST") {
+      return res.status(405).send("Method Not Allowed");
+    }
+
     try {
       const body = req.body || {};
       const {
@@ -1197,77 +1220,107 @@ export const nowPaymentsWebhook = onRequest(
         price_currency,
       } = body;
 
+      // Only accept finished/confirmed
       if (payment_status !== "finished" && payment_status !== "confirmed") {
         return res.status(200).send("Ignored");
       }
 
       const reference = String(order_id || payment_id || "");
-      if (!reference) return res.status(200).send("No reference");
+      if (!reference) {
+        return res.status(200).send("No reference");
+      }
+
+      // Optional: verify IPN secret if you pass it via header/query
+      // Adjust to match how you configured NOWPayments
+      const providedSecret =
+        req.headers["x-nowpayments-sig"] ||
+        req.headers["x-ipn-secret"] ||
+        req.query?.ipn_secret;
+      const expectedSecret = nowpaymentsIpnSecret.value();
+      if (expectedSecret && providedSecret && String(providedSecret) !== String(expectedSecret)) {
+        console.warn("NOWPayments IPN secret mismatch");
+        return res.status(401).send("Invalid secret");
+      }
 
       const supportRef = db.collection("supporters").doc(reference);
-      const snap = await supportRef.get();
-      const existing = snap.exists ? snap.data() : {};
-      const userId = existing.userId || null;
+      const existing = await supportRef.get();
+      if (existing.exists && existing.data()?.status === "completed") {
+        return res.status(200).send("Already processed");
+      }
+
+      const amountMajor = Number(price_amount || 0);
+      const currency = String(price_currency || pay_currency || "USD").toUpperCase();
+
+      // Prefer userId stored when payment was created
+      const userId =
+        existing.exists && existing.data()?.userId
+          ? String(existing.data().userId)
+          : body.order_description || body.userId || null;
+
+      if (!userId) {
+        console.warn("NOWPayments success missing userId for", reference);
+        return res.status(200).send("Missing userId");
+      }
 
       await supportRef.set(
         {
           reference,
-          paymentId: String(payment_id),
-          amount: Number(price_amount) || existing.amount || 0,
-          currency: String(price_currency || pay_currency || "USD").toUpperCase(),
-          provider: "nowpayments",
-          type: existing.type || "one_time",
+          userId: String(userId),
           status: "completed",
+          paymentId: String(payment_id || reference),
+          amount: amountMajor,
+          currency,
+          provider: "nowpayments",
+          type: "one_time",
           completedAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         },
         { merge: true }
       );
 
-      if (userId) {
-        await db.collection("users").doc(userId).set(
-          {
-            isSupporter: true,
-            supporterTier: "supporter",
-            supporterSince: admin.firestore.FieldValue.serverTimestamp(),
-            totalContributed: admin.firestore.FieldValue.increment(
-              Number(price_amount) || 0
-            ),
-            lastSupportAt: admin.firestore.FieldValue.serverTimestamp(),
-            lastSupportRef: reference,
-          },
-          { merge: true }
-        );
+      await db.collection("users").doc(String(userId)).set(
+        {
+          isSupporter: true,
+          supporterTier: "supporter",
+          supporterSince: admin.firestore.FieldValue.serverTimestamp(),
+          totalContributed: admin.firestore.FieldValue.increment(amountMajor),
+          lastSupportAt: admin.firestore.FieldValue.serverTimestamp(),
+          lastSupportRef: reference,
+        },
+        { merge: true }
+      );
 
-        const userRecord = await admin.auth().getUser(userId);
-        const claims = userRecord.customClaims || {};
-        await admin.auth().setCustomUserClaims(userId, {
-          ...claims,
+      try {
+        const userRecord = await admin.auth().getUser(String(userId));
+        const currentClaims = userRecord.customClaims || {};
+        await admin.auth().setCustomUserClaims(String(userId), {
+          ...currentClaims,
           supporter: true,
         });
-
-        await writeAuditLog({
-          action: "supporter_granted",
-          performedBy: "system",
-          targetId: userId,
-          targetType: "user",
-          details: {
-            amount: price_amount,
-            reference,
-            provider: "nowpayments",
-          },
-          severity: "info",
-        });
+      } catch (claimsErr) {
+        console.warn("NOWPayments claims update failed:", claimsErr?.message || claimsErr);
       }
 
+      await writeAuditLog({
+        action: "supporter_granted",
+        performedBy: "system",
+        targetId: String(userId),
+        targetType: "user",
+        details: {
+          amount: amountMajor,
+          currency,
+          reference,
+          provider: "nowpayments",
+        },
+        severity: "info",
+      });
+
       return res.status(200).send("OK");
-    } catch (error) {
-      console.error("NOWPayments webhook error:", error);
-      return res.status(500).send("Internal Server Error");
+    } catch (err) {
+      console.error("NOWPayments webhook error:", err);
+      return res.status(500).send("Processing error");
     }
   }
 );
-
 // ======================================================
 // ZERO-KNOWLEDGE PROOF VERIFICATION & WITNESS CIRCLE
 // ======================================================
