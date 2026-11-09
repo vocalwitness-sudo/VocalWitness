@@ -37,7 +37,7 @@ import { createBanUser } from "./callable/banUser.js";
 import { createUnbanUser } from "./callable/unbanUser.js";
 import { createModeratedDelete } from "./callable/moderatedDelete.js";
 import { createEvaluateTrustTier } from "./callable/evaluateTrustTier.js";
-
+import { createRestoreHiddenContent } from "./callable/restoreHiddenContent.js";
 
 // ESM __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -130,6 +130,8 @@ async function enqueueBackgroundTask(functionName, payload, delaySeconds = 0) {
 
 
 export const evaluateTrustTier = createEvaluateTrustTier({ allowedOrigins, db });
+export const moderatedDelete = createModeratedDelete({ allowedOrigins, db });
+export const restoreHiddenContent = createRestoreHiddenContent({ allowedOrigins, db });
 
 // ======================================================
 // 2. USER INITIALIZATION (Pure v2)
