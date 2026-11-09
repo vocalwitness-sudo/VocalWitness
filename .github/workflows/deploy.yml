@@ -45,15 +45,11 @@ jobs:
           functions:banUser,\
           functions:unbanUser,\
           functions:moderatedDelete,\
-          functions:submitTestimonySecure,\
-          functions:generateZKProof,\
           functions:registerZKCommitment,\
-          functions:onTestimonyReactionWriteV2,\
           functions:paystackWebhook,\
           functions:nowPaymentsWebhook,\
           functions:dailyAnchor,\
-          functions:triggerAnchorNow,\
-          functions:ogPost \
+          functions:triggerAnchorNow \
             --project vocalwitness-3affa \
             --force \
             --non-interactive
