@@ -128,6 +128,9 @@ async function enqueueBackgroundTask(functionName, payload, delaySeconds = 0) {
   return response.name;
 }
 
+
+export const evaluateTrustTier = createEvaluateTrustTier({ allowedOrigins, db });
+
 // ======================================================
 // 2. USER INITIALIZATION (Pure v2)
 // ======================================================
