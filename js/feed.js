@@ -1193,12 +1193,17 @@ async function handleUpvote(postId) {
     showToast("Failed to record upvote.", "error");
   }
 }
-${post.genesis ? `
-  <span class="ml-2 inline-flex rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-    Genesis Seal
-  </span>
-` : ''}
-/**
+
+const html = `
+    <div class="post-card">
+        <h3>${escapeHtml(post.title)}</h3>
+        ${post.genesis ? `
+            <span class="ml-2 inline-flex rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400">
+                Genesis Seal
+            </span>
+        ` : ''}
+    </div>
+`;
  * Edit post (title + content only)
  */
 async function handleEditPost(postId) {
