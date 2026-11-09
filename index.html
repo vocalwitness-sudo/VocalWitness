@@ -8,6 +8,7 @@
   <meta name="theme-color" content="#10b981">
   <meta name="color-scheme" content="dark">
 <meta name="description" content="VocalWitness – Privacy-first public square for sealed citizen reports and evidence. Client-side hashing and application-level protection. Built in Enugu, Nigeria.">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="robots" content="index, follow">
   <meta name="author" content="Lawmann Ngwu">
   <meta name="keywords" content="citizen journalism, zero knowledge proof, evidence logging, truth public square, decentralized media, anti-deepfake, cryptographic proof, VocalWitness, Nigeria">
@@ -250,8 +251,8 @@
 }
   </style>
 
-  <!-- Structured Data / Search Engine Knowledge Graph (Improved) -->
-  <script type="application/ld+json">
+ <!-- Structured Data / Search Engine Knowledge Graph (LocalBusiness & WebApplication) -->
+ <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@graph": [
@@ -288,12 +289,34 @@
         }
       },
       {
-        "@type": "Organization",
+        "@type": ["Organization", "LocalBusiness"],
         "@id": "https://vocalwitness.com/#organization",
         "name": "VocalWitness",
+        "alternateName": "Vocal Witness",
         "url": "https://vocalwitness.com/",
         "logo": "https://vocalwitness.com/logo.png",
+        "image": "https://vocalwitness.com/logo.png",
         "description": "Privacy-first platform for truth and evidence, powered by zero-knowledge technology.",
+        "telephone": "+2348135078755",
+        "openingHoursSpecification": {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday"
+          ],
+          "opens": "00:00",
+          "closes": "23:59"
+        },
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Enugu",
+          "addressCountry": "NG"
+        },
         "foundingLocation": {
           "@type": "Place",
           "name": "Enugu, Nigeria"
@@ -326,7 +349,7 @@
       }
     ]
   }
-  </script>
+</script>
 </head>
 
 <body class="theme-citizen tier-citizen">
