@@ -157,6 +157,9 @@ export function escapeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
+// This creates an alias export pointing to the exact same function
+export const escapeHtml = escapeHTML;
+
 /* ====================== PEER VOTING ====================== */
 export async function submitPeerVote(postId, voteType) {
     if (!postId) return;
