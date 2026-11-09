@@ -26,4 +26,28 @@ jobs:
           npx @tailwindcss/cli -i ./input.css -o ./style.css --minify
 
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Deploy Firestore, Storage & All Functions
+        env:
+          NODE_OPTIONS: "--experimental-vm-modules"
+          FUNCTIONS_DISCOVERY_TIMEOUT: "60"
+        run: |
+          npm install -g firebase-tools@latest
+          firebase deploy \
+            --only firestore,storage,functions \
+            --project vocalwitness-3affa \
+            --force \
+            --non-interactive
+
+      - name: Deploy to Firebase Hosting (Live)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: vocalwitness-3affa
+          channelId: live
+          entryPoint: .
+          firebaseToolsVersion: latest
