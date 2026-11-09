@@ -132,6 +132,9 @@ async function enqueueBackgroundTask(functionName, payload, delaySeconds = 0) {
 export const evaluateTrustTier = createEvaluateTrustTier({ allowedOrigins, db });
 export const moderatedDelete = createModeratedDelete({ allowedOrigins, db });
 export const restoreHiddenContent = createRestoreHiddenContent({ allowedOrigins, db });
+export const setUserClaims = createSetUserClaims({ allowedOrigins, db });
+export const banUser = createBanUser({ allowedOrigins, db });
+export const unbanUser = createUnbanUser({ allowedOrigins, db });
 
 // ======================================================
 // 2. USER INITIALIZATION (Pure v2)
