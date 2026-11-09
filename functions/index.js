@@ -391,6 +391,8 @@ export const evaluateTrustTier = onCall(
     }
 
     const uid = request.auth.uid;
+    await enforceRateLimit(uid, "evaluateTrustTier", { windowMs: 60_000, max: 10 });
+
     const userRef = db.collection("users").doc(uid);
 
     try {
@@ -399,26 +401,44 @@ export const evaluateTrustTier = onCall(
         throw new HttpsError("not-found", "User record not found.");
       }
 
-      const u = userSnap.data();
+      const u = userSnap.data() || {};
       let newTier = "citizen";
 
       const isVerified = Boolean(u.isVerified || u.isPhoneVerified || u.zkVerified);
-      const testimonies = u.testimoniesCount || 0;
-      const verifications = u.verificationsMade || 0;
-      const score = u.reputationScore || 0;
+      const testimonies = Number(u.testimoniesCount || 0);
+      const verifications = Number(u.verificationsMade || 0);
+      const score = Number(u.reputationScore || 0);
 
+      // Keep thresholds explicit and conservative
       if (score >= 1000 && testimonies >= 20 && isVerified) {
         newTier = "steward";
       } else if (score >= 500 && testimonies >= 10 && verifications >= 15) {
         newTier = "elite_witness";
       } else if (isVerified || (score >= 150 && verifications >= 5)) {
         newTier = "verified_citizen";
+      } else if (u.tier === "citizen_circle" || u.isPhoneVerified) {
+        newTier = "citizen_circle";
+      }
+
+      // Never downgrade a higher server-set tier silently except via admin tools
+      const rank = {
+        citizen: 0,
+        citizen_circle: 1,
+        verified_citizen: 2,
+        elite_witness: 3,
+        witness_circle: 3,
+        steward: 4,
+      };
+      const currentRank = rank[u.tier] ?? 0;
+      const nextRank = rank[newTier] ?? 0;
+      if (nextRank < currentRank) {
+        newTier = u.tier; // keep existing higher tier
       }
 
       if (newTier !== u.tier) {
         await userRef.update({
           tier: newTier,
-          tierUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
+          tierUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 
         if (newTier === "steward") {
@@ -432,8 +452,8 @@ export const evaluateTrustTier = onCall(
           performedBy: "system",
           targetId: uid,
           targetType: "user",
-          details: { oldTier: u.tier, newTier },
-          severity: "info"
+          details: { oldTier: u.tier || null, newTier },
+          severity: "info",
         });
       }
 
@@ -441,7 +461,7 @@ export const evaluateTrustTier = onCall(
     } catch (error) {
       console.error("Evaluate tier error:", error);
       if (error instanceof HttpsError) throw error;
-      throw new HttpsError("internal", error.message || "Failed to evaluate trust tier.");
+      throw new HttpsError("internal", "Failed to evaluate trust tier.");
     }
   }
 );
@@ -452,10 +472,17 @@ export const evaluateTrustTier = onCall(
 export const setUserClaims = onCall(
   { cors: allowedOrigins },
   async (request) => {
-    if (!request.auth) throw new HttpsError("unauthenticated", "You must be signed in.");
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "You must be signed in.");
+    }
     if (!request.auth.token.admin) {
       throw new HttpsError("permission-denied", "Only admins can set custom claims.");
     }
+
+    await enforceRateLimit(request.auth.uid, "setUserClaims", {
+      windowMs: 60_000,
+      max: 20,
+    });
 
     const { uid, claims } = request.data || {};
     if (!uid || typeof uid !== "string") {
@@ -465,11 +492,20 @@ export const setUserClaims = onCall(
       throw new HttpsError("invalid-argument", "A valid claims object is required.");
     }
 
+    // Strict allow-list — never accept arbitrary claim keys
     const allowed = ["admin", "moderator", "banned", "supporter", "steward"];
     const newClaims = {};
-    allowed.forEach((key) => {
+    for (const key of allowed) {
       if (key in claims) newClaims[key] = Boolean(claims[key]);
-    });
+    }
+
+    // Prevent accidental self-lockout of the last admin path (basic guard)
+    if (uid === request.auth.uid && newClaims.admin === false) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Admins cannot remove their own admin claim via this endpoint."
+      );
+    }
 
     try {
       const userRecord = await admin.auth().getUser(uid);
@@ -485,7 +521,7 @@ export const setUserClaims = onCall(
           isBanned: finalClaims.banned === true,
           isSupporter: finalClaims.supporter === true,
           isSteward: finalClaims.steward === true,
-          claimsUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
+          claimsUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
         },
         { merge: true }
       );
@@ -496,45 +532,61 @@ export const setUserClaims = onCall(
         targetId: uid,
         targetType: "user",
         details: { claimsSet: newClaims, finalClaims },
-        severity: "high"
+        severity: "high",
       });
 
       return { success: true, claims: finalClaims };
     } catch (error) {
       console.error("Error setting custom claims:", error);
       if (error instanceof HttpsError) throw error;
-      throw new HttpsError("internal", error.message || "Failed to set user claims.");
+      throw new HttpsError("internal", "Failed to set user claims.");
     }
   }
 );
 
+
 export const banUser = onCall(
   { cors: allowedOrigins },
   async (request) => {
-    if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
-    const isAllowed = request.auth.token.admin || request.auth.token.moderator;
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in required.");
+    }
+    const isAllowed =
+      request.auth.token.admin === true || request.auth.token.moderator === true;
     if (!isAllowed) {
       throw new HttpsError("permission-denied", "Only admins or moderators can ban users.");
     }
+
+    await enforceRateLimit(request.auth.uid, "banUser", { windowMs: 60_000, max: 30 });
 
     const { uid, reason = "No reason provided" } = request.data || {};
     if (!uid || typeof uid !== "string") {
       throw new HttpsError("invalid-argument", "A valid string uid is required.");
     }
+    if (uid === request.auth.uid) {
+      throw new HttpsError("failed-precondition", "You cannot ban yourself.");
+    }
 
     try {
-      await admin.auth().updateUser(uid, { disabled: true });
-      const userRecord = await admin.auth().getUser(uid);
-      const existingClaims = userRecord.customClaims || {};
+      // Do not allow moderators to ban admins
+      const targetRecord = await admin.auth().getUser(uid);
+      const targetClaims = targetRecord.customClaims || {};
+      if (targetClaims.admin === true && request.auth.token.admin !== true) {
+        throw new HttpsError("permission-denied", "Only admins can ban other admins.");
+      }
 
-      await admin.auth().setCustomUserClaims(uid, { ...existingClaims, banned: true });
+      await admin.auth().updateUser(uid, { disabled: true });
+      await admin.auth().setCustomUserClaims(uid, {
+        ...targetClaims,
+        banned: true,
+      });
 
       await db.collection("users").doc(uid).set(
         {
           isBanned: true,
-          banReason: String(reason),
+          banReason: String(reason).slice(0, 500),
           bannedAt: admin.firestore.FieldValue.serverTimestamp(),
-          bannedBy: request.auth.uid
+          bannedBy: request.auth.uid,
         },
         { merge: true }
       );
@@ -544,15 +596,15 @@ export const banUser = onCall(
         performedBy: request.auth.uid,
         targetId: uid,
         targetType: "user",
-        details: { reason: String(reason) },
-        severity: "high"
+        details: { reason: String(reason).slice(0, 500) },
+        severity: "high",
       });
 
       return { success: true, message: `User ${uid} has been banned.` };
     } catch (error) {
       console.error("Ban user error:", error);
       if (error instanceof HttpsError) throw error;
-      throw new HttpsError("internal", error.message || "Failed to ban user.");
+      throw new HttpsError("internal", "Failed to ban user.");
     }
   }
 );
@@ -564,6 +616,8 @@ export const unbanUser = onCall(
       throw new HttpsError("permission-denied", "Only admins can unban users.");
     }
 
+    await enforceRateLimit(request.auth.uid, "unbanUser", { windowMs: 60_000, max: 30 });
+
     const { uid } = request.data || {};
     if (!uid || typeof uid !== "string") {
       throw new HttpsError("invalid-argument", "A valid string uid is required.");
@@ -574,7 +628,10 @@ export const unbanUser = onCall(
       const userRecord = await admin.auth().getUser(uid);
       const existingClaims = userRecord.customClaims || {};
 
-      await admin.auth().setCustomUserClaims(uid, { ...existingClaims, banned: false });
+      await admin.auth().setCustomUserClaims(uid, {
+        ...existingClaims,
+        banned: false,
+      });
 
       await db.collection("users").doc(uid).set(
         {
@@ -583,7 +640,7 @@ export const unbanUser = onCall(
           bannedAt: admin.firestore.FieldValue.delete(),
           bannedBy: admin.firestore.FieldValue.delete(),
           unbannedAt: admin.firestore.FieldValue.serverTimestamp(),
-          unbannedBy: request.auth.uid
+          unbannedBy: request.auth.uid,
         },
         { merge: true }
       );
@@ -593,17 +650,18 @@ export const unbanUser = onCall(
         performedBy: request.auth.uid,
         targetId: uid,
         targetType: "user",
-        severity: "medium"
+        severity: "medium",
       });
 
       return { success: true, message: `User ${uid} has been unbanned.` };
     } catch (error) {
       console.error("Unban user error:", error);
       if (error instanceof HttpsError) throw error;
-      throw new HttpsError("internal", error.message || "Failed to unban user.");
+      throw new HttpsError("internal", "Failed to unban user.");
     }
   }
 );
+
 
 // ======================================================
 // MODERATED DELETE & TOXICITY HELPERS
@@ -612,12 +670,23 @@ export const unbanUser = onCall(
 export const moderatedDelete = onCall(
   { cors: allowedOrigins },
   async (request) => {
-    if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
-    
-    const isMod = request.auth.token.moderator === true || request.auth.token.admin === true;
-    if (!isMod) {
-      throw new HttpsError("permission-denied", "Only moderators or admins can perform moderated deletes.");
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in required.");
     }
+
+    const isMod =
+      request.auth.token.moderator === true || request.auth.token.admin === true;
+    if (!isMod) {
+      throw new HttpsError(
+        "permission-denied",
+        "Only moderators or admins can perform moderated deletes."
+      );
+    }
+
+    await enforceRateLimit(request.auth.uid, "moderatedDelete", {
+      windowMs: 60_000,
+      max: 40,
+    });
 
     const { collection, docId, reason = "No reason provided" } = request.data || {};
     if (!collection || typeof collection !== "string" || !docId || typeof docId !== "string") {
@@ -625,8 +694,13 @@ export const moderatedDelete = onCall(
     }
 
     const allowedCollections = [
-      "testimonies", "posts", "feeds", "groups",
-      "witnessCycles", "dao_proposals", "reports"
+      "testimonies",
+      "posts",
+      "feeds",
+      "groups",
+      "witnessCycles",
+      "dao_proposals",
+      "reports",
     ];
     if (!allowedCollections.includes(collection)) {
       throw new HttpsError("invalid-argument", "Collection not allowed for moderated deletion.");
@@ -635,9 +709,51 @@ export const moderatedDelete = onCall(
     try {
       const docRef = db.collection(collection).doc(docId);
       const docSnap = await docRef.get();
-      if (!docSnap.exists) throw new HttpsError("not-found", "Document does not exist.");
+      if (!docSnap.exists) {
+        throw new HttpsError("not-found", "Document does not exist.");
+      }
 
       const originalData = docSnap.data() || {};
+
+      // Prefer soft-hide for sealed testimonies when possible
+      if (collection === "testimonies" && originalData.packCoreHash) {
+        await docRef.set(
+          {
+            visibility: "moderator_hidden",
+            isDeleted: true,
+            hiddenAt: admin.firestore.FieldValue.serverTimestamp(),
+            hiddenBy: request.auth.uid,
+            hiddenReason: String(reason).slice(0, 500),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+
+        await writeAuditLog({
+          action: "moderator_soft_hide",
+          performedBy: request.auth.uid,
+          targetId: docId,
+          targetType: collection,
+          details: {
+            reason: String(reason).slice(0, 500),
+            originalAuthor:
+              originalData.authorId ||
+              originalData.ownerId ||
+              originalData.witnessId ||
+              null,
+            hadPackCoreHash: true,
+          },
+          severity: "high",
+        });
+
+        return {
+          success: true,
+          message: "Sealed testimony soft-hidden (core preserved).",
+          mode: "soft_hide",
+        };
+      }
+
+      // Hard delete only for non-sealed / allowed collections
       await docRef.delete();
 
       await writeAuditLog({
@@ -646,22 +762,27 @@ export const moderatedDelete = onCall(
         targetId: docId,
         targetType: collection,
         details: {
-          reason: String(reason),
-          originalAuthor: originalData.authorId || originalData.ownerId || originalData.witnessId || null,
-          contentPreview: originalData.content ? String(originalData.content).substring(0, 200) : null
+          reason: String(reason).slice(0, 500),
+          originalAuthor:
+            originalData.authorId ||
+            originalData.ownerId ||
+            originalData.witnessId ||
+            null,
+          contentPreview: originalData.content
+            ? String(originalData.content).substring(0, 200)
+            : null,
         },
-        severity: "high"
+        severity: "high",
       });
 
-      return { success: true, message: "Document deleted and audited." };
+      return { success: true, message: "Document deleted and audited.", mode: "hard_delete" };
     } catch (error) {
-      logger.error("Moderated delete error:", error);
+      console.error("Moderated delete error:", error);
       if (error instanceof HttpsError) throw error;
-      throw new HttpsError("internal", error.message || "Failed to delete document.");
+      throw new HttpsError("internal", "Failed to delete document.");
     }
   }
 );
-
 // ======================================================
 // TOXICITY HELPERS, GEMINI AI MODERATION & AI TOOLS
 // ======================================================
