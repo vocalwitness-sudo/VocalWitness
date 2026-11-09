@@ -30,6 +30,8 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { writeAuditLog } from "./lib/audit.js";
 import { enforceRateLimit } from "./lib/rate-limit.js";
 import { getR2Client, createUploadSignedUrl } from "./lib/r2.js";
+import { createGetUploadUrl } from "./http/getUploadUrl.js";
+import { createConfirmPhoneVerification } from "./callable/confirmPhoneVerification.js";
 
 
 // ESM __dirname equivalent
@@ -2118,6 +2120,17 @@ export const castDaoVote = onCall(
     });
   }
 );
+export const getUploadUrl = createGetUploadUrl({
+  allowedOrigins,
+  corsHandler,
+  r2AccessKeyId,
+  r2SecretAccessKey,
+});
+
+export const confirmPhoneVerification = createConfirmPhoneVerification({
+  allowedOrigins,
+  db,
+});
 
 /**
  * Step 2: Prove membership and elevate tier.
