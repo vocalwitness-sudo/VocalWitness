@@ -1197,7 +1197,7 @@ ${post.genesis ? `
   <span class="ml-2 inline-flex rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
     Genesis Seal
   </span>
-` : ''
+` : ''}
 /**
  * Edit post (title + content only)
  */
