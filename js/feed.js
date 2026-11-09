@@ -32,7 +32,7 @@ import {
     renderCorroborationUI  
 } from './corroboration.js';
 import { translateTestimony } from './ai-services.js';
-import { escapeHtml } from './utils.js';
+import { escapeHTML } from './utils.js';
 
 let activeFeedListener = null;
 let allPostsCache = [];
