@@ -268,77 +268,7 @@ export const analyzeToxicity = onRequest(
   }
 );
 
-// 1. Post Content Moderation
-export const moderatePostContent = onCall(
-  {
-    cors: allowedOrigins,
-    secrets: [geminiApiKey]
-  },
-  async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Authentication required to run moderation.");
-    }
 
-    const { title = "", text = "" } = request.data || {};
-    const fullContent = `${title}\n${text}`.trim();
-
-    if (!fullContent) {
-      return { flagged: false, reason: "Empty content", categories: [], safetyScore: 1.0 };
-    }
-
-    try {
-      const apiKey = geminiApiKey.value() || process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        logger.warn("GEMINI_API_KEY is not set. Falling back to local check.");
-        const fallback = gentleModerationCheck(fullContent);
-        return {
-          flagged: !fallback.safe,
-          reason: fallback.note,
-          categories: fallback.safe ? [] : ["toxic_content"],
-          safetyScore: 1 - fallback.toxicityScore
-        };
-      }
-
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: `Analyze the following user-submitted post for illegal content, severe hate speech, explicit violence, harassment, or dangerous misinformation.\n\nPost Content:\n"${fullContent}"`
-              }
-            ]
-          }
-        ],
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              flagged: { type: Type.BOOLEAN },
-              reason: { type: Type.STRING },
-              categories: { type: Type.ARRAY, items: { type: Type.STRING } },
-              safetyScore: { type: Type.NUMBER }
-            },
-            required: ["flagged", "reason", "categories", "safetyScore"]
-          }
-        }
-      });
-
-      const resultText = response.text ? response.text.trim() : null;
-      if (!resultText) {
-        return { flagged: false, reason: "No response from model", categories: [], safetyScore: 1.0 };
-      }
-
-      return JSON.parse(resultText);
-    } catch (error) {
-      logger.error("Error in moderatePostContent function:", error);
-      return { flagged: false, reason: "Moderation system error fallback", categories: [], safetyScore: 1.0 };
-    }
-  }
-);
 
 // 2. Multi-Language Feed Translation
 export const translateTestimony = onCall(
