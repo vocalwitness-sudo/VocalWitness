@@ -45,7 +45,7 @@ jobs:
           FUNCTIONS_DISCOVERY_TIMEOUT: "60"
         run: |
           firebase deploy \
-            --only functions:submittestimonysecure,functions:generatezkproof,functions:verifyandtimestampmedia,functions:getuploadurl,functions:getpresignedurl,functions:verifyandelevatezkproof,functions:registerzkcommitment \
+            --only functions:submitTestimonySecure,functions:generateZKProof,functions:verifyAndTimestampMedia,functions:getUploadUrl,functions:getPresignedUrl,functions:verifyAndElevateZKProof,functions:registerZKCommitment \
             --project vocalwitness-3affa \
             --force \
             --non-interactive
@@ -56,7 +56,7 @@ jobs:
           FUNCTIONS_DISCOVERY_TIMEOUT: "60"
         run: |
           firebase deploy \
-            --only functions:analyzetoxicity,functions:scoretoxicity,functions:banuser,functions:unbanuser,functions:castdaovote,functions:evaluatetrusttier,functions:moderateddelete,functions:restorehiddencontent,functions:setuserclaims \
+            --only functions:analyzeToxicity,functions:scoreToxicity,functions:banUser,functions:unbanUser,functions:castDaoVote,functions:evaluateTrustTier,functions:moderatedDelete,functions:restoreHiddenContent,functions:setUserClaims \
             --project vocalwitness-3affa \
             --force \
             --non-interactive
@@ -67,7 +67,7 @@ jobs:
           FUNCTIONS_DISCOVERY_TIMEOUT: "60"
         run: |
           firebase deploy \
-            --only functions:paystackwebhook,functions:initializepaystack,functions:nowpaymentswebhook,functions:dailyanchor,functions:triggeranchornow,functions:getcuratednews,functions:warmcuratednews,functions:tickerheadlines \
+            --only functions:paystackWebhook,functions:initializePaystack,functions:nowPaymentsWebhook,functions:dailyAnchor,functions:triggerAnchorNow,functions:getCuratedNews,functions:warmCuratedNews,functions:tickerHeadlines \
             --project vocalwitness-3affa \
             --force \
             --non-interactive
