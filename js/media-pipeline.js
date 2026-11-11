@@ -1,5 +1,7 @@
 // js/media-pipeline.js
-// Unified pre-upload media pipeline – Mobile + HEIC hardened
+// VocalWitness – Canonical Media Pipeline (Batch 1 – Production)
+// Single source of truth. Hash is always of the final uploaded bytes.
+// Fail-closed: never seal uncleaned / unprocessed media.
 
 import { scrubImageMetadata } from './imageScrubber.js';
 import { normalizeAudioBlob } from './audio-normalize.js';
@@ -7,6 +9,7 @@ import { compressImage } from './media-compression.js';
 import { computeSHA256 } from './utils.js';
 import { showToast } from './utils.js';
 import { uploadMedia } from './upload.js';
+import { inspectAndValidateVideo } from './video-validator.js';
 
 /**
  * Dynamically load heic2any only when needed
@@ -74,22 +77,25 @@ async function convertHeicToJpeg(file) {
       quality: 0.88
     });
 
-    // heic2any can return Blob or array of Blobs
     const jpegBlob = Array.isArray(result) ? result[0] : result;
-
     const baseName = (file.name || 'photo').replace(/\.[^/.]+$/, '');
+
     return new File([jpegBlob], `${baseName}.jpg`, {
       type: 'image/jpeg',
       lastModified: Date.now()
     });
   } catch (err) {
     console.error('[MediaPipeline] HEIC conversion failed:', err);
-    throw new Error('Could not convert HEIC photo. Please take a new photo in “Most Compatible” mode or convert it to JPEG first.');
+    throw new Error(
+      'Could not convert HEIC photo. Please take a new photo in “Most Compatible” mode or convert it to JPEG first.'
+    );
   }
 }
 
 /**
- * Universal media preparation pipeline
+ * Canonical media preparation.
+ * Returns the exact File that will be uploaded + its SHA-256.
+ * Fail-closed: any processing error aborts the seal.
  */
 export async function prepareMediaForUpload(file, options = {}) {
   if (!file) throw new Error('No media file provided');
@@ -113,75 +119,79 @@ export async function prepareMediaForUpload(file, options = {}) {
   let processedBlob = file;
 
   // ========== IMAGE PATH ==========
-   // ========== IMAGE PATH ==========
   if (type.startsWith('image/') || type === 'image/heic' || type === 'image/heif') {
-    try {
-      // Convert HEIC first
-      if (type === 'image/heic' || type === 'image/heif') {
-        file = await convertHeicToJpeg(file);
-        type = 'image/jpeg';
-      }
-
-      const dataSaverOn = localStorage.getItem('vw_data_saver') === 'true';
-
-      const maxWidth  = dataSaverOn ? 1280 : (options.maxWidth || 1920);
-      const maxHeight = dataSaverOn ? 1280 : (options.maxHeight || 1080);
-      const quality   = dataSaverOn ? 0.72 : (options.quality || 0.85);
-
-      showToast(
-        dataSaverOn
-          ? '🛡️ Data Saver: compressing image…'
-          : '🛡️ Scrubbing image metadata…',
-        'info'
-      );
-
-      processedBlob = await scrubImageMetadata(file, {
-        maxWidth,
-        maxHeight,
-        outputType: 'image/webp',
-        quality,
-        ...options
-      });
-
-      // Extra compression pass if still large
-      const sizeLimit = dataSaverOn ? 220 * 1024 : 450 * 1024;
-      if (processedBlob.size > sizeLimit) {
-        processedBlob = await compressImage(processedBlob, {
-          maxWidth: dataSaverOn ? 1024 : 1600,
-          maxHeight: dataSaverOn ? 1024 : 1600,
-          quality: dataSaverOn ? 0.68 : 0.82
-        });
-      }
-
-      type = processedBlob.type || 'image/webp';
-    } catch (err) {
-      console.error('[MediaPipeline] Image processing failed:', err);
-      showToast(err.message || 'Image processing failed – using original', 'warning');
-      processedBlob = file;
+    // Convert HEIC first
+    if (type === 'image/heic' || type === 'image/heif') {
+      file = await convertHeicToJpeg(file);
+      type = 'image/jpeg';
     }
+
+    const dataSaverOn = localStorage.getItem('vw_data_saver') === 'true';
+
+    const maxWidth  = dataSaverOn ? 1280 : (options.maxWidth || 1920);
+    const maxHeight = dataSaverOn ? 1280 : (options.maxHeight || 1080);
+    const quality   = dataSaverOn ? 0.72 : (options.quality || 0.85);
+
+    showToast(
+      dataSaverOn
+        ? '🛡️ Data Saver: compressing image…'
+        : '🛡️ Scrubbing image metadata…',
+      'info'
+    );
+
+    // Fail-closed: do not catch and fall back to original
+    processedBlob = await scrubImageMetadata(file, {
+      maxWidth,
+      maxHeight,
+      outputType: 'image/webp',
+      quality,
+      ...options
+    });
+
+    // Extra compression pass if still large
+    const sizeLimit = dataSaverOn ? 220 * 1024 : 450 * 1024;
+    if (processedBlob.size > sizeLimit) {
+      processedBlob = await compressImage(processedBlob, {
+        maxWidth: dataSaverOn ? 1024 : 1600,
+        maxHeight: dataSaverOn ? 1024 : 1600,
+        quality: dataSaverOn ? 0.68 : 0.82
+      });
+    }
+
+    type = processedBlob.type || 'image/webp';
   }
 
   // ========== AUDIO PATH ==========
   else if (type.startsWith('audio/')) {
-    try {
-      showToast('🛡️ Normalizing audio...', 'info');
-      const result = await normalizeAudioBlob(file, {
-        forceNormalize: options.forceNormalize
-      });
-      processedBlob = result.blob;
-      type = 'audio/wav';
-    } catch (err) {
-      console.error('[MediaPipeline] Audio normalization failed:', err);
-      showToast('Audio processing failed – using original', 'warning');
-      processedBlob = file;
+    showToast('🛡️ Normalizing audio…', 'info');
+
+    // Fail-closed: do not catch and fall back to original
+    const result = await normalizeAudioBlob(file, {
+      forceNormalize: options.forceNormalize
+    });
+
+    if (!result || !result.blob) {
+      throw new Error('Audio normalization produced no output.');
     }
+
+    processedBlob = result.blob;
+    type = 'audio/wav';
   }
 
   // ========== VIDEO PATH ==========
   else if (type.startsWith('video/')) {
+    const inspection = await inspectAndValidateVideo(file);
+
+    if (!inspection.valid) {
+      throw new Error(inspection.message || 'Video validation failed');
+    }
+
+    // Critical: never rewrite video bytes – hash the original
     processedBlob = file;
   } else {
-    throw new Error(`Unsupported media type: ${type || 'unknown'}. Please use JPEG, PNG, WebP, MP4, WebM, MOV, MP3, WAV or M4A.`);
+    throw new Error(
+      `Unsupported media type: ${type || 'unknown'}. Please use JPEG, PNG, WebP, MP4, WebM, MOV, MP3, WAV or M4A.`
+    );
   }
 
   // Ensure proper File object
@@ -194,7 +204,7 @@ export async function prepareMediaForUpload(file, options = {}) {
       'audio/mpeg': 'mp3',
       'video/mp4': 'mp4'
     };
-    const ext = extMap[type] || type.split('/')[1] || 'bin';
+    const ext = extMap[type] || (type.split('/')[1] || 'bin');
     const baseName = (file.name || 'media').replace(/\.[^/.]+$/, '');
     finalFile = new File([processedBlob], `${baseName}_processed.${ext}`, {
       type,
@@ -202,7 +212,13 @@ export async function prepareMediaForUpload(file, options = {}) {
     });
   }
 
+  // ===== THE CRITICAL LINE =====
+  // Hash is of the exact bytes that will be uploaded
   const fileHash = await computeSHA256(finalFile);
+
+  if (!fileHash || typeof fileHash !== 'string' || fileHash.length !== 64) {
+    throw new Error('Failed to compute a valid SHA-256 of the processed media.');
+  }
 
   return {
     file: finalFile,
@@ -232,14 +248,14 @@ export async function processAndUploadMedia(
   if (!publicUrl || typeof publicUrl !== 'string') {
     throw new Error('Upload did not return a public URL.');
   }
-  if (!prepared.hash || typeof prepared.hash !== 'string') {
-    throw new Error('Processed media hash missing.');
+  if (!prepared.hash || typeof prepared.hash !== 'string' || prepared.hash.length !== 64) {
+    throw new Error('Processed media hash missing or invalid.');
   }
 
   return {
     publicUrl,
     hash: prepared.hash,
     mimeType: prepared.mimeType,
-    size: prepared.size,
+    size: prepared.size
   };
 }
