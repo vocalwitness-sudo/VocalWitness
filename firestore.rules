@@ -953,3 +953,5 @@ match /liveRooms/{roomId} {
     allow update, delete: if isModerator();
   }
 }
+  }
+}
