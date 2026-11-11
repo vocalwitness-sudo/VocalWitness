@@ -150,7 +150,147 @@ export function initGroupDetail() {
     }
   });
 
+  // ====================== ADD A CITIZEN EVENT LISTENERS ======================
+  document.getElementById('addCitizenBtn')?.addEventListener('click', openAddCitizenModal);
+  document.getElementById('closeAddCitizenModalBtn')?.addEventListener('click', closeAddCitizenModal);
+  document.getElementById('shareInviteBtn')?.addEventListener('click', shareInviteLink);
+
+  document.getElementById('inviteCitizenBtn')?.addEventListener('click', () => handleAddCitizen('invite'));
+  document.getElementById('addCitizenDirectBtn')?.addEventListener('click', () => handleAddCitizen('direct'));
+
+  // Live search
+  document.getElementById('citizenSearchInput')?.addEventListener('input', debounce(searchCitizens, 300));
+
   loadGroup();
+}
+
+// ====================== ADD A CITIZEN FUNCTIONS ======================
+
+function openAddCitizenModal() {
+  const modal = document.getElementById('addCitizenModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    document.getElementById('citizenSearchInput').value = '';
+    document.getElementById('citizenUidInput').value = '';
+    document.getElementById('citizenSearchResults').classList.add('hidden');
+  }
+}
+
+function closeAddCitizenModal() {
+  document.getElementById('addCitizenModal')?.classList.add('hidden');
+}
+
+async function searchCitizens(e) {
+  const q = (e.target.value || '').trim().toLowerCase();
+  const resultsBox = document.getElementById('citizenSearchResults');
+  if (!q || q.length < 2) {
+    resultsBox.classList.add('hidden');
+    return;
+  }
+
+  // Simple client-side search against publicProfiles (you can later move this to a Cloud Function)
+  try {
+    const snap = await getDocs(query(collection(db, 'publicProfiles'), limit(30)));
+    const matches = [];
+    snap.forEach(doc => {
+      const d = doc.data();
+      const name = (d.displayName || '').toLowerCase();
+      const uname = (d.username || '').toLowerCase();
+      if (name.includes(q) || uname.includes(q)) {
+        matches.push({ uid: doc.id, ...d });
+      }
+    });
+
+    if (matches.length === 0) {
+      resultsBox.innerHTML = `<div class="p-3 text-sm text-zinc-500">No citizens found</div>`;
+    } else {
+      resultsBox.innerHTML = matches.slice(0, 8).map(m => `
+        <button data-uid="${m.uid}" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 text-left">
+          <div class="h-8 w-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs">
+            ${(m.displayName || '?')[0]}
+          </div>
+          <div>
+            <p class="text-sm font-medium">${escapeHtml(m.displayName || 'Citizen')}</p>
+            <p class="text-xs text-zinc-500">${m.username ? '@' + m.username : m.uid.slice(0,8)+'…'}</p>
+          </div>
+        </button>
+      `).join('');
+    }
+    resultsBox.classList.remove('hidden');
+
+    resultsBox.querySelectorAll('[data-uid]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('citizenUidInput').value = btn.dataset.uid;
+        resultsBox.classList.add('hidden');
+      });
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function handleAddCitizen(mode = 'invite') {
+  const uid = document.getElementById('citizenUidInput').value.trim();
+  if (!uid) {
+    showToast('Please select or paste a User ID', 'error');
+    return;
+  }
+
+  if (!auth.currentUser) {
+    showToast('You must be signed in', 'error');
+    return;
+  }
+
+  try {
+    if (mode === 'direct') {
+      // Direct add (admin only)
+      await updateDoc(doc(db, 'groups', currentGroupId), {
+        members: arrayUnion(uid),
+        pendingMembers: arrayRemove(uid),
+        memberCount: increment(1)
+      });
+      showToast('Citizen added directly', 'success');
+    } else {
+      // Invite → put in pending
+      await updateDoc(doc(db, 'groups', currentGroupId), {
+        pendingMembers: arrayUnion(uid)
+      });
+      showToast('Invite sent (pending approval)', 'success');
+    }
+    closeAddCitizenModal();
+  } catch (err) {
+    console.error(err);
+    showToast(err.message || 'Failed to add citizen', 'error');
+  }
+}
+
+function shareInviteLink() {
+  const link = document.getElementById('inviteLinkInput')?.value || 
+               `${window.location.origin}/group-detail.html?id=${currentGroupId}`;
+  
+  if (navigator.share) {
+    navigator.share({
+      title: currentGroupData?.name || 'Join this group on VocalWitness',
+      text: `Join "${currentGroupData?.name}" on VocalWitness – sealed citizen reporting.`,
+      url: link
+    }).catch(() => copyInvite(link));
+  } else {
+    copyInvite(link);
+  }
+}
+
+function copyInvite(link) {
+  navigator.clipboard.writeText(link);
+  showToast('Invite link copied! Share it with citizens.', 'success');
+}
+
+// Simple debounce helper
+function debounce(fn, delay) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
 }
 /**
  * Load group in real-time
