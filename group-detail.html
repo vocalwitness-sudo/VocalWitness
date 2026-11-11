@@ -112,6 +112,19 @@
     <!-- ===================== TAB: MEMBERS ===================== -->
     <div id="tab-members" class="hidden space-y-6">
       
+      <!-- MEMBERS HEADER & ACTIONS -->
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <h3 class="text-lg font-semibold">Members</h3>
+        <div class="flex gap-2">
+          <button id="addCitizenBtn" class="rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-black hover:bg-emerald-500 flex items-center gap-2">
+            + Add a Citizen
+          </button>
+          <button id="shareInviteBtn" class="rounded-2xl bg-zinc-800 border border-zinc-700 px-4 py-2.5 text-sm font-medium text-emerald-400 hover:bg-zinc-700 flex items-center gap-2">
+            Share Invite Link
+          </button>
+        </div>
+      </div>
+      
       <!-- 🛡️ ADMIN MEMBER MANAGEMENT PANEL (Injected for Admins) -->
       <div id="admin-members-panel" class="glass hidden rounded-3xl border border-zinc-800 p-5 shadow-2xl space-y-6">
         <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
@@ -223,9 +236,6 @@
         </div>
       </div>
     </div>
-
-  </div>
-
   <!-- ===== ATTESTATION MODAL ===== -->
   <div id="attestationModal" class="hidden fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-labelledby="attestationModalTitle">
     <div class="w-full max-w-md rounded-2xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl">
