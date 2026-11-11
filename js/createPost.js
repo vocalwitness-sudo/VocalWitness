@@ -10,6 +10,19 @@ import { processAndUploadMedia } from './media-pipeline.js';
 import { parsePostMetadata } from './utils/parser.js';
 import { createEvidencePack } from './evidence-pack.js';
 
+async function isPhoneCircleUser() {
+  const user = auth.currentUser;
+  if (!user) return false;
+  try {
+    const token = await user.getIdTokenResult();
+    const t = token.claims || {};
+    if (t.phone_verified === true) return true;
+    if (t.tier === 'citizen_circle' || t.tier === 'witness_circle') return true;
+  } catch (_) {}
+  // fallback: provider
+  return user.providerData?.some((p) => p.providerId === 'phone') === true;
+}
+
 function normalizeChannel(channel) {
   const allowed = [
     'citizen-talk', 'witness-voice',
