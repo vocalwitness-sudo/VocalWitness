@@ -519,20 +519,34 @@ function scorePost(post) {
         post.videoHash ||
         post.bodyHash
     );
+    const phoneCircle = !!(
+        post.authorPhoneVerified === true ||
+        tier === 'citizen_circle' ||
+        tier === 'witness_circle' ||
+        tier === 'citizen-circle' ||
+        tier === 'witness-circle'
+    );
+    const isGenesis = post.genesis === true;
 
     if (post.isPinned) s += 200;
-    if (hasMedia) s += 100;
+    if (sealed) s += 40;
+    if (hasMedia) s += 80;
     if (corr >= 1) s += 50 + Math.min(corr, 10) * 5;
-    if (tier && tier !== 'citizen' && tier !== 'unverified') s += 30;
-    if (sealed) s += 20;
+    if (phoneCircle) s += 35;
+    if (tier && tier !== 'citizen' && tier !== 'unverified') s += 20;
+    if (isGenesis) s -= 30; // markers stay visible but below live reports
 
+    // Light recency (hours), capped
     const t =
         (post.createdAt && typeof post.createdAt.toMillis === 'function'
             ? post.createdAt.toMillis()
             : post.createdAt?.seconds
               ? post.createdAt.seconds * 1000
               : 0) || 0;
-    s += Math.min(20, Math.floor(t / 3.6e6) % 20);
+    if (t) {
+        const ageHours = (Date.now() - t) / 3.6e6;
+        s += Math.max(0, 25 - Math.min(ageHours, 25));
+    }
 
     return s;
 }
