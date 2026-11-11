@@ -674,13 +674,13 @@ function loadGroupFeed() {
 
   if (unsubscribeFeed) unsubscribeFeed();
 
+  // Read from the correct subcollection
   const q = query(
-    collection(db, 'testimonies'),
-    where('groupId', '==', currentGroupId),
+    collection(db, 'groups', currentGroupId, 'posts'),
     orderBy('createdAt', 'desc')
   );
 
-  unsubscribeFeed = onSnapshot(q, (snapshot) => {
+  unsubscribeFeed = onSnapshot(q, async (snapshot) => {
     feedContainer.innerHTML = '';
 
     if (snapshot.empty) {
@@ -694,22 +694,34 @@ function loadGroupFeed() {
       return;
     }
 
+    // Collect author IDs to show names
+    const authorIds = [...new Set(snapshot.docs.map(d => d.data().authorId).filter(Boolean))];
+    const profiles = await getPublicProfiles(authorIds);
+
     snapshot.forEach((docSnap) => {
       const data = docSnap.data();
+      const author = profiles[data.authorId] || {};
+      const name = author.displayName || (data.authorId ? data.authorId.slice(0, 8) + '…' : 'Citizen');
+
       const card = document.createElement('div');
       card.className = 'glass rounded-3xl p-5';
 
       card.innerHTML = `
-        <div class="text-xs text-zinc-400 mb-2">
-          ${data.createdAt?.toDate ? data.createdAt.toDate().toLocaleString() : ''}
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm font-medium text-emerald-400">${escapeHtml(name)}</span>
+          <span class="text-xs text-zinc-500">
+            ${data.createdAt?.toDate ? data.createdAt.toDate().toLocaleString() : ''}
+          </span>
         </div>
-        ${data.title ? `<h4 class="font-semibold text-white mb-1">${escapeHtml(data.title)}</h4>` : ''}
         <p class="text-zinc-200 text-sm leading-relaxed whitespace-pre-wrap">
-          ${escapeHtml(data.content || data.text || '')}
+          ${escapeHtml(data.content || '')}
         </p>
       `;
       feedContainer.appendChild(card);
     });
+  }, (err) => {
+    console.error('Group feed error:', err);
+    feedContainer.innerHTML = `<p class="text-center text-red-400 text-sm py-8">Failed to load posts</p>`;
   });
 }
 
