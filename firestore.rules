@@ -642,16 +642,46 @@ match /groups/{groupId} {
       allow update, delete: if false;
     }
 
-match /groups/{groupId}/posts/{postId} {
-  allow read: if true;
-  allow create: if isAuthenticated()
-    && isGroupMember(groupId)
-    && request.resource.data.authorId == request.auth.uid
-    && request.resource.data.content is string
-    && request.resource.data.content.size() > 0
-    && request.resource.data.content.size() < 5000;
-  allow update, delete: if false; // sealed for now
-}
+    // ===== Group Discussion Posts & Replies =====
+    match /groups/{groupId}/posts/{postId} {
+      allow read: if true;
+
+      allow create: if isAuthenticated()
+        && isNotBanned()
+        && isGroupMember(groupId)
+        && !isGroupBanned(groupId)
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.content is string
+        && request.resource.data.content.size() > 0
+        && request.resource.data.content.size() <= 5000
+        && (request.resource.data.createdAt is timestamp
+            || request.resource.data.createdAt == request.time);
+
+      allow update: if isAuthenticated()
+        && isGroupMember(groupId)
+        && !isGroupBanned(groupId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']);
+
+      allow delete: if false;
+
+      // ===== Replies under a post =====
+      match /replies/{replyId} {
+        allow read: if true;
+
+        allow create: if isAuthenticated()
+          && isNotBanned()
+          && isGroupMember(groupId)
+          && !isGroupBanned(groupId)
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.content is string
+          && request.resource.data.content.size() > 0
+          && request.resource.data.content.size() <= 2000
+          && (request.resource.data.createdAt is timestamp
+              || request.resource.data.createdAt == request.time);
+
+        allow update, delete: if false;
+      }
+    }
 
     match /corroborations/{corrId} {
       allow read: if true;
@@ -794,6 +824,8 @@ match /groups/{groupId}/posts/{postId} {
       allow delete: if false;
     }
 
+  }
+}
     match /disputes/{disputeId} {
       allow read: if true;
       allow create: if isNotBanned()
