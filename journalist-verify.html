@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Journalist Verification Guide • VocalWitness</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" href="/logo.png" type="image/png">
+</head>
+<body class="min-h-screen bg-[#0a0f1c] text-white pb-16">
+  <header class="sticky top-0 z-50 mx-4 mt-4 mb-8 rounded-3xl border border-emerald-500/20 bg-zinc-900/95 p-4 backdrop-blur">
+    <div class="mx-auto flex max-w-3xl items-center justify-between">
+      <a href="/" class="text-sm font-semibold text-zinc-300 hover:text-emerald-400">← Back to Square</a>
+      <a href="/verify" class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-500">Open Verifier</a>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-3xl px-6">
+    <h1 class="mb-2 text-3xl font-bold text-emerald-400">Journalist &amp; investigator guide</h1>
+    <p class="mb-8 text-sm text-zinc-400">
+      VocalWitness proves <strong class="text-zinc-300">integrity</strong> (bits unchanged since sealing).
+      It does <strong class="text-zinc-300">not</strong> prove that a real-world event occurred. No account required.
+    </p>
+
+    <section class="mb-8 rounded-3xl border border-emerald-500/20 bg-zinc-900/80 p-6">
+      <h2 class="mb-4 text-lg font-semibold text-white">Quick verification</h2>
+      <ol class="list-decimal space-y-3 pl-5 text-sm leading-relaxed text-zinc-300">
+        <li>Open the shared link or QR → <code class="text-emerald-400">/verify.html?id=…&amp;h=…</code></li>
+        <li>Or download the <strong>Evidence Pack</strong> (JSON) from the report.</li>
+        <li>Use <a href="/verify" class="text-emerald-400 hover:underline">vocalwitness.com/verify</a>:
+          <ul class="mt-2 list-disc space-y-1 pl-5 text-zinc-400">
+            <li><strong>Ledger link</strong> — paste ID + hash</li>
+            <li><strong>JSON proof</strong> — paste the full Evidence Pack</li>
+            <li><strong>Media</strong> — drop the file (hash / C2PA if present)</li>
+          </ul>
+        </li>
+      </ol>
+    </section>
+
+    <section class="mb-8 rounded-3xl border border-zinc-700 bg-zinc-900/80 p-6">
+      <h2 class="mb-4 text-lg font-semibold text-white">Offline (command line)</h2>
+      <ol class="list-decimal space-y-3 pl-5 text-sm leading-relaxed text-zinc-300">
+        <li>Download the Evidence Pack JSON and the original media.</li>
+        <li>Note <code class="text-emerald-400">hashAfterUpload</code> / media hash and <code class="text-emerald-400">bodyHash</code> in the JSON.</li>
+        <li>Hash the media yourself:
+          <pre class="mt-2 overflow-x-auto rounded-xl bg-zinc-950 p-3 text-xs text-emerald-400"># Linux / macOS
+sha256sum your-media-file.mp4
+
+# Windows
+certutil -hashfile your-media-file.mp4 SHA256</pre>
+        </li>
+        <li>Compare to the pack. Match = integrity OK for those bits.</li>
+      </ol>
+    </section>
+
+    <section class="mb-10 rounded-3xl border border-zinc-700 bg-zinc-900/60 p-6 text-sm text-zinc-400">
+      <p class="mb-3">Also useful:</p>
+      <ul class="space-y-2">
+        <li><a href="/verify" class="text-emerald-400 hover:underline">Evidence Verifier</a></li>
+        <li><a href="/transparency" class="text-emerald-400 hover:underline">Transparency dashboard</a> (ledger roots, Prove-It-Yourself)</li>
+        <li><a href="/about" class="text-emerald-400 hover:underline">About VocalWitness</a></li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
