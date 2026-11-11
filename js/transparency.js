@@ -323,16 +323,16 @@ export async function loadChallengesTable() {
 /* -------------------------------------------------------------------------- */
 /* External OpenTimestamps Anchor                                             */
 /* -------------------------------------------------------------------------- */
-
 export async function loadLatestOtsAnchor() {
   const container = document.getElementById('otsAnchorContainer');
   if (!container) return;
 
   try {
+    // Match functions/anchor.js → collection "ledger_roots", doc id = YYYY-MM-DD
     const snap = await getDocs(
       query(
-        collection(db, 'ledger_anchors'),
-        orderBy('createdAt', 'desc'),
+        collection(db, 'ledger_roots'),
+        orderBy('timestamp', 'desc'),
         limit(1)
       )
     );
@@ -340,17 +340,22 @@ export async function loadLatestOtsAnchor() {
     if (snap.empty) {
       container.innerHTML = `
         <div class="text-zinc-500 text-sm">
-          No external anchors published yet. The first daily Merkle root will appear here after the scheduled function runs.
+          No external anchors published yet. Trigger once from admin, or wait for the daily job (00:00 UTC).
         </div>`;
+      const status = document.getElementById('labAnchorStatus');
+      if (status) {
+        status.textContent = 'OpenTimestamps daily root — waiting for first ledger_roots entry.';
+      }
       return;
     }
 
     const a = snap.docs[0].data();
-    const root = escapeHtml(a.root || '—');
-    const date = escapeHtml(a.date || formatDate(a.createdAt));
+    const root = escapeHtml(a.merkleRoot || a.root || '—');
+    const date = escapeHtml(a.date || formatDate(a.timestamp) || snap.docs[0].id);
     const leafCount = Number(a.leafCount || 0).toLocaleString();
-    const otsUrl = a.otsUrl || '';
-    const previousRoot = a.previousRoot ? escapeHtml(a.previousRoot) : null;
+    const publicUrl = a.publicUrl || '';
+    const otsStamped = a.ots?.stamped === true;
+    const otsBase64 = a.ots?.otsBase64 || '';
 
     container.innerHTML = `
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
@@ -367,46 +372,47 @@ export async function loadLatestOtsAnchor() {
       <div class="bg-zinc-950/60 border border-zinc-800 rounded-2xl p-4 mt-4">
         <div class="text-zinc-500 text-[11px] uppercase tracking-wide mb-2">Merkle Root (SHA-256)</div>
         <div class="font-mono text-xs text-emerald-400 break-all select-all">${root}</div>
+        <div class="mt-2 text-[11px] ${otsStamped ? 'text-emerald-400' : 'text-amber-400'}">
+          ${otsStamped ? 'OpenTimestamps stamp recorded' : 'OTS stamp missing or failed (root still public)'}
+        </div>
       </div>
 
-      ${previousRoot ? `
-        <div class="bg-zinc-950/40 border border-zinc-800/70 rounded-2xl p-3 mt-3">
-          <div class="text-zinc-500 text-[10px] uppercase tracking-wide mb-1">Previous Root</div>
-          <div class="font-mono text-[10px] text-zinc-500 break-all">${previousRoot}</div>
-        </div>` : ''}
-
       <div class="flex flex-wrap gap-3 mt-5">
-        ${otsUrl ? `
-          <a href="${escapeHtml(otsUrl)}" 
-             download 
-             class="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-900/40 hover:bg-cyan-800/50 border border-cyan-700 text-cyan-300 text-xs font-medium rounded-xl transition">
-            📥 Download .ots Receipt
+        ${publicUrl ? `
+          <a href="${escapeHtml(publicUrl)}" target="_blank" rel="noopener"
+             class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-900/40 hover:bg-emerald-800/50 border border-emerald-700 text-emerald-300 text-xs font-medium rounded-xl transition">
+            📥 Download root JSON
           </a>` : ''}
-
-        <a href="https://opentimestamps.org" 
-           target="_blank" 
-           rel="noopener"
+        ${otsBase64 ? `
+          <button type="button" id="downloadOtsBtn"
+             class="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-900/40 hover:bg-cyan-800/50 border border-cyan-700 text-cyan-300 text-xs font-medium rounded-xl transition">
+            📥 Download .ots (base64 → file)
+          </button>` : ''}
+        <a href="https://opentimestamps.org" target="_blank" rel="noopener"
            class="inline-flex items-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-xs font-medium rounded-xl transition">
-          🔗 Verify on OpenTimestamps.org
+          🔗 OpenTimestamps.org
         </a>
-
-        <button type="button" 
-                id="copyRootBtn"
+        <button type="button" id="copyRootBtn"
                 class="inline-flex items-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-xs font-medium rounded-xl transition">
           📋 Copy Root
         </button>
       </div>
 
       <p class="text-[11px] text-zinc-500 mt-4 leading-relaxed">
-        The <code class="text-zinc-400">.ots</code> file contains the cryptographic proof that this Merkle root was submitted to the public OpenTimestamps calendars. 
-        You can verify it independently at <a href="https://opentimestamps.org" class="text-cyan-400 hover:underline" target="_blank">opentimestamps.org</a> 
-        or with the <code class="text-zinc-400">ots</code> command-line tool.
+        This root is the Merkle root of sealed report hashes for the period.
+        It proves those hashes existed at anchor time — not that real-world events occurred.
       </p>
     `;
 
-    // Copy button
+    const status = document.getElementById('labAnchorStatus');
+    if (status) {
+      status.textContent = otsStamped
+        ? `Latest root ${date}: ${String(a.merkleRoot || '').slice(0, 16)}… (${leafCount} leaves, OTS stamped)`
+        : `Latest root ${date}: ${String(a.merkleRoot || '').slice(0, 16)}… (${leafCount} leaves)`;
+    }
+
     document.getElementById('copyRootBtn')?.addEventListener('click', () => {
-      navigator.clipboard.writeText(a.root || '').then(() => {
+      navigator.clipboard.writeText(a.merkleRoot || a.root || '').then(() => {
         const btn = document.getElementById('copyRootBtn');
         if (btn) {
           btn.textContent = '✅ Copied';
@@ -415,11 +421,24 @@ export async function loadLatestOtsAnchor() {
       });
     });
 
+    document.getElementById('downloadOtsBtn')?.addEventListener('click', () => {
+      try {
+        const bin = Uint8Array.from(atob(otsBase64), (c) => c.charCodeAt(0));
+        const blob = new Blob([bin], { type: 'application/octet-stream' });
+        const aEl = document.createElement('a');
+        aEl.href = URL.createObjectURL(blob);
+        aEl.download = `vocalwitness-${date}.ots`;
+        aEl.click();
+        URL.revokeObjectURL(aEl.href);
+      } catch (err) {
+        console.warn('OTS download failed', err);
+      }
+    });
   } catch (e) {
     console.error('OTS anchor load error:', e);
     container.innerHTML = `
       <div class="text-red-400/80 text-sm">
-        Unable to load external anchor data. The collection may not exist yet or rules may restrict public reads.
+        Unable to load ledger_roots. Check Firestore rules (public read) and that dailyAnchor has run.
       </div>`;
   }
 }
