@@ -106,6 +106,14 @@ export function initGroupDetail() {
   document.getElementById('openTimelineModalBtn')?.addEventListener('click', openTimelineModal);
   document.getElementById('openEvidenceModalBtn')?.addEventListener('click', openEvidenceModal);
 
+  // Add a Citizen + Share
+document.getElementById('addCitizenBtn')?.addEventListener('click', openAddCitizenModal);
+document.getElementById('closeAddCitizenModalBtn')?.addEventListener('click', closeAddCitizenModal);
+document.getElementById('shareInviteBtn')?.addEventListener('click', shareInviteLink);
+document.getElementById('inviteCitizenBtn')?.addEventListener('click', () => handleAddCitizen('invite'));
+document.getElementById('addCitizenDirectBtn')?.addEventListener('click', () => handleAddCitizen('direct'));
+document.getElementById('citizenSearchInput')?.addEventListener('input', debounce(searchCitizens, 320));
+
   // Modal chrome (✕ + backdrop click)
   wireModalChrome('attestationModal', 'closeAttestationModalBtn');
   wireModalChrome('timelineModal', 'closeTimelineModalBtn');
@@ -164,16 +172,15 @@ export function initGroupDetail() {
   loadGroup();
 }
 
-// ====================== ADD A CITIZEN FUNCTIONS ======================
+// ====================== ADD A CITIZEN ======================
 
 function openAddCitizenModal() {
   const modal = document.getElementById('addCitizenModal');
-  if (modal) {
-    modal.classList.remove('hidden');
-    document.getElementById('citizenSearchInput').value = '';
-    document.getElementById('citizenUidInput').value = '';
-    document.getElementById('citizenSearchResults').classList.add('hidden');
-  }
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  document.getElementById('citizenSearchInput').value = '';
+  document.getElementById('citizenUidInput').value = '';
+  document.getElementById('citizenSearchResults').classList.add('hidden');
 }
 
 function closeAddCitizenModal() {
@@ -182,47 +189,46 @@ function closeAddCitizenModal() {
 
 async function searchCitizens(e) {
   const q = (e.target.value || '').trim().toLowerCase();
-  const resultsBox = document.getElementById('citizenSearchResults');
+  const box = document.getElementById('citizenSearchResults');
   if (!q || q.length < 2) {
-    resultsBox.classList.add('hidden');
+    box.classList.add('hidden');
     return;
   }
 
-  // Simple client-side search against publicProfiles (you can later move this to a Cloud Function)
   try {
-    const snap = await getDocs(query(collection(db, 'publicProfiles'), limit(30)));
+    const snap = await getDocs(query(collection(db, 'publicProfiles'), limit(40)));
     const matches = [];
-    snap.forEach(doc => {
-      const d = doc.data();
-      const name = (d.displayName || '').toLowerCase();
-      const uname = (d.username || '').toLowerCase();
+    snap.forEach(d => {
+      const data = d.data();
+      const name = (data.displayName || '').toLowerCase();
+      const uname = (data.username || '').toLowerCase();
       if (name.includes(q) || uname.includes(q)) {
-        matches.push({ uid: doc.id, ...d });
+        matches.push({ uid: d.id, ...data });
       }
     });
 
     if (matches.length === 0) {
-      resultsBox.innerHTML = `<div class="p-3 text-sm text-zinc-500">No citizens found</div>`;
+      box.innerHTML = `<div class="p-3 text-sm text-zinc-500">No citizens found</div>`;
     } else {
-      resultsBox.innerHTML = matches.slice(0, 8).map(m => `
-        <button data-uid="${m.uid}" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 text-left">
-          <div class="h-8 w-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs">
-            ${(m.displayName || '?')[0]}
+      box.innerHTML = matches.slice(0, 8).map(m => `
+        <button type="button" data-uid="${m.uid}" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 text-left">
+          <div class="h-8 w-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs overflow-hidden">
+            ${m.photoURL ? `<img src="${m.photoURL}" class="h-full w-full object-cover">` : (m.displayName || '?')[0]}
           </div>
-          <div>
-            <p class="text-sm font-medium">${escapeHtml(m.displayName || 'Citizen')}</p>
-            <p class="text-xs text-zinc-500">${m.username ? '@' + m.username : m.uid.slice(0,8)+'…'}</p>
+          <div class="min-w-0">
+            <p class="text-sm font-medium truncate">${escapeHtml(m.displayName || 'Citizen')}</p>
+            <p class="text-xs text-zinc-500 truncate">${m.username ? '@'+m.username : m.uid.slice(0,10)+'…'}</p>
           </div>
         </button>
       `).join('');
     }
-    resultsBox.classList.remove('hidden');
+    box.classList.remove('hidden');
 
-    resultsBox.querySelectorAll('[data-uid]').forEach(btn => {
-      btn.addEventListener('click', () => {
+    box.querySelectorAll('[data-uid]').forEach(btn => {
+      btn.onclick = () => {
         document.getElementById('citizenUidInput').value = btn.dataset.uid;
-        resultsBox.classList.add('hidden');
-      });
+        box.classList.add('hidden');
+      };
     });
   } catch (err) {
     console.error(err);
@@ -230,8 +236,8 @@ async function searchCitizens(e) {
 }
 
 async function handleAddCitizen(mode = 'invite') {
-  const uid = document.getElementById('citizenUidInput').value.trim();
-  if (!uid) {
+  const targetUid = document.getElementById('citizenUidInput').value.trim();
+  if (!targetUid) {
     showToast('Please select or paste a User ID', 'error');
     return;
   }
@@ -241,19 +247,24 @@ async function handleAddCitizen(mode = 'invite') {
     return;
   }
 
+  const isAdmin = currentGroupData?.creatorId === auth.currentUser.uid ||
+                  (currentGroupData?.admins || []).includes(auth.currentUser.uid);
+
   try {
     if (mode === 'direct') {
-      // Direct add (admin only)
+      if (!isAdmin) {
+        showToast('Only admins can add directly', 'error');
+        return;
+      }
       await updateDoc(doc(db, 'groups', currentGroupId), {
-        members: arrayUnion(uid),
-        pendingMembers: arrayRemove(uid),
+        members: arrayUnion(targetUid),
+        pendingMembers: arrayRemove(targetUid),
         memberCount: increment(1)
       });
-      showToast('Citizen added directly', 'success');
+      showToast('Citizen added to the group', 'success');
     } else {
-      // Invite → put in pending
       await updateDoc(doc(db, 'groups', currentGroupId), {
-        pendingMembers: arrayUnion(uid)
+        pendingMembers: arrayUnion(targetUid)
       });
       showToast('Invite sent (pending approval)', 'success');
     }
@@ -265,31 +276,27 @@ async function handleAddCitizen(mode = 'invite') {
 }
 
 function shareInviteLink() {
-  const link = document.getElementById('inviteLinkInput')?.value || 
-               `${window.location.origin}/group-detail.html?id=${currentGroupId}`;
-  
+  const link = `${window.location.origin}/group-detail.html?id=${currentGroupId}`;
   if (navigator.share) {
     navigator.share({
-      title: currentGroupData?.name || 'Join this group on VocalWitness',
-      text: `Join "${currentGroupData?.name}" on VocalWitness – sealed citizen reporting.`,
+      title: currentGroupData?.name || 'VocalWitness Group',
+      text: `Join "${currentGroupData?.name || 'this group'}" on VocalWitness`,
       url: link
-    }).catch(() => copyInvite(link));
+    }).catch(() => {
+      navigator.clipboard.writeText(link);
+      showToast('Invite link copied!', 'success');
+    });
   } else {
-    copyInvite(link);
+    navigator.clipboard.writeText(link);
+    showToast('Invite link copied!', 'success');
   }
 }
 
-function copyInvite(link) {
-  navigator.clipboard.writeText(link);
-  showToast('Invite link copied! Share it with citizens.', 'success');
-}
-
-// Simple debounce helper
 function debounce(fn, delay) {
-  let timer;
+  let t;
   return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), delay);
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), delay);
   };
 }
 /**
@@ -1389,6 +1396,14 @@ async function postToGroup() {
     return;
   }
 
+  const uid = auth.currentUser.uid;
+  const isMember = currentGroupData?.members?.includes(uid) || currentGroupData?.creatorId === uid;
+
+  if (!isMember) {
+    showToast('You must be a member to post', 'error');
+    return;
+  }
+
   const input = document.getElementById('groupPostInput');
   const content = input?.value?.trim();
   if (!content) {
@@ -1397,21 +1412,21 @@ async function postToGroup() {
   }
 
   try {
-    await addDoc(collection(db, 'testimonies'), {
+    // Write to a dedicated subcollection instead of the main testimonies collection
+    await addDoc(collection(db, 'groups', currentGroupId, 'posts'), {
       content,
-      groupId: currentGroupId,
-      authorId: auth.currentUser.uid,
-      channel: 'group',
-      createdAt: serverTimestamp()
+      authorId: uid,
+      createdAt: serverTimestamp(),
+      type: 'discussion'
     });
+
     input.value = '';
-    showToast('Posted', 'success');
+    showToast('Posted to group', 'success');
   } catch (err) {
     console.error(err);
-    showToast('Failed to post', 'error');
+    showToast(err.message || 'Failed to post – check permissions', 'error');
   }
 }
-
 function renderInviteUI() {
   const linkInput = document.getElementById('inviteLinkInput');
   const codeInput = document.getElementById('inviteCodeInput');
