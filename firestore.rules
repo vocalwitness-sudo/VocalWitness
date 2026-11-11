@@ -500,468 +500,456 @@ function isNotSensitiveWriteThrottled(seconds) {
       }
     }
 match /groups/{groupId} {
-      allow read: if true;
+  allow read: if true;
 
-      allow create: if isNotBanned()
-        && isAuthenticated()
-        && request.resource.data.creatorId == request.auth.uid
-        && request.resource.data.keys().hasAll([
-             'name', 'creatorId', 'visibility', 'createdAt', 'members', 'memberCount'
+  allow create: if isNotBanned()
+    && isAuthenticated()
+    && request.resource.data.creatorId == request.auth.uid
+    && request.resource.data.keys().hasAll([
+         'name', 'creatorId', 'visibility', 'createdAt', 'members', 'memberCount'
+       ])
+    && request.resource.data.name is string
+    && request.resource.data.name.size() > 0
+    && request.resource.data.name.size() <= 60
+    && request.resource.data.visibility in [
+         'public', 'network', 'citizen_circle', 'witness_circle'
+       ]
+    && request.resource.data.members is list
+    && request.resource.data.members.size() == 1
+    && request.auth.uid in request.resource.data.members
+    && request.resource.data.memberCount is number
+    && request.resource.data.memberCount == 1
+    && (!('bannedMembers' in request.resource.data)
+        || request.resource.data.bannedMembers.size() == 0)
+    && (!('pendingMembers' in request.resource.data)
+        || request.resource.data.pendingMembers.size() == 0);
+
+  allow update: if isNotBanned() && isAuthenticated() && (
+    (
+      (resource.data.creatorId == request.auth.uid
+        || request.auth.uid in resource.data.get('admins', []))
+      && request.resource.data.diff(resource.data).affectedKeys()
+           .hasOnly([
+             'members', 'memberCount', 'pendingMembers', 'bannedMembers',
+             'admins', 'suspendedMembers', 'inviteCode', 'updatedAt',
+             'description', 'name'
            ])
-        && request.resource.data.name is string
-        && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 60
-        && request.resource.data.visibility in [
-             'public', 'network', 'citizen_circle', 'witness_circle'
-           ]
-        && request.resource.data.members is list
-        && request.resource.data.members.size() == 1
-        && request.auth.uid in request.resource.data.members
-        && request.resource.data.memberCount is number
-        && request.resource.data.memberCount == 1
-        && (!('bannedMembers' in request.resource.data)
-            || request.resource.data.bannedMembers.size() == 0)
-        && (!('pendingMembers' in request.resource.data)
-            || request.resource.data.pendingMembers.size() == 0);
-
-      allow update: if isNotBanned() && isAuthenticated() && (
-        (
-          (resource.data.creatorId == request.auth.uid
-            || request.auth.uid in resource.data.get('admins', []))
-          && request.resource.data.diff(resource.data).affectedKeys()
-               .hasOnly([
-                 'members', 'memberCount', 'pendingMembers', 'bannedMembers',
-                 'admins', 'suspendedMembers', 'inviteCode', 'updatedAt',
-                 'description', 'name'
-               ])
-          && request.resource.data.name is string
-          && request.resource.data.name.size() > 0
-          && request.resource.data.name.size() <= 60
-          && request.resource.data.memberCount is number
-          && request.resource.data.members is list
-          && request.resource.data.memberCount == request.resource.data.members.size()
-        )
+      && request.resource.data.name is string
+      && request.resource.data.name.size() > 0
+      && request.resource.data.name.size() <= 60
+      && request.resource.data.memberCount is number
+      && request.resource.data.members is list
+      && request.resource.data.memberCount == request.resource.data.members.size()
+    )
+    ||
+    (
+      !isGroupBanned(groupId)
+      && request.resource.data.diff(resource.data).affectedKeys()
+           .hasOnly(['members', 'memberCount', 'pendingMembers'])
+      && request.resource.data.members is list
+      && request.resource.data.memberCount is number
+      && request.resource.data.memberCount == request.resource.data.members.size()
+      && (
+        (request.auth.uid in request.resource.data.members
+          && !(request.auth.uid in resource.data.get('members', [])))
         ||
-        (
-          !isGroupBanned(groupId)
-          && request.resource.data.diff(resource.data).affectedKeys()
-               .hasOnly(['members', 'memberCount', 'pendingMembers'])
-          && request.resource.data.members is list
-          && request.resource.data.memberCount is number
-          && request.resource.data.memberCount == request.resource.data.members.size()
-          && (
-            (request.auth.uid in request.resource.data.members
-              && !(request.auth.uid in resource.data.get('members', [])))
-            ||
-            (!(request.auth.uid in request.resource.data.members)
-              && request.auth.uid in resource.data.get('members', []))
-            ||
-            (request.auth.uid in request.resource.data.get('pendingMembers', [])
-              && !(request.auth.uid in resource.data.get('pendingMembers', [])))
-          )
-        )
-      );
+        (!(request.auth.uid in request.resource.data.members)
+          && request.auth.uid in resource.data.get('members', []))
+        ||
+        (request.auth.uid in request.resource.data.get('pendingMembers', [])
+          && !(request.auth.uid in resource.data.get('pendingMembers', [])))
+      )
+    )
+  );
 
-      allow delete: if isNotBanned()
-        && resource.data.creatorId == request.auth.uid;
-    }
+  allow delete: if isNotBanned()
+    && resource.data.creatorId == request.auth.uid;
+}
 
-    match /group_attestations/{docId} {
-      allow read: if isAuthenticated();
-      allow create: if isNotBanned()
-        && isAuthenticated()
-        && request.resource.data.groupId is string
-        && isGroupMember(request.resource.data.groupId)
-        && !isGroupBanned(request.resource.data.groupId)
-        && request.resource.data.signedBy == request.auth.uid
-        && request.resource.data.statement is string
-        && request.resource.data.statement.size() > 0
-        && request.resource.data.statement.size() <= 1000
-        && (request.resource.data.createdAt is timestamp
-            || request.resource.data.createdAt == request.time);
-      allow update, delete: if false;
-    }
+match /group_attestations/{docId} {
+  allow read: if isAuthenticated();
+  allow create: if isNotBanned()
+    && isAuthenticated()
+    && request.resource.data.groupId is string
+    && isGroupMember(request.resource.data.groupId)
+    && !isGroupBanned(request.resource.data.groupId)
+    && request.resource.data.signedBy == request.auth.uid
+    && request.resource.data.statement is string
+    && request.resource.data.statement.size() > 0
+    && request.resource.data.statement.size() <= 1000
+    && (request.resource.data.createdAt is timestamp
+        || request.resource.data.createdAt == request.time);
+  allow update, delete: if false;
+}
 
-    match /group_timeline/{docId} {
-      allow read: if isAuthenticated();
-      allow create: if isNotBanned()
-        && isAuthenticated()
-        && request.resource.data.groupId is string
-        && isGroupMember(request.resource.data.groupId)
-        && !isGroupBanned(request.resource.data.groupId)
-        && request.resource.data.addedBy == request.auth.uid
-        && request.resource.data.description is string
-        && request.resource.data.description.size() > 0
-        && request.resource.data.description.size() <= 500
-        && (request.resource.data.eventTime is timestamp
-            || request.resource.data.eventTime == request.time)
-        && (request.resource.data.createdAt is timestamp
-            || request.resource.data.createdAt == request.time);
-      allow update, delete: if false;
-    }
+match /group_timeline/{docId} {
+  allow read: if isAuthenticated();
+  allow create: if isNotBanned()
+    && isAuthenticated()
+    && request.resource.data.groupId is string
+    && isGroupMember(request.resource.data.groupId)
+    && !isGroupBanned(request.resource.data.groupId)
+    && request.resource.data.addedBy == request.auth.uid
+    && request.resource.data.description is string
+    && request.resource.data.description.size() > 0
+    && request.resource.data.description.size() <= 500
+    && (request.resource.data.eventTime is timestamp
+        || request.resource.data.eventTime == request.time)
+    && (request.resource.data.createdAt is timestamp
+        || request.resource.data.createdAt == request.time);
+  allow update, delete: if false;
+}
 
-    match /witnessCycles/{cycleId} {
-      allow read: if isAuthenticated();
-      allow create: if isNotBanned()
-        && isWitnessCircle()
-        && request.resource.data.witnessId == request.auth.uid
-        && request.resource.data.status is string
-        && request.resource.data.status in ['active', 'ended']
-        && (request.resource.data.createdAt is timestamp
-            || request.resource.data.createdAt == request.time);
-      allow update: if isNotBanned()
-        && resource.data.witnessId == request.auth.uid
-        && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['status', 'endedAt', 'updatedAt']);
-      allow delete: if false;
-    }
+match /witnessCycles/{cycleId} {
+  allow read: if isAuthenticated();
+  allow create: if isNotBanned()
+    && isWitnessCircle()
+    && request.resource.data.witnessId == request.auth.uid
+    && request.resource.data.status is string
+    && request.resource.data.status in ['active', 'ended']
+    && (request.resource.data.createdAt is timestamp
+        || request.resource.data.createdAt == request.time);
+  allow update: if isNotBanned()
+    && resource.data.witnessId == request.auth.uid
+    && request.resource.data.diff(resource.data).affectedKeys()
+         .hasOnly(['status', 'endedAt', 'updatedAt']);
+  allow delete: if false;
+}
 
-    match /group_evidence/{evidenceId} {
-      allow read: if true;
+match /group_evidence/{evidenceId} {
+  allow read: if true;
 
-      allow create: if isAuthenticated()
-        && isNotBanned()
-        && request.resource.data.groupId is string
-        && isGroupMember(request.resource.data.groupId)
-        && !isGroupBanned(request.resource.data.groupId)
-        && request.resource.data.depositedBy == request.auth.uid
-        && isValidSha256(request.resource.data.hash)
-        && request.resource.data.hashAlg == 'SHA-256'
-        && request.resource.data.name is string
-        && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 240
-        && request.resource.data.keys().hasAll([
-             'groupId', 'name', 'hash', 'hashAlg', 'depositedBy', 'createdAt'
-           ])
-        && (!('url' in request.resource.data)
-            || request.resource.data.url == null
-            || isValidMediaUrl(request.resource.data.url))
-        && (request.resource.data.createdAt is timestamp
-            || request.resource.data.createdAt == request.time);
+  allow create: if isAuthenticated()
+    && isNotBanned()
+    && request.resource.data.groupId is string
+    && isGroupMember(request.resource.data.groupId)
+    && !isGroupBanned(request.resource.data.groupId)
+    && request.resource.data.depositedBy == request.auth.uid
+    && isValidSha256(request.resource.data.hash)
+    && request.resource.data.hashAlg == 'SHA-256'
+    && request.resource.data.name is string
+    && request.resource.data.name.size() > 0
+    && request.resource.data.name.size() <= 240
+    && request.resource.data.keys().hasAll([
+         'groupId', 'name', 'hash', 'hashAlg', 'depositedBy', 'createdAt'
+       ])
+    && (!('url' in request.resource.data)
+        || request.resource.data.url == null
+        || isValidMediaUrl(request.resource.data.url))
+    && (request.resource.data.createdAt is timestamp
+        || request.resource.data.createdAt == request.time);
 
-      allow update, delete: if false;
-    }
+  allow update, delete: if false;
+}
 
-    // ===== Group Discussion Posts & Replies =====
-    match /groups/{groupId}/posts/{postId} {
-      allow read: if true;
+// ===== Group Discussion Posts & Replies =====
+match /groups/{groupId}/posts/{postId} {
+  allow read: if true;
 
-      allow create: if isAuthenticated()
-        && isNotBanned()
-        && isGroupMember(groupId)
-        && !isGroupBanned(groupId)
-        && request.resource.data.authorId == request.auth.uid
-        && request.resource.data.content is string
-        && request.resource.data.content.size() > 0
-        && request.resource.data.content.size() <= 5000
-        && (request.resource.data.createdAt is timestamp
-            || request.resource.data.createdAt == request.time);
+  allow create: if isAuthenticated()
+    && isNotBanned()
+    && isGroupMember(groupId)
+    && !isGroupBanned(groupId)
+    && request.resource.data.authorId == request.auth.uid
+    && request.resource.data.content is string
+    && request.resource.data.content.size() > 0
+    && request.resource.data.content.size() <= 5000
+    && (request.resource.data.createdAt is timestamp
+        || request.resource.data.createdAt == request.time);
 
-      allow update: if isAuthenticated()
-        && isGroupMember(groupId)
-        && !isGroupBanned(groupId)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']);
+  allow update: if isAuthenticated()
+    && isGroupMember(groupId)
+    && !isGroupBanned(groupId)
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']);
 
-      allow delete: if false;
+  allow delete: if false;
 
-      // ===== Replies under a post =====
-      match /replies/{replyId} {
-        allow read: if true;
+  // ===== Replies under a post =====
+  match /replies/{replyId} {
+    allow read: if true;
 
-        allow create: if isAuthenticated()
-          && isNotBanned()
-          && isGroupMember(groupId)
-          && !isGroupBanned(groupId)
-          && request.resource.data.authorId == request.auth.uid
-          && request.resource.data.content is string
-          && request.resource.data.content.size() > 0
-          && request.resource.data.content.size() <= 2000
-          && (request.resource.data.createdAt is timestamp
-              || request.resource.data.createdAt == request.time);
+    allow create: if isAuthenticated()
+      && isNotBanned()
+      && isGroupMember(groupId)
+      && !isGroupBanned(groupId)
+      && request.resource.data.authorId == request.auth.uid
+      && request.resource.data.content is string
+      && request.resource.data.content.size() > 0
+      && request.resource.data.content.size() <= 2000
+      && (request.resource.data.createdAt is timestamp
+          || request.resource.data.createdAt == request.time);
 
-        allow update, delete: if false;
-      }
-    }
-
-    match /corroborations/{corrId} {
-      allow read: if true;
-      allow create: if isNotBanned()
-        && request.resource.data.authorId == request.auth.uid
-        && request.resource.data.keys().hasAll(['testimonyId', 'authorId', 'weight', 'createdAt'])
-        && request.resource.data.testimonyId is string
-        && request.resource.data.authorId is string
-        && request.resource.data.weight is number
-        && request.resource.data.weight >= 1
-        && request.resource.data.weight <= 5
-        && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time)
-        && (!('note' in request.resource.data) ||
-            (request.resource.data.note is string && request.resource.data.note.size() <= 280));
-      allow update, delete: if false;
-    }
-
-    match /forensic_ledger/{ledgerId} {
-      allow read: if true;
-      allow create: if isNotBanned()
-        && isWitnessCircle()
-        && request.resource.data.authorId == request.auth.uid
-        && request.resource.data.hash is string
-        && request.resource.data.hash.size() == 64;
-      allow update, delete: if false;
-    }
-
-    match /ledger_anchors/{date} {
-      allow read: if true;
-      allow create, update, delete: if false;
-    }
-
-    match /verifiable_docs/{docId} {
-      allow get: if true;
-      allow list: if false;
-      allow create: if isNotBanned()
-        && request.resource.data.keys().hasAll(['userId', 'type', 'createdAt', 'status'])
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.type in ['standard', 'premium']
-        && request.resource.data.status == 'active'
-        && (request.resource.data.createdAt is timestamp
-            || request.resource.data.createdAt == request.time);
-      allow update, delete: if false;
-    }
-
-    match /dao_comments/{commentId} {
-      allow read: if true;
-      allow create: if isNotBanned()
-        && request.resource.data.authorId == request.auth.uid
-        && request.resource.data.proposalId is string
-        && request.resource.data.content is string
-        && request.resource.data.content.size() > 0
-        && request.resource.data.content.size() <= 400
-        && request.resource.data.createdAt is timestamp;
-      allow update, delete: if false;
-    }
-
-    // POSTS, DAO, LIVE ROOMS & AUDIT LOGS
-    match /posts/{postId} {
-      allow read: if resource.data.visibilityDoor == 'public_square' ||
-                    (resource.data.visibilityDoor == 'citizen_circle' && isAuthenticated()) ||
-                    (resource.data.visibilityDoor == 'witness_circle' && isWitnessCircle());
-      allow create: if isNotBanned()
-        && request.resource.data.authorId == request.auth.uid
-        && request.resource.data.content is string
-        && request.resource.data.content.size() <= 2000
-        && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time)
-        && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl));
-      allow update: if isModerator() || (
-        isNotBanned()
-        && resource.data.authorId == request.auth.uid
-        && isSafeAuthorPostUpdate()
-      );
-      allow delete: if false;
-
-      match /comments/{commentId} {
-        allow read: if true;
-        allow create: if isNotBanned()
-          && isAuthenticated()
-          && canCommentOnPost(postId)
-          && request.resource.data.authorId == request.auth.uid
-          && request.resource.data.keys().hasAll(['content', 'authorId', 'createdAt'])
-          && request.resource.data.content is string
-          && request.resource.data.content.size() > 0
-          && request.resource.data.content.size() <= 1200
-          && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time);
-        allow update: if isNotBanned()
-          && resource.data.authorId == request.auth.uid
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content', 'updatedAt']);
-        allow delete: if isAuthenticated()
-          && (resource.data.authorId == request.auth.uid || isModerator());
-      }
-    }
-
-    match /reports/{reportId} {
-      allow read: if isModerator();
-      allow create: if isNotBanned()
-        && request.resource.data.reportedBy == request.auth.uid
-        && request.resource.data.reason is string;
-      allow update, delete: if isModerator();
-    }
-
-    match /audit_logs/{auditId} {
-      allow read: if isModerator() || isAdmin()
-        || (isAuthenticated() && resource.data.uid == request.auth.uid);
-      allow create: if isAuthenticated()
-        && request.resource.data.keys().hasAll(['actionType', 'clientTimestamp', 'uid'])
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.actionType is string
-        && request.resource.data.actionType.size() > 0
-        && request.resource.data.actionType.size() <= 64
-        && request.resource.data.clientTimestamp is number;
-      allow update, delete: if false;
-    }
-
-    match /dao_proposals/{proposalId} {
-      allow read: if true;
-      allow create: if isNotBanned()
-        && request.resource.data.title is string
-        && request.resource.data.title.size() > 0
-        && request.resource.data.title.size() <= 120
-        && request.resource.data.description is string
-        && request.resource.data.description.size() <= 800
-        && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.status == 'active'
-        && request.resource.data.totalVotesFor == 0
-        && request.resource.data.totalVotesAgainst == 0
-        && request.resource.data.totalVotingPowerSpent == 0
-        && request.resource.data.voteLog is map
-        && request.resource.data.voteLog.size() == 0;
-      allow update: if isNotBanned()
-        && (resource.data.createdBy == request.auth.uid || isModerator())
-        && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly([
-               'status', 'closedAt', 'closedBy',
-               'finalResult', 'finalVotesFor', 'finalVotesAgainst',
-               'updatedAt', 'commentCount',
-               'multiSigSignatures', 'relatedPostId', 'originalDecision'
-             ]);
-      allow delete: if false;
-    }
-
+    allow update, delete: if false;
   }
 }
-    match /disputes/{disputeId} {
-      allow read: if true;
-      allow create: if isNotBanned()
-        && request.resource.data.challengerId == request.auth.uid
-        && request.resource.data.keys().hasAll([
-             'type', 'testimonyId', 'challengerId', 'reason', 'status', 'createdAt'
-           ])
-        && request.resource.data.type == 'TESTIMONY_CHALLENGE'
-        && request.resource.data.testimonyId is string
-        && request.resource.data.reason is string
-        && request.resource.data.reason.size() >= 20
-        && request.resource.data.reason.size() <= 2000
-        && request.resource.data.status == 'OPEN'
-        && request.resource.data.resolution == null
-        && request.resource.data.resolvedBy == null
-        && request.resource.data.resolvedAt == null
-        && (request.resource.data.createdAt is timestamp
-            || request.resource.data.createdAt == request.time);
-      allow update: if isModerator()
-        && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly([
-               'status', 'resolution', 'resolutionNote',
-               'resolvedBy', 'resolvedAt'
-             ])
-        && request.resource.data.status in ['UPHELD', 'REJECTED']
-        && request.resource.data.resolution in ['UPHELD', 'REJECTED'];
-      allow delete: if false;
-    }
 
-    match /publicProfiles/{uid} {
-      allow read: if true;
-      allow create, update: if isOwner(uid)
-        && request.resource.data.keys().hasOnly([
-             'uid', 'displayName', 'photoURL', 'username',
-             'bio', 'region', 'tierBadge', 'updatedAt'
-           ])
-        && request.resource.data.uid == uid;
-      allow delete: if false;
-    }
+match /corroborations/{corrId} {
+  allow read: if true;
+  allow create: if isNotBanned()
+    && request.resource.data.authorId == request.auth.uid
+    && request.resource.data.keys().hasAll(['testimonyId', 'authorId', 'weight', 'createdAt'])
+    && request.resource.data.testimonyId is string
+    && request.resource.data.authorId is string
+    && request.resource.data.weight is number
+    && request.resource.data.weight >= 1
+    && request.resource.data.weight <= 5
+    && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time)
+    && (!('note' in request.resource.data) ||
+        (request.resource.data.note is string && request.resource.data.note.size() <= 280));
+  allow update, delete: if false;
+}
 
-    match /liveRooms/{roomId} {
-      allow read: if true;
+match /forensic_ledger/{ledgerId} {
+  allow read: if true;
+  allow create: if isNotBanned()
+    && isWitnessCircle()
+    && request.resource.data.authorId == request.auth.uid
+    && request.resource.data.hash is string
+    && request.resource.data.hash.size() == 64;
+  allow update, delete: if false;
+}
 
-      allow create: if isNotBanned() && isAuthenticated()
-        && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.title is string
-        && request.resource.data.title.size() >= 6
-        && request.resource.data.title.size() <= 120;
+match /ledger_anchors/{date} {
+  allow read: if true;
+  allow create, update, delete: if false;
+}
 
-      allow update: if isNotBanned() && isAuthenticated() && (
-        // Host / creator / moderator
-        (
-          resource.data.createdBy == request.auth.uid
-          || resource.data.hostUid == request.auth.uid
-          || isModerator()
-        )
-        ||
-        // Anyone: reactions + activity only
-        (
-          request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['reactions', 'lastActivityAt'])
-        )
-        ||
-        // Self: add/remove only own uid on safe arrays (join / leave / raise hand)
-        (
-          request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['participants', 'pendingRequests', 'speakers', 'lastActivityAt'])
-          && request.resource.data.bannedUsers == resource.data.bannedUsers
-          && request.resource.data.isLive == resource.data.isLive
-          && request.resource.data.participantCount == resource.data.participantCount
-          && request.resource.data.speakingCount == resource.data.speakingCount
-          && request.resource.data.createdBy == resource.data.createdBy
-          && request.resource.data.hostUid == resource.data.hostUid
-        )
-      );
+match /verifiable_docs/{docId} {
+  allow get: if true;
+  allow list: if false;
+  allow create: if isNotBanned()
+    && request.resource.data.keys().hasAll(['userId', 'type', 'createdAt', 'status'])
+    && request.resource.data.userId == request.auth.uid
+    && request.resource.data.type in ['standard', 'premium']
+    && request.resource.data.status == 'active'
+    && (request.resource.data.createdAt is timestamp
+        || request.resource.data.createdAt == request.time);
+  allow update, delete: if false;
+}
 
-      allow delete: if isNotBanned() && isAuthenticated() && (
-        resource.data.createdBy == request.auth.uid || isModerator()
-      );
+match /dao_comments/{commentId} {
+  allow read: if true;
+  allow create: if isNotBanned()
+    && request.resource.data.authorId == request.auth.uid
+    && request.resource.data.proposalId is string
+    && request.resource.data.content is string
+    && request.resource.data.content.size() > 0
+    && request.resource.data.content.size() <= 400
+    && request.resource.data.createdAt is timestamp;
+  allow update, delete: if false;
+}
 
-      match /participants/{participantId} {
-        allow read: if true;
-        allow create, update: if isNotBanned() && isAuthenticated()
-          && (
-            (request.auth.uid == participantId
-             && request.resource.data.uid == request.auth.uid)
-            ||
-            (get(/databases/$(database)/documents/liveRooms/$(roomId)).data.createdBy == request.auth.uid
-             && request.resource.data.uid == participantId)
-            ||
-            (get(/databases/$(database)/documents/liveRooms/$(roomId)).data.hostUid == request.auth.uid
-             && request.resource.data.uid == participantId)
-          );
-        allow delete: if isAuthenticated() && (
-          request.auth.uid == participantId
-          || get(/databases/$(database)/documents/liveRooms/$(roomId)).data.createdBy == request.auth.uid
-          || get(/databases/$(database)/documents/liveRooms/$(roomId)).data.hostUid == request.auth.uid
-          || isModerator()
-        );
-      }
+// POSTS, DAO, LIVE ROOMS & AUDIT LOGS
+match /posts/{postId} {
+  allow read: if resource.data.visibilityDoor == 'public_square' ||
+                (resource.data.visibilityDoor == 'citizen_circle' && isAuthenticated()) ||
+                (resource.data.visibilityDoor == 'witness_circle' && isWitnessCircle());
+  allow create: if isNotBanned()
+    && request.resource.data.authorId == request.auth.uid
+    && request.resource.data.content is string
+    && request.resource.data.content.size() <= 2000
+    && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time)
+    && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl));
+  allow update: if isModerator() || (
+    isNotBanned()
+    && resource.data.authorId == request.auth.uid
+    && isSafeAuthorPostUpdate()
+  );
+  allow delete: if false;
 
-      match /corroborations/{corrId} {
-        allow read: if true;
-        allow create: if isNotBanned() && isAuthenticated()
-          && corrId == request.auth.uid
-          && request.resource.data.uid == request.auth.uid
-          && request.resource.data.keys().hasAll(['uid', 'displayName', 'createdAt'])
-          && request.resource.data.createdAt is timestamp;
-        allow update, delete: if false;
-      }
-
-      match /sealedSegments/{segmentId} {
-        allow read: if true;
-        allow create: if isNotBanned() && isAuthenticated()
-          && request.resource.data.sealedBy == request.auth.uid
-          && request.resource.data.keys().hasAll(['sealedBy', 'displayName', 'sealedAt']);
-        allow update, delete: if isModerator();
-      }
-
-      match /evidenceDrops/{dropId} {
-        allow read: if true;
-        allow create: if isNotBanned() && isAuthenticated()
-          && request.resource.data.droppedBy == request.auth.uid;
-        allow update, delete: if isModerator();
-      }
-    }
-
-      match /reports/{reportId} {
-        allow read: if isModerator() || isAdmin();
-        allow create: if isNotBanned() && isAuthenticated()
-          && request.resource.data.reportedBy == request.auth.uid
-          && request.resource.data.reason is string
-          && request.resource.data.reason.size() > 0
-          && request.resource.data.reason.size() <= 500
-          && request.resource.data.createdAt is timestamp;
-        allow update, delete: if isModerator() || isAdmin();
-      }
-    }
+  match /comments/{commentId} {
+    allow read: if true;
+    allow create: if isNotBanned()
+      && isAuthenticated()
+      && canCommentOnPost(postId)
+      && request.resource.data.authorId == request.auth.uid
+      && request.resource.data.keys().hasAll(['content', 'authorId', 'createdAt'])
+      && request.resource.data.content is string
+      && request.resource.data.content.size() > 0
+      && request.resource.data.content.size() <= 1200
+      && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time);
+    allow update: if isNotBanned()
+      && resource.data.authorId == request.auth.uid
+      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content', 'updatedAt']);
+    allow delete: if isAuthenticated()
+      && (resource.data.authorId == request.auth.uid || isModerator());
   }
+}
+
+match /reports/{reportId} {
+  allow read: if isModerator() || isAdmin();
+  allow create: if isNotBanned() && isAuthenticated()
+    && request.resource.data.reportedBy == request.auth.uid
+    && request.resource.data.reason is string
+    && request.resource.data.reason.size() > 0
+    && request.resource.data.reason.size() <= 500
+    && request.resource.data.createdAt is timestamp;
+  allow update, delete: if isModerator() || isAdmin();
+}
+
+match /audit_logs/{auditId} {
+  allow read: if isModerator() || isAdmin()
+    || (isAuthenticated() && resource.data.uid == request.auth.uid);
+  allow create: if isAuthenticated()
+    && request.resource.data.keys().hasAll(['actionType', 'clientTimestamp', 'uid'])
+    && request.resource.data.uid == request.auth.uid
+    && request.resource.data.actionType is string
+    && request.resource.data.actionType.size() > 0
+    && request.resource.data.actionType.size() <= 64
+    && request.resource.data.clientTimestamp is number;
+  allow update, delete: if false;
+}
+
+match /dao_proposals/{proposalId} {
+  allow read: if true;
+  allow create: if isNotBanned()
+    && request.resource.data.title is string
+    && request.resource.data.title.size() > 0
+    && request.resource.data.title.size() <= 120
+    && request.resource.data.description is string
+    && request.resource.data.description.size() <= 800
+    && request.resource.data.createdBy == request.auth.uid
+    && request.resource.data.status == 'active'
+    && request.resource.data.totalVotesFor == 0
+    && request.resource.data.totalVotesAgainst == 0
+    && request.resource.data.totalVotingPowerSpent == 0
+    && request.resource.data.voteLog is map
+    && request.resource.data.voteLog.size() == 0;
+  allow update: if isNotBanned()
+    && (resource.data.createdBy == request.auth.uid || isModerator())
+    && request.resource.data.diff(resource.data).affectedKeys()
+         .hasOnly([
+           'status', 'closedAt', 'closedBy',
+           'finalResult', 'finalVotesFor', 'finalVotesAgainst',
+           'updatedAt', 'commentCount',
+           'multiSigSignatures', 'relatedPostId', 'originalDecision'
+         ]);
+  allow delete: if false;
+}
+
+match /disputes/{disputeId} {
+  allow read: if true;
+  allow create: if isNotBanned()
+    && request.resource.data.challengerId == request.auth.uid
+    && request.resource.data.keys().hasAll([
+         'type', 'testimonyId', 'challengerId', 'reason', 'status', 'createdAt'
+       ])
+    && request.resource.data.type == 'TESTIMONY_CHALLENGE'
+    && request.resource.data.testimonyId is string
+    && request.resource.data.reason is string
+    && request.resource.data.reason.size() >= 20
+    && request.resource.data.reason.size() <= 2000
+    && request.resource.data.status == 'OPEN'
+    && request.resource.data.resolution == null
+    && request.resource.data.resolvedBy == null
+    && request.resource.data.resolvedAt == null
+    && (request.resource.data.createdAt is timestamp
+        || request.resource.data.createdAt == request.time);
+  allow update: if isModerator()
+    && request.resource.data.diff(resource.data).affectedKeys()
+         .hasOnly([
+           'status', 'resolution', 'resolutionNote',
+           'resolvedBy', 'resolvedAt'
+         ])
+    && request.resource.data.status in ['UPHELD', 'REJECTED']
+    && request.resource.data.resolution in ['UPHELD', 'REJECTED'];
+  allow delete: if false;
+}
+
+match /publicProfiles/{uid} {
+  allow read: if true;
+  allow create, update: if isOwner(uid)
+    && request.resource.data.keys().hasOnly([
+         'uid', 'displayName', 'photoURL', 'username',
+         'bio', 'region', 'tierBadge', 'updatedAt'
+       ])
+    && request.resource.data.uid == uid;
+  allow delete: if false;
+}
+
+match /liveRooms/{roomId} {
+  allow read: if true;
+
+  allow create: if isNotBanned() && isAuthenticated()
+    && request.resource.data.createdBy == request.auth.uid
+    && request.resource.data.title is string
+    && request.resource.data.title.size() >= 6
+    && request.resource.data.title.size() <= 120;
+
+  allow update: if isNotBanned() && isAuthenticated() && (
+    // Host / creator / moderator
+    (
+      resource.data.createdBy == request.auth.uid
+      || resource.data.hostUid == request.auth.uid
+      || isModerator()
+    )
+    ||
+    // Anyone: reactions + activity only
+    (
+      request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['reactions', 'lastActivityAt'])
+    )
+    ||
+    // Self: add/remove only own uid on safe arrays (join / leave / raise hand)
+    (
+      request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['participants', 'pendingRequests', 'speakers', 'lastActivityAt'])
+      && request.resource.data.bannedUsers == resource.data.bannedUsers
+      && request.resource.data.isLive == resource.data.isLive
+      && request.resource.data.participantCount == resource.data.participantCount
+      && request.resource.data.speakingCount == resource.data.speakingCount
+      && request.resource.data.createdBy == resource.data.createdBy
+      && request.resource.data.hostUid == resource.data.hostUid
+    )
+  );
+
+  allow delete: if isNotBanned() && isAuthenticated() && (
+    resource.data.createdBy == request.auth.uid || isModerator()
+  );
+
+  match /participants/{participantId} {
+    allow read: if true;
+    allow create, update: if isNotBanned() && isAuthenticated()
+      && (
+        (request.auth.uid == participantId
+         && request.resource.data.uid == request.auth.uid)
+        ||
+        (get(/databases/$(database)/documents/liveRooms/$(roomId)).data.createdBy == request.auth.uid
+         && request.resource.data.uid == participantId)
+        ||
+        (get(/databases/$(database)/documents/liveRooms/$(roomId)).data.hostUid == request.auth.uid
+         && request.resource.data.uid == participantId)
+      );
+    allow delete: if isAuthenticated() && (
+      request.auth.uid == participantId
+      || get(/databases/$(database)/documents/liveRooms/$(roomId)).data.createdBy == request.auth.uid
+      || get(/databases/$(database)/documents/liveRooms/$(roomId)).data.hostUid == request.auth.uid
+      || isModerator()
+    );
+  }
+
+  match /corroborations/{corrId} {
+    allow read: if true;
+    allow create: if isNotBanned() && isAuthenticated()
+      && corrId == request.auth.uid
+      && request.resource.data.uid == request.auth.uid
+      && request.resource.data.keys().hasAll(['uid', 'displayName', 'createdAt'])
+      && request.resource.data.createdAt is timestamp;
+    allow update, delete: if false;
+  }
+
+  match /sealedSegments/{segmentId} {
+    allow read: if true;
+    allow create: if isNotBanned() && isAuthenticated()
+      && request.resource.data.sealedBy == request.auth.uid
+      && request.resource.data.keys().hasAll(['sealedBy', 'displayName', 'sealedAt']);
+    allow update, delete: if isModerator();
+  }
+
+  match /evidenceDrops/{dropId} {
+    allow read: if true;
+    allow create: if isNotBanned() && isAuthenticated()
+      && request.resource.data.droppedBy == request.auth.uid;
+    allow update, delete: if isModerator();
+  }
+}
