@@ -34,6 +34,14 @@
   - Authors may only soft-hide or edit text inside the 30-minute window
   - Hard delete of sealed evidence is forbidden for owners
   - Tier / phone / admin / reputation fields are server-controlled
+     
+  - ## Batch 1 Integrity Gate
+- [ ] All media hashes are of final uploaded bytes (media-pipeline is the only path)
+- [ ] integrity-core + media-integrity tests pass in CI
+- [ ] Rules unit tests pass on emulator
+- [ ] App Check required on submitTestimonySecure, confirmPhoneVerification, getUploadUrl
+- [ ] Daily anchor ran successfully in last 24 h (check ledger_roots)
+- [ ] No client code can write tier / phoneVerified / zkVerified
 
 ```bash
 firebase deploy --only firestore:rules,storage --project vocalwitness-3affa
