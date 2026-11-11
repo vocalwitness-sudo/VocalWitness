@@ -58,6 +58,27 @@ export async function submitTestimony({
     throw new Error("Unauthorized submission attempt.");
   }
 
+  // ===== SOFT PHONE VERIFICATION GATE =====
+  const phoneOk = await isPhoneCircleUser();
+  if (!phoneOk && !window.__vwSkipPhoneNudge) {
+    const goVerify = window.confirm(
+      'Verify your phone to unlock Citizen Circle (anti-spam + Circle badge on the Square).\n\nOK = verify now\nCancel = publish without Circle'
+    );
+    if (goVerify) {
+      try {
+        const { startPhoneVerification } = await import('./phoneVerification.js');
+        startPhoneVerification();
+      } catch (_) {
+        if (typeof window.startPhoneVerification === 'function') {
+          window.startPhoneVerification();
+        }
+      }
+      throw new Error('Complete phone verification, then publish again.');
+    }
+    // Allow publishing without Circle for this session if canceled
+    window.__vwSkipPhoneNudge = true;
+  }
+
   // Resolve legacy single file → typed slots
   if (mediaFile && !imageFile && !videoFile && !audioFile) {
     const mime = (mediaFile.type || '').toLowerCase();
@@ -118,7 +139,6 @@ export async function submitTestimony({
   };
 
   // ===== UNIFIED MEDIA SEAL =====
-  // processAndUploadMedia MUST return { publicUrl, hash } where hash is of the processed bytes
   if (imageFile) {
     showToast("🛡️ Sealing image...", "info");
     const up = await processAndUploadMedia(imageFile, folder, reportProgress);
@@ -201,11 +221,17 @@ export async function submitTestimony({
   const functions = getFunctions();
   const submitSecure = httpsCallable(functions, "submitTestimonySecure");
 
+  // Determine phone verification status to pass to server
+  const token = await user.getIdTokenResult().catch(() => ({ claims: {} }));
+  const claims = token.claims || {};
+  const authorPhoneVerified = phoneOk;
+
   const result = await submitSecure({
     content: cleanedContent || '',
     channel,
     isAnonymous: !!isAnonymous,
     authorDisplayName: isAnonymous ? null : (user.displayName || null),
+    authorPhoneVerified,
     forensicHash,
     imageUrl,
     videoUrl,
