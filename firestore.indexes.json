@@ -103,13 +103,6 @@
         { "fieldPath": "groupId", "order": "ASCENDING" },
         { "fieldPath": "eventTime", "order": "ASCENDING" }
       ]
-    },
-    {
-      "collectionGroup": "ledger_roots",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "timestamp", "order": "DESCENDING" }
-      ]
     }
   ],
   "fieldOverrides": []
