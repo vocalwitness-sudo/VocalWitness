@@ -4,6 +4,7 @@
 import { db, auth } from './firebase-config.js';
 import {
   doc,
+ getDoc, 
   onSnapshot,
   updateDoc,
   arrayUnion,
@@ -666,7 +667,7 @@ function updatePendingBadge(group) {
 }
 
 /**
- * Group discussion feed
+ * Group discussion feed with replies + reactions
  */
 function loadGroupFeed() {
   const feedContainer = document.getElementById('groupFeed');
@@ -674,7 +675,6 @@ function loadGroupFeed() {
 
   if (unsubscribeFeed) unsubscribeFeed();
 
-  // Read from the correct subcollection
   const q = query(
     collection(db, 'groups', currentGroupId, 'posts'),
     orderBy('createdAt', 'desc')
@@ -694,35 +694,213 @@ function loadGroupFeed() {
       return;
     }
 
-    // Collect author IDs to show names
     const authorIds = [...new Set(snapshot.docs.map(d => d.data().authorId).filter(Boolean))];
     const profiles = await getPublicProfiles(authorIds);
 
-    snapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      const author = profiles[data.authorId] || {};
-      const name = author.displayName || (data.authorId ? data.authorId.slice(0, 8) + '…' : 'Citizen');
-
-      const card = document.createElement('div');
-      card.className = 'glass rounded-3xl p-5';
-
-      card.innerHTML = `
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-sm font-medium text-emerald-400">${escapeHtml(name)}</span>
-          <span class="text-xs text-zinc-500">
-            ${data.createdAt?.toDate ? data.createdAt.toDate().toLocaleString() : ''}
-          </span>
-        </div>
-        <p class="text-zinc-200 text-sm leading-relaxed whitespace-pre-wrap">
-          ${escapeHtml(data.content || '')}
-        </p>
-      `;
+    for (const docSnap of snapshot.docs) {
+      const post = { id: docSnap.id, ...docSnap.data() };
+      const card = await buildPostCard(post, profiles);
       feedContainer.appendChild(card);
-    });
+    }
   }, (err) => {
     console.error('Group feed error:', err);
     feedContainer.innerHTML = `<p class="text-center text-red-400 text-sm py-8">Failed to load posts</p>`;
   });
+}
+
+// ====================== DISCUSSION: REPLIES + REACTIONS ======================
+
+const REACTION_EMOJIS = ['👍', '❤️', '🔥', '👏', '😮'];
+
+async function buildPostCard(post, profiles) {
+  const author = profiles[post.authorId] || {};
+  const name = author.displayName || (post.authorId ? post.authorId.slice(0, 8) + '…' : 'Citizen');
+  const uid = auth.currentUser?.uid;
+
+  const card = document.createElement('div');
+  card.className = 'glass rounded-3xl p-5 space-y-4';
+  card.dataset.postId = post.id;
+
+  // Reactions
+  const reactions = post.reactions || {};
+  const reactionHtml = REACTION_EMOJIS.map(emoji => {
+    const users = reactions[emoji] || [];
+    const count = users.length;
+    const reacted = uid && users.includes(uid);
+    return `
+      <button class="reaction-btn flex items-center gap-1 rounded-full px-2.5 py-1 text-sm transition
+        ${reacted ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-zinc-800/70 text-zinc-400 hover:bg-zinc-700'}"
+        data-emoji="${emoji}" data-post-id="${post.id}">
+        <span>${emoji}</span>
+        ${count > 0 ? `<span class="text-xs font-medium">${count}</span>` : ''}
+      </button>
+    `;
+  }).join('');
+
+  card.innerHTML = `
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <span class="text-sm font-semibold text-emerald-400">${escapeHtml(name)}</span>
+      <span class="text-xs text-zinc-500">
+        ${post.createdAt?.toDate ? post.createdAt.toDate().toLocaleString() : ''}
+      </span>
+    </div>
+
+    <!-- Content -->
+    <p class="text-zinc-200 text-sm leading-relaxed whitespace-pre-wrap">
+      ${escapeHtml(post.content || '')}
+    </p>
+
+    <!-- Reactions + Reply button -->
+    <div class="flex flex-wrap items-center gap-2 pt-1">
+      ${reactionHtml}
+      <button class="reply-toggle-btn ml-auto text-xs font-medium text-zinc-400 hover:text-emerald-400 transition">
+        Reply
+      </button>
+    </div>
+
+    <!-- Reply form (hidden by default) -->
+    <div class="reply-form hidden mt-3 space-y-2">
+      <textarea rows="2" placeholder="Write a reply…"
+        class="reply-input w-full resize-none rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"></textarea>
+      <div class="flex justify-end gap-2">
+        <button class="cancel-reply-btn rounded-xl px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-800">Cancel</button>
+        <button class="submit-reply-btn rounded-xl bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-black hover:bg-emerald-500">
+          Reply
+        </button>
+      </div>
+    </div>
+
+    <!-- Replies list -->
+    <div class="replies-container space-y-3 mt-3 border-l-2 border-zinc-800 pl-4"></div>
+  `;
+
+  // Wire reaction buttons
+  card.querySelectorAll('.reaction-btn').forEach(btn => {
+    btn.addEventListener('click', () => toggleReaction(post.id, btn.dataset.emoji));
+  });
+
+  // Wire reply form
+  const replyToggle = card.querySelector('.reply-toggle-btn');
+  const replyForm = card.querySelector('.reply-form');
+  const cancelBtn = card.querySelector('.cancel-reply-btn');
+  const submitBtn = card.querySelector('.submit-reply-btn');
+  const replyInput = card.querySelector('.reply-input');
+
+  replyToggle.addEventListener('click', () => {
+    replyForm.classList.toggle('hidden');
+    if (!replyForm.classList.contains('hidden')) {
+      replyInput.focus();
+    }
+  });
+
+  cancelBtn.addEventListener('click', () => {
+    replyForm.classList.add('hidden');
+    replyInput.value = '';
+  });
+
+  submitBtn.addEventListener('click', () => {
+    submitReply(post.id, replyInput, replyForm);
+  });
+
+  // Load replies for this post
+  loadReplies(post.id, card.querySelector('.replies-container'));
+
+  return card;
+}
+
+async function loadReplies(postId, container) {
+  const q = query(
+    collection(db, 'groups', currentGroupId, 'posts', postId, 'replies'),
+    orderBy('createdAt', 'asc')
+  );
+
+  onSnapshot(q, async (snapshot) => {
+    container.innerHTML = '';
+    if (snapshot.empty) return;
+
+    const authorIds = [...new Set(snapshot.docs.map(d => d.data().authorId).filter(Boolean))];
+    const profiles = await getPublicProfiles(authorIds);
+
+    snapshot.forEach(docSnap => {
+      const reply = { id: docSnap.id, ...docSnap.data() };
+      const author = profiles[reply.authorId] || {};
+      const name = author.displayName || (reply.authorId ? reply.authorId.slice(0, 8) + '…' : 'Citizen');
+
+      const el = document.createElement('div');
+      el.className = 'rounded-2xl bg-zinc-900/70 border border-zinc-800 p-3';
+      el.innerHTML = `
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-medium text-emerald-400">${escapeHtml(name)}</span>
+          <span class="text-[10px] text-zinc-500">
+            ${reply.createdAt?.toDate ? reply.createdAt.toDate().toLocaleString() : ''}
+          </span>
+        </div>
+        <p class="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed">${escapeHtml(reply.content || '')}</p>
+      `;
+      container.appendChild(el);
+    });
+  });
+}
+
+async function submitReply(postId, inputEl, formEl) {
+  if (!auth.currentUser) {
+    showToast('Please sign in', 'error');
+    return;
+  }
+
+  const content = inputEl.value.trim();
+  if (!content) {
+    showToast('Write a reply first', 'error');
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, 'groups', currentGroupId, 'posts', postId, 'replies'), {
+      content,
+      authorId: auth.currentUser.uid,
+      createdAt: serverTimestamp()
+    });
+    inputEl.value = '';
+    formEl.classList.add('hidden');
+    showToast('Reply added', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast(err.message || 'Failed to reply', 'error');
+  }
+}
+
+async function toggleReaction(postId, emoji) {
+  if (!auth.currentUser) {
+    showToast('Please sign in to react', 'error');
+    return;
+  }
+
+  const uid = auth.currentUser.uid;
+  const postRef = doc(db, 'groups', currentGroupId, 'posts', postId);
+
+  try {
+    const snap = await getDoc(postRef);
+    if (!snap.exists()) return;
+
+    const reactions = snap.data().reactions || {};
+    const list = reactions[emoji] || [];
+
+    if (list.includes(uid)) {
+      // Remove reaction
+      await updateDoc(postRef, {
+        [`reactions.${emoji}`]: arrayRemove(uid)
+      });
+    } else {
+      // Add reaction
+      await updateDoc(postRef, {
+        [`reactions.${emoji}`]: arrayUnion(uid)
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to react', 'error');
+  }
 }
 
 // ====================== EVIDENCE LOCKER (SEALED) ======================
