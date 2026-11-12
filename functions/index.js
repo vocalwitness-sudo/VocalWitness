@@ -38,7 +38,7 @@ import { createUnbanUser } from "./callable/unbanUser.js";
 import { createModeratedDelete } from "./callable/moderatedDelete.js";
 import { createEvaluateTrustTier } from "./callable/evaluateTrustTier.js";
 import { createRestoreHiddenContent } from "./callable/restoreHiddenContent.js";
-import { createAnalyzeToxicity } from "./http/analyzeToxicity.js";
+import { analyzeToxicityWithPerspective } from "./lib/moderation.js";
 import {
   createTranslateTestimony,
   createTranscribeAudioWitness,
@@ -205,13 +205,13 @@ export const initializeCitizenProfile = beforeUserCreated(async (event) => {
 });
 
 // ======================================================
-// TOXICITY HELPERS, GEMINI AI MODERATION & AI TOOLS
+// TOXICITY + AI TOOLS (extracted modules)
 // ======================================================
 
-export function createAnalyzeToxicity({ perspectiveApiKey, corsHandler }) {
-  return onCall(async (request) => {
-  });
-}
+export const analyzeToxicity = createAnalyzeToxicity({
+  perspectiveApiKey,
+  corsHandler,
+});
 
 export const translateTestimony = createTranslateTestimony({
   allowedOrigins,
