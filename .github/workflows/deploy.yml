@@ -52,7 +52,7 @@ jobs:
           entryPoint: .
           firebaseToolsVersion: latest
 
-      # Functions deployed in staggered batches to stay under CPU limits
+      # Functions in batches — use EXPORT names only (never create* factory names)
       - name: Deploy Functions (Batch 1 - Core Callables)
         env:
           NODE_OPTIONS: "--experimental-vm-modules"
@@ -60,7 +60,7 @@ jobs:
           FIREBASE_SUPPRESS_REGION_WARNING: "true"
         run: |
           firebase deploy \
-            --only functions:createGetUploadUrl,functions:createConfirmPhoneVerification,functions:createSetUserClaims \
+            --only functions:getUploadUrl,functions:confirmPhoneVerification,functions:setUserClaims \
             --project vocalwitness-3affa \
             --force \
             --non-interactive
@@ -72,7 +72,7 @@ jobs:
           FIREBASE_SUPPRESS_REGION_WARNING: "true"
         run: |
           firebase deploy \
-            --only functions:createBanUser,functions:createUnbanUser,functions:createModeratedDelete,functions:createEvaluateTrustTier,functions:createRestoreHiddenContent \
+            --only functions:banUser,functions:unbanUser,functions:moderatedDelete,functions:evaluateTrustTier,functions:restoreHiddenContent \
             --project vocalwitness-3affa \
             --force \
             --non-interactive
@@ -80,11 +80,11 @@ jobs:
       - name: Deploy Functions (Batch 3 - Remaining Services & Tasks)
         env:
           NODE_OPTIONS: "--experimental-vm-modules"
-          FUNCTIONS_DISCOVERY_TIMEOUT: "90"
+          FUNCTIONS_DISCOVERY_TIMEOUT: "120"
           FIREBASE_SUPPRESS_REGION_WARNING: "true"
         run: |
           firebase deploy \
-            --only functions:analyzeToxicity,functions:castDaoVote,functions:checkContentConsistency,functions:dailyAnchor,functions:detectSyntheticMedia,functions:generateZkProof,functions:getCuratedNews,functions:getLiveKitToken,functions:getPresignedUrl,functions:getUploadUrl,functions:heavyProcessingTask \
+            --only functions:analyzeToxicity,functions:translateTestimony,functions:transcribeAudioWitness,functions:summarizeReport,functions:initializePaystack,functions:paystackWebhook,functions:castDaoVote,functions:checkContentConsistency,functions:dailyAnchor,functions:detectSyntheticMedia,functions:generateZkProof,functions:getCuratedNews,functions:getLiveKitToken,functions:getPresignedUrl,functions:heavyProcessingTask,functions:initializeCitizenProfile,functions:triggerAnchorNow,functions:scoreToxicity \
             --project vocalwitness-3affa \
             --force \
             --non-interactive
