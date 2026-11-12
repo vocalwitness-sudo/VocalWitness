@@ -2,30 +2,38 @@ name: Integrity & Security Checks
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
-  test:
+  integrity:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: 22
+          cache: npm
 
       - name: Install dependencies
         run: |
-          if [ -f functions/package.json ]; then
-            cd functions && npm install
+          if [ -f package-lock.json ]; then
+            npm ci || npm install
+          else
+            npm install
           fi
-          npm install --save-dev @firebase/rules-unit-testing firebase-tools
 
-      - name: Run Firestore Rules & Integrity Tests
+      # integrity-core.js is a standalone Node script, NOT a Mocha suite
+      - name: Run integrity-core
+        run: node tests/integrity-core.js
+
+      - name: Run media-integrity (if present)
         run: |
-          # Runs your integrity test suite against firestore.rules
-          npx mocha tests/integrity-core.js
+          if [ -f tests/media-integrity.test.js ]; then
+            node tests/media-integrity.test.js
+          else
+            echo "skip media-integrity"
+          fi
