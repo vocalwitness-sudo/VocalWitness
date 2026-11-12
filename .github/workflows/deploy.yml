@@ -20,8 +20,18 @@ jobs:
 
       - name: Install dependencies & compile CSS
         run: |
-          npm ci || npm install
-          cd functions && (npm ci || npm install) && cd ..
+          # Force clean lockfiles so npm ci never fails again
+          rm -f package-lock.json
+          npm install --package-lock-only
+          npm install
+
+          cd functions
+          rm -f package-lock.json
+          npm install --package-lock-only
+          npm install
+          cd ..
+
+          # Build CSS
           npm install -D tailwindcss @tailwindcss/cli
           npx @tailwindcss/cli -i ./input.css -o ./style.css --minify
 
@@ -41,7 +51,7 @@ jobs:
             --force \
             --non-interactive
 
-      # Hosting first so frontend changes always go live
+      # Hosting first so frontend always goes live
       - name: Deploy to Firebase Hosting (Live)
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -52,7 +62,9 @@ jobs:
           entryPoint: .
           firebaseToolsVersion: latest
 
-      # Functions in batches — use EXPORT names only (never create* factory names)
+      # ========== FUNCTIONS IN SMALL BATCHES ==========
+      # Use only the real export names (never the create* factory names)
+
       - name: Deploy Functions (Batch 1 - Core Callables)
         env:
           NODE_OPTIONS: "--experimental-vm-modules"
@@ -77,14 +89,27 @@ jobs:
             --force \
             --non-interactive
 
-      - name: Deploy Functions (Batch 3 - Remaining Services & Tasks)
+      # Paystack in its own tiny batch (avoids CPU quota spike)
+      - name: Deploy Functions (Batch 3 - Paystack)
+        env:
+          NODE_OPTIONS: "--experimental-vm-modules"
+          FUNCTIONS_DISCOVERY_TIMEOUT: "90"
+          FIREBASE_SUPPRESS_REGION_WARNING: "true"
+        run: |
+          firebase deploy \
+            --only functions:initializePaystack,functions:paystackWebhook \
+            --project vocalwitness-3affa \
+            --force \
+            --non-interactive
+
+      - name: Deploy Functions (Batch 4 - Remaining Services & Tasks)
         env:
           NODE_OPTIONS: "--experimental-vm-modules"
           FUNCTIONS_DISCOVERY_TIMEOUT: "120"
           FIREBASE_SUPPRESS_REGION_WARNING: "true"
         run: |
           firebase deploy \
-            --only functions:analyzeToxicity,functions:translateTestimony,functions:transcribeAudioWitness,functions:summarizeReport,functions:initializePaystack,functions:paystackWebhook,functions:nowPaymentsWebhook,functions:verifyAndElevateZKProof,functions:detectSyntheticMedia,functions:checkContentConsistency,functions:suggestCorroborations,functions:scoreToxicity,functions:requestTimestamp,functions:getLiveKitToken,functions:registerZKCommitment,functions:castDaoVote,functions:generateZKProof,functions:submitTestimonySecure,functions:onTestimonyReactionWriteV2,functions:getPresignedUrl,functions:verifyAndTimestampMedia,functions:heavyProcessingTask,functions:ogPost,functions:dailyAnchor,functions:triggerAnchorNow,functions:initializeCitizenProfile \
+            --only functions:analyzeToxicity,functions:translateTestimony,functions:transcribeAudioWitness,functions:summarizeReport,functions:nowPaymentsWebhook,functions:verifyAndElevateZKProof,functions:detectSyntheticMedia,functions:checkContentConsistency,functions:suggestCorroborations,functions:scoreToxicity,functions:requestTimestamp,functions:getLiveKitToken,functions:registerZKCommitment,functions:castDaoVote,functions:generateZKProof,functions:submitTestimonySecure,functions:onTestimonyReactionWriteV2,functions:getPresignedUrl,functions:verifyAndTimestampMedia,functions:heavyProcessingTask,functions:ogPost,functions:dailyAnchor,functions:triggerAnchorNow,functions:initializeCitizenProfile \
             --project vocalwitness-3affa \
             --force \
             --non-interactive
