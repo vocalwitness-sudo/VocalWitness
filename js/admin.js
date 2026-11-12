@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 // js/admin.js
 import { db, auth } from './firebase-config.js';
 import { collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
