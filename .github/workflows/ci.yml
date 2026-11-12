@@ -18,8 +18,10 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies
-        run: npm install --no-fund --no-audit
+      - name: Install dependencies (Root & Functions)
+        run: |
+          npm install --no-fund --no-audit
+          cd functions && npm install --no-fund --no-audit && cd ..
 
       - name: Run ESLint
         run: npx eslint js functions --no-error-on-unmatched-pattern --max-warnings 500
@@ -34,8 +36,10 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies
-        run: npm install --no-fund --no-audit
+      - name: Install dependencies (Root & Functions)
+        run: |
+          npm install --no-fund --no-audit
+          cd functions && npm install --no-fund --no-audit && cd ..
 
       - name: Production Integrity Test
         run: npm run test:integrity
@@ -59,8 +63,10 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies
-        run: npm install --no-fund --no-audit
+      - name: Install dependencies (Root & Functions)
+        run: |
+          npm install --no-fund --no-audit
+          cd functions && npm install --no-fund --no-audit && cd ..
 
       - name: Phone Verification Smoke Test
         run: node tests/phone-smoke.js
