@@ -84,7 +84,7 @@ jobs:
           FIREBASE_SUPPRESS_REGION_WARNING: "true"
         run: |
           firebase deploy \
-            --only functions:analyzeToxicity,functions:translateTestimony,functions:transcribeAudioWitness,functions:summarizeReport,functions:initializePaystack,functions:paystackWebhook,functions:castDaoVote,functions:checkContentConsistency,functions:dailyAnchor,functions:detectSyntheticMedia,functions:generateZkProof,functions:getCuratedNews,functions:getLiveKitToken,functions:getPresignedUrl,functions:heavyProcessingTask,functions:initializeCitizenProfile,functions:triggerAnchorNow,functions:scoreToxicity \
+            --only functions:analyzeToxicity,functions:translateTestimony,functions:transcribeAudioWitness,functions:summarizeReport,functions:initializePaystack,functions:paystackWebhook,functions:nowPaymentsWebhook,functions:verifyAndElevateZKProof,functions:detectSyntheticMedia,functions:checkContentConsistency,functions:suggestCorroborations,functions:scoreToxicity,functions:requestTimestamp,functions:getLiveKitToken,functions:registerZKCommitment,functions:castDaoVote,functions:generateZKProof,functions:submitTestimonySecure,functions:onTestimonyReactionWriteV2,functions:getPresignedUrl,functions:verifyAndTimestampMedia,functions:heavyProcessingTask,functions:ogPost,functions:dailyAnchor,functions:triggerAnchorNow,functions:initializeCitizenProfile \
             --project vocalwitness-3affa \
             --force \
             --non-interactive
