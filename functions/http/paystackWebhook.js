@@ -1,6 +1,6 @@
 /**
  * functions/http/paystackWebhook.js
- * Paystack charge.success webhook – grants supporter status (idempotent)
+ * Paystack charge.success webhook
  */
 import { onRequest } from "firebase-functions/v2/https";
 import admin from "firebase-admin";
@@ -8,8 +8,7 @@ import crypto from "crypto";
 import { writeAuditLog } from "../lib/audit.js";
 
 /**
- * Factory for the HTTP webhook.
- * @param {{ db: FirebaseFirestore.Firestore, paystackSecretKey: any }} deps
+ * @param {{ db: any, paystackSecretKey: any }} deps
  */
 export function createPaystackWebhook({ db, paystackSecretKey }) {
   return onRequest(
@@ -32,7 +31,7 @@ export function createPaystackWebhook({ db, paystackSecretKey }) {
         return res.status(400).send("Missing raw body");
       }
 
-      // Timing-safe signature verification
+      // Verify signature (timing-safe)
       const expectedHash = crypto
         .createHmac("sha512", secret)
         .update(req.rawBody)
@@ -71,7 +70,7 @@ export function createPaystackWebhook({ db, paystackSecretKey }) {
       try {
         const supportRef = db.collection("supporters").doc(String(reference));
 
-        // Idempotency
+        // Idempotency: do not re-process completed payments
         const existing = await supportRef.get();
         if (existing.exists && existing.data()?.status === "completed") {
           return res.status(200).send("Already processed");
@@ -99,7 +98,8 @@ export function createPaystackWebhook({ db, paystackSecretKey }) {
             isSupporter: true,
             supporterTier: "supporter",
             supporterSince: admin.firestore.FieldValue.serverTimestamp(),
-            totalContributed: admin.firestore.FieldValue.increment(amountMajor),
+            totalContributed:
+              admin.firestore.FieldValue.increment(amountMajor),
             lastSupportAt: admin.firestore.FieldValue.serverTimestamp(),
             lastSupportRef: String(reference),
           },
