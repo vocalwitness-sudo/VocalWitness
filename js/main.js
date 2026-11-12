@@ -1054,6 +1054,12 @@ window.viewSealedReport = function (id) {
 
   document.body.appendChild(modal);
   document.body.style.overflow = 'hidden';
+  document.getElementById('vw-feedback-btn')?.addEventListener('click', () => {
+  const message = prompt('What went wrong or what would you like improved?');
+  if (message) {
+    import('./observability.js').then(m => m.submitFeedback({ message }));
+  }
+});
 
   const close = () => {
     modal.remove();
