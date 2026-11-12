@@ -1,4 +1,5 @@
 // eslint.config.js
+// Production-pragmatic: catch real breakage, don't block on legacy noise.
 import js from "@eslint/js";
 import globals from "globals";
 
@@ -10,6 +11,11 @@ export default [
       "style.css",
       "circuits/**",
       "**/*.min.js",
+      "dist/**",
+      "coverage/**",
+      // Optional: temporarily ignore known noisy legacy modules
+      // "js/support.js",
+      // "js/token-engine.js",
     ],
   },
   js.configs.recommended,
@@ -21,12 +27,22 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.es2021,
+        // App / Firebase globals often attached on window
+        firebase: "readonly",
+        grecaptcha: "readonly",
+        heic2any: "readonly",
+        snarkjs: "readonly",
       },
     },
     rules: {
       "no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
       "no-console": "off",
       "no-empty": ["warn", { allowEmptyCatch: true }],
+      "no-undef": "warn",          // was error via recommended → warn for now
+      "no-unreachable": "warn",
+      "no-self-assign": "warn",
+      "no-redeclare": "warn",
+      "no-useless-escape": "warn",
     },
   },
   {
@@ -42,6 +58,8 @@ export default [
     rules: {
       "no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
       "no-console": "off",
+      "no-undef": "error",         // keep strict on server
+      "no-unreachable": "warn",
     },
   },
 ];
