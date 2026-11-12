@@ -38,7 +38,12 @@ import { createUnbanUser } from "./callable/unbanUser.js";
 import { createModeratedDelete } from "./callable/moderatedDelete.js";
 import { createEvaluateTrustTier } from "./callable/evaluateTrustTier.js";
 import { createRestoreHiddenContent } from "./callable/restoreHiddenContent.js";
-import { createAnalyzeToxicity } from "./callable/analyzeToxicity.js"; // Adjust path as needed
+import { createAnalyzeToxicity } from "./http/analyzeToxicity.js";
+import {
+  createTranslateTestimony,
+  createTranscribeAudioWitness,
+  createSummarizeReport,
+} from "./callable/aiTools.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
