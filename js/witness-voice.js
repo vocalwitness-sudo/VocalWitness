@@ -1,4 +1,4 @@
-// js/witness-voice.js
+// js/witness-voice.js - Part 1
 // Hybrid Witness Voice Channel + Structured Evidence Intake + Live Voice Recording
 
 import { initFeed } from './feed.js';
@@ -51,7 +51,7 @@ function showStatus(message, type = 'info') {
 }
 
 /* ------------------------------------------------------------------ */
-/*  LIVE VOICE RECORDING                                              */
+/*  LIVE VOICE RECORDING & OPTIONAL AI TRANSCRIPTION                  */
 /* ------------------------------------------------------------------ */
 
 let mediaRecorder = null;
@@ -59,6 +59,7 @@ let recordedChunks = [];
 let isRecording = false;
 let recordingStartTime = null;
 let recordingTimerInterval = null;
+const attachedMedia = [];
 
 function setupLiveVoiceRecording() {
   const btnVoice = document.getElementById('wv-btn-voice');
@@ -83,14 +84,24 @@ function setupLiveVoiceRecording() {
       </button>
       <span id="wv-recording-timer" class="text-sm font-mono text-red-400 hidden">00:00</span>
     </div>
-    <p id="wv-mic-hint" class="text-xs text-zinc-500">
+
+    <!-- Optional AI Transcription Toggle (Off by default) -->
+    <label class="flex items-center gap-2 text-sm text-zinc-400 mt-3 cursor-pointer">
+      <input type="checkbox" id="wv-enable-ai-transcription" class="rounded border-zinc-600 bg-zinc-900 text-emerald-600 focus:ring-emerald-500">
+      <span>Also create an AI transcript (optional – off by default)</span>
+    </label>
+    <p class="text-xs text-zinc-500 mt-1">
+      AI transcription is advisory only and is never applied to the sealed evidence itself.
+    </p>
+
+    <p id="wv-mic-hint" class="text-xs text-zinc-500 mt-2">
       Allow microphone when the browser asks. If blocked, use “Upload audio file” below.
     </p>
     <button type="button" id="wv-upload-audio-fallback"
             class="text-xs font-medium text-sky-400 hover:text-sky-300 underline underline-offset-2">
       Upload audio file instead
     </button>
-    <div id="wv-recording-preview" class="hidden">
+    <div id="wv-recording-preview" class="hidden mt-3">
       <audio id="wv-audio-preview" controls class="w-full"></audio>
       <div class="mt-2 flex flex-wrap gap-2">
         <button type="button" id="wv-use-recording"
@@ -189,6 +200,27 @@ function setupLiveVoiceRecording() {
         showToast('Hashing audio…', 'info');
         const hash = await computeSHA256(file);
         const previewUrl = URL.createObjectURL(file);
+
+        // Optional AI transcription check
+        const enableAI = document.getElementById('wv-enable-ai-transcription')?.checked === true;
+        if (enableAI) {
+          showToast('Creating optional AI transcript…', 'info');
+          try {
+            const base64Audio = await blobToBase64(file);
+            const transcript = await transcribeAudioWitness(base64Audio, file.type || 'audio/webm');
+            if (transcript?.trim()) {
+              const contentEl = document.getElementById('wv-content');
+              if (contentEl) {
+                contentEl.value += `\n\n[Optional AI Transcript - Advisory Only]\n${transcript.trim()}`;
+                contentEl.dispatchEvent(new Event('input', { bubbles: true }));
+              }
+            }
+          } catch (aiErr) {
+            console.warn('Optional AI transcription failed', aiErr);
+            showToast('AI transcript unavailable – continuing without it', 'warning');
+          }
+        }
+
         attachedMedia.push({
           id: crypto.randomUUID(),
           type: 'audio',
@@ -327,6 +359,27 @@ function setupLiveVoiceRecording() {
       showToast('Hashing voice recording…', 'info');
       const hash = await computeSHA256(file);
       const previewUrl = URL.createObjectURL(file);
+
+      // Optional AI transcription check
+      const enableAI = document.getElementById('wv-enable-ai-transcription')?.checked === true;
+      if (enableAI) {
+        showToast('Creating optional AI transcript…', 'info');
+        try {
+          const base64Audio = await blobToBase64(file);
+          const transcript = await transcribeAudioWitness(base64Audio, file.type || 'audio/webm');
+          if (transcript?.trim()) {
+            const contentEl = document.getElementById('wv-content');
+            if (contentEl) {
+              contentEl.value += `\n\n[Optional AI Transcript - Advisory Only]\n${transcript.trim()}`;
+              contentEl.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          }
+        } catch (aiErr) {
+          console.warn('Optional AI transcription failed', aiErr);
+          showToast('AI transcript unavailable – continuing without it', 'warning');
+        }
+      }
+
       attachedMedia.push({
         id: crypto.randomUUID(),
         type: 'audio',
@@ -351,6 +404,8 @@ function setupLiveVoiceRecording() {
     showToast('Recording discarded', 'info');
   });
 }
+// js/witness-voice.js - Part 2
+
 /* ------------------------------------------------------------------ */
 /*  Evidence Intake Assistant                                         */
 /* ------------------------------------------------------------------ */
@@ -394,8 +449,6 @@ export function renderEvidenceIntakeAssistant(container) {
     </div>
   `;
 
-  // ... (keep the rest of the intake assistant logic exactly as before)
-  // For brevity I'm keeping the previous intake logic — it already has Send button
   const sendBtn = container.querySelector('#intake-send-btn');
   const userInput = container.querySelector('#intake-user-input');
   const chatHistory = container.querySelector('#intake-chat-history');
@@ -509,9 +562,9 @@ function applyStructuredTestimonyToForm(type, timeline, facts) {
   if (whenEl && timeline) whenEl.value = timeline;
   if (contentEl) {
     contentEl.value = `[STRUCTURED WITNESS TESTIMONY]
-• Admissibility Type: ${type}
-• Timeline: ${timeline}
-• Verified Facts: ${facts}`;
+- Admissibility Type: ${type}
+- Timeline: ${timeline}
+- Verified Facts: ${facts}`;
     contentEl.dispatchEvent(new Event('input', { bubbles: true }));
     showToast('Structured testimony loaded into form', 'success');
   }
@@ -536,8 +589,6 @@ function setupCharCounter() {
 /*  Media handling (file upload + live recording)                     */
 /* ------------------------------------------------------------------ */
 
-const attachedMedia = [];
-
 function setupMediaButtons() {
   const btnPhoto = document.getElementById('wv-btn-photo');
   const btnVideo = document.getElementById('wv-btn-video');
@@ -553,7 +604,6 @@ function setupMediaButtons() {
     inputVideo.addEventListener('change', (e) => handleMediaSelect(e, 'video'));
   }
 
-  // Live voice is handled separately
   setupLiveVoiceRecording();
 }
 
@@ -714,7 +764,7 @@ export async function initWitnessVoice() {
 
     await initFeed(undefined, 'witness-voice');
 
-    console.log('✅ Hybrid Witness Voice ready (with live recording)');
+    console.log('✅ Hybrid Witness Voice ready (with live recording & optional AI transcript toggle)');
   } catch (err) {
     console.error('Failed to initialize Witness Voice:', err);
   }
