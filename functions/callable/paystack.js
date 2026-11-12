@@ -7,8 +7,7 @@ import admin from "firebase-admin";
 import { enforceRateLimit } from "../lib/rate-limit.js";
 
 /**
- * Factory – same pattern as phone / ban / claims.
- * @param {{ allowedOrigins: string[], db: FirebaseFirestore.Firestore, paystackSecretKey: any, getPaystackClient: () => any }} deps
+ * @param {{ allowedOrigins: string[], db: any, paystackSecretKey: any, getPaystackClient: () => any }} deps
  */
 export function createInitializePaystack({
   allowedOrigins,
@@ -20,7 +19,6 @@ export function createInitializePaystack({
     {
       cors: allowedOrigins,
       secrets: [paystackSecretKey],
-      // enforceAppCheck: true,  // enable when ready
     },
     async (request) => {
       if (!request.auth) {
@@ -30,6 +28,7 @@ export function createInitializePaystack({
         );
       }
 
+      // 1. Enforce rate limit (max 8 requests per 60 seconds per user)
       await enforceRateLimit(request.auth.uid, "initializePaystack", {
         windowMs: 60_000,
         max: 8,
@@ -59,6 +58,7 @@ export function createInitializePaystack({
       const amountSubunit = Math.round(major * 100);
 
       try {
+        // 2. Firestore document containing all required fields
         await db.collection("supporters").doc(reference).set({
           reference,
           userId: uid,
