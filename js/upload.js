@@ -50,39 +50,36 @@ export function setUploadProgress(percent, statusText = 'Uploading media...') {
  * Low-level upload to R2 via XHR.
  * Requires Firebase Auth. Sends App Check token when available.
  */
-function executeUpload(blob, keyPath, mimeType, onProgress) {
-  return new Promise(async (resolve, reject) => {
-    if (!auth.currentUser) {
-      reject(new Error('Sign in required to upload media.'));
-      return;
-    }
+async function executeUpload(blob, keyPath, mimeType, onProgress) {
+  if (!auth.currentUser) {
+    throw new Error('Sign in required to upload media.');
+  }
 
-    const xhr = new XMLHttpRequest();
-    const targetUrl = `${R2_UPLOAD_ENDPOINT}?key=${encodeURIComponent(keyPath)}`;
+  const xhr = new XMLHttpRequest();
+  const targetUrl = `${R2_UPLOAD_ENDPOINT}?key=${encodeURIComponent(keyPath)}`;
 
-    xhr.open('PUT', targetUrl, true);
-    xhr.setRequestHeader('Content-Type', mimeType || 'application/octet-stream');
+  xhr.open('PUT', targetUrl, true);
+  xhr.setRequestHeader('Content-Type', mimeType || 'application/octet-stream');
 
-    try {
-      const idToken = await auth.currentUser.getIdToken();
-      xhr.setRequestHeader('Authorization', `Bearer ${idToken}`);
-    } catch (err) {
-      reject(new Error('Could not get auth token for upload.'));
-      return;
-    }
+  try {
+    const idToken = await auth.currentUser.getIdToken();
+    xhr.setRequestHeader('Authorization', `Bearer ${idToken}`);
+  } catch (err) {
+    throw new Error('Could not get auth token for upload.');
+  }
 
-    // App Check – required in production; worker should reject if missing
-    try {
-      if (appCheck) {
-        const { token } = await getToken(appCheck, /* forceRefresh */ false);
-        if (token) {
-          xhr.setRequestHeader('X-Firebase-AppCheck', token);
-        }
+  try {
+    if (appCheck) {
+      const { token } = await getToken(appCheck, false);
+      if (token) {
+        xhr.setRequestHeader('X-Firebase-AppCheck', token);
       }
-    } catch (err) {
-      console.warn('[Upload] App Check token unavailable:', err?.message || err);
     }
+  } catch (err) {
+    console.warn('[Upload] App Check token unavailable:', err?.message || err);
+  }
 
+  return new Promise((resolve, reject) => {
     if (xhr.upload && typeof onProgress === 'function') {
       xhr.upload.onprogress = (evt) => {
         if (evt.lengthComputable) {
@@ -106,7 +103,6 @@ function executeUpload(blob, keyPath, mimeType, onProgress) {
     xhr.send(blob);
   });
 }
-
 /**
  * Core transport helper used by media-pipeline.js
  * Accepts an already-processed File/Blob and uploads it.
