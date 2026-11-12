@@ -45,6 +45,9 @@ import {
   createTranscribeAudioWitness,
   createSummarizeReport,
 } from "./callable/aiTools.js";
+import { createInitializePaystack } from "./callable/paystack.js";
+import { createPaystackWebhook } from "./http/paystackWebhook.js";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
