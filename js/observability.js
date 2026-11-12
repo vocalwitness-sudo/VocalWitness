@@ -84,7 +84,7 @@ export async function submitFeedback({ message, category = 'general', email = nu
     return true;
   } catch (e) {
     console.error(e);
-    showToast('Could not send feedback. Try again later.', 'error');
+  showToast('Could not send feedback. Try again later.', 'error');
     return false;
   }
 }
