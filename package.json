@@ -2,6 +2,7 @@
 {
   "name": "vocalwitness",
   "version": "1.0.0",
+  "type": "module",
   "description": "VocalWitness - Truth • Evidence • Public Square",
   "private": true,
   "type": "module",
