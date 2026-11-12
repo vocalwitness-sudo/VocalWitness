@@ -1,8 +1,7 @@
 // js/support.js - Upgraded Support Module
 import { showToast } from './utils.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { app } from './firebase.js';
-import { auth } from './firebase-config.js';   // Make sure this import works in your setup
+import { auth } from './firebase-config.js'; 
 
 const functions = getFunctions(app);
 
