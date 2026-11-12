@@ -38,7 +38,7 @@ import { createUnbanUser } from "./callable/unbanUser.js";
 import { createModeratedDelete } from "./callable/moderatedDelete.js";
 import { createEvaluateTrustTier } from "./callable/evaluateTrustTier.js";
 import { createRestoreHiddenContent } from "./callable/restoreHiddenContent.js";
-// ESM __dirname equivalent
+import { createAnalyzeToxicity } from "./callable/analyzeToxicity.js"; // Adjust path as needed
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -203,10 +203,10 @@ export const initializeCitizenProfile = beforeUserCreated(async (event) => {
 // TOXICITY HELPERS, GEMINI AI MODERATION & AI TOOLS
 // ======================================================
 
-export const analyzeToxicity = createAnalyzeToxicity({
-  perspectiveApiKey,
-  corsHandler,
-});
+export function createAnalyzeToxicity({ perspectiveApiKey, corsHandler }) {
+  return onCall(async (request) => {
+  });
+}
 
 export const translateTestimony = createTranslateTestimony({
   allowedOrigins,
