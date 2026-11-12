@@ -1,8 +1,7 @@
 // eslint.config.js
 // Production-pragmatic: catch real breakage, don't block on legacy noise.
-import js from "@eslint/js";
 import globals from "globals";
-
+import js from "@eslint/js";
 export default [
   {
     ignores: [
