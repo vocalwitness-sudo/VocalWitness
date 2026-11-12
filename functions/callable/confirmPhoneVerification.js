@@ -1,13 +1,5 @@
 /**
  * functions/callable/confirmPhoneVerification.js
- */
-import { onCall, HttpsError } from "firebase-functions/v2/https";
-import admin from "firebase-admin";
-import { enforceRateLimit } from "../lib/rate-limit.js";
-import { writeAuditLog } from "../lib/audit.js";
-
-/**
- * functions/callable/confirmPhoneVerification.js
  * Batch 1 – Integrity / Trust Foundation
  */
 import { onCall, HttpsError } from "firebase-functions/v2/https";
