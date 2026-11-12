@@ -17,18 +17,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Install dependencies
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci || npm install
-          else
-            npm install
-          fi
+        run: npm install --no-fund --no-audit
 
-      # Warnings allowed; only real ESLint *errors* fail the job.
-      # max-warnings high until legacy no-undef noise is cleaned.
       - name: Run ESLint
         run: npx eslint js functions --no-error-on-unmatched-pattern --max-warnings 500
 
@@ -41,15 +33,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Install dependencies
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci || npm install
-          else
-            npm install
-          fi
+        run: npm install --no-fund --no-audit
 
       - name: Production Integrity Test
         run: npm run test:integrity
@@ -72,15 +58,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Install dependencies
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci || npm install
-          else
-            npm install
-          fi
+        run: npm install --no-fund --no-audit
 
       - name: Phone Verification Smoke Test
         run: node tests/phone-smoke.js
