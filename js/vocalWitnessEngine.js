@@ -77,25 +77,24 @@ export async function uploadMediaAsset(file, folder, uid, onProgress = null) {
     ?.split(';')[0] || 'bin';
   const path = `${folder}/${uid}/${crypto.randomUUID()}.${ext}`;
 
-  return new Promise(async (resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('PUT', `${R2_UPLOAD_ENDPOINT}?key=${encodeURIComponent(path)}`, true);
-    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+  const xhr = new XMLHttpRequest();
+  xhr.open('PUT', `${R2_UPLOAD_ENDPOINT}?key=${encodeURIComponent(path)}`, true);
+  xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
 
-    try {
-      if (auth.currentUser) {
-        const token = await auth.currentUser.getIdToken();
-        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-      }
-    } catch (err) {
-      console.warn('[Engine] Could not retrieve Auth Token for R2 Upload:', err);
+  try {
+    if (auth.currentUser) {
+      const token = await auth.currentUser.getIdToken();
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
     }
+  } catch (err) {
+    console.warn('[Engine] Could not retrieve Auth Token for R2 Upload:', err);
+  }
 
+  return new Promise((resolve, reject) => {
     if (xhr.upload && onProgress) {
       xhr.upload.onprogress = (evt) => {
         if (evt.lengthComputable) {
-          const percent = Math.round((evt.loaded / evt.total) * 100);
-          onProgress(percent);
+          onProgress(Math.round((evt.loaded / evt.total) * 100));
         }
       };
     }
@@ -471,13 +470,13 @@ export class CitizenTalkEngine extends BaseEngine {
    * @param {Object} opts
    * @param {string} [opts.text]
    * @param {string} [opts.category='General']
-   * @param {string|null} [opts.audioUrl]   - from uploadForensicMedia
-   * @param {string|null} [opts.audioHash]  - from uploadForensicMedia
+   * @param {string|null} [opts.audioUrl]    - from uploadForensicMedia
+   * @param {string|null} [opts.audioHash]   - from uploadForensicMedia
    * @param {string|null} [opts.imageUrl]
    * @param {string|null} [opts.imageHash]
    * @param {string|null} [opts.videoUrl]
    * @param {string|null} [opts.videoHash]
-   * @param {Object} [opts.extra]           - optional extra fields (origin claim, etc.)
+   * @param {Object} [opts.extra]            - optional extra fields (origin claim, etc.)
    */
   async submitCitizenTalk({
     text = '',
