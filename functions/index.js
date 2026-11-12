@@ -38,7 +38,6 @@ import { createUnbanUser } from "./callable/unbanUser.js";
 import { createModeratedDelete } from "./callable/moderatedDelete.js";
 import { createEvaluateTrustTier } from "./callable/evaluateTrustTier.js";
 import { createRestoreHiddenContent } from "./callable/restoreHiddenContent.js";
-
 // ESM __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -204,143 +203,25 @@ export const initializeCitizenProfile = beforeUserCreated(async (event) => {
 // TOXICITY HELPERS, GEMINI AI MODERATION & AI TOOLS
 // ======================================================
 
-async function analyzeToxicityWithPerspective(content = "") {
-  const apiKey = perspectiveApiKey.value() || process.env.PERSPECTIVE_API_KEY;
-  if (!apiKey || !content || content.length < 3) {
-    return { safe: true, toxicityScore: 0, note: "Skipped or too short" };
-  }
+export const analyzeToxicity = createAnalyzeToxicity({
+  perspectiveApiKey,
+  corsHandler,
+});
 
-  try {
-    const response = await axios.post(
-      `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=${apiKey}`,
-      {
-        comment: { text: content },
-        languages: ["en"],
-        requestedAttributes: { TOXICITY: {}, INSULT: {}, THREAT: {} }
-      }
-    );
+export const translateTestimony = createTranslateTestimony({
+  allowedOrigins,
+  geminiApiKey,
+});
 
-    const scores = response.data.attributeScores;
-    const toxicityScore = scores?.TOXICITY?.summaryScore?.value || 0;
-    const insultScore = scores?.INSULT?.summaryScore?.value || 0;
-    const threatScore = scores?.THREAT?.summaryScore?.value || 0;
-    const isToxic = toxicityScore > 0.7 || insultScore > 0.7 || threatScore > 0.6;
+export const transcribeAudioWitness = createTranscribeAudioWitness({
+  allowedOrigins,
+  geminiApiKey,
+});
 
-    return {
-      safe: !isToxic,
-      toxicityScore,
-      insultScore,
-      threatScore,
-      note: isToxic
-        ? "Flagged by automated Perspective API moderation for toxicity/insult."
-        : "Passed Perspective API check."
-    };
-  } catch (error) {
-    logger.error("Perspective API evaluation error:", error.message);
-    return gentleModerationCheck(content);
-  }
-}
-
-function gentleModerationCheck(content = "") {
-  const text = content.toLowerCase();
-  const flagWords = ["spam", "scam", "abuse", "hate", "harass"];
-  const isFlagged = flagWords.some((word) => text.includes(word));
-  return {
-    safe: !isFlagged,
-    toxicityScore: isFlagged ? 0.8 : 0.0,
-    note: isFlagged ? "Flagged by local fallback moderation check." : "Passed local fallback check."
-  };
-}
-
-export const analyzeToxicity = onRequest(
-  { secrets: [perspectiveApiKey] },
-  (req, res) => {
-    corsHandler(req, res, async () => {
-      try {
-        const { text } = req.body;
-        const result = await analyzeToxicityWithPerspective(text);
-        res.status(200).json(result);
-      } catch (error) {
-        logger.error("Perspective API error:", error);
-        res.status(500).json({ error: error.message });
-      }
-    });
-  }
-);
-
-
-
-// 2. Multi-Language Feed Translation
-export const translateTestimony = onCall(
-  { cors: allowedOrigins, secrets: [geminiApiKey] },
-  async (request) => {
-    const { text, targetLanguage } = request.data || {};
-    if (!text || !targetLanguage) {
-      throw new HttpsError("invalid-argument", "Text and targetLanguage are required.");
-    }
-
-    const apiKey = geminiApiKey.value() || process.env.GEMINI_API_KEY;
-    const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `Translate the following report accurately into ${targetLanguage}, preserving tone and essential detail:\n\n"${text}"`
-    });
-
-    const translatedText = response.text ? response.text.trim() : "";
-    return { translatedText };
-  }
-);
-
-// 3. Audio-to-Text Witness Transcriptions (Base64 Audio Input)
-export const transcribeAudioWitness = onCall(
-  { cors: allowedOrigins, secrets: [geminiApiKey] },
-  async (request) => {
-    const { audioBase64, mimeType } = request.data || {};
-    if (!audioBase64 || !mimeType) {
-      throw new HttpsError("invalid-argument", "audioBase64 and mimeType are required.");
-    }
-
-    const apiKey = geminiApiKey.value() || process.env.GEMINI_API_KEY;
-    const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: [
-        {
-          inlineData: {
-            mimeType: mimeType,
-            data: audioBase64
-          }
-        },
-        "Provide a precise, verbatim transcription of this voice witness submission. Do not add intro or outro prose."
-      ]
-    });
-
-    const transcription = response.text ? response.text.trim() : "";
-    return { transcription };
-  }
-);
-
-// 4. Compact Report Summarization
-export const summarizeReport = onCall(
-  { cors: allowedOrigins, secrets: [geminiApiKey] },
-  async (request) => {
-    const { text } = request.data || {};
-    if (!text) {
-      throw new HttpsError("invalid-argument", "Text is required.");
-    }
-
-    const apiKey = geminiApiKey.value() || process.env.GEMINI_API_KEY;
-    const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `Summarize this citizen report into a single concise sentence (under 25 words) suitable for a compact feed card:\n\n"${text}"`
-    });
-
-    const summary = response.text ? response.text.trim() : "";
-    return { summary };
-  }
-);
-
+export const summarizeReport = createSummarizeReport({
+  allowedOrigins,
+  geminiApiKey,
+});
 // ======================================================
 // 6. PAYSTACK — ONE-TIME SUPPORT
 // ======================================================
