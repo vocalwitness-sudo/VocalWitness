@@ -52,32 +52,39 @@ jobs:
           entryPoint: .
           firebaseToolsVersion: latest
 
-      # Functions with retry (handles temporary us-central1 unavailability)
-      - name: Deploy Functions (with retry)
+      # Functions deployed in staggered batches to stay under CPU limits
+      - name: Deploy Functions (Batch 1 - Core Callables)
         env:
           NODE_OPTIONS: "--experimental-vm-modules"
           FUNCTIONS_DISCOVERY_TIMEOUT: "90"
           FIREBASE_SUPPRESS_REGION_WARNING: "true"
         run: |
-          echo "Attempting functions deploy..."
-          
-          for i in 1 2 3; do
-            echo "=== Attempt $i of 3 ==="
-            if firebase deploy \
-              --only functions \
-              --project vocalwitness-3affa \
-              --force \
-              --non-interactive; then
-              echo "Functions deployed successfully on attempt $i"
-              exit 0
-            fi
-            
-            if [ $i -lt 3 ]; then
-              echo "Attempt $i failed. Waiting 90 seconds before retry..."
-              sleep 90
-            fi
-          done
-          
-          echo "All 3 attempts failed (temporary region issue)."
-          echo "Frontend was still deployed successfully."
-          exit 1
+          firebase deploy \
+            --only functions:createGetUploadUrl,functions:createConfirmPhoneVerification,functions:createSetUserClaims \
+            --project vocalwitness-3affa \
+            --force \
+            --non-interactive
+
+      - name: Deploy Functions (Batch 2 - Moderation & Trust)
+        env:
+          NODE_OPTIONS: "--experimental-vm-modules"
+          FUNCTIONS_DISCOVERY_TIMEOUT: "90"
+          FIREBASE_SUPPRESS_REGION_WARNING: "true"
+        run: |
+          firebase deploy \
+            --only functions:createBanUser,functions:createUnbanUser,functions:createModeratedDelete,functions:createEvaluateTrustTier,functions:createRestoreHiddenContent \
+            --project vocalwitness-3affa \
+            --force \
+            --non-interactive
+
+      - name: Deploy Functions (Batch 3 - Remaining Services & Tasks)
+        env:
+          NODE_OPTIONS: "--experimental-vm-modules"
+          FUNCTIONS_DISCOVERY_TIMEOUT: "90"
+          FIREBASE_SUPPRESS_REGION_WARNING: "true"
+        run: |
+          firebase deploy \
+            --only functions:analyzeToxicity,functions:castDaoVote,functions:checkContentConsistency,functions:dailyAnchor,functions:detectSyntheticMedia,functions:generateZkProof,functions:getCuratedNews,functions:getLiveKitToken,functions:getPresignedUrl,functions:getUploadUrl,functions:heavyProcessingTask \
+            --project vocalwitness-3affa \
+            --force \
+            --non-interactive
