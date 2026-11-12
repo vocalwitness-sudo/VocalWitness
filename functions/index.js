@@ -38,6 +38,7 @@ import { createUnbanUser } from "./callable/unbanUser.js";
 import { createModeratedDelete } from "./callable/moderatedDelete.js";
 import { createEvaluateTrustTier } from "./callable/evaluateTrustTier.js";
 import { createRestoreHiddenContent } from "./callable/restoreHiddenContent.js";
+import { createAnalyzeToxicity } from "./http/analyzeToxicity.js";
 import { analyzeToxicityWithPerspective } from "./lib/moderation.js";
 import {
   createTranslateTestimony,
@@ -207,7 +208,6 @@ export const initializeCitizenProfile = beforeUserCreated(async (event) => {
 // ======================================================
 // TOXICITY + AI TOOLS (extracted modules)
 // ======================================================
-
 export const analyzeToxicity = createAnalyzeToxicity({
   perspectiveApiKey,
   corsHandler,
@@ -800,7 +800,9 @@ export const scoreToxicity = onCall(
     }
 
     try {
-      const result = await analyzeToxicityWithPerspective(text);
+      const result = await analyzeToxicityWithPerspective(text, () =>
+  perspectiveApiKey.value() || process.env.PERSPECTIVE_API_KEY
+);
       return {
         score: result.toxicityScore || 0,
         insultScore: result.insultScore || 0,
