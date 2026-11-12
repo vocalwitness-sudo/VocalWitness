@@ -167,13 +167,14 @@ paystackBtn?.addEventListener('click', async () => {
       ? 'Please sign in to pay with card.'
       : 'Payment initialization failed. Try again or use USDT.';
     showToast(msg, 'error');
-  } finally {
+   } finally {
     paystackBtn.disabled = false;
   }
 });
-    
+} // closes initSupportModal
+
 // Auto init
 document.addEventListener('DOMContentLoaded', () => {
-    initSupportModal();
-    console.log('%cSupport module loaded successfully ✓', 'color:#10b981; font-weight:bold');
+  initSupportModal();
+  console.log('%cSupport module loaded successfully ✓', 'color:#10b981; font-weight:bold');
 });
