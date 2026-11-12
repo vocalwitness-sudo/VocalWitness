@@ -20,18 +20,8 @@ jobs:
 
       - name: Install dependencies & compile CSS
         run: |
-          # Force clean lockfiles so npm ci never fails again
-          rm -f package-lock.json
-          npm install --package-lock-only
-          npm install
-
-          cd functions
-          rm -f package-lock.json
-          npm install --package-lock-only
-          npm install
-          cd ..
-
-          # Build CSS
+          npm ci || npm install
+          cd functions && (npm ci || npm install) && cd ..
           npm install -D tailwindcss @tailwindcss/cli
           npx @tailwindcss/cli -i ./input.css -o ./style.css --minify
 
@@ -51,7 +41,7 @@ jobs:
             --force \
             --non-interactive
 
-      # Hosting first so frontend always goes live
+      # Hosting first so frontend changes always go live
       - name: Deploy to Firebase Hosting (Live)
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -62,54 +52,114 @@ jobs:
           entryPoint: .
           firebaseToolsVersion: latest
 
-      # ========== FUNCTIONS IN SMALL BATCHES ==========
-      # Use only the real export names (never the create* factory names)
+      # =====================================================
+      # FUNCTIONS – very small batches to stay under CPU quota
+      # =====================================================
 
-      - name: Deploy Functions (Batch 1 - Core Callables)
+      - name: Deploy Functions (Batch 1a - getUploadUrl alone)
         env:
           NODE_OPTIONS: "--experimental-vm-modules"
           FUNCTIONS_DISCOVERY_TIMEOUT: "90"
           FIREBASE_SUPPRESS_REGION_WARNING: "true"
         run: |
           firebase deploy \
-            --only functions:getUploadUrl,functions:confirmPhoneVerification,functions:setUserClaims \
+            --only functions:getUploadUrl \
             --project vocalwitness-3affa \
             --force \
             --non-interactive
 
-      - name: Deploy Functions (Batch 2 - Moderation & Trust)
+      - name: Deploy Functions (Batch 1b - Phone + Claims)
         env:
           NODE_OPTIONS: "--experimental-vm-modules"
           FUNCTIONS_DISCOVERY_TIMEOUT: "90"
           FIREBASE_SUPPRESS_REGION_WARNING: "true"
         run: |
           firebase deploy \
-            --only functions:banUser,functions:unbanUser,functions:moderatedDelete,functions:evaluateTrustTier,functions:restoreHiddenContent \
+            --only functions:confirmPhoneVerification,functions:setUserClaims \
             --project vocalwitness-3affa \
             --force \
             --non-interactive
 
-      # Paystack in its own tiny batch (avoids CPU quota spike)
-      - name: Deploy Functions (Batch 3 - Paystack)
+      - name: Deploy Functions (Batch 2a - Ban / Unban)
         env:
           NODE_OPTIONS: "--experimental-vm-modules"
           FUNCTIONS_DISCOVERY_TIMEOUT: "90"
           FIREBASE_SUPPRESS_REGION_WARNING: "true"
         run: |
           firebase deploy \
-            --only functions:initializePaystack,functions:paystackWebhook \
+            --only functions:banUser,functions:unbanUser \
             --project vocalwitness-3affa \
             --force \
             --non-interactive
 
-      - name: Deploy Functions (Batch 4 - Remaining Services & Tasks)
+      - name: Deploy Functions (Batch 2b - Moderation)
+        env:
+          NODE_OPTIONS: "--experimental-vm-modules"
+          FUNCTIONS_DISCOVERY_TIMEOUT: "90"
+          FIREBASE_SUPPRESS_REGION_WARNING: "true"
+        run: |
+          firebase deploy \
+            --only functions:moderatedDelete,functions:restoreHiddenContent \
+            --project vocalwitness-3affa \
+            --force \
+            --non-interactive
+
+      - name: Deploy Functions (Batch 3 - Trust Tier)
+        env:
+          NODE_OPTIONS: "--experimental-vm-modules"
+          FUNCTIONS_DISCOVERY_TIMEOUT: "90"
+          FIREBASE_SUPPRESS_REGION_WARNING: "true"
+        run: |
+          firebase deploy \
+            --only functions:evaluateTrustTier \
+            --project vocalwitness-3affa \
+            --force \
+            --non-interactive
+
+      - name: Deploy Functions (Batch 4 - AI Tools)
+        env:
+          NODE_OPTIONS: "--experimental-vm-modules"
+          FUNCTIONS_DISCOVERY_TIMEOUT: "90"
+          FIREBASE_SUPPRESS_REGION_WARNING: "true"
+        run: |
+          firebase deploy \
+            --only functions:translateTestimony,functions:transcribeAudioWitness,functions:summarizeReport \
+            --project vocalwitness-3affa \
+            --force \
+            --non-interactive
+
+      - name: Deploy Functions (Batch 5 - Payments)
+        env:
+          NODE_OPTIONS: "--experimental-vm-modules"
+          FUNCTIONS_DISCOVERY_TIMEOUT: "90"
+          FIREBASE_SUPPRESS_REGION_WARNING: "true"
+        run: |
+          firebase deploy \
+            --only functions:initializePaystack,functions:paystackWebhook,functions:nowPaymentsWebhook \
+            --project vocalwitness-3affa \
+            --force \
+            --non-interactive
+
+      - name: Deploy Functions (Batch 6 - Remaining Core)
         env:
           NODE_OPTIONS: "--experimental-vm-modules"
           FUNCTIONS_DISCOVERY_TIMEOUT: "120"
           FIREBASE_SUPPRESS_REGION_WARNING: "true"
         run: |
           firebase deploy \
-            --only functions:analyzeToxicity,functions:translateTestimony,functions:transcribeAudioWitness,functions:summarizeReport,functions:nowPaymentsWebhook,functions:verifyAndElevateZKProof,functions:detectSyntheticMedia,functions:checkContentConsistency,functions:suggestCorroborations,functions:scoreToxicity,functions:requestTimestamp,functions:getLiveKitToken,functions:registerZKCommitment,functions:castDaoVote,functions:generateZKProof,functions:submitTestimonySecure,functions:onTestimonyReactionWriteV2,functions:getPresignedUrl,functions:verifyAndTimestampMedia,functions:heavyProcessingTask,functions:ogPost,functions:dailyAnchor,functions:triggerAnchorNow,functions:initializeCitizenProfile \
+            --only functions:analyzeToxicity,functions:submitTestimonySecure,functions:initializeCitizenProfile,functions:dailyAnchor,functions:triggerAnchorNow \
+            --project vocalwitness-3affa \
+            --force \
+            --non-interactive
+
+      - name: Deploy Functions (Batch 7 - ZK & Advanced)
+        env:
+          NODE_OPTIONS: "--experimental-vm-modules"
+          FUNCTIONS_DISCOVERY_TIMEOUT: "120"
+          FIREBASE_SUPPRESS_REGION_WARNING: "true"
+        run: |
+          firebase deploy \
+            --only functions:generateZKProof,functions:registerZKCommitment,functions:verifyAndElevateZKProof,functions:detectSyntheticMedia,functions:checkContentConsistency,functions:suggestCorroborations,functions:scoreToxicity \
             --project vocalwitness-3affa \
             --force \
             --non-interactive
