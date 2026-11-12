@@ -23,10 +23,10 @@ export const AI_PRINCIPLES = {
 };
 
 export const AI_USER_NOTICE = {
-  short: "AI is helping humans review content. It does not decide truth and never changes sealed reports.",
-  full: `VocalWitness uses limited AI tools to help with translation, transcription, and risk signals for synthetic media. 
-These tools are advisory only. They do not decide what is true, do not automatically hide or delete sealed reports, 
-and are designed with privacy and data minimization in mind. Final judgment always stays with people.`
+  short: "AI is optional and off by default on Witness Voice. It never changes sealed reports.",
+  full: `VocalWitness uses limited AI tools (transcription, translation, summarization) only when you explicitly turn them on.
+On the high-integrity Witness Voice channel these features are OFF by default.
+AI is advisory only. It does not decide truth, does not alter sealed evidence, and never auto-deletes reports.`
 };
 
 /**
@@ -60,12 +60,22 @@ export async function moderatePost(title = "", text = "") {
 
 /**
  * On-Demand Feed Translation
+ * @param {string} text
+ * @param {string} targetLanguage
+ * @param {{ enableAI?: boolean }} options
  */
-export async function translateTestimony(text, targetLanguage) {
+export async function translateTestimony(text, targetLanguage, options = {}) {
+  const { enableAI = false } = options;
+
+  if (!enableAI) {
+    console.info("[AI] Translation skipped – enableAI is false (default for high-integrity paths)");
+    return null; // or throw a friendly error if you prefer
+  }
+
   remindUserOfAIRestrictions("translation");
   try {
     const translateFn = httpsCallable(functions, "translateTestimony");
-    const result = await translateFn({ text, targetLanguage });
+    const result = await translateFn({ text, targetLanguage, enableAI: true });
     return result.data.translatedText;
   } catch (error) {
     console.error("AI Translation Error:", error);
@@ -75,12 +85,29 @@ export async function translateTestimony(text, targetLanguage) {
 
 /**
  * Audio-to-Text Witness Transcriptions
+ * High-integrity path – OFF by default
+ * @param {string} audioBase64
+ * @param {string} mimeType
+ * @param {{ enableAI?: boolean, channel?: string }} options
  */
-export async function transcribeAudioWitness(audioBase64, mimeType = "audio/wav") {
+export async function transcribeAudioWitness(audioBase64, mimeType = "audio/wav", options = {}) {
+  const { enableAI = false, channel = "citizen" } = options;
+
+  // Batch 4: hard off-by-default for Witness Voice
+  if (!enableAI) {
+    console.info("[AI] Transcription skipped – enableAI is false (required for Witness Voice)");
+    return null;
+  }
+
   remindUserOfAIRestrictions("transcription");
   try {
     const transcribeFn = httpsCallable(functions, "transcribeAudioWitness");
-    const result = await transcribeFn({ audioBase64, mimeType });
+    const result = await transcribeFn({
+      audioBase64,
+      mimeType,
+      enableAI: true,
+      channel
+    });
     return result.data.transcription;
   } catch (error) {
     console.error("AI Transcription Error:", error);
@@ -89,20 +116,28 @@ export async function transcribeAudioWitness(audioBase64, mimeType = "audio/wav"
 }
 
 /**
- * Compact Report Summarization (optional helper)
+ * Compact Report Summarization
+ * @param {string} text
+ * @param {{ enableAI?: boolean }} options
  */
-export async function summarizeReport(text) {
+export async function summarizeReport(text, options = {}) {
+  const { enableAI = false } = options;
+
+  if (!enableAI) {
+    console.info("[AI] Summarization skipped – enableAI is false");
+    return null;
+  }
+
   remindUserOfAIRestrictions("summarization");
   try {
     const summarizeFn = httpsCallable(functions, "summarizeReport");
-    const result = await summarizeFn({ text });
+    const result = await summarizeFn({ text, enableAI: true });
     return result.data.summary;
   } catch (error) {
     console.error("AI Summarization Error:", error);
     throw error;
   }
 }
-
 /* ==========================================================================
    2. CLIENT-SIDE SYNTHETIC SCORING (Lightweight Advisory)
    ========================================================================== */
