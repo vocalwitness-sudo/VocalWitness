@@ -1,13 +1,16 @@
 
-name: CI - Smoke + Integrity Tests
+name: CI - Lint + Integrity + Smoke
 
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
-  smoke-and-integrity:
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -17,20 +20,77 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci || npm install
 
-      - name: Lint (non-blocking)
-        run: npm run lint || echo "Lint warnings present – continuing"
+      - name: Run ESLint (blocking)
+        run: npm run lint
+
+  integrity:
+    name: Integrity Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Production Integrity Test
+        run: npm run test:integrity
+
+      - name: Media Integrity Test (if present)
+        run: |
+          if [ -f tests/media-integrity.test.js ]; then
+            node tests/media-integrity.test.js
+          else
+            echo "No media-integrity.test.js – skipping"
+          fi
+
+  smoke:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [lint, integrity]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci || npm install
 
       - name: Phone Verification Smoke Test
         run: node tests/phone-smoke.js
-
-      - name: Production Integrity Test (real code)
-        run: npm run test:integrity
 
       - name: Build CSS
         run: |
           npm install -D tailwindcss @tailwindcss/cli
           npx @tailwindcss/cli -i ./input.css -o ./style.css --minify
+
+  # Optional: enable when Playwright suite is stable
+  # e2e:
+  #   name: Playwright E2E
+  #   runs-on: ubuntu-latest
+  #   needs: [lint, integrity]
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 22
+  #         cache: npm
+  #     - run: npm ci || npm install
+  #     - run: npx playwright install --with-deps chromium
+  #     - run: npx playwright test --project=chromium
