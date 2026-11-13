@@ -1487,21 +1487,29 @@ async function handleCorroborate(postId, btnEl) {
         return;
     }
 
-    const allowed = await canCorroborate();
-    if (!allowed) {
-        showToast(
-            "Phone verification is required to corroborate reports. This helps keep bots and spam out of the Square.",
-            "info"
-        );
-        const modal = document.getElementById('phoneVerificationModal') ||
-                      document.getElementById('phone-upgrade-modal') ||
-                      document.getElementById('verificationModal');
+   const allowed = await canCorroborate();
+if (!allowed) {
+    showToast(
+        "Phone verification is required to corroborate reports. This helps keep bots and spam out of the Square.",
+        "info"
+    );
+    // Prefer shared auth entrypoint, then startPhoneVerification, then DOM fallback
+    if (typeof window.openVerificationModal === "function") {
+        window.openVerificationModal();
+    } else if (typeof window.startPhoneVerification === "function") {
+        window.startPhoneVerification();
+    } else {
+        const modal =
+            document.getElementById("phoneVerificationModal") ||
+            document.getElementById("phone-upgrade-modal") ||
+            document.getElementById("verificationModal");
         if (modal) {
-            modal.classList.remove('hidden');
-            modal.style.display = 'flex';
+            modal.classList.remove("hidden");
+            modal.style.display = "flex";
         }
-        return;
     }
+    return;
+}
 
     const note = prompt("Optional short note (max 280 chars):\nWhat did you also see / hear?");
     if (note === null) return;
