@@ -846,15 +846,36 @@ function renderSinglePostDOM(id, data, container) {
         </span>`;
     }
 
-    // 4) Circle only if elevated (no more "Unverified Source" noise)
-    const tier = String(data.authorTier || '').toLowerCase();
-    if (tier && tier !== 'citizen' && tier !== 'unverified') {
-        trustBadgesHTML += `
-        <span class="bg-blue-500/10 text-blue-300 border border-blue-500/25 text-[10px] px-2 py-0.5 rounded flex items-center gap-1"
-              title="Phone-verified or higher trust tier">
-          📱 Circle
-        </span>`;
-    }
+   // 4) Author tier — always readable
+const tier = String(data.authorTier || '').toLowerCase();
+const phoneOk =
+  data.authorPhoneVerified === true ||
+  tier === 'citizen_circle' ||
+  tier === 'citizen-circle';
+const isWitness =
+  tier === 'witness_circle' ||
+  tier === 'witness-circle' ||
+  data.zkVerified === true;
+
+if (isWitness) {
+  trustBadgesHTML += `
+    <span class="bg-violet-500/10 text-violet-300 border border-violet-500/30 text-[10px] px-2 py-0.5 rounded flex items-center gap-1"
+          title="Witness Circle — higher trust path">
+      🔐 Witness Circle
+    </span>`;
+} else if (phoneOk) {
+  trustBadgesHTML += `
+    <span class="bg-sky-500/10 text-sky-300 border border-sky-500/25 text-[10px] px-2 py-0.5 rounded flex items-center gap-1"
+          title="Phone-verified Citizen Circle">
+      📱 Citizen Circle
+    </span>`;
+} else {
+  trustBadgesHTML += `
+    <span class="bg-zinc-800 text-zinc-400 border border-zinc-700 text-[10px] px-2 py-0.5 rounded flex items-center gap-1"
+          title="Standard Citizen account">
+      👤 Citizen
+    </span>`;
+}
 
     // Field Note (optional)
     if (data.postingStyle === 'field-note') {
