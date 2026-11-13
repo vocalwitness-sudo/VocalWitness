@@ -888,7 +888,7 @@ async function loadEvidenceLedger() {
       return;
     }
 
-    // Store data for the modal
+  // Store data for the modal
     window.__ledgerDocs = {};
 
     let html = `
@@ -946,7 +946,7 @@ async function loadEvidenceLedger() {
         tierClass = 'text-sky-300';
       }
 
-      const statusHTML = isSealed
+      const hashDisplay = isSealed
         ? `<span class="inline-flex flex-col gap-0.5">
              <span class="inline-flex items-center gap-1 font-semibold text-emerald-400" title="Hash fixed after publish — not a truth stamp">🛡️ Sealed</span>
              <span class="text-[10px] ${tierClass}">${tierLabel}</span>
@@ -966,7 +966,7 @@ async function loadEvidenceLedger() {
             title="View sealed record (read-only)">
           <td class="py-3.5 px-3 sm:px-4 font-medium text-white group-hover:text-emerald-300">${escapeHtml(data.author || 'Anonymous')}</td>
           <td class="py-3.5 px-3 sm:px-4 max-w-[180px] sm:max-w-xs truncate text-zinc-300">${escapeHtml(summary)}</td>
-          <td class="py-3.5 px-3 sm:px-4 font-mono text-xs">${statusHTML}</td>
+          <td class="py-3.5 px-3 sm:px-4 font-mono text-xs">${hashDisplay}</td>
           <td class="py-3.5 px-3 sm:px-4 text-xs text-zinc-500">${dateStr}</td>
         </tr>`;
     });
@@ -1093,11 +1093,11 @@ window.viewSealedReport = function (id) {
   document.body.appendChild(modal);
   document.body.style.overflow = 'hidden';
   document.getElementById('vw-feedback-btn')?.addEventListener('click', () => {
-  const message = prompt('What went wrong or what would you like improved?');
-  if (message) {
-    import('./observability.js').then(m => m.submitFeedback({ message }));
-  }
-});
+    const message = prompt('What went wrong or what would you like improved?');
+    if (message) {
+      import('./observability.js').then(m => m.submitFeedback?.({ message }));
+    }
+  });
 
   const close = () => {
     modal.remove();
