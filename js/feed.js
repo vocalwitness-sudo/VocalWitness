@@ -1545,11 +1545,16 @@ if (!allowed) {
                 "info"
             );
         } else if (msg.includes("insufficient tier") || msg.includes("phone")) {
-            showToast(
-                "Phone verification is required to corroborate reports. This helps keep bots and spam out of the Square.",
-                "info"
-            );
-        } else {
+    showToast(
+        "Phone verification is required to corroborate reports. This helps keep bots and spam out of the Square.",
+        "info"
+    );
+    if (typeof window.openVerificationModal === "function") {
+        window.openVerificationModal();
+    } else if (typeof window.startPhoneVerification === "function") {
+        window.startPhoneVerification();
+    }
+} else {
             showToast(err.message || "Corroboration failed. Please try again.", "error");
         }
 
