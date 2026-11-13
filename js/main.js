@@ -637,7 +637,6 @@ window.publishTestimony = async () => {
         postingStyle,
         fieldNoteRole,
         fieldNoteOrg,
-        // Do not queue large blobs here; ask user to retry online for media
         hasMediaPending: !!(imageFile || videoFile || audioFile),
       });
       showToast(
@@ -649,7 +648,7 @@ window.publishTestimony = async () => {
       return;
     }
 
-   const result = await submitTestimony({
+    const result = await submitTestimony({
       content,
       channel,
       imageFile,
@@ -669,7 +668,6 @@ window.publishTestimony = async () => {
       },
     });
 
-    // submitTestimony returns { id, fullPack, ... } — not a plain string
     const id =
       typeof result === 'string'
         ? result
@@ -701,7 +699,7 @@ window.publishTestimony = async () => {
     if (typeof window.loadEvidenceLedger === 'function') window.loadEvidenceLedger();
     if (typeof window.loadForensicLedger === 'function') window.loadForensicLedger();
 
-  const successEl = document.getElementById('publish-success');
+    const successEl = document.getElementById('publish-success');
     const downloadPackBtn = document.getElementById('download-pack-after-publish');
     const shareAfterBtn = document.getElementById('share-after-publish');
     const viewSquareBtn = document.getElementById('view-in-square-btn');
@@ -724,7 +722,6 @@ window.publishTestimony = async () => {
           try {
             downloadPackBtn.disabled = true;
             downloadPackBtn.innerHTML = 'Preparing…';
-            // Prefer in-memory pack from submitTestimony (fast, no extra fetch)
             if (result?.fullPack) {
               downloadEvidencePack(result.fullPack, id);
               showToast('Evidence Pack downloaded', 'success');
@@ -781,7 +778,6 @@ window.publishTestimony = async () => {
         };
       }
 
-      // Give users time to download + share
       setTimeout(() => {
         successEl.classList.add('hidden');
         if (postBtn) postBtn.classList.remove('hidden');
@@ -800,14 +796,9 @@ window.publishTestimony = async () => {
       initFeed(db, channel === 'witness-voice' ? 'witness-voice' : 'citizen-talk');
     }
   } catch (err) {
-    console.error('[publish] FULL ERROR:', err);
-    if (err.code === 'permission-denied' || err?.message?.includes('permission')) {
-      showToast("Permission denied. Check console for exact rule failure.", "error");
-    } else if (err.code === 'functions/unauthenticated') {
-      showToast("Session expired. Please sign in again.", "error");
-    } else {
-      showToast(err.message || "Failed to publish. See console.", "error");
-    }
+    console.error('[publish] failed', err);
+    const msg = err?.message || String(err);
+    showToast(msg || 'Publish failed.', 'error');
   } finally {
     window.__isPublishing = false;
     if (postBtn) {
