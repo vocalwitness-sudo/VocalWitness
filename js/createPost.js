@@ -1,15 +1,13 @@
 // js/createPost.js - Single secure testimony submission (Cloud Function only)
 // Unified seal path: one hash function + processed-media hash only
 
-import { getFunctions, httpsCallable } from
-  "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
-import { auth } from './firebase-config.js';
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
+import { auth, app } from './firebase-config.js';
 import { showToast, computeSHA256 } from './utils.js';
 import { analyzeReportContent } from './moderation.js';
 import { processAndUploadMedia } from './media-pipeline.js';
 import { parsePostMetadata } from './utils/parser.js';
 import { createEvidencePack } from './evidence-pack.js';
-import { app } from './firebase-config.js'; 
 
 async function isPhoneCircleUser() {
   const user = auth.currentUser;
@@ -60,19 +58,13 @@ export async function submitTestimony({
   }
 
   // ===== SOFT PHONE VERIFICATION GATE (Mobile-Friendly) =====
-const phoneOk = await isPhoneCircleUser();
-if (!phoneOk && !window.__vwSkipPhoneNudge) {
-  window.__vwSkipPhoneNudge = true;
-  if (typeof showToast === 'function') {
-    showToast('Publishing as Citizen. Verify phone later for Citizen Circle badge.', 'info');
-  }
-  // Non-blocking: publish continues smoothly without throwing or interrupting the user
-}
-  console.log('[createPost] media ready', {
-  imageUrl, imageHash, videoUrl, videoHash, audioUrl, audioHash
-});
-    // Allow publishing without Circle for this session if canceled
+  const phoneOk = await isPhoneCircleUser();
+  if (!phoneOk && !window.__vwSkipPhoneNudge) {
     window.__vwSkipPhoneNudge = true;
+    if (typeof showToast === 'function') {
+      showToast('Publishing as Citizen. Verify phone later for Citizen Circle badge.', 'info');
+    }
+    // Non-blocking: publish continues smoothly without interrupting the user
   }
 
   // Resolve legacy single file → typed slots
@@ -214,51 +206,58 @@ if (!phoneOk && !window.__vwSkipPhoneNudge) {
 
   showToast("Sealing on server...", "info");
 
-  const submitSecure = httpsCallable(functions, "submitTestimonySecure");
+  // Initialize functions instance safely before calling
   const functions = getFunctions(app, 'us-central1');
+  const submitSecure = httpsCallable(functions, "submitTestimonySecure");
 
   // Determine phone verification status to pass to server
   const token = await user.getIdTokenResult().catch(() => ({ claims: {} }));
-  const claims = token.claims || {};
   const authorPhoneVerified = phoneOk;
 
- let result;
-try {
-  result = await submitSecure({
-    content: cleanedContent || '',
-    channel,
-    isAnonymous: !!isAnonymous,
-    authorDisplayName: isAnonymous ? null : (user.displayName || null),
-    authorPhoneVerified,
-    forensicHash,
-    imageUrl,
-    videoUrl,
-    audioUrl,
-    imageHash,
-    videoHash,
-    audioHash,
-    bodyHash,
-    hashtags: hashtags || [],
-    mentions: mentions || [],
-    postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
-    fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
-    fieldNoteOrg: postingStyle === 'field-note' ? (fieldNoteOrg || null) : null,
-    evidencePack: firestorePack,
-    packCoreHash,
-  });
-} catch (err) {
-  console.error('[createPost] submitTestimonySecure failed', err);
-  const hasUploadedMedia = !!(imageUrl || videoUrl || audioUrl);
-  if (hasUploadedMedia) {
-    showToast(
-      'Media was uploaded, but publishing failed. Tap Publish again. If it keeps failing, try Wi‑Fi or publish text first.',
-      'error'
-    );
-  } else {
-    showToast(err.message || 'Publish failed. Please try again.', 'error');
+  let response;
+  try {
+    response = await submitSecure({
+      content: cleanedContent || '',
+      channel,
+      isAnonymous: !!isAnonymous,
+      authorDisplayName: isAnonymous ? null : (user.displayName || null),
+      authorPhoneVerified,
+      forensicHash,
+      imageUrl,
+      videoUrl,
+      audioUrl,
+      imageHash,
+      videoHash,
+      audioHash,
+      bodyHash,
+      hashtags: hashtags || [],
+      mentions: mentions || [],
+      postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
+      fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
+      fieldNoteOrg: postingStyle === 'field-note' ? (fieldNoteOrg || null) : null,
+      evidencePack: firestorePack,
+      packCoreHash,
+    });
+  } catch (err) {
+    console.error('[createPost] submitTestimonySecure failed', err);
+    const hasUploadedMedia = !!(imageUrl || videoUrl || audioUrl);
+    if (hasUploadedMedia) {
+      showToast(
+        'Media was uploaded, but publishing failed. Tap Publish again. If it keeps failing, try Wi‑Fi or publish text first.',
+        'error'
+      );
+    } else {
+      showToast(err.message || 'Publish failed. Please try again.', 'error');
+    }
+    throw err;
   }
-  throw err;
-}
+
+  const resData = response.data || {};
+  const id = typeof resData === 'string' ? resData : (resData.id || resData.testimonyId);
+
+  if (!id) {
+    throw new Error('Secure submit returned no document ID.');
+  }
 
   // Attach real ID to the full pack for download
   if (fullPack) {
