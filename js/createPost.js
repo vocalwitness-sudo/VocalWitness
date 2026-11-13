@@ -214,7 +214,6 @@ if (!phoneOk && !window.__vwSkipPhoneNudge) {
 
   showToast("Sealing on server...", "info");
 
-  const functions = getFunctions();
   const submitSecure = httpsCallable(functions, "submitTestimonySecure");
   const functions = getFunctions(app, 'us-central1');
 
