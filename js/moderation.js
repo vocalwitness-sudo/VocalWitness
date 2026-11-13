@@ -35,28 +35,21 @@ export async function scanForToxicity(content) {
     }
 
     try {
-        // Calls backend onRequest proxy to avoid leaking client-side API keys
-        const response = await fetch("https://us-central1-vocalwitness-3affa.cloudfunctions.net/analyzeToxicity", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: content })
-        });
-
-        if (!response.ok) {
-            return fallbackToxicityScan(content);
-        }
-
-        const data = await response.json();
-        const toxicityScore = data.toxicityScore || 0;
-        const isToxic = !data.safe;
+        // Use Firebase callable function to avoid CORS and handle payloads cleanly
+        const scoreToxicityFn = httpsCallable(functions, "scoreToxicity");
+        const response = await scoreToxicityFn({ text: content });
+        const data = response.data || {};
+        
+        const toxicityScore = data.toxicityScore ?? data.score ?? 0;
+        const isToxic = data.safe === false || data.flagged === true;
 
         return {
             score: toxicityScore,
             flagged: isToxic,
-            reasons: isToxic ? [data.note || "Flagged for toxicity"] : []
+            reasons: isToxic ? [data.note || data.reason || "Flagged for toxicity"] : []
         };
     } catch (err) {
-        console.warn("Toxicity endpoint connection failure, engaging fallback scanner:", err);
+        console.warn("Toxicity callable failed, engaging fallback scanner:", err);
         return fallbackToxicityScan(content);
     }
 }
