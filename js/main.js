@@ -888,7 +888,7 @@ async function loadEvidenceLedger() {
       return;
     }
 
-  // Store data for the modal
+    // Store data for the modal
     window.__ledgerDocs = {};
 
     let html = `
@@ -1013,7 +1013,6 @@ async function loadEvidenceLedger() {
 
 window.loadEvidenceLedger = loadEvidenceLedger;
 window.refreshLedger = loadEvidenceLedger;
-
 /* ====================== SEALED REPORT VIEWER (read-only) ====================== */
 window.viewSealedReport = function (id) {
   const data = window.__ledgerDocs?.[id];
