@@ -9,6 +9,7 @@ import { analyzeReportContent } from './moderation.js';
 import { processAndUploadMedia } from './media-pipeline.js';
 import { parsePostMetadata } from './utils/parser.js';
 import { createEvidencePack } from './evidence-pack.js';
+import { app } from './firebase-config.js'; 
 
 async function isPhoneCircleUser() {
   const user = auth.currentUser;
@@ -58,23 +59,18 @@ export async function submitTestimony({
     throw new Error("Unauthorized submission attempt.");
   }
 
-  // ===== SOFT PHONE VERIFICATION GATE =====
-  const phoneOk = await isPhoneCircleUser();
-  if (!phoneOk && !window.__vwSkipPhoneNudge) {
-    const goVerify = window.confirm(
-      'Verify your phone to unlock Citizen Circle (anti-spam + Circle badge on the Square).\n\nOK = verify now\nCancel = publish without Circle'
-    );
-    if (goVerify) {
-      try {
-        const { startPhoneVerification } = await import('./phoneVerification.js');
-        startPhoneVerification();
-      } catch (_) {
-        if (typeof window.startPhoneVerification === 'function') {
-          window.startPhoneVerification();
-        }
-      }
-      throw new Error('Complete phone verification, then publish again.');
-    }
+  // ===== SOFT PHONE VERIFICATION GATE (Mobile-Friendly) =====
+const phoneOk = await isPhoneCircleUser();
+if (!phoneOk && !window.__vwSkipPhoneNudge) {
+  window.__vwSkipPhoneNudge = true;
+  if (typeof showToast === 'function') {
+    showToast('Publishing as Citizen. Verify phone later for Citizen Circle badge.', 'info');
+  }
+  // Non-blocking: publish continues smoothly without throwing or interrupting the user
+}
+  console.log('[createPost] media ready', {
+  imageUrl, imageHash, videoUrl, videoHash, audioUrl, audioHash
+});
     // Allow publishing without Circle for this session if canceled
     window.__vwSkipPhoneNudge = true;
   }
@@ -220,13 +216,16 @@ export async function submitTestimony({
 
   const functions = getFunctions();
   const submitSecure = httpsCallable(functions, "submitTestimonySecure");
+  const functions = getFunctions(app, 'us-central1');
 
   // Determine phone verification status to pass to server
   const token = await user.getIdTokenResult().catch(() => ({ claims: {} }));
   const claims = token.claims || {};
   const authorPhoneVerified = phoneOk;
 
-  const result = await submitSecure({
+ let result;
+try {
+  result = await submitSecure({
     content: cleanedContent || '',
     channel,
     isAnonymous: !!isAnonymous,
@@ -248,11 +247,19 @@ export async function submitTestimony({
     evidencePack: firestorePack,
     packCoreHash,
   });
-
-  const id = result?.data?.id;
-  if (!id) {
-    throw new Error("Secure submit returned no document id.");
+} catch (err) {
+  console.error('[createPost] submitTestimonySecure failed', err);
+  const hasUploadedMedia = !!(imageUrl || videoUrl || audioUrl);
+  if (hasUploadedMedia) {
+    showToast(
+      'Media was uploaded, but publishing failed. Tap Publish again. If it keeps failing, try Wi‑Fi or publish text first.',
+      'error'
+    );
+  } else {
+    showToast(err.message || 'Publish failed. Please try again.', 'error');
   }
+  throw err;
+}
 
   // Attach real ID to the full pack for download
   if (fullPack) {
