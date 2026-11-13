@@ -589,17 +589,25 @@ function applySearchAndFilter(container) {
 
         if (!matchesSearch) return false;
 
-        if (filterType === 'verified') {
-            return post.authorTier && post.authorTier !== 'citizen' && post.authorTier !== 'unverified';
-        }
-        if (filterType === 'media') {
-            return !!(post.imageUrl || post.audioUrl || post.videoUrl);
-        }
-        if (filterType === 'corroborated') {
-            return (post.corroborationCount || 0) >= 1;
-        }
-        return true;
-    });
+      if (filterType === 'verified') {
+    const t = String(post.authorTier || '').toLowerCase();
+    return (
+        post.authorPhoneVerified === true ||
+        t === 'citizen_circle' ||
+        t === 'citizen-circle' ||
+        t === 'witness_circle' ||
+        t === 'witness-circle' ||
+        post.zkVerified === true
+    );
+}
+if (filterType === 'media') {
+    return !!(post.imageUrl || post.audioUrl || post.videoUrl);
+}
+if (filterType === 'corroborated') {
+    return (post.corroborationCount || 0) >= 1;
+}
+return true;
+});
 
     // Signal-first ranking (media → corroboration → circle → sealed → recency)
     filtered.sort((a, b) => {
