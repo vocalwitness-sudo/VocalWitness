@@ -846,7 +846,7 @@ function renderSinglePostDOM(id, data, container) {
         </span>`;
     }
 
-   // 4) Author tier — always readable
+// 4) Author tier — always readable
 const tier = String(data.authorTier || '').toLowerCase();
 const phoneOk =
   data.authorPhoneVerified === true ||
@@ -876,7 +876,6 @@ if (isWitness) {
       👤 Citizen
     </span>`;
 }
-
     // Field Note (optional)
     if (data.postingStyle === 'field-note') {
         if (typeof renderFieldNoteBadge === 'function') {
