@@ -871,7 +871,7 @@ async function loadEvidenceLedger() {
   }
 
   try {
-   const q = query(
+    const q = query(
       collection(db, "testimonies"),
       orderBy("createdAt", "desc"),
       limit(25)
@@ -897,7 +897,7 @@ async function loadEvidenceLedger() {
           <tr class="border-b border-zinc-800 text-xs text-zinc-400 uppercase tracking-wider">
             <th class="py-3 px-3 sm:px-4">Witness</th>
             <th class="py-3 px-3 sm:px-4">Summary</th>
-            <th class="py-3 px-3 sm:px-4">Status</th>
+            <th class="py-3 px-3 sm:px-4">Status & Tier</th>
             <th class="py-3 px-3 sm:px-4">Timestamp</th>
           </tr>
         </thead>
@@ -913,10 +913,48 @@ async function loadEvidenceLedger() {
         ? (ts.toDate ? ts.toDate() : new Date(ts)).toLocaleString()
         : 'N/A';
 
-      const hasHash = data.imageHash || data.audioHash || data.videoHash || data.bodyHash || data.hasForensic;
-      const hashDisplay = hasHash
-        ? `<span class="inline-flex items-center gap-1 font-semibold text-emerald-400">🔒 Verified</span>`
-        : `<span class="text-zinc-500">Standard</span>`;
+      // Integrity: sealed vs not
+      const isSealed = !!(
+        data.packCoreHash ||
+        data.forensicHash ||
+        data.evidencePack ||
+        data.imageHash ||
+        data.audioHash ||
+        data.videoHash ||
+        data.bodyHash ||
+        data.hasForensic
+      );
+
+      // Author trust tier (not the same as sealed)
+      const tier = String(data.authorTier || '').toLowerCase();
+      const phoneOk = data.authorPhoneVerified === true;
+      let tierLabel = 'Citizen';
+      let tierClass = 'text-zinc-400';
+      if (
+        tier === 'witness_circle' ||
+        tier === 'witness-circle' ||
+        data.zkVerified === true
+      ) {
+        tierLabel = 'Witness Circle';
+        tierClass = 'text-violet-300';
+      } else if (
+        tier === 'citizen_circle' ||
+        tier === 'citizen-circle' ||
+        phoneOk
+      ) {
+        tierLabel = 'Citizen Circle';
+        tierClass = 'text-sky-300';
+      }
+
+      const statusHTML = isSealed
+        ? `<span class="inline-flex flex-col gap-0.5">
+             <span class="inline-flex items-center gap-1 font-semibold text-emerald-400" title="Hash fixed after publish — not a truth stamp">🛡️ Sealed</span>
+             <span class="text-[10px] ${tierClass}">${tierLabel}</span>
+           </span>`
+        : `<span class="inline-flex flex-col gap-0.5">
+             <span class="text-zinc-500">Unsealed</span>
+             <span class="text-[10px] ${tierClass}">${tierLabel}</span>
+           </span>`;
 
       const summary = (data.content || data.headline || data.title || '').slice(0, 90);
 
@@ -928,7 +966,7 @@ async function loadEvidenceLedger() {
             title="View sealed record (read-only)">
           <td class="py-3.5 px-3 sm:px-4 font-medium text-white group-hover:text-emerald-300">${escapeHtml(data.author || 'Anonymous')}</td>
           <td class="py-3.5 px-3 sm:px-4 max-w-[180px] sm:max-w-xs truncate text-zinc-300">${escapeHtml(summary)}</td>
-          <td class="py-3.5 px-3 sm:px-4 font-mono text-xs">${hashDisplay}</td>
+          <td class="py-3.5 px-3 sm:px-4 font-mono text-xs">${statusHTML}</td>
           <td class="py-3.5 px-3 sm:px-4 text-xs text-zinc-500">${dateStr}</td>
         </tr>`;
     });
