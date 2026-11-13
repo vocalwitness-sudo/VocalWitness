@@ -854,7 +854,7 @@ function renderSinglePostDOM(id, data, container) {
         </span>`;
     }
 
-// 4) Author tier — always readable
+// Author tier — always show one
 const tier = String(data.authorTier || '').toLowerCase();
 const phoneOk =
   data.authorPhoneVerified === true ||
