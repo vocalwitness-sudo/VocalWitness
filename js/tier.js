@@ -35,8 +35,8 @@ export const TIER_METADATA = {
   },
   [TIERS.CITIZEN_CIRCLE]: {
     id: 2,
-    name: 'Verified Citizen (Phone)',
-    badge: '🛡️ Field Witness',
+    name: 'Citizen Circle (Phone)',
+    badge: '🛡️ Citizen Circle',
     maxUploadMB: 100,
     requiresPhone: true,
     requiresZK: false,
@@ -389,7 +389,7 @@ export async function updateTierBadge() {
       badge.style.backgroundColor = seal.short === 'ZK-SNARK' ? '#10b981' : '#64748b';
     }
   } else if (tier === TIERS.CITIZEN_CIRCLE) {
-    badge.innerHTML = '🛡️ Field Witness';
+    badge.innerHTML = '🛡️ Citizen Circle';
     badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
     badge.style.backgroundColor = '';
   } else {
@@ -643,8 +643,8 @@ export function getSealLabel(profileOrProof) {
   }
 
   return {
-    name: 'Verified Citizen (Phone)',
-    badge: '🛡️ Field Witness',
+    name: 'Citizen Circle (Phone)',
+    badge: '🛡️ Citizen Circle',
     short: 'Phone'
   };
 }
