@@ -1032,6 +1032,137 @@ if (isWitness) {
           </button>
         </div>
       </div>
+// Synthetic advisory only when flagged
+    const claim = data.mediaOriginClaim || data.originType || data.provenanceType || '';
+    const isSynthetic =
+        claim === 'synthetic' ||
+        claim === 'synthetic-ai' ||
+        data.isSynthetic === true ||
+        data.aiGenerated === true ||
+        (data.syntheticScore != null && Number(data.syntheticScore) >= 70);
+    if (isSynthetic) {
+        trustBadgesHTML += `
+        <span class="bg-amber-500/10 text-amber-300 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded flex items-center gap-1"
+            title="Synthetic / AI-assisted advisory">🤖 Advisory</span>`;
+    }
+
+    const trustContainer = trustBadgesHTML
+        ? `<div class="flex flex-wrap gap-1 mt-1">${trustBadgesHTML}</div>`
+        : '';
+
+    const reactions = data.reactions || { respect: 0, truth: 0, solidarity: 0, impact: 0 };
+    const hasPack = Boolean(
+        data.evidencePack ||
+        data.packCoreHash ||
+        data.imageHash ||
+        data.audioHash ||
+        data.videoHash ||
+        data.forensicHash
+    );
+
+    let mediaHTML = '';
+    if (data.videoUrl) {
+        mediaHTML = `
+            <div class="mt-5 rounded-2xl overflow-hidden border border-zinc-700 bg-black">
+                <video controls playsinline class="w-full max-h-96 object-cover" preload="metadata"
+                        src="${escapeHTML(data.videoUrl)}"></video>
+            </div>`;
+    } else if (data.imageUrl) {
+        mediaHTML = `
+            <div class="mt-5 rounded-2xl overflow-hidden border border-zinc-700 bg-black">
+              <img src="${escapeHTML(data.imageUrl)}"
+                   class="w-full max-h-96 object-cover"
+                   alt="Evidence"
+                   loading="lazy"
+                   onerror="this.parentElement.innerHTML='<div class=\\'p-6 text-center text-zinc-500 text-sm\\'>Media unavailable</div>'">
+            </div>`;
+    } else if (data.audioUrl) {
+        let safeAudioUrl = data.audioUrl;
+        if (!safeAudioUrl.includes('alt=media')) {
+            safeAudioUrl += safeAudioUrl.includes('?') ? '&alt=media' : '?alt=media';
+        }
+        mediaHTML = `
+            <div class="mt-5 bg-zinc-900 rounded-2xl p-4 border border-zinc-700">
+                <audio controls preload="metadata" class="w-full" crossorigin="anonymous">
+                    <source src="${escapeHTML(safeAudioUrl)}" type="audio/webm">
+                    <source src="${escapeHTML(safeAudioUrl)}" type="audio/ogg">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>`;
+    }
+
+    let formattedDate = "Just now";
+    if (data.createdAt?.toDate) formattedDate = data.createdAt.toDate().toLocaleString();
+    else if (data.createdAt) formattedDate = new Date(data.createdAt).toLocaleString();
+
+    const authorDisplayName = escapeHTML(
+        data.author ||
+        (data.authorId ? `Citizen` : 'Citizen')
+    );
+
+    let ownerControlsHTML = '';
+    if (isOwner) {
+        ownerControlsHTML = `
+            <button data-action="edit" data-id="${id}" title="Edit Report"
+                    class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-emerald-400 transition text-xs">
+              ✏️
+            </button>
+            <button data-action="hide" data-id="${id}" title="Hide from Square"
+                    class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition text-xs">
+              👁️‍🗨️
+            </button>
+            <button data-action="permanent-hide" data-id="${id}" title="Permanently Hide"
+                    class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-red-400 transition text-xs">
+              🔒
+            </button>
+        `;
+    } else if (isStewardUserCache) {
+        ownerControlsHTML = `
+            <button data-action="hide" data-id="${id}" title="Hide (Steward)"
+                    class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition text-xs">
+              👁️‍🗨️
+            </button>
+        `;
+    }
+
+    const corrCount = data.corroborationCount || 0;
+    const corrScoreHTML = corrCount > 0
+        ? `<span class="corr-score text-[11px] text-emerald-400/90 font-medium tracking-tight">
+               Witnessed by ${corrCount} Citizen${corrCount === 1 ? '' : 's'}
+           </span>`
+        : '';
+
+    postEl.innerHTML = `
+      <!-- Header -->
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          ${typeof renderTierCircle === 'function'  
+            ? renderTierCircle(data.authorTier || 'citizen', data.reputation || 0)  
+            : '<div class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800 text-lg">👤</div>'}
+          
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <p class="font-semibold text-zinc-100 truncate">${authorDisplayName}</p>
+              ${pinnedBadge}
+            </div>
+            <p class="text-xs text-zinc-500 mt-0.5">
+              ${formattedDate}${getEditedLabel(data)}
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button data-action="pin" data-id="${id}" title="Pin Post"  
+                  class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition">
+            📌
+          </button>
+          ${ownerControlsHTML}
+          <button data-action="menu" data-id="${id}"  
+                  class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-white transition text-lg leading-none">
+            ⋯
+          </button>
+        </div>
+      </div>
 
       <!-- Trust Badges -->
       ${trustContainer ? `
@@ -1048,649 +1179,3 @@ if (isWitness) {
       <!-- Media -->
       ${mediaHTML}
     `;
-  <!-- Content (collapsed on home feed; Read more expands) -->
-  ${data.content ? (() => {
-    const full = String(data.content);
-    const LIMIT = 180;
-    const needsMore = full.length > LIMIT;
-    const preview = needsMore
-      ? full.slice(0, LIMIT).replace(/\s+\S*$/, '') + '…'
-      : full;
-    return `
-    <div class="mt-2">
-      <p id="post-text-${id}"
-         class="text-sm text-zinc-300 leading-relaxed whitespace-pre-line"
-         data-full="${escapeHTML(full).replace(/"/g, '&quot;')}"
-         data-preview="${escapeHTML(preview).replace(/"/g, '&quot;')}"
-         data-expanded="false">
-        ${escapeHTML(preview)}
-      </p>
-      ${needsMore ? `
-        <button type="button"
-                data-action="toggle-more"
-                data-id="${id}"
-                class="mt-1.5 text-xs font-medium text-emerald-400 hover:text-emerald-300 transition">
-          Read more
-        </button>
-      ` : ''}
-    </div>`;
-  })() : ''}
-
-  <!-- Media -->
-  ${mediaHTML}
-
-  <!-- Translation Box -->
-  <div id="translate-box-${id}" class="mt-4 hidden rounded-xl border border-zinc-800 bg-zinc-950 p-3">
-    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-      <select id="lang-select-${id}" 
-              class="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-200 focus:border-emerald-500 focus:outline-none sm:w-auto">
-        <option value="English">English</option>
-        <option value="Pidgin">Nigerian Pidgin</option>
-        <option value="Hausa">Hausa</option>
-        <option value="Yoruba">Yorùbá</option>
-        <option value="Igbo">Igbo</option>
-        <option value="Swahili">Swahili</option>
-        <option value="French">French</option>
-        <option value="Spanish">Spanish</option>
-        <option value="Portuguese">Portuguese</option>
-        <option value="Arabic">Arabic</option>
-      </select>
-      <button data-action="execute-translate" data-id="${id}"
-              class="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-emerald-500">
-        Translate Text
-      </button>
-    </div>
-  </div>
-
-  <div id="translated-result-${id}" 
-       class="mt-3 hidden rounded-xl border border-emerald-500/20 bg-emerald-950/30 p-3 text-xs leading-relaxed text-emerald-300">
-  </div>
-
-  <!-- Action Bar -->
-  <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 pt-4">
-    <div class="flex flex-wrap items-center gap-2">
-      <button data-action="react" data-id="${id}" data-reaction="respect"
-              class="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
-        👍 <span>${reactions.respect || 0}</span>
-      </button>
-
-      <button data-action="react" data-id="${id}" data-reaction="truth"
-              class="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
-        💡 <span>${reactions.truth || 0}</span>
-      </button>
-
-      <button data-action="comment" data-id="${id}"
-              class="comment-trigger-btn flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
-        💬 <span>${data.commentsCount || 0}</span>
-      </button>
-
-      <button data-action="toggle-translate" data-id="${id}"
-              class="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
-        🌐 Translate
-      </button>
-
-               ${(() => {
-          if (isOwner) {
-              return `
-                <button disabled
-                        class="corroborate-btn flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-500 cursor-not-allowed"
-                        title="You cannot corroborate your own report — only other witnesses can strengthen it">
-                  👁️ Your report
-                </button>`;
-          }
-          return `
-            <button data-action="corroborate" data-id="${id}"
-                    class="corroborate-btn flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-600/15 px-3 py-1.5 text-xs font-medium text-emerald-400 transition hover:bg-emerald-600/25"
-                    title="I saw this too">
-              👁️ I witnessed this
-            </button>`;
-      })()}
-
-      ${corrScoreHTML}
-    </div>
-
-    <div class="flex items-center gap-4 text-xs">
-      ${hasPack ? renderDownloadPackButton(id) : ''}
-      <button data-action="report" data-id="${id}" class="text-red-400/80 transition hover:text-red-400">
-        Report
-      </button>
-      <button data-action="share" data-id="${id}" class="text-emerald-400 transition hover:text-emerald-300">
-        Share
-      </button>
-    </div>
-  </div>
-
-  <div class="reply-input-area mt-3"></div>
-`;
-    applyPostDoorDecorations(postEl, data, currentUser);
-    container.appendChild(postEl);
-}
-
-// ====================== ACTION HANDLERS ======================
-
-async function handleTranslateAction(postId, btn) {
-    const langSelect = document.getElementById(`lang-select-${postId}`);
-    const resultBox = document.getElementById(`translated-result-${postId}`);
-    const textEl = document.getElementById(`post-text-${postId}`);
-
-    if (!langSelect || !resultBox || !textEl) return;
-
-    const targetLanguage = langSelect.value;
-       const textToTranslate =
-      textEl.getAttribute('data-full') || textEl.textContent;
-    if (!textToTranslate || textToTranslate.trim() === '') {
-        showToast("No text content available to translate", "warning");
-        return;
-    }
-
-    try {
-        btn.textContent = "Translating...";
-        const translatedText = await translateTestimony(textToTranslate, targetLanguage);
-
-        resultBox.innerHTML = `<strong>🌐 ${escapeHTML(targetLanguage)}:</strong> ${escapeHTML(translatedText)}`;
-        resultBox.classList.remove('hidden');
-        showToast(`Translated to ${targetLanguage}`, "success");
-    } catch (err) {
-        console.error("Translation request failed:", err);
-        showToast("Translation failed. Please try again.", "error");
-    } finally {
-        btn.textContent = "Translate Text";
-    }
-}
-
-async function handleUpvote(postId) {
-  if (!auth.currentUser) {
-    showToast("Please log in to support testimonies.", "error");
-    return;
-  }
-
-  const uid = auth.currentUser.uid;
-  const postRef = doc(db, "testimonies", postId);
-
-  try {
-    await runTransaction(db, async (tx) => {
-      const snap = await tx.get(postRef);
-      if (!snap.exists()) {
-        throw new Error("Post not found");
-      }
-
-      const data = snap.data() || {};
-      const likedBy = data.likedBy || {};
-
-      if (likedBy[uid] === true) {
-        throw new Error("ALREADY_LIKED");
-      }
-
-      tx.update(postRef, {
-        [`likedBy.${uid}`]: true,
-        likes: increment(1)
-      });
-    });
-
-    showToast("👍 Upvoted testimony!", "success");
-  } catch (e) {
-    if (e?.message === "ALREADY_LIKED") {
-      showToast("You already supported this testimony", "info");
-      return;
-    }
-    console.error("Upvote failed:", e);
-    showToast("Failed to record upvote.", "error");
-  }
-}
-
-// * Edit post (title + content only)
- 
-async function handleEditPost(postId) {
-  const post = allPostsCache.find(p => p.id === postId);
-  if (!post) {
-    showToast('Post not found', 'error');
-    return;
-  }
-
-  const currentUser = auth.currentUser;
-  if (!currentUser || currentUser.uid !== post.authorId) {
-    showToast('You can only edit your own reports', 'error');
-    return;
-  }
-
-  // 30-minute correction window (matches firestore.rules)
-  const createdMs = post.createdAt?.toMillis
-    ? post.createdAt.toMillis()
-    : (post.createdAt ? new Date(post.createdAt).getTime() : 0);
-  const withinWindow = createdMs && (Date.now() - createdMs) < 30 * 60 * 1000;
-
-  if (!withinWindow) {
-    showToast(
-      'Text edits are locked after 30 minutes. You can still hide this report from the Square.',
-      'info'
-    );
-    return;
-  }
-
-  const existing = document.getElementById('edit-post-modal');
-  if (existing) existing.remove();
-
-  const modal = document.createElement('div');
-  modal.id = 'edit-post-modal';
-  modal.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm';
-  modal.innerHTML = `
-    <div class="w-full max-w-lg rounded-2xl border border-zinc-700 bg-zinc-900 p-6 shadow-2xl">
-      <div class="mb-5 flex items-center justify-between">
-        <h3 class="text-lg font-bold text-white">Edit Report</h3>
-        <button type="button" class="edit-cancel text-zinc-400 hover:text-white text-xl">✕</button>
-      </div>
-
-      <input type="text" id="edit-title" maxlength="120"
-             value="${escapeHTML(post.headline || post.title || '')}"
-             placeholder="Title (optional)"
-             class="mb-3 w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none">
-
-       <textarea id="edit-content" rows="5" maxlength="3000"
-                 class="mb-4 w-full resize-none rounded-xl border border-zinc-700 bg-zinc-800 p-4 text-sm text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none">${escapeHTML(post.content || '')}</textarea>
-
-            <p class="mb-5 text-xs text-zinc-500">
-        Text can be edited only within 30 minutes of publishing. Media and seal cannot be changed.
-      </p>
-
-      <div class="flex justify-end gap-3">
-        <button type="button" class="edit-cancel rounded-xl px-5 py-2.5 text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-white">
-          Cancel
-        </button>
-        <button type="button" id="edit-save-btn"
-                class="rounded-xl bg-emerald-500 px-6 py-2.5 text-sm font-bold text-black hover:bg-emerald-400 active:scale-95">
-          Save Changes
-        </button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(modal);
-
-  const close = () => modal.remove();
-  modal.querySelectorAll('.edit-cancel').forEach(btn => btn.onclick = close);
-  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
-
-  modal.querySelector('#edit-save-btn').onclick = async () => {
-    const newTitle   = document.getElementById('edit-title').value.trim();
-    const newContent = document.getElementById('edit-content').value.trim();
-
-    if (!newContent) {
-      showToast('Content cannot be empty', 'error');
-      return;
-    }
-
-    const saveBtn = document.getElementById('edit-save-btn');
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving…';
-
-    try {
-           await updateDoc(doc(db, 'testimonies', postId), {
-        content: newContent,
-        updatedAt: serverTimestamp()
-      });
-        
-      showToast('Report updated', 'success');
-      close();
-    } catch (err) {
-      console.error('Edit failed:', err);
-      showToast('Failed to update report', 'error');
-      saveBtn.disabled = false;
-      saveBtn.textContent = 'Save Changes';
-    }
-  };
-}
-
-/**
- * Hide post (revocable or permanent)
- * @param {string} postId
- * @param {boolean} permanent - true = cannot be unhidden later
- */
-async function handleHidePost(postId, permanent = false) {
-  const post = allPostsCache.find(p => p.id === postId);
-  if (!post) {
-    showToast('Post not found', 'error');
-    return;
-  }
-
-  const currentUser = auth.currentUser;
-  const isOwner = currentUser && currentUser.uid === post.authorId;
-
-  if (!isOwner && !isStewardUserCache) {
-    showToast('You can only hide your own reports', 'error');
-    return;
-  }
-
-  if (permanent) {
-    const confirmed = confirm(
-      '⚠️ PERMANENTLY HIDE this report?\n\n' +
-      'This cannot be undone.\n' +
-      'The report will never appear in the Public Square again.\n\n' +
-      'The sealed record is still preserved for integrity, but it will be hidden from public view forever.'
-    );
-    if (!confirmed) return;
-  } else {
-    const confirmed = confirm(
-      'Hide this report from the Public Square?\n\n' +
-      'You can restore it later from "My Reports".'
-    );
-    if (!confirmed) return;
-  }
-
-  try {
-       const updateData = {
-      visibility: 'author_hidden',
-      isDeleted: true,
-      hiddenAt: serverTimestamp(),
-      hiddenBy: currentUser.uid,
-      hiddenReason: permanent ? 'author_permanent_hide' : 'author_hide',
-      updatedAt: serverTimestamp()
-    };
-
-    await updateDoc(doc(db, 'testimonies', postId), updateData);
-
-    showToast(
-      permanent
-        ? 'Report permanently hidden from the Square'
-        : 'Report hidden. You can restore it later from My Reports.',
-      'success'
-    );
-  } catch (err) {
-    console.error('Hide failed:', err);
-    showToast('Failed to hide report', 'error');
-  }
-}
-
-async function handlePinPost(postId) {
-  if (!auth.currentUser) {
-    showToast("Sign in to pin a report.", "error");
-    return;
-  }
-
-  const post = allPostsCache.find(p => p.id === postId);
-  if (!post) return;
-
-  const currentlyPinned = !!post.isPinned;
-
-  let isSteward = false;
-  let isPhoneVerified = false;
-  try {
-    isSteward = await hasStewardAccess();
-  } catch (_) {}
-
-  try {
-    const userSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
-    const u = userSnap.data() || {};
-    isPhoneVerified = !!(
-      u.isPhoneVerified ||
-      u.hasVerifiedPhone ||
-      u.isVerified ||
-      u.tier === "citizen_circle" ||
-      u.tier === "witness_circle"
-    );
-  } catch (_) {}
-
-  try {
-    const token = await auth.currentUser.getIdTokenResult();
-    if (token.claims?.steward || token.claims?.tier === "steward") isSteward = true;
-    if (token.claims?.phone_verified || token.claims?.tier === "citizen_circle") {
-      isPhoneVerified = true;
-    }
-  } catch (_) {}
-
-  if (!isSteward && !isPhoneVerified) {
-    showToast("Phone verification required to pin a report.", "error");
-    return;
-  }
-
-  const maxPins = isSteward ? 2 : 1;
-
-  if (!currentlyPinned) {
-    let pinnedCount = allPostsCache.filter(p => p.isPinned).length;
-    try {
-      pinnedCount = allPostsCache.filter(p => p.isPinned).length;
-    } catch (_) {
-      pinnedCount = allPostsCache.filter(p => p.isPinned).length;
-    }
-
-    if (pinnedCount >= maxPins) {
-      showToast(
-        isSteward
-          ? "Stewards can pin up to 2 posts. Unpin one first."
-          : "Phone-verified citizens can pin 1 post. Unpin the current one first.",
-        "warning"
-      );
-      return;
-    }
-  }
-
-  try {
-    const postRef = doc(db, "testimonies", postId);
-    const newPinnedState = !currentlyPinned;
-
-    await updateDoc(postRef, {
-      isPinned: newPinnedState,
-      pinnedAt: newPinnedState ? serverTimestamp() : null,
-      pinnedBy: newPinnedState ? auth.currentUser.uid : null
-    });
-
-    showToast(newPinnedState ? "📌 Post pinned to top" : "📌 Post unpinned", "info");
-  } catch (e) {
-    console.error("Pin operation failed:", e);
-    showToast("Failed to toggle pin state.", "error");
-  }
-}
-
-/**
- * Handle "I witnessed this" click – Corroboration Engine
- */
-async function handleCorroborate(postId, btnEl) {
-    if (!auth.currentUser) {
-        showToast("Please sign in to corroborate a report.", "error");
-        return;
-    }
-
-    const post = allPostsCache.find(p => p.id === postId);
-    if (post && post.authorId === auth.currentUser.uid) {
-        showToast(
-            "You can’t corroborate your own report. Only other witnesses who also saw the event can strengthen it — this keeps the public record honest.",
-            "info"
-        );
-        return;
-    }
-
-   const allowed = await canCorroborate();
-if (!allowed) {
-    showToast(
-        "Phone verification is required to corroborate reports. This helps keep bots and spam out of the Square.",
-        "info"
-    );
-    // Prefer shared auth entrypoint, then startPhoneVerification, then DOM fallback
-    if (typeof window.openVerificationModal === "function") {
-        window.openVerificationModal();
-    } else if (typeof window.startPhoneVerification === "function") {
-        window.startPhoneVerification();
-    } else {
-        const modal =
-            document.getElementById("phoneVerificationModal") ||
-            document.getElementById("phone-upgrade-modal") ||
-            document.getElementById("verificationModal");
-        if (modal) {
-            modal.classList.remove("hidden");
-            modal.style.display = "flex";
-        }
-    }
-    return;
-}
-
-    const note = prompt("Optional short note (max 280 chars):\nWhat did you also see / hear?");
-    if (note === null) return;
-
-    try {
-        btnEl.disabled = true;
-        btnEl.textContent = "Sealing…";
-
-        await submitCorroboration(postId, {
-            note: (note || "").trim().slice(0, 280)
-        });
-
-        if (post) {
-            post.corroborationCount = (post.corroborationCount || 0) + 1;
-        }
-
-        btnEl.textContent = "👁️ You witnessed this";
-        btnEl.classList.add('opacity-60', 'cursor-default');
-        btnEl.disabled = true;
-
-        const scoreEl = btnEl.parentElement?.querySelector('.corr-score');
-        if (scoreEl && post) {
-            const count = post.corroborationCount || 1;
-            scoreEl.textContent = `Witnessed by ${count} Citizen${count === 1 ? '' : 's'}`;
-        }
-    } catch (err) {
-        console.error("Corroboration failed:", err);
-
-        const msg = (err?.message || String(err)).toLowerCase();
-        if (msg.includes("self-corroboration") || msg.includes("self corroboration")) {
-            showToast(
-                "You can’t corroborate your own report. Only other witnesses who also saw the event can strengthen it — this keeps the public record honest.",
-                "info"
-            );
-        } else if (msg.includes("insufficient tier") || msg.includes("phone")) {
-    showToast(
-        "Phone verification is required to corroborate reports. This helps keep bots and spam out of the Square.",
-        "info"
-    );
-    if (typeof window.openVerificationModal === "function") {
-        window.openVerificationModal();
-    } else if (typeof window.startPhoneVerification === "function") {
-        window.startPhoneVerification();
-    }
-} else {
-            showToast(err.message || "Corroboration failed. Please try again.", "error");
-        }
-
-        btnEl.disabled = false;
-        btnEl.textContent = "👁️ I witnessed this";
-    }
-}
-
-function showPostMenu(postId) {
-    showToast(`Post options menu for: ${postId.substring(0, 8)}...`, "info");
-}
-
-async function handleDownloadEvidencePack(postId) {
-    try {
-        const post = allPostsCache.find(p => p.id === postId);
-        if (!post) {
-            showToast('Post not found', 'error');
-            return;
-        }
-
-        const core = {
-            schemaVersion: post.evidencePack?.schemaVersion || 'vocalwitness.evidence-pack.v1',
-            content: {
-                body: post.content || '',
-                bodyHash: post.bodyHash || null,
-                channel: post.feedVisibility || post.channel || 'citizen-talk'
-            },
-            media: [],
-            identity: {
-                mode: post.isAnonymous ? 'ANONYMOUS' : 'IDENTIFIED',
-                authorId: post.authorId || null,
-                displayName: post.author || null,
-                phoneOnPublicRecord: false
-            },
-            timestamps: {
-                clientCaptureMs: post.evidencePack?.clientCaptureMs || post.timestamp || Date.now()
-            },
-            environment: {
-                app: 'VocalWitness',
-                hashApi: 'WebCrypto.subtle.digest SHA-256'
-            }
-        };
-
-        if (post.imageUrl && post.imageHash) {
-            core.media.push({
-                role: 'image',
-                url: post.imageUrl,
-                hashAlg: 'SHA-256',
-                hashCapture: post.imageHash,
-                hashAfterUpload: post.imageHash,
-                hashMatch: true,
-                exifScrubbed: true
-            });
-        }
-
-        if (post.audioUrl && post.audioHash) {
-            core.media.push({
-                role: 'audio',
-                url: post.audioUrl,
-                hashAlg: 'SHA-256',
-                hashCapture: post.audioHash,
-                hashAfterUpload: post.audioHash,
-                hashMatch: true
-            });
-        }
-
-        if (post.videoUrl && post.videoHash) {
-            core.media.push({
-                role: 'video',
-                url: post.videoUrl,
-                hashAlg: 'SHA-256',
-                hashCapture: post.videoHash,
-                hashAfterUpload: post.videoHash,
-                hashMatch: true
-            });
-        }
-
-        const fullPack = toFullEvidencePack(
-            core,
-            post.packCoreHash || post.evidencePack?.packCoreHash || null,
-            post.evidencePack?.rfc3161 || null,
-            postId
-        );
-
-        downloadEvidencePack(fullPack, postId);
-        showToast('Evidence pack downloaded', 'success');
-    } catch (err) {
-        console.error('Download pack failed:', err);
-        showToast('Could not prepare evidence pack', 'error');
-    }
-}
-
-// ====================== FEED FILTER PILLS ======================
-document.addEventListener('DOMContentLoaded', () => {
-  const pills = document.querySelectorAll('.feed-pill');
-
-  pills.forEach(button => {
-    button.addEventListener('click', () => {
-      pills.forEach(btn => {
-        btn.classList.remove(
-          'active',
-          'bg-emerald-500',
-          'text-black',
-          'bg-emerald-500/10',
-          'border-emerald-500/40',
-          'text-emerald-400'
-        );
-        btn.classList.add('border', 'border-zinc-800', 'bg-zinc-900', 'text-zinc-300');
-      });
-
-      button.classList.remove('border', 'border-zinc-800', 'bg-zinc-900', 'text-zinc-300');
-      button.classList.add('active');
-
-      if (button.dataset.filter === 'zk-verified') {
-        button.classList.add('bg-emerald-500/10', 'border-emerald-500/40', 'text-emerald-400');
-      } else {
-        button.classList.add('bg-emerald-500', 'text-black');
-      }
-
-      const filter = button.dataset.filter;
-      console.log('Filtering feed by:', filter);
-
-      if (typeof initFeed === 'function') {
-        initFeed(db, filter === 'all' ? 'all' : filter);
-      }
-    });
-  });
-});
