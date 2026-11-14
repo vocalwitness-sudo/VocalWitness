@@ -280,25 +280,23 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                 }
                 return;
             }
-           const lockButton = action !== 'react' && action !== 'toggle-more' && action !== 'toggle-translate';
-if (lockButton) {
-    btn.disabled = true;
-    btn.classList.add('opacity-50', 'cursor-not-allowed');
-}
+               const lockButton = action !== 'react' && action !== 'toggle-more' && action !== 'toggle-translate';
+            if (lockButton) {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
 
-try {
-    if (action === 'like') {
-        
+            try {
                 if (action === 'like') {
                     if (typeof handleUpvote === 'function') await handleUpvote(id);
                     else console.warn('handleUpvote is not defined');
-              } else if (action === 'react') {
-    const reactionType = btn.getAttribute('data-reaction') || 'respect';
-    if (typeof toggleReaction === 'function') {
-        await toggleReaction(id, reactionType, btn); // pass btn for optimistic UI
-    } else {
-        console.warn('toggleReaction is not defined');
-    }
+                } else if (action === 'react') {
+                    const reactionType = btn.getAttribute('data-reaction') || 'respect';
+                    if (typeof toggleReaction === 'function') {
+                        await toggleReaction(id, reactionType, btn); // pass btn for optimistic UI
+                    } else {
+                        console.warn('toggleReaction is not defined');
+                    }
                 } else if (action === 'comment') {
                     if (typeof openCommentModal === 'function') await openCommentModal(id);
                     else console.warn('openCommentModal is not defined');
@@ -375,15 +373,14 @@ try {
                 if (action !== 'share' && action !== 'corroborate') {
                     showToast('Something went wrong. Please try again.', 'error');
                 }
-           } finally {
-    if (lockButton && (action !== 'corroborate' || !btn.classList.contains('cursor-default'))) {
-        btn.disabled = false;
-        btn.classList.remove('opacity-50', 'cursor-not-allowed');
-    }
+            } finally {
+                if (lockButton && (action !== 'corroborate' || !btn.classList.contains('cursor-default'))) {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+              });
 }
-        });
-    }
-    
     const q = query(
         collection(db, 'testimonies'),
         where('channel', '==', currentChannel),
