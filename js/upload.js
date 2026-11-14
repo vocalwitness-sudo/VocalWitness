@@ -89,18 +89,22 @@ async function executeUpload(blob, keyPath, mimeType, onProgress) {
     }
 
     xhr.onload = () => {
-  if (xhr.status >= 200 && xhr.status < 300) {
-    if (typeof onProgress === 'function') onProgress(100);
-    resolve(`${R2_PUBLIC_BASE}/${keyPath}`);
-  } else if (xhr.status === 401 || xhr.status === 403) {
-    reject(new Error('Upload denied (auth or App Check). Refresh and try again.'));
-  } else {
-    reject(new Error(`Upload failed (HTTP ${xhr.status}). Please retry.`));
-  }
-};
-xhr.onerror = () => reject(new Error('Network error during upload. Check connection and retry.'));
-xhr.ontimeout = () => reject(new Error('Upload timed out. Please retry.'));
-    
+      if (xhr.status >= 200 && xhr.status < 300) {
+        if (typeof onProgress === 'function') onProgress(100);
+        resolve(`${R2_PUBLIC_BASE}/${keyPath}`);
+      } else if (xhr.status === 401 || xhr.status === 403) {
+        reject(new Error('Upload denied (auth or App Check). Refresh and try again.'));
+      } else {
+        reject(new Error(`Upload failed (HTTP ${xhr.status}). Please retry.`));
+      }
+    };
+    xhr.onerror = () => reject(new Error('Network error during upload. Check connection and retry.'));
+    xhr.ontimeout = () => reject(new Error('Upload timed out. Please retry.'));
+
+    xhr.send(blob);
+  });
+}
+
 /**
  * Core transport helper used by media-pipeline.js
  * Accepts an already-processed File/Blob and uploads it.
