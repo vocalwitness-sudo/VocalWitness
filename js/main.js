@@ -1163,29 +1163,6 @@ async function fetchCuratedNews() {
   ) {
     applyTicker(fallbackItems);
   }
-
-    // Pad so the marquee never sits still with 1–2 lines
-    while (list.length < 10) {
-      list = list.concat(list);
-    }
-    list = list.slice(0, 16);
-
-    const html = list
-      .map((title) => {
-        const safe = String(title)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;');
-        return `<span class="ticker-item px-8 whitespace-nowrap"><strong class="text-emerald-400">•</strong> ${safe}</span>`;
-      })
-      .join('');
-
-    // Duplicate strip for seamless -50% loop
-    tickerEl.innerHTML = html + html;
-    restartTickerAnimation();
-  }
-
   // Paint something immediately (cache or fallback) so UI never freezes
   let usedCache = false;
   try {
