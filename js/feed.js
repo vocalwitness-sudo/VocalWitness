@@ -22,7 +22,7 @@ import { db, auth } from './firebase-config.js?v=2';
 import { showToast } from './utils.js';
 import { renderTierCircle, renderFieldNoteBadge } from './ui-components.js';
 import { hasStewardAccess, canCorroborate } from './tier.js';
-import { toggleReaction } from './reactions.js';
+import { toggleReaction, syncReactionButtonState } from './reactions.js';
 import { applyPostDoorDecorations } from './door-ui.js';
 import { state } from './app-state.js';
 import { openCommentModal } from './comments.js';
@@ -280,17 +280,25 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                 }
                 return;
             }
-            btn.disabled = true;
-            btn.classList.add('opacity-50', 'cursor-not-allowed');
+           const lockButton = action !== 'react' && action !== 'toggle-more' && action !== 'toggle-translate';
+if (lockButton) {
+    btn.disabled = true;
+    btn.classList.add('opacity-50', 'cursor-not-allowed');
+}
 
-            try {
+try {
+    if (action === 'like') {
+        
                 if (action === 'like') {
                     if (typeof handleUpvote === 'function') await handleUpvote(id);
                     else console.warn('handleUpvote is not defined');
-                } else if (action === 'react') {
-                    const reactionType = btn.getAttribute('data-reaction');
-                    if (typeof toggleReaction === 'function') await toggleReaction(id, reactionType);
-                    else console.warn('toggleReaction is not defined');
+              } else if (action === 'react') {
+    const reactionType = btn.getAttribute('data-reaction') || 'respect';
+    if (typeof toggleReaction === 'function') {
+        await toggleReaction(id, reactionType, btn); // pass btn for optimistic UI
+    } else {
+        console.warn('toggleReaction is not defined');
+    }
                 } else if (action === 'comment') {
                     if (typeof openCommentModal === 'function') await openCommentModal(id);
                     else console.warn('openCommentModal is not defined');
@@ -367,12 +375,12 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                 if (action !== 'share' && action !== 'corroborate') {
                     showToast('Something went wrong. Please try again.', 'error');
                 }
-            } finally {
-                if (action !== 'corroborate' || !btn.classList.contains('cursor-default')) {
-                    btn.disabled = false;
-                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                }
-            }
+           } finally {
+    if (lockButton && (action !== 'corroborate' || !btn.classList.contains('cursor-default'))) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+}
         });
     }
     
@@ -997,6 +1005,8 @@ function renderSinglePostDOM(id, data, container) {
         : '';
 
     postEl.innerHTML = `
+
+    syncReactionButtonState(id, postEl);
       <!-- Header -->
       <div class="flex items-start justify-between gap-3">
         <div class="flex items-center gap-3 min-w-0">
@@ -1070,6 +1080,37 @@ function renderSinglePostDOM(id, data, container) {
 
       <!-- Media -->
       ${mediaHTML}
+            <!-- Body text (if you already have body elsewhere, skip duplicate) -->
+      <p class="mt-3 text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">${escapeHTML(data.content || data.text || data.body || '')}</p>
+
+      <!-- Reactions + actions -->
+      <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-zinc-800 pt-3">
+        <button type="button" data-action="react" data-reaction="respect" data-id="${id}"
+          class="reaction-btn inline-flex items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-300 transition hover:border-emerald-500/50 active:scale-95">
+          🙌 <span>${Number(reactions.respect) || 0}</span>
+        </button>
+        <button type="button" data-action="react" data-reaction="truth" data-id="${id}"
+          class="reaction-btn inline-flex items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-300 transition hover:border-sky-500/50 active:scale-95">
+          🎯 <span>${Number(reactions.truth) || 0}</span>
+        </button>
+        <button type="button" data-action="react" data-reaction="solidarity" data-id="${id}"
+          class="reaction-btn inline-flex items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-300 transition hover:border-amber-500/50 active:scale-95">
+          ✊ <span>${Number(reactions.solidarity) || 0}</span>
+        </button>
+        <button type="button" data-action="react" data-reaction="impact" data-id="${id}"
+          class="reaction-btn inline-flex items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-300 transition hover:border-rose-500/50 active:scale-95">
+          💥 <span>${Number(reactions.impact) || 0}</span>
+        </button>
+
+        <button type="button" data-action="comment" data-id="${id}"
+          class="ml-auto rounded-lg px-2 py-1.5 text-xs text-zinc-400 hover:text-white active:scale-95">💬</button>
+        <button type="button" data-action="share" data-id="${id}"
+          class="rounded-lg px-2 py-1.5 text-xs text-zinc-400 hover:text-white active:scale-95">↗</button>
+        <button type="button" data-action="corroborate" data-id="${id}"
+          class="rounded-lg px-2 py-1.5 text-xs text-zinc-400 hover:text-emerald-400 active:scale-95">👁️</button>
+      </div>
+      ${corrScoreHTML || ''}
+      `;
 
       <!-- Translation Box -->
       <div id="translate-box-${id}" class="mt-4 hidden rounded-xl border border-zinc-800 bg-zinc-950 p-3">
