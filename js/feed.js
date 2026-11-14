@@ -901,7 +901,7 @@ if (isWitness) {
         }
     }
 
-    // Synthetic advisory only when flagged
+  // Synthetic advisory only when flagged
     const claim = data.mediaOriginClaim || data.originType || data.provenanceType || '';
     const isSynthetic =
         claim === 'synthetic' ||
@@ -912,7 +912,7 @@ if (isWitness) {
     if (isSynthetic) {
         trustBadgesHTML += `
         <span class="bg-amber-500/10 text-amber-300 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded flex items-center gap-1"
-              title="Synthetic / AI-assisted advisory">🤖 Advisory</span>`;
+            title="Synthetic / AI-assisted advisory">🤖 Advisory</span>`;
     }
 
     const trustContainer = trustBadgesHTML
@@ -934,10 +934,17 @@ if (isWitness) {
         mediaHTML = `
             <div class="mt-5 rounded-2xl overflow-hidden border border-zinc-700 bg-black">
                 <video controls playsinline class="w-full max-h-96 object-cover" preload="metadata"
-                       src="${escapeHTML(data.videoUrl)}"></video>
+                        src="${escapeHTML(data.videoUrl)}"></video>
             </div>`;
     } else if (data.imageUrl) {
-        mediaHTML = `<img src="${escapeHTML(data.imageUrl)}" class="mt-5 rounded-2xl w-full max-h-96 object-cover border border-zinc-700" alt="Evidence" loading="lazy">`;
+        mediaHTML = `
+            <div class="mt-5 rounded-2xl overflow-hidden border border-zinc-700 bg-black">
+              <img src="${escapeHTML(data.imageUrl)}"
+                   class="w-full max-h-96 object-cover"
+                   alt="Evidence"
+                   loading="lazy"
+                   onerror="this.parentElement.innerHTML='<div class=\\'p-6 text-center text-zinc-500 text-sm\\'>Media unavailable</div>'">
+            </div>`;
     } else if (data.audioUrl) {
         let safeAudioUrl = data.audioUrl;
         if (!safeAudioUrl.includes('alt=media')) {
@@ -958,85 +965,89 @@ if (isWitness) {
     else if (data.createdAt) formattedDate = new Date(data.createdAt).toLocaleString();
 
     const authorDisplayName = escapeHTML(
-    data.author ||
-    (data.authorId ? `Citizen` : 'Citizen')
-);
+        data.author ||
+        (data.authorId ? `Citizen` : 'Citizen')
+    );
 
-  let ownerControlsHTML = '';
-if (isOwner) {
-  ownerControlsHTML = `
-    <button data-action="edit" data-id="${id}" title="Edit Report"
-            class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-emerald-400 transition text-xs">
-      ✏️
-    </button>
-    <button data-action="hide" data-id="${id}" title="Hide from Square"
-            class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition text-xs">
-      👁️‍🗨️
-    </button>
-    <button data-action="permanent-hide" data-id="${id}" title="Permanently Hide"
-            class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-red-400 transition text-xs">
-      🔒
-    </button>
-  `;
-} else if (isStewardUserCache) {
-  ownerControlsHTML = `
-    <button data-action="hide" data-id="${id}" title="Hide (Steward)"
-            class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition text-xs">
-      👁️‍🗨️
-    </button>
-  `;
-}
+    let ownerControlsHTML = '';
+    if (isOwner) {
+        ownerControlsHTML = `
+            <button data-action="edit" data-id="${id}" title="Edit Report"
+                    class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-emerald-400 transition text-xs">
+              ✏️
+            </button>
+            <button data-action="hide" data-id="${id}" title="Hide from Square"
+                    class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition text-xs">
+              👁️‍🗨️
+            </button>
+            <button data-action="permanent-hide" data-id="${id}" title="Permanently Hide"
+                    class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-red-400 transition text-xs">
+              🔒
+            </button>
+        `;
+    } else if (isStewardUserCache) {
+        ownerControlsHTML = `
+            <button data-action="hide" data-id="${id}" title="Hide (Steward)"
+                    class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition text-xs">
+              👁️‍🗨️
+            </button>
+        `;
+    }
+
     const corrCount = data.corroborationCount || 0;
     const corrScoreHTML = corrCount > 0
-    ? `<span class="corr-score text-[11px] text-emerald-400/90 font-medium tracking-tight">
-            Witnessed by ${corrCount} Citizen${corrCount === 1 ? '' : 's'}
-       </span>`
-    : '';
+        ? `<span class="corr-score text-[11px] text-emerald-400/90 font-medium tracking-tight">
+               Witnessed by ${corrCount} Citizen${corrCount === 1 ? '' : 's'}
+           </span>`
+        : '';
 
- postEl.innerHTML = `
-  <!-- Header -->
-  <div class="flex items-start justify-between gap-3">
-    <div class="flex items-center gap-3 min-w-0">
-      ${typeof renderTierCircle === 'function' 
-        ? renderTierCircle(data.authorTier || 'citizen', data.reputation || 0) 
-        : '<div class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800 text-lg">👤</div>'}
-      
-      <div class="min-w-0">
-        <div class="flex flex-wrap items-center gap-2">
-          <p class="font-semibold text-zinc-100 truncate">${authorDisplayName}</p>
-          ${pinnedBadge}
+    postEl.innerHTML = `
+      <!-- Header -->
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          ${typeof renderTierCircle === 'function'  
+            ? renderTierCircle(data.authorTier || 'citizen', data.reputation || 0)  
+            : '<div class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800 text-lg">👤</div>'}
+          
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <p class="font-semibold text-zinc-100 truncate">${authorDisplayName}</p>
+              ${pinnedBadge}
+            </div>
+            <p class="text-xs text-zinc-500 mt-0.5">
+              ${formattedDate}${getEditedLabel(data)}
+            </p>
+          </div>
         </div>
-      <p class="text-xs text-zinc-500 mt-0.5">
-  ${formattedDate}${getEditedLabel(data)}
-</p>
+
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button data-action="pin" data-id="${id}" title="Pin Post"  
+                  class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition">
+            📌
+          </button>
+          ${ownerControlsHTML}
+          <button data-action="menu" data-id="${id}"  
+                  class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-white transition text-lg leading-none">
+            ⋯
+          </button>
+        </div>
       </div>
-    </div>
 
-   <div class="flex items-center gap-1.5 shrink-0">
-  <button data-action="pin" data-id="${id}" title="Pin Post" 
-          class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition">
-    📌
-  </button>
-  ${ownerControlsHTML}
-  <button data-action="menu" data-id="${id}" 
-          class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-white transition text-lg leading-none">
-    ⋯
-  </button>
-</div>
-  </div>
+      <!-- Trust Badges -->
+      ${trustContainer ? `
+        <div class="mt-3 flex flex-wrap gap-1.5">
+          ${trustBadgesHTML}
+        </div>
+      ` : ''}
 
-  <!-- Trust Badges -->
-  ${trustContainer ? `
-    <div class="mt-3 flex flex-wrap gap-1.5">
-      ${trustBadgesHTML}
-    </div>
-  ` : ''}
+      <!-- Title -->
+      <h3 class="mt-4 text-lg font-bold text-white leading-snug">
+        ${escapeHTML(headline)}
+      </h3>
 
-   <!-- Title -->
-  <h3 class="mt-4 text-lg font-bold text-white leading-snug">
-    ${escapeHTML(headline)}
-  </h3>
-
+      <!-- Media -->
+      ${mediaHTML}
+    `;
   <!-- Content (collapsed on home feed; Read more expands) -->
   ${data.content ? (() => {
     const full = String(data.content);
