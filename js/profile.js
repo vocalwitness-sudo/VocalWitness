@@ -437,7 +437,6 @@ export function renderProfileUI(userData, retryCount = 0) {
                         </div>
                         ` : ''}
                     </div>
-
                     <!-- Step 3: Public profile -->
                     <div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-zinc-950/80 border border-zinc-800">
                         <div class="min-w-0">
@@ -453,6 +452,43 @@ export function renderProfileUI(userData, retryCount = 0) {
                         </button>
                     </div>
                 </div>
+
+                <!-- Action Buttons -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                    ${!isCitizenCircle && !isWitness ? `
+                        <button type="button" id="btnGetVerifiedCta"
+                                class="col-span-1 sm:col-span-2 py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                            🛡️ Get Verified — Unlock Citizen Circle
+                        </button>
+                    ` : ''}
+
+                    <button type="button" id="btnOpenEditProfile"
+                            class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                        ✏️ Edit Profile
+                    </button>
+
+                    <button type="button" id="btnOpenSettings"
+                            class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2 border border-zinc-600">
+                        ⚙️ Security & Settings
+                    </button>
+
+                    <button type="button" id="downloadProfileJsonBtn"
+                            class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2 border border-zinc-600">
+                        📄 Download Profile JSON
+                    </button>
+
+                    <button type="button" id="exportUserDataPdfBtn"
+                            class="col-span-1 sm:col-span-2 py-3.5 px-4 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                        📥 Download Press Credential
+                    </button>
+
+                    <button type="button" id="btnSignOut"
+                            class="col-span-1 sm:col-span-2 py-3 px-4 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                        🚪 Sign Out
+                    </button>
+                </div>
+            </div>
+        `;
 
         content.innerHTML = html;
         attachProfileEventListeners(userData, isCitizenCircle, isWitness);
@@ -531,71 +567,10 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
         }
     });
 
-  // ===== Download Press Credential (Proper Choice Modal) =====
-document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', () => {
-    const data = window.currentUserData || userData;
-    if (!data) {
-        showToast('Profile data not loaded', 'error');
-        return;
-    }
-
-    const modal = document.getElementById('credentialChoiceModal');
-    if (!modal) {
-        showToast('Credential choice modal not found', 'error');
-        return;
-    }
-
-    // Show the modal
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-
-    // Clean previous listeners (important)
-    const btnPremium = document.getElementById('btnChoosePremium');
-    const btnStandard = document.getElementById('btnChooseStandard');
-    const btnCancel = document.getElementById('btnCancelCredential');
-
-    const closeModal = () => {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    };
-
-    // Remove old listeners by cloning
-    const newPremium = btnPremium.cloneNode(true);
-    const newStandard = btnStandard.cloneNode(true);
-    const newCancel = btnCancel.cloneNode(true);
-    btnPremium.parentNode.replaceChild(newPremium, btnPremium);
-    btnStandard.parentNode.replaceChild(newStandard, btnStandard);
-    btnCancel.parentNode.replaceChild(newCancel, btnCancel);
-
-    newPremium.addEventListener('click', async () => {
-        closeModal();
-        try {
-            showToast("Generating Official (Premium) Credential...", "info");
-            await generateAndDownloadPDF(data, db, 'premium');
-        } catch (err) {
-            console.error(err);
-            showToast("Failed to generate credential", "error");
-        }
+    // ===== Download Press Credential (single source of truth) =====
+    document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', () => {
+        openCredentialChoiceModal(window.currentUserData || userData);
     });
-
-    newStandard.addEventListener('click', async () => {
-        closeModal();
-        try {
-            showToast("Generating Standard Credential...", "info");
-            await generateAndDownloadPDF(data, db, 'standard');
-        } catch (err) {
-            console.error(err);
-            showToast("Failed to generate credential", "error");
-        }
-    });
-
-    newCancel.addEventListener('click', closeModal);
-
-    // Also close when clicking outside
-    modal.onclick = (e) => {
-        if (e.target === modal) closeModal();
-    };
-});
 
     // Profile JSON Download
     document.getElementById('downloadProfileJsonBtn')?.addEventListener('click', () => {
@@ -625,7 +600,6 @@ document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', () =>
         }
     });
 }
-
 // ====================== SESSIONS & LOGIN HISTORY PLACEHOLDERS ======================
 window.renderSessionsPlaceholder = function() {
     const el = document.getElementById('activeSessionsList');
@@ -664,6 +638,7 @@ window.cancelBioEdit = function () {
 window.saveUserBio = async function () {
     const textarea = document.getElementById('profileBioTextarea');
     if (!textarea || !auth.currentUser) return;
+
     const bioText = textarea.value.trim().slice(0, 280);
     try {
         showToast("Saving bio...", "info");
@@ -673,7 +648,7 @@ window.saveUserBio = async function () {
             updatedAt: serverTimestamp()
         });
         showToast("✅ Bio saved successfully!", "success");
-        cancelBioEdit();
+        window.cancelBioEdit();
         if (currentUserData) {
             currentUserData.bio = bioText;
             renderProfileUI(currentUserData);
@@ -690,19 +665,24 @@ window.togglePrivacyShield = async function () {
         showToast("You must be signed in", "error");
         return;
     }
+
     const currentlyPrivate = isPrivacyPrivate(currentUserData);
     const nextPrivate = !currentlyPrivate;
+
     try {
         showToast(nextPrivate ? "Switching to private…" : "Making profile public…", "info");
         await updateDoc(doc(db, "users", auth.currentUser.uid), {
             hidePublicInfo: nextPrivate,
             updatedAt: serverTimestamp()
         });
+
         if (currentUserData) {
             currentUserData.hidePublicInfo = nextPrivate;
             window.currentUserData = currentUserData;
             await syncPublicProfile(auth.currentUser.uid, currentUserData);
+            renderProfileUI(currentUserData); // refresh UI immediately
         }
+
         showToast(
             nextPrivate
                 ? "🛡️ Profile is private (name & location hidden from others)"
@@ -723,7 +703,7 @@ window.openEditProfileSafe = function () {
         return;
     }
     showToast("Opening quick bio editor...", "info");
-    toggleBioEdit();
+    window.toggleBioEdit();
 };
 
 window.openSettingsSafe = function () {
@@ -736,41 +716,49 @@ window.openSettingsSafe = function () {
 };
 
 // ====================== IMAGE PREVIEW + COMPRESSION ======================
+// Note: Currently stores base64 for preview only.
+// Real upload to R2/Storage will be completed in the final avatar pass.
 export function handleImagePreview(event) {
     const file = event?.target?.files?.[0];
     if (!file) return;
+
     if (file.size > 2 * 1024 * 1024) {
         showToast("Image size must be under 2MB", "error");
         event.target.value = '';
         return;
     }
+
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
             const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 256;
-            const MAX_HEIGHT = 256;
+            const MAX = 256;
             let width = img.width;
             let height = img.height;
+
             if (width > height) {
-                if (width > MAX_WIDTH) {
-                    height = height * (MAX_WIDTH / width);
-                    width = MAX_WIDTH;
+                if (width > MAX) {
+                    height = Math.round(height * (MAX / width));
+                    width = MAX;
                 }
             } else {
-                if (height > MAX_HEIGHT) {
-                    width = width * (MAX_HEIGHT / height);
-                    height = MAX_HEIGHT;
+                if (height > MAX) {
+                    width = Math.round(width * (MAX / height));
+                    height = MAX;
                 }
             }
+
             canvas.width = width;
             canvas.height = height;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
+
             pendingAvatarBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
             const imgPreview = document.getElementById('avatarPreview');
             const avatarFallback = document.getElementById('avatarFallback');
+
             if (imgPreview) {
                 imgPreview.src = pendingAvatarBase64;
                 imgPreview.classList.remove('hidden');
@@ -789,18 +777,24 @@ window.handleImagePreview = handleImagePreview;
 export async function handleSignOut() {
     try {
         showToast("Signing out...", "info");
+
         if (userUnsubscribe) {
             userUnsubscribe();
             userUnsubscribe = null;
         }
+
         document.querySelectorAll('.modal, [id$="Modal"]').forEach(modal => {
             modal.classList.add('hidden');
+            modal.classList.remove('flex');
             modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
         });
+
         currentUserData = null;
         window.currentUserData = null;
+
         await signOut(auth);
-        window.location.href = window.location.origin + '/' || '/';
+        window.location.href = '/';          // clean – no dead || '/'
     } catch (error) {
         console.error("Sign out error:", error);
         showToast("Error signing out", "error");
@@ -838,19 +832,19 @@ export function closeEditProfile() {
 }
 
 // ====================== EDIT PROFILE FORM & MODALS ======================
-let isProfileSaving = false;
-
 export function openEditProfile() {
     const modal = document.getElementById('editProfileModal');
     if (!modal) {
         showToast("Edit Profile modal not found. Using quick bio editor instead.", "info");
         openProfile();
         setTimeout(() => {
-            if (typeof toggleBioEdit === 'function') toggleBioEdit();
+            if (typeof window.toggleBioEdit === 'function') window.toggleBioEdit();
         }, 300);
         return;
     }
+
     pendingAvatarBase64 = null;
+
     if (currentUserData) {
         const firstNameInput   = document.getElementById('editFirstName');
         const lastNameInput    = document.getElementById('editLastName');
@@ -879,9 +873,10 @@ export function openEditProfile() {
             if (avatarFallback) avatarFallback.classList.remove('hidden');
         }
     }
+
     modal.classList.remove('hidden');
     modal.classList.add('flex');
-    modal.style.display = ''; // Clear conflicting inline overrides
+    modal.style.display = '';
     modal.setAttribute('aria-hidden', 'false');
     closeProfile();
 }
@@ -922,156 +917,146 @@ export function handleSaveProfile(event) {
     saveProfileChanges(event);
 }
 
-
 export async function saveProfileChanges(event) {
-  if (event) event.preventDefault();
-  if (!auth.currentUser) {
-    showToast("You must be logged in", "error");
-    return;
-  }
-
-  const firstNameEl   = document.getElementById('editFirstName');
-  const lastNameEl    = document.getElementById('editLastName');
-  const displayNameEl = document.getElementById('editDisplayName');
-  const usernameEl    = document.getElementById('editUsername');
-  const regionEl      = document.getElementById('editRegion');
-  const bioEl         = document.getElementById('editBio');
-  const hidePublicEl  = document.getElementById('toggleHidePublicInfo');
-
-  const firstName   = (firstNameEl?.value || "").trim().slice(0, 60);
-  const lastName    = (lastNameEl?.value || "").trim().slice(0, 60);
-  const displayName = (displayNameEl?.value || "").trim().slice(0, 80);
-  const username    = (usernameEl?.value || "").trim().slice(0, 40) || null;
-  const region      = (regionEl?.value || "").trim().slice(0, 80) || null;
-  const bio         = (bioEl?.value || "").trim().slice(0, 500) || null;
-  const hidePublicInfo = hidePublicEl ? !!hidePublicEl.checked : true;
-
-  if (!displayNameEl) {
-    showToast("Edit form not ready", "error");
-    return;
-  }
-  if (!displayName) {
-    showToast("Display name is required", "error");
-    return;
-  }
-
-  // Only keys allowed by isSafeUserUpdate()
-  const updatePayload = {
-    firstName: firstName || "",
-    lastName: lastName || "",
-    displayName,
-    username,
-    region,
-    bio,
-    hidePublicInfo,
-    updatedAt: serverTimestamp()
-  };
-
-  // NEVER write data: base64 into photoURL (rules reject it)
-  if (pendingAvatarBase64) {
-    if (typeof pendingAvatarBase64 === 'string' &&
-        pendingAvatarBase64.startsWith('https://')) {
-      updatePayload.photoURL = pendingAvatarBase64;
-    } else {
-      showToast(
-        "Avatar must be uploaded first (HTTPS URL only). Photo skipped this save.",
-        "warning"
-      );
-      // Do not put base64 in payload
-    }
-  }
-
-  try {
-    showToast("Saving changes...", "info");
-    const userRef = doc(db, "users", auth.currentUser.uid);
-    await updateDoc(userRef, updatePayload);
-
-    // Keep local cache in sync
-    if (currentUserData) {
-      Object.assign(currentUserData, updatePayload);
-      window.currentUserData = currentUserData;
-      try {
-        await syncPublicProfile(auth.currentUser.uid, currentUserData);
-      } catch (_) {}
-      renderProfileUI(currentUserData);
+    if (event) event.preventDefault();
+    if (!auth.currentUser) {
+        showToast("You must be logged in", "error");
+        return;
     }
 
-    pendingAvatarBase64 = null;
-    showToast("✅ Profile updated successfully!", "success");
-    if (typeof closeEditProfile === 'function') closeEditProfile();
-    if (typeof refreshTierAndUI === 'function') refreshTierAndUI();
-  } catch (error) {
-    console.error("Save profile error:", error);
-    const code = error?.code || "";
-    const msg =
-      code === "permission-denied"
-        ? "Save blocked by security rules. Check fields or photo URL."
-        : (error?.message || "Failed to save profile");
-    showToast(msg, "error");
-  }
+    const firstNameEl   = document.getElementById('editFirstName');
+    const lastNameEl    = document.getElementById('editLastName');
+    const displayNameEl = document.getElementById('editDisplayName');
+    const usernameEl    = document.getElementById('editUsername');
+    const regionEl      = document.getElementById('editRegion');
+    const bioEl         = document.getElementById('editBio');
+    const hidePublicEl  = document.getElementById('toggleHidePublicInfo');
+
+    const firstName     = (firstNameEl?.value || "").trim().slice(0, 60);
+    const lastName      = (lastNameEl?.value || "").trim().slice(0, 60);
+    const displayName   = (displayNameEl?.value || "").trim().slice(0, 80);
+    const username      = (usernameEl?.value || "").trim().slice(0, 40) || null;
+    const region        = (regionEl?.value || "").trim().slice(0, 80) || null;
+    const bio           = (bioEl?.value || "").trim().slice(0, 500) || null;
+    const hidePublicInfo = hidePublicEl ? !!hidePublicEl.checked : true;
+
+    if (!displayNameEl) {
+        showToast("Edit form not ready", "error");
+        return;
+    }
+    if (!displayName) {
+        showToast("Display name is required", "error");
+        return;
+    }
+
+    // Only keys allowed by isSafeUserUpdate()
+    const updatePayload = {
+        firstName: firstName || "",
+        lastName: lastName || "",
+        displayName,
+        username,
+        region,
+        bio,
+        hidePublicInfo,
+        updatedAt: serverTimestamp()
+    };
+
+    // NEVER write data: base64 into photoURL (rules reject it)
+    if (pendingAvatarBase64) {
+        if (typeof pendingAvatarBase64 === 'string' && pendingAvatarBase64.startsWith('https://')) {
+            updatePayload.photoURL = pendingAvatarBase64;
+        } else {
+            showToast("Avatar must be uploaded first (HTTPS URL only). Photo skipped this save.", "warning");
+        }
+    }
+
+    try {
+        showToast("Saving changes...", "info");
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        await updateDoc(userRef, updatePayload);
+
+        if (currentUserData) {
+            Object.assign(currentUserData, updatePayload);
+            window.currentUserData = currentUserData;
+            try {
+                await syncPublicProfile(auth.currentUser.uid, currentUserData);
+            } catch (_) {}
+            renderProfileUI(currentUserData);
+        }
+
+        pendingAvatarBase64 = null;
+        showToast("✅ Profile updated successfully!", "success");
+        if (typeof closeEditProfile === 'function') closeEditProfile();
+        if (typeof refreshTierAndUI === 'function') refreshTierAndUI();
+    } catch (error) {
+        console.error("Save profile error:", error);
+        const code = error?.code || "";
+        const msg = code === "permission-denied"
+            ? "Save blocked by security rules. Check fields or photo URL."
+            : (error?.message || "Failed to save profile");
+        showToast(msg, "error");
+    }
 }
 
+// ====================== PASSWORD RESET ======================
 let _passwordResetInFlight = false;
 
 export async function triggerPasswordReset() {
-  if (_passwordResetInFlight) return;
-  _passwordResetInFlight = true;
+    if (_passwordResetInFlight) return;
+    _passwordResetInFlight = true;
 
-  try {
-    const user = auth.currentUser;
-    if (!user) {
-      showToast('Sign in required', 'error');
-      return;
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            showToast('Sign in required', 'error');
+            return;
+        }
+
+        const providers = (user.providerData || []).map(p => p.providerId);
+        const hasPassword = providers.includes('password');
+
+        if (!hasPassword) {
+            const providerNames = providers
+                .map(p => {
+                    if (p === 'google.com') return 'Google';
+                    if (p === 'github.com') return 'GitHub';
+                    if (p === 'twitter.com') return 'Twitter/X';
+                    return p;
+                })
+                .join(', ');
+
+            showToast(
+                `This account uses ${providerNames || 'a social provider'} sign-in. There is no password to reset.`,
+                'info'
+            );
+            return;
+        }
+
+        if (!user.email) {
+            showToast('No email on this account', 'error');
+            return;
+        }
+
+        await sendPasswordResetEmail(auth, user.email, {
+            url: 'https://vocalwitness.com/',
+            handleCodeInApp: false
+        });
+
+        showToast(`Reset link sent to ${user.email}. Check inbox and spam.`, 'success');
+    } catch (error) {
+        console.error('Password reset error:', error);
+        const msg =
+            error.code === 'auth/too-many-requests' ? 'Too many attempts. Try again later.' :
+            error.code === 'auth/user-not-found'   ? 'No password account for this email.' :
+            'Could not send reset email.';
+        showToast(msg, 'error');
+    } finally {
+        setTimeout(() => { _passwordResetInFlight = false; }, 1500);
     }
-
-    const providers = (user.providerData || []).map(p => p.providerId);
-    const hasPassword = providers.includes('password');
-
-    if (!hasPassword) {
-      const providerNames = providers
-        .map(p => {
-          if (p === 'google.com') return 'Google';
-          if (p === 'github.com') return 'GitHub';
-          if (p === 'twitter.com') return 'Twitter/X';
-          return p;
-        })
-        .join(', ');
-
-      showToast(
-        `This account uses ${providerNames || 'a social provider'} sign-in. There is no password to reset.`,
-        'info'
-      );
-      return;
-    }
-
-    if (!user.email) {
-      showToast('No email on this account', 'error');
-      return;
-    }
-
-    await sendPasswordResetEmail(auth, user.email, {
-      url: 'https://vocalwitness.com/',
-      handleCodeInApp: false
-    });
-
-    showToast(`Reset link sent to ${user.email}. Check inbox and spam.`, 'success');
-  } catch (error) {
-    console.error('Password reset error:', error);
-    const msg =
-      error.code === 'auth/too-many-requests'
-        ? 'Too many attempts. Try again later.'
-        : error.code === 'auth/user-not-found'
-          ? 'No password account for this email.'
-          : 'Could not send reset email.';
-    showToast(msg, 'error');
-  } finally {
-    setTimeout(() => { _passwordResetInFlight = false; }, 1500);
-  }
 }
 
 window.handlePasswordReset = triggerPasswordReset;
 window.triggerPasswordReset = triggerPasswordReset;
-
 
 // ====================== LANGUAGE CHANGE SUPPORT ======================
 window.addEventListener('languageChanged', () => {
@@ -1092,27 +1077,29 @@ export function openCredentialChoiceModal(data) {
         return;
     }
 
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-
-    const btnPremium = document.getElementById('btnChoosePremium');
+    const btnPremium  = document.getElementById('btnChoosePremium');
     const btnStandard = document.getElementById('btnChooseStandard');
-    const btnCancel = document.getElementById('btnCancelCredential');
+    const btnCancel   = document.getElementById('btnCancelCredential');
 
     if (!btnPremium || !btnStandard || !btnCancel) {
         showToast('Credential choice controls not found', 'error');
         return;
     }
 
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    modal.setAttribute('aria-hidden', 'false');
+
     const closeModal = () => {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
+        modal.setAttribute('aria-hidden', 'true');
     };
 
-    // Remove previous listeners by cloning
-    const newPremium = btnPremium.cloneNode(true);
+    // Remove previous listeners by cloning (idempotent)
+    const newPremium  = btnPremium.cloneNode(true);
     const newStandard = btnStandard.cloneNode(true);
-    const newCancel = btnCancel.cloneNode(true);
+    const newCancel   = btnCancel.cloneNode(true);
 
     btnPremium.parentNode.replaceChild(newPremium, btnPremium);
     btnStandard.parentNode.replaceChild(newStandard, btnStandard);
@@ -1142,7 +1129,6 @@ export function openCredentialChoiceModal(data) {
 
     newCancel.addEventListener('click', closeModal);
 
-    // Click outside to close
     modal.onclick = (e) => {
         if (e.target === modal) closeModal();
     };
@@ -1209,6 +1195,7 @@ export class ProfileManager {
 
     renderProfileCard(user, tierData, mode) {
         if (!this.profileContainer) return;
+
         const isBold = mode === 'BOLD_WITNESS';
         const displayName = isBold
             ? (user.displayName || 'Verified Witness')
@@ -1287,12 +1274,14 @@ export class ProfileManager {
                 }
             });
         }
+
         const voiceToggle = document.getElementById('prefVoiceObfuscation');
         if (voiceToggle) {
             voiceToggle.addEventListener('change', (e) => {
                 AppState.setPref('voiceObfuscate', e.target.checked);
             });
         }
+
         const exifToggle = document.getElementById('prefExifScrub');
         if (exifToggle) {
             exifToggle.addEventListener('change', (e) => {
@@ -1333,7 +1322,7 @@ export function initProfileModals() {
     document.getElementById('cancelEditProfileBtn')?.addEventListener('click', closeEditProfile);
     document.getElementById('closeSettingsBtn')?.addEventListener('click', closeSettings);
 
-    // Universal Backdrop Click Handler for All Modals
+    // Backdrop click for all modals
     ['profileModal', 'editProfileModal', 'settingsModal', 'credentialChoiceModal', 'mfaModal'].forEach(id => {
         const modal = document.getElementById(id);
         if (modal) {
@@ -1348,13 +1337,13 @@ export function initProfileModals() {
         }
     });
 
-    // Form Submissions & Inputs
+    // Form + Inputs
     document.getElementById('editProfileForm')?.addEventListener('submit', saveProfileChanges);
     document.getElementById('avatarInput')?.addEventListener('change', handleImagePreview);
     document.getElementById('triggerPasswordResetBtn')?.addEventListener('click', triggerPasswordReset);
     document.getElementById('settingsSignOutBtn')?.addEventListener('click', handleSignOut);
 
-    // PDF / Credential download buttons
+    // PDF / Credential buttons
     document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', () => {
         openCredentialChoiceModal(window.currentUserData);
     });
@@ -1362,11 +1351,13 @@ export function initProfileModals() {
         openCredentialChoiceModal(window.currentUserData);
     });
 
+    // Panic Clear
     document.getElementById('panicClearBtn')?.addEventListener('click', async () => {
         const confirmed = confirm(
             '⚠️ EMERGENCY CLEAR\n\nErases ALL VocalWitness data on THIS device and signs you out.\nPublic ledger is unchanged.\n\nContinue?'
         );
         if (!confirmed) return;
+
         if (typeof window.panicClearDevice === 'function') {
             await window.panicClearDevice({ redirectUrl: 'https://www.accuweather.com' });
         } else {
@@ -1377,90 +1368,73 @@ export function initProfileModals() {
     });
 
     // ====================== 2FA / MFA TOGGLE ======================
-   // ====================== 2FA / MFA TOGGLE ======================
-const toggle2FAEl = document.getElementById('toggle2FA');
-if (toggle2FAEl) {
-  try {
-    const factors = getEnrolledFactors();
-    toggle2FAEl.checked = !!(factors && factors.length);
-  } catch (err) {
-    console.warn('[profile] MFA status read failed:', err);
-  }
+    const toggle2FAEl = document.getElementById('toggle2FA');
+    if (toggle2FAEl) {
+        try {
+            const factors = getEnrolledFactors();
+            toggle2FAEl.checked = !!(factors && factors.length);
+        } catch (err) {
+            console.warn('[profile] MFA status read failed:', err);
+        }
 
-  toggle2FAEl.addEventListener('change', async (e) => {
-    const user = auth.currentUser;
-    if (!user) {
-      e.target.checked = false;
-      showToast('Sign in required for 2FA', 'error');
-      return;
+        toggle2FAEl.addEventListener('change', async (e) => {
+            const user = auth.currentUser;
+            if (!user) {
+                e.target.checked = false;
+                showToast('Sign in required for 2FA', 'error');
+                return;
+            }
+
+            if (e.target.checked) {
+                // Turning ON
+                e.target.checked = false; // stay off until success
+                try {
+                    const { totpSecret, qrCodeUrl, secretKey } = await enrollTotpMfa();
+                    window.__pendingTotpSecret = totpSecret;
+
+                    const mfaModal = document.getElementById('mfaModal');
+                    if (mfaModal) {
+                        const qrImg = document.getElementById('mfaQrImage');
+                        const secretEl = document.getElementById('mfaSecretKey');
+                        if (qrImg) {
+                            qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(qrCodeUrl);
+                        }
+                        if (secretEl) secretEl.textContent = secretKey;
+                        mfaModal.classList.remove('hidden');
+                        mfaModal.classList.add('flex');
+                        mfaModal.setAttribute('aria-hidden', 'false');
+                    } else {
+                        showToast('Add this key in your authenticator app: ' + secretKey, 'info');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    if (err.code === 'auth/requires-recent-login') {
+                        showToast('For security, please sign out and sign back in before enabling 2FA.', 'error');
+                    } else {
+                        showToast(err.message || 'Could not start 2FA setup', 'error');
+                    }
+                }
+            } else {
+                // Turning OFF
+                try {
+                    const enrolledFactors = user?.multiFactor?.enrolledFactors || [];
+                    if (enrolledFactors.length === 0) return;
+                    await unenrollMfa(enrolledFactors[0]);
+                    showToast('2FA disabled', 'success');
+                } catch (err) {
+                    console.error(err);
+                    e.target.checked = true; // revert
+                    if (err.code === 'auth/requires-recent-login') {
+                        showToast('For security, please sign out and sign back in before modifying 2FA.', 'error');
+                    } else {
+                        showToast('Could not disable 2FA', 'error');
+                    }
+                }
+            }
+        });
     }
 
-    // Turning ON
-    if (e.target.checked) {
-      e.target.checked = false; // stay off until enrollment succeeds
-      try {
-        const { totpSecret, qrCodeUrl, secretKey } = await enrollTotpMfa();
-        window.__pendingTotpSecret = totpSecret;
-
-        const mfaModal = document.getElementById('mfaModal');
-        if (mfaModal) {
-          const qrImg = document.getElementById('mfaQrImage');
-          const secretEl = document.getElementById('mfaSecretKey');
-          if (qrImg) {
-            qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(qrCodeUrl);
-          }
-          if (secretEl) secretEl.textContent = secretKey;
-          mfaModal.classList.remove('hidden');
-          mfaModal.classList.add('flex');
-          mfaModal.setAttribute('aria-hidden', 'false');
-        } else {
-          showToast('Add this key in your authenticator app: ' + secretKey, 'info');
-        }
-      } catch (err) {
-        console.error(err);
-        if (err.code === 'auth/requires-recent-login') {
-          showToast('For security, please sign out and sign back in before enabling 2FA.', 'error');
-        } else {
-          showToast(err.message || 'Could not start 2FA setup', 'error');
-        }
-      }
-    }
-    // Turning OFF
-    else {
-      try {
-        const enrolledFactors = user?.multiFactor?.enrolledFactors || [];
-        if (enrolledFactors.length === 0) {
-          // Silent – nothing to remove
-          return;
-        }
-        await unenrollMfa(enrolledFactors[0]);
-        showToast('2FA disabled', 'success');
-      } catch (err) {
-        console.error(err);
-        e.target.checked = true; // revert
-        if (err.code === 'auth/requires-recent-login') {
-          showToast('For security, please sign out and sign back in before modifying 2FA.', 'error');
-        } else {
-          showToast('Could not disable 2FA', 'error');
-        }
-      }
-    }
-  });
-}
-    document.getElementById('closeProfileModalBtn')?.addEventListener('click', closeProfile);
-    document.getElementById('closeEditProfileBtn')?.addEventListener('click', closeEditProfile);
-    document.getElementById('btn-close-edit-profile')?.addEventListener('click', closeEditProfile);
-
-    document.getElementById('profileModal')?.addEventListener('click', (e) => {
-        if (e.target.id === 'profileModal') closeProfile();
-    });
-    document.getElementById('editProfileModal')?.addEventListener('click', (e) => {
-        if (e.target.id === 'editProfileModal') closeEditProfile();
-    });
-    document.getElementById('settingsModal')?.addEventListener('click', (e) => {
-        if (e.target.id === 'settingsModal') closeSettings();
-    });
-
+    // MFA Confirm
     document.getElementById('mfaConfirmBtn')?.addEventListener('click', async () => {
         const code = (document.getElementById('mfaOtpInput')?.value || '').replace(/\D/g, '');
         const secret = window.__pendingTotpSecret;
@@ -1478,6 +1452,7 @@ if (toggle2FAEl) {
             }
             const toggle = document.getElementById('toggle2FA');
             if (toggle) toggle.checked = true;
+            showToast('2FA enabled successfully', 'success');
         } catch (err) {
             console.error(err);
             showToast(err.message || 'Invalid code — try again', 'error');
@@ -1494,6 +1469,7 @@ function bootProfileUi() {
     } catch (err) {
         console.warn('[profile] ProfileManager init skipped:', err);
     }
+
     try {
         initProfileModals();
     } catch (err) {
@@ -1510,12 +1486,10 @@ function bootProfileUi() {
 
     document.getElementById('defaultDoorSelect')?.addEventListener('change', (e) => {
         localStorage.setItem('vw_default_page', e.target.value);
-        if (typeof showToast === 'function') {
-            showToast('Default page saved', 'success');
-        }
+        showToast('Default page saved', 'success');
     });
 
-    // Updated Escape handler (closes all modals including credential + MFA)
+    // Escape key – closes all relevant modals
     document.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape') return;
 
@@ -1527,12 +1501,14 @@ function bootProfileUi() {
         if (cred) {
             cred.classList.add('hidden');
             cred.classList.remove('flex');
+            cred.setAttribute('aria-hidden', 'true');
         }
 
         const mfa = document.getElementById('mfaModal');
         if (mfa) {
             mfa.classList.add('hidden');
             mfa.classList.remove('flex');
+            mfa.setAttribute('aria-hidden', 'true');
         }
     });
 }
