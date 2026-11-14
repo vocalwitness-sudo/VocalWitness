@@ -71,6 +71,16 @@ export async function handleReaction(postId, type = 'respect', btnEl = null) {
     }
   }
 
+  // Clear other reaction buttons in the same row when selecting a new type
+  if (btnEl && !isRemoving) {
+    const row = btnEl.parentElement;
+    if (row) {
+      row.querySelectorAll('[data-action="react"], .reaction-btn').forEach((b) => {
+        if (b !== btnEl) b.classList.remove('active-reaction');
+      });
+    }
+  }
+
   try {
     if (isRemoving) {
       await deleteDoc(reactionRef);
@@ -96,13 +106,15 @@ export async function handleReaction(postId, type = 'respect', btnEl = null) {
 
     // Rollback optimistic UI
     if (btnEl) {
-      btnEl.classList.toggle('active-reaction', isRemoving);
-      const countSpan = btnEl.querySelector('span');
-      if (countSpan) {
-        const current = parseInt(countSpan.textContent || '0', 10);
-        countSpan.textContent = String(
-          Math.max(0, isRemoving ? current + 1 : current - 1)
-        );
+      btn_rollback: {
+        btnEl.classList.toggle('active-reaction', isRemoving);
+        const countSpan = btnEl.querySelector('span');
+        if (countSpan) {
+          const current = parseInt(countSpan.textContent || '0', 10);
+          countSpan.textContent = String(
+            Math.max(0, isRemoving ? current + 1 : current - 1)
+          );
+        }
       }
     }
 
