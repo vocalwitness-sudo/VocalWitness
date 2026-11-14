@@ -1109,90 +1109,90 @@ function renderSinglePostDOM(id, data, container) {
       ${corrScoreHTML || ''}
       `;
 
-      <!-- Translation Box -->
-      <div id="translate-box-${id}" class="mt-4 hidden rounded-xl border border-zinc-800 bg-zinc-950 p-3">
-        <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <select id="lang-select-${id}" 
-                  class="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-200 focus:border-emerald-500 focus:outline-none sm:w-auto">
-            <option value="English">English</option>
-            <option value="Pidgin">Nigerian Pidgin</option>
-            <option value="Hausa">Hausa</option>
-            <option value="Yoruba">Yorùbá</option>
-            <option value="Igbo">Igbo</option>
-            <option value="Swahili">Swahili</option>
-            <option value="French">French</option>
-            <option value="Spanish">Spanish</option>
-            <option value="Portuguese">Portuguese</option>
-            <option value="Arabic">Arabic</option>
-          </select>
-          <button data-action="execute-translate" data-id="${id}"
-                  class="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-emerald-500">
-            Translate Text
-          </button>
-        </div>
+   // Translation Box
+    <div id="translate-box-${id}" class="mt-4 hidden rounded-xl border border-zinc-800 bg-zinc-950 p-3">
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <select id="lang-select-${id}" 
+                class="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-200 focus:border-emerald-500 focus:outline-none sm:w-auto">
+          <option value="English">English</option>
+          <option value="Pidgin">Nigerian Pidgin</option>
+          <option value="Hausa">Hausa</option>
+          <option value="Yoruba">Yorùbá</option>
+          <option value="Igbo">Igbo</option>
+          <option value="Swahili">Swahili</option>
+          <option value="French">French</option>
+          <option value="Spanish">Spanish</option>
+          <option value="Portuguese">Portuguese</option>
+          <option value="Arabic">Arabic</option>
+        </select>
+        <button data-action="execute-translate" data-id="${id}"
+                class="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-emerald-500">
+          Translate Text
+        </button>
+      </div>
+    </div>
+
+    <div id="translated-result-${id}" 
+         class="mt-3 hidden rounded-xl border border-emerald-500/20 bg-emerald-950/30 p-3 text-xs leading-relaxed text-emerald-300">
+    </div>
+
+    {/* Action Bar */}
+    <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 pt-4">
+      <div class="flex flex-wrap items-center gap-2">
+        <button data-action="react" data-id="${id}" data-reaction="respect"
+                class="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
+          👍 <span>${reactions.respect || 0}</span>
+        </button>
+
+        <button data-action="react" data-id="${id}" data-reaction="truth"
+                class="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
+          💡 <span>${reactions.truth || 0}</span>
+        </button>
+
+        <button data-action="comment" data-id="${id}"
+                class="comment-trigger-btn flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
+          💬 <span>${data.commentsCount || 0}</span>
+        </button>
+
+        <button data-action="toggle-translate" data-id="${id}"
+                class="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
+          🌐 Translate
+        </button>
+
+        ${(() => {
+            if (isOwner) {
+                return `
+                  <button disabled
+                          class="corroborate-btn flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-500 cursor-not-allowed"
+                          title="You cannot corroborate your own report — only other witnesses can strengthen it">
+                    👁️ Your report
+                  </button>`;
+            }
+            return `
+              <button data-action="corroborate" data-id="${id}"
+                      class="corroborate-btn flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-600/15 px-3 py-1.5 text-xs font-medium text-emerald-400 transition hover:bg-emerald-600/25"
+                      title="I saw this too">
+                👁️ I witnessed this
+              </button>`;
+        })()}
+
+        ${corrScoreHTML}
       </div>
 
-      <div id="translated-result-${id}" 
-           class="mt-3 hidden rounded-xl border border-emerald-500/20 bg-emerald-950/30 p-3 text-xs leading-relaxed text-emerald-300">
+      <div class="flex items-center gap-4 text-xs">
+        ${hasPack ? renderDownloadPackButton(id) : ''}
+        <button data-action="report" data-id="${id}" class="text-red-400/80 transition hover:text-red-400">
+          Report
+        </button>
+        <button data-action="share" data-id="${id}" class="text-emerald-400 transition hover:text-emerald-300">
+          Share
+        </button>
       </div>
+    </div>
 
-      <!-- Action Bar -->
-      <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 pt-4">
-        <div class="flex flex-wrap items-center gap-2">
-          <button data-action="react" data-id="${id}" data-reaction="respect"
-                  class="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
-            👍 <span>${reactions.respect || 0}</span>
-          </button>
+    <div class="reply-input-area mt-3"></div>
+  `;
 
-          <button data-action="react" data-id="${id}" data-reaction="truth"
-                  class="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
-            💡 <span>${reactions.truth || 0}</span>
-          </button>
-
-          <button data-action="comment" data-id="${id}"
-                  class="comment-trigger-btn flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
-            💬 <span>${data.commentsCount || 0}</span>
-          </button>
-
-          <button data-action="toggle-translate" data-id="${id}"
-                  class="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
-            🌐 Translate
-          </button>
-
-          ${(() => {
-              if (isOwner) {
-                  return `
-                    <button disabled
-                            class="corroborate-btn flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-500 cursor-not-allowed"
-                            title="You cannot corroborate your own report — only other witnesses can strengthen it">
-                      👁️ Your report
-                    </button>`;
-              }
-              return `
-                <button data-action="corroborate" data-id="${id}"
-                        class="corroborate-btn flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-600/15 px-3 py-1.5 text-xs font-medium text-emerald-400 transition hover:bg-emerald-600/25"
-                        title="I saw this too">
-                  👁️ I witnessed this
-                </button>`;
-          })()}
-
-          ${corrScoreHTML}
-        </div>
-
-        <div class="flex items-center gap-4 text-xs">
-          ${hasPack ? renderDownloadPackButton(id) : ''}
-          <button data-action="report" data-id="${id}" class="text-red-400/80 transition hover:text-red-400">
-            Report
-          </button>
-          <button data-action="share" data-id="${id}" class="text-emerald-400 transition hover:text-emerald-300">
-            Share
-          </button>
-        </div>
-      </div>
-
-      <div class="reply-input-area mt-3"></div>
-    `;
-
-    applyPostDoorDecorations(postEl, data, currentUser);
-    container.appendChild(postEl);
+  applyPostDoorDecorations(postEl, data, currentUser);
+  container.appendChild(postEl);
 }
