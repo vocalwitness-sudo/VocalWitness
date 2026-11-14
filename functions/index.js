@@ -1481,6 +1481,31 @@ export const submitTestimonySecure = onCall(
       throw new HttpsError("invalid-argument", "Invalid packCoreHash.");
     }
 
+    // --- Server-side media existence check ---
+    async function assertMediaExists(url) {
+      if (!url) return;
+      try {
+        const res = await fetch(url, { method: 'HEAD', redirect: 'follow' });
+        if (!res.ok && res.status !== 403) { // 403 can happen with some private configs
+          throw new HttpsError(
+            'failed-precondition',
+            `Media not reachable (${res.status}). Upload may have failed.`
+          );
+        }
+      } catch (err) {
+        if (err instanceof HttpsError) throw err;
+        console.warn('Media HEAD check failed:', url, err?.message);
+        throw new HttpsError(
+          'failed-precondition',
+          'Media URL is not reachable. Please re-upload and try again.'
+        );
+      }
+    }
+
+    if (imageUrl) await assertMediaExists(imageUrl);
+    if (videoUrl) await assertMediaExists(videoUrl);
+    if (audioUrl) await assertMediaExists(audioUrl);
+
     // --- Load user: ban + tier + throttle ---
     const userRef = db.collection("users").doc(uid);
     const userSnap = await userRef.get();
