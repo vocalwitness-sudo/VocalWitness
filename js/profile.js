@@ -454,29 +454,6 @@ export function renderProfileUI(userData, retryCount = 0) {
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
-                <!-- Action Buttons -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
-                    ${!isCitizenCircle && !isWitness ? `
-                        <button type="button" id="btnGetVerifiedCta"
-                                class="col-span-1 sm:col-span-2 py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
-                            🛡️ Get Verified — Unlock Citizen Circle
-                        </button>
-                    ` : ''}
-
-                    <button type="button" id="btnOpenEditProfile"
-                            class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
-                        ✏️ Edit Profile
-                    </button>
-
-                    <button type="button" id="btnOpenSettings"
-                            class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2 border border-zinc-600">
-                        ⚙️ Security & Settings
-                    </button>
-
-                   
-                   
-
         content.innerHTML = html;
         attachProfileEventListeners(userData, isCitizenCircle, isWitness);
     }).catch(err => {
