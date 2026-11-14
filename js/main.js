@@ -136,6 +136,7 @@ window.toggleDataSaver = function () {
   } else {
     showSingleDataSaverToast(next ? 'Data Saver ON' : 'Data Saver OFF');
   }
+  window.getDataSaverState = getDataSaverState;
   window.dispatchEvent(new CustomEvent('data-saver-changed', {
     detail: { enabled: next }
   }));
@@ -1136,16 +1137,32 @@ async function fetchCuratedNews() {
     '🏛️ DAO governance: quadratic voting is open',
     '✅ Verify integrity without revealing identity'
   ];
+
   function restartTickerAnimation() {
-  tickerEl.style.animation = 'none';
-  void tickerEl.offsetWidth;
-  tickerEl.style.animation = 'ticker-scroll 45s linear infinite';
-  tickerEl.classList.remove('ticker-paused');
-}
+    tickerEl.style.animation = 'none';
+    void tickerEl.offsetWidth;
+    tickerEl.style.animation = 'ticker-scroll 45s linear infinite';
+    tickerEl.classList.remove('ticker-paused');
+  }
 
   function applyTicker(items) {
     let list = Array.isArray(items) ? items.filter(Boolean).map(String) : [];
     if (list.length < 4) list = fallbackItems.slice();
+    
+    const doubled = [...list, ...list];
+    tickerEl.innerHTML = doubled.map(text => `<span class="ticker-item">${text}</span>`).join('');
+    restartTickerAnimation();
+    tickerEl.dataset.loading = '0';
+  }
+
+  // Never leave "Loading latest headlines…" stuck
+  if (
+    !tickerEl.innerHTML ||
+    tickerEl.innerHTML.length < 40 ||
+    /loading latest/i.test(tickerEl.textContent || '')
+  ) {
+    applyTicker(fallbackItems);
+  }
 
     // Pad so the marquee never sits still with 1–2 lines
     while (list.length < 10) {
