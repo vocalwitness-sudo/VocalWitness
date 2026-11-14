@@ -1383,10 +1383,14 @@ export const generateZKProof = onCall(
 // Clients must NOT write authorTier / moderation / counters.
 // ======================================================
 export const submitTestimonySecure = onCall(
-  { cors: allowedOrigins },
+  { 
+    cors: allowedOrigins,
+    consumeAppCheckToken: true   // ← add this
+  },
   async (request) => {
-    if (!request.auth?.uid) {
-      throw new HttpsError("unauthenticated", "Sign in required.");
+    // Optional extra guard (matches getPresignedUrl style):
+    if (!request.app) {
+      throw new HttpsError("unauthenticated", "App Check required.");
     }
 
     const uid = request.auth.uid;
