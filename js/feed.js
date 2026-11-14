@@ -344,11 +344,14 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                     if (typeof handlePinPost === 'function') await handlePinPost(id);
                     else console.warn('handlePinPost is not defined');
                 } else if (action === 'edit') {
-                    await handleEditPost(id);
+                    if (typeof handleEditPost === 'function') await handleEditPost(id);
+                    else console.warn('handleEditPost is not defined');
                 } else if (action === 'hide') {
-                    await handleHidePost(id, false);
+                    if (typeof handleHidePost === 'function') await handleHidePost(id, false);
+                    else console.warn('handleHidePost is not defined');
                 } else if (action === 'permanent-hide') {
-                    await handleHidePost(id, true);
+                    if (typeof handleHidePost === 'function') await handleHidePost(id, true);
+                    else console.warn('handleHidePost is not defined');
                 } else if (action === 'menu') {
                     if (typeof showPostMenu === 'function') showPostMenu(id);
                     else console.warn('showPostMenu is not defined');
@@ -373,19 +376,19 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
         });
     }
     
-const q = query(
-    collection(db, 'testimonies'),
-    where('channel', '==', currentChannel),
-    orderBy('createdAt', 'desc'),
-    limit(50)
-);
+    const q = query(
+        collection(db, 'testimonies'),
+        where('channel', '==', currentChannel),
+        orderBy('createdAt', 'desc'),
+        limit(50)
+    );
 
-let previousIds = new Set();
-let isFirstSnapshot = true;
+    let previousIds = new Set();
+    let isFirstSnapshot = true;
 
-activeFeedListener = onSnapshot(q, (snapshot) => {
-    allPostsCache = [];
-    
+    activeFeedListener = onSnapshot(q, (snapshot) => {
+        allPostsCache = [];
+        
         if (snapshot.empty) {
             renderFilteredPosts([], feedContainer);
             previousIds = new Set();
@@ -401,7 +404,6 @@ activeFeedListener = onSnapshot(q, (snapshot) => {
             }
         });
 
-        // Cache order: pinned first, then newest (final display rank is signal-based)
         allPostsCache.sort((a, b) => {
             if (a.isPinned && !b.isPinned) return -1;
             if (!a.isPinned && b.isPinned) return 1;
@@ -534,15 +536,14 @@ function scorePost(post) {
     if (corr >= 1) s += 50 + Math.min(corr, 10) * 5;
     if (phoneCircle) s += 35;
     if (tier && tier !== 'citizen' && tier !== 'unverified') s += 20;
-    if (isGenesis) s -= 30; // markers stay visible but below live reports
+    if (isGenesis) s -= 30;
 
-    // Light recency (hours), capped
     const t =
         (post.createdAt && typeof post.createdAt.toMillis === 'function'
             ? post.createdAt.toMillis()
             : post.createdAt?.seconds
-              ? post.createdAt.seconds * 1000
-              : 0) || 0;
+                ? post.createdAt.seconds * 1000
+                : 0) || 0;
     if (t) {
         const ageHours = (Date.now() - t) / 3.6e6;
         s += Math.max(0, 25 - Math.min(ageHours, 25));
@@ -589,27 +590,26 @@ function applySearchAndFilter(container) {
 
         if (!matchesSearch) return false;
 
-      if (filterType === 'verified') {
-    const t = String(post.authorTier || '').toLowerCase();
-    return (
-        post.authorPhoneVerified === true ||
-        t === 'citizen_circle' ||
-        t === 'citizen-circle' ||
-        t === 'witness_circle' ||
-        t === 'witness-circle' ||
-        post.zkVerified === true
-    );
-}
-if (filterType === 'media') {
-    return !!(post.imageUrl || post.audioUrl || post.videoUrl);
-}
-if (filterType === 'corroborated') {
-    return (post.corroborationCount || 0) >= 1;
-}
-return true;
-});
+        if (filterType === 'verified') {
+            const t = String(post.authorTier || '').toLowerCase();
+            return (
+                post.authorPhoneVerified === true ||
+                t === 'citizen_circle' ||
+                t === 'citizen-circle' ||
+                t === 'witness_circle' ||
+                t === 'witness-circle' ||
+                post.zkVerified === true
+            );
+        }
+        if (filterType === 'media') {
+            return !!(post.imageUrl || post.audioUrl || post.videoUrl);
+        }
+        if (filterType === 'corroborated') {
+            return (post.corroborationCount || 0) >= 1;
+        }
+        return true;
+    });
 
-    // Signal-first ranking (media → corroboration → circle → sealed → recency)
     filtered.sort((a, b) => {
         const diff = scorePost(b) - scorePost(a);
         if (diff !== 0) return diff;
@@ -750,10 +750,10 @@ function renderFilteredPosts(posts, container) {
                 <div id="empty-feed-state" class="rounded-3xl border border-dashed border-emerald-500/30 bg-zinc-900/50 px-6 py-16 text-center">
                     <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl">🗣️</div>
                     <h4 class="text-xl font-bold text-white">The Square is ready for sealed reports</h4>
-<p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400">
-    Genesis markers hold the ledger open. Be among the first citizens to publish a real sealed report.
-    Media and seal cannot be quietly changed after publish.
-</p>
+                    <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400">
+                        Genesis markers hold the ledger open. Be among the first citizens to publish a real sealed report.
+                        Media and seal cannot be quietly changed after publish.
+                    </p>
                     <div class="mt-6 flex flex-wrap justify-center gap-2">
                       ${renderPromptButtonsHTML()}
                     </div>
@@ -786,13 +786,13 @@ function renderFilteredPosts(posts, container) {
         return;
     }
 
-    // Sparse Square: invite more reports without looking dead
     if (!hasSearch && filterType === 'all' && posts.length > 0 && posts.length < 8) {
         feedContainer.appendChild(buildPromptStripEl());
     }
 
     posts.forEach((post) => renderSinglePostDOM(post.id, post, feedContainer));
 }
+
 function renderSinglePostDOM(id, data, container) {
     const currentUser = auth.currentUser || state.currentUser;
     const isOwner = currentUser && currentUser.uid === data.authorId;
@@ -816,7 +816,6 @@ function renderSinglePostDOM(id, data, container) {
 
     let trustBadgesHTML = '';
 
-    // 1) Sealed (primary)
     const isSealed = !!(
         data.packCoreHash ||
         data.forensicHash ||
@@ -834,7 +833,6 @@ function renderSinglePostDOM(id, data, container) {
         </span>`;
     }
 
-    // 2) Media
     if (data.audioUrl || data.videoUrl || data.imageUrl) {
         const kind = data.audioUrl ? 'Voice' : data.videoUrl ? 'Video' : 'Photo';
         trustBadgesHTML += `
@@ -844,7 +842,6 @@ function renderSinglePostDOM(id, data, container) {
         </span>`;
     }
 
-    // 3) Corroborated
     const corrCountBadge = Number(data.corroborationCount || 0);
     if (corrCountBadge >= 1) {
         trustBadgesHTML += `
@@ -854,37 +851,36 @@ function renderSinglePostDOM(id, data, container) {
         </span>`;
     }
 
-// Author tier — always show one
-const tier = String(data.authorTier || '').toLowerCase();
-const phoneOk =
-  data.authorPhoneVerified === true ||
-  tier === 'citizen_circle' ||
-  tier === 'citizen-circle';
-const isWitness =
-  tier === 'witness_circle' ||
-  tier === 'witness-circle' ||
-  data.zkVerified === true;
+    const tier = String(data.authorTier || '').toLowerCase();
+    const phoneOk =
+      data.authorPhoneVerified === true ||
+      tier === 'citizen_circle' ||
+      tier === 'citizen-circle';
+    const isWitness =
+      tier === 'witness_circle' ||
+      tier === 'witness-circle' ||
+      data.zkVerified === true;
 
-if (isWitness) {
-  trustBadgesHTML += `
-    <span class="bg-violet-500/10 text-violet-300 border border-violet-500/30 text-[10px] px-2 py-0.5 rounded flex items-center gap-1"
-          title="Witness Circle — higher trust path">
-      🔐 Witness Circle
-    </span>`;
-} else if (phoneOk) {
-  trustBadgesHTML += `
-    <span class="bg-sky-500/10 text-sky-300 border border-sky-500/25 text-[10px] px-2 py-0.5 rounded flex items-center gap-1"
-          title="Phone-verified Citizen Circle">
-      📱 Citizen Circle
-    </span>`;
-} else {
-  trustBadgesHTML += `
-    <span class="bg-zinc-800 text-zinc-400 border border-zinc-700 text-[10px] px-2 py-0.5 rounded flex items-center gap-1"
-          title="Standard Citizen account">
-      👤 Citizen
-    </span>`;
-}
-    // Field Note (optional)
+    if (isWitness) {
+      trustBadgesHTML += `
+        <span class="bg-violet-500/10 text-violet-300 border border-violet-500/30 text-[10px] px-2 py-0.5 rounded flex items-center gap-1"
+              title="Witness Circle — higher trust path">
+          🔐 Witness Circle
+        </span>`;
+    } else if (phoneOk) {
+      trustBadgesHTML += `
+        <span class="bg-sky-500/10 text-sky-300 border border-sky-500/25 text-[10px] px-2 py-0.5 rounded flex items-center gap-1"
+              title="Phone-verified Citizen Circle">
+          📱 Citizen Circle
+        </span>`;
+    } else {
+      trustBadgesHTML += `
+        <span class="bg-zinc-800 text-zinc-400 border border-zinc-700 text-[10px] px-2 py-0.5 rounded flex items-center gap-1"
+              title="Standard Citizen account">
+          👤 Citizen
+        </span>`;
+    }
+
     if (data.postingStyle === 'field-note') {
         if (typeof renderFieldNoteBadge === 'function') {
             trustBadgesHTML += renderFieldNoteBadge(data);
@@ -901,264 +897,264 @@ if (isWitness) {
         }
     }
 
-  // Synthetic advisory only when flagged
-  const claim = data.mediaOriginClaim || data.originType || data.provenanceType || '';
-  const isSynthetic =
-      claim === 'synthetic' ||
-      claim === 'synthetic-ai' ||
-      data.isSynthetic === true ||
-      data.aiGenerated === true ||
-      (data.syntheticScore != null && Number(data.syntheticScore) >= 70);
-  if (isSynthetic) {
-      trustBadgesHTML += `
-      <span class="bg-amber-500/10 text-amber-300 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded flex items-center gap-1"
-          title="Synthetic / AI-assisted advisory">🤖 Advisory</span>`;
-  }
+    const claim = data.mediaOriginClaim || data.originType || data.provenanceType || '';
+    const isSynthetic =
+        claim === 'synthetic' ||
+        claim === 'synthetic-ai' ||
+        data.isSynthetic === true ||
+        data.aiGenerated === true ||
+        (data.syntheticScore != null && Number(data.syntheticScore) >= 70);
+    if (isSynthetic) {
+        trustBadgesHTML += `
+        <span class="bg-amber-500/10 text-amber-300 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded flex items-center gap-1"
+            title="Synthetic / AI-assisted advisory">🤖 Advisory</span>`;
+    }
 
-  const trustContainer = trustBadgesHTML
-      ? `<div class="flex flex-wrap gap-1 mt-1">${trustBadgesHTML}</div>`
-      : '';
+    const trustContainer = trustBadgesHTML
+        ? `<div class="flex flex-wrap gap-1 mt-1">${trustBadgesHTML}</div>`
+        : '';
 
-  const reactions = data.reactions || { respect: 0, truth: 0, solidarity: 0, impact: 0 };
-  const hasPack = Boolean(
-      data.evidencePack ||
-      data.packCoreHash ||
-      data.imageHash ||
-      data.audioHash ||
-      data.videoHash ||
-      data.forensicHash
-  );
+    const reactions = data.reactions || { respect: 0, truth: 0, solidarity: 0, impact: 0 };
+    const hasPack = Boolean(
+        data.evidencePack ||
+        data.packCoreHash ||
+        data.imageHash ||
+        data.audioHash ||
+        data.videoHash ||
+        data.forensicHash
+    );
 
-  let mediaHTML = '';
-  if (data.videoUrl) {
-      mediaHTML = `
-          <div class="mt-5 rounded-2xl overflow-hidden border border-zinc-700 bg-black">
-              <video controls playsinline class="w-full max-h-96 object-cover" preload="metadata"
-                      src="${escapeHTML(data.videoUrl)}"></video>
-          </div>`;
-  } else if (data.imageUrl) {
-      mediaHTML = `
-          <div class="mt-5 rounded-2xl overflow-hidden border border-zinc-700 bg-black">
-            <img src="${escapeHTML(data.imageUrl)}"
-                 class="w-full max-h-96 object-cover"
-                 alt="Evidence"
-                 loading="lazy"
-                 onerror="this.parentElement.innerHTML='<div class=\\'p-6 text-center text-zinc-500 text-sm\\'>Media unavailable</div>'">
-          </div>`;
-  } else if (data.audioUrl) {
-      let safeAudioUrl = data.audioUrl;
-      if (!safeAudioUrl.includes('alt=media')) {
-          safeAudioUrl += safeAudioUrl.includes('?') ? '&alt=media' : '?alt=media';
-      }
-      mediaHTML = `
-          <div class="mt-5 bg-zinc-900 rounded-2xl p-4 border border-zinc-700">
-              <audio controls preload="metadata" class="w-full" crossorigin="anonymous">
-                  <source src="${escapeHTML(safeAudioUrl)}" type="audio/webm">
-                  <source src="${escapeHTML(safeAudioUrl)}" type="audio/ogg">
-                  Your browser does not support the audio element.
-              </audio>
-          </div>`;
-  }
+    let mediaHTML = '';
+    if (data.videoUrl) {
+        mediaHTML = `
+            <div class="mt-5 rounded-2xl overflow-hidden border border-zinc-700 bg-black">
+                <video controls playsinline class="w-full max-h-96 object-cover" preload="metadata"
+                        src="${escapeHTML(data.videoUrl)}"></video>
+            </div>`;
+    } else if (data.imageUrl) {
+        mediaHTML = `
+            <div class="mt-5 rounded-2xl overflow-hidden border border-zinc-700 bg-black">
+              <img src="${escapeHTML(data.imageUrl)}"
+                   class="w-full max-h-96 object-cover"
+                   alt="Evidence"
+                   loading="lazy"
+                   onerror="this.parentElement.innerHTML='<div class=\\'p-6 text-center text-zinc-500 text-sm\\'>Media unavailable</div>'">
+            </div>`;
+    } else if (data.audioUrl) {
+        let safeAudioUrl = data.audioUrl;
+        if (!safeAudioUrl.includes('alt=media')) {
+            safeAudioUrl += safeAudioUrl.includes('?') ? '&alt=media' : '?alt=media';
+        }
+        mediaHTML = `
+            <div class="mt-5 bg-zinc-900 rounded-2xl p-4 border border-zinc-700">
+                <audio controls preload="metadata" class="w-full" crossorigin="anonymous">
+                    <source src="${escapeHTML(safeAudioUrl)}" type="audio/webm">
+                    <source src="${escapeHTML(safeAudioUrl)}" type="audio/ogg">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>`;
+    }
 
-  let formattedDate = "Just now";
-  if (data.createdAt?.toDate) formattedDate = data.createdAt.toDate().toLocaleString();
-  else if (data.createdAt) formattedDate = new Date(data.createdAt).toLocaleString();
+    let formattedDate = "Just now";
+    if (data.createdAt?.toDate) formattedDate = data.createdAt.toDate().toLocaleString();
+    else if (data.createdAt) formattedDate = new Date(data.createdAt).toLocaleString();
 
-  const authorDisplayName = escapeHTML(
-      data.author ||
-      (data.authorId ? `Citizen` : 'Citizen')
-  );
+    const authorDisplayName = escapeHTML(
+        data.author ||
+        (data.authorId ? `Citizen` : 'Citizen')
+    );
 
-  let ownerControlsHTML = '';
-  if (isOwner) {
-      ownerControlsHTML = `
-          <button data-action="edit" data-id="${id}" title="Edit Report"
-                  class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-emerald-400 transition text-xs">
-            ✏️
-          </button>
-          <button data-action="hide" data-id="${id}" title="Hide from Square"
-                  class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition text-xs">
-            👁️‍🗨️
-          </button>
-          <button data-action="permanent-hide" data-id="${id}" title="Permanently Hide"
-                  class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-red-400 transition text-xs">
-            🔒
-          </button>
-      `;
-  } else if (isStewardUserCache) {
-      ownerControlsHTML = `
-          <button data-action="hide" data-id="${id}" title="Hide (Steward)"
-                  class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition text-xs">
-            👁️‍🗨️
-          </button>
-      `;
-  }
+    let ownerControlsHTML = '';
+    if (isOwner) {
+        ownerControlsHTML = `
+            <button data-action="edit" data-id="${id}" title="Edit Report"
+                    class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-emerald-400 transition text-xs">
+              ✏️
+            </button>
+            <button data-action="hide" data-id="${id}" title="Hide from Square"
+                    class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition text-xs">
+              👁️‍🗨️
+            </button>
+            <button data-action="permanent-hide" data-id="${id}" title="Permanently Hide"
+                    class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-red-400 transition text-xs">
+              🔒
+            </button>
+        `;
+    } else if (isStewardUserCache) {
+        ownerControlsHTML = `
+            <button data-action="hide" data-id="${id}" title="Hide (Steward)"
+                    class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition text-xs">
+              👁️‍🗨️
+            </button>
+        `;
+    }
 
-  const corrCount = data.corroborationCount || 0;
-  const corrScoreHTML = corrCount > 0
-      ? `<span class="corr-score text-[11px] text-emerald-400/90 font-medium tracking-tight">
-             Witnessed by ${corrCount} Citizen${corrCount === 1 ? '' : 's'}
-         </span>`
-      : '';
+    const corrCount = data.corroborationCount || 0;
+    const corrScoreHTML = corrCount > 0
+        ? `<span class="corr-score text-[11px] text-emerald-400/90 font-medium tracking-tight">
+               Witnessed by ${corrCount} Citizen${corrCount === 1 ? '' : 's'}
+           </span>`
+        : '';
 
-  postEl.innerHTML = `
-    <!-- Header -->
-    <div class="flex items-start justify-between gap-3">
-      <div class="flex items-center gap-3 min-w-0">
-        ${typeof renderTierCircle === 'function'  
-          ? renderTierCircle(data.authorTier || 'citizen', data.reputation || 0)  
-          : '<div class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800 text-lg">👤</div>'}
-        
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-2">
-            <p class="font-semibold text-zinc-100 truncate">${authorDisplayName}</p>
-            ${pinnedBadge}
+    postEl.innerHTML = `
+      <!-- Header -->
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          ${typeof renderTierCircle === 'function'  
+            ? renderTierCircle(data.authorTier || 'citizen', data.reputation || 0)  
+            : '<div class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800 text-lg">👤</div>'}
+          
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <p class="font-semibold text-zinc-100 truncate">${authorDisplayName}</p>
+              ${pinnedBadge}
+            </div>
+            <p class="text-xs text-zinc-500 mt-0.5">
+              ${formattedDate}${getEditedLabel(data)}
+            </p>
           </div>
-          <p class="text-xs text-zinc-500 mt-0.5">
-            ${formattedDate}${getEditedLabel(data)}
-          </p>
+        </div>
+
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button data-action="pin" data-id="${id}" title="Pin Post"  
+                  class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition">
+            📌
+          </button>
+          ${ownerControlsHTML}
+          <button data-action="menu" data-id="${id}"  
+                  class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-white transition text-lg leading-none">
+            ⋯
+          </button>
         </div>
       </div>
 
-      <div class="flex items-center gap-1.5 shrink-0">
-        <button data-action="pin" data-id="${id}" title="Pin Post"  
-                class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition">
-          📌
-        </button>
-        ${ownerControlsHTML}
-        <button data-action="menu" data-id="${id}"  
-                class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-white transition text-lg leading-none">
-          ⋯
-        </button>
-      </div>
-    </div>
+      <!-- Trust Badges -->
+      ${trustContainer ? `
+        <div class="mt-3 flex flex-wrap gap-1.5">
+          ${trustBadgesHTML}
+        </div>
+      ` : ''}
 
-    <!-- Trust Badges -->
-    ${trustContainer ? `
-      <div class="mt-3 flex flex-wrap gap-1.5">
-        ${trustBadgesHTML}
-      </div>
-    ` : ''}
+      <!-- Title -->
+      <h3 class="mt-4 text-lg font-bold text-white leading-snug">
+        ${escapeHTML(headline)}
+      </h3>
 
-    <!-- Title -->
-    <h3 class="mt-4 text-lg font-bold text-white leading-snug">
-      ${escapeHTML(headline)}
-    </h3>
+      <!-- Content (collapsed on home feed; Read more expands) -->
+      ${data.content ? (() => {
+        const full = String(data.content);
+        const LIMIT = 180;
+        const needsMore = full.length > LIMIT;
+        const preview = needsMore
+          ? full.slice(0, LIMIT).replace(/\s+\S*$/, '') + '…'
+          : full;
+        return `
+        <div class="mt-2">
+          <p id="post-text-${id}"
+             class="text-sm text-zinc-300 leading-relaxed whitespace-pre-line"
+             data-full="${escapeHTML(full).replace(/"/g, '&quot;')}"
+             data-preview="${escapeHTML(preview).replace(/"/g, '&quot;')}"
+             data-expanded="false">
+            ${escapeHTML(preview)}
+          </p>
+          ${needsMore ? `
+            <button type="button"
+                    data-action="toggle-more"
+                    data-id="${id}"
+                    class="mt-1.5 text-xs font-medium text-emerald-400 hover:text-emerald-300 transition">
+              Read more
+            </button>
+          ` : ''}
+        </div>`;
+      })() : ''}
 
-    <!-- Content (collapsed on feed; Read more expands) -->
-    ${data.content ? (() => {
-      const full = String(data.content);
-      const LIMIT = 180;
-      const needsMore = full.length > LIMIT;
-      const preview = needsMore
-        ? full.slice(0, LIMIT).replace(/\s+\S*$/, '') + '…'
-        : full;
-      return `
-      <div class="mt-2">
-        <p id="post-text-${id}"
-           class="text-sm text-zinc-300 leading-relaxed whitespace-pre-line"
-           data-full="${escapeHTML(full).replace(/"/g, '&quot;')}"
-           data-preview="${escapeHTML(preview).replace(/"/g, '&quot;')}"
-           data-expanded="false">
-          ${escapeHTML(preview)}
-        </p>
-        ${needsMore ? `
-          <button type="button"
-                  data-action="toggle-more"
-                  data-id="${id}"
-                  class="mt-1.5 text-xs font-medium text-emerald-400 hover:text-emerald-300 transition">
-            Read more
+      <!-- Media -->
+      ${mediaHTML}
+
+      <!-- Translation Box -->
+      <div id="translate-box-${id}" class="mt-4 hidden rounded-xl border border-zinc-800 bg-zinc-950 p-3">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <select id="lang-select-${id}" 
+                  class="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-200 focus:border-emerald-500 focus:outline-none sm:w-auto">
+            <option value="English">English</option>
+            <option value="Pidgin">Nigerian Pidgin</option>
+            <option value="Hausa">Hausa</option>
+            <option value="Yoruba">Yorùbá</option>
+            <option value="Igbo">Igbo</option>
+            <option value="Swahili">Swahili</option>
+            <option value="French">French</option>
+            <option value="Spanish">Spanish</option>
+            <option value="Portuguese">Portuguese</option>
+            <option value="Arabic">Arabic</option>
+          </select>
+          <button data-action="execute-translate" data-id="${id}"
+                  class="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-emerald-500">
+            Translate Text
           </button>
-        ` : ''}
-      </div>`;
-    })() : ''}
-
-    <!-- Media -->
-    ${mediaHTML}
-
-    <!-- Translation Box -->
-    <div id="translate-box-${id}" class="mt-4 hidden rounded-xl border border-zinc-800 bg-zinc-950 p-3">
-      <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <select id="lang-select-${id}" 
-                class="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-200 focus:border-emerald-500 focus:outline-none sm:w-auto">
-          <option value="English">English</option>
-          <option value="Pidgin">Nigerian Pidgin</option>
-          <option value="Hausa">Hausa</option>
-          <option value="Yoruba">Yorùbá</option>
-          <option value="Igbo">Igbo</option>
-          <option value="Swahili">Swahili</option>
-          <option value="French">French</option>
-          <option value="Spanish">Spanish</option>
-          <option value="Portuguese">Portuguese</option>
-          <option value="Arabic">Arabic</option>
-        </select>
-        <button data-action="execute-translate" data-id="${id}"
-                class="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-emerald-500">
-          Translate Text
-        </button>
-      </div>
-    </div>
-
-    <div id="translated-result-${id}" 
-         class="mt-3 hidden rounded-xl border border-emerald-500/20 bg-emerald-950/30 p-3 text-xs leading-relaxed text-emerald-300">
-    </div>
-
-    <!-- Action Bar -->
-    <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 pt-4">
-      <div class="flex flex-wrap items-center gap-2">
-        <button data-action="react" data-id="${id}" data-reaction="respect"
-                class="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
-          👍 <span>${reactions.respect || 0}</span>
-        </button>
-
-        <button data-action="react" data-id="${id}" data-reaction="truth"
-                class="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
-          💡 <span>${reactions.truth || 0}</span>
-        </button>
-
-        <button data-action="comment" data-id="${id}"
-                class="comment-trigger-btn flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
-          💬 <span>${data.commentsCount || 0}</span>
-        </button>
-
-        <button data-action="toggle-translate" data-id="${id}"
-                class="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
-          🌐 Translate
-        </button>
-
-        ${(() => {
-            if (isOwner) {
-                return `
-                  <button disabled
-                          class="corroborate-btn flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-500 cursor-not-allowed"
-                          title="You cannot corroborate your own report — only other witnesses can strengthen it">
-                    👁️ Your report
-                  </button>`;
-            }
-            return `
-              <button data-action="corroborate" data-id="${id}"
-                      class="corroborate-btn flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-600/15 px-3 py-1.5 text-xs font-medium text-emerald-400 transition hover:bg-emerald-600/25"
-                      title="I saw this too">
-                👁️ I witnessed this
-              </button>`;
-        })()}
-
-        ${corrScoreHTML}
+        </div>
       </div>
 
-      <div class="flex items-center gap-4 text-xs">
-        ${hasPack ? renderDownloadPackButton(id) : ''}
-        <button data-action="report" data-id="${id}" class="text-red-400/80 transition hover:text-red-400">
-          Report
-        </button>
-        <button data-action="share" data-id="${id}" class="text-emerald-400 transition hover:text-emerald-300">
-          Share
-        </button>
+      <div id="translated-result-${id}" 
+           class="mt-3 hidden rounded-xl border border-emerald-500/20 bg-emerald-950/30 p-3 text-xs leading-relaxed text-emerald-300">
       </div>
-    </div>
 
-    <div class="reply-input-area mt-3"></div>
-  `;
+      <!-- Action Bar -->
+      <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 pt-4">
+        <div class="flex flex-wrap items-center gap-2">
+          <button data-action="react" data-id="${id}" data-reaction="respect"
+                  class="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
+            👍 <span>${reactions.respect || 0}</span>
+          </button>
 
-  applyPostDoorDecorations(postEl, data, currentUser);
-  container.appendChild(postEl);
+          <button data-action="react" data-id="${id}" data-reaction="truth"
+                  class="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
+            💡 <span>${reactions.truth || 0}</span>
+          </button>
+
+          <button data-action="comment" data-id="${id}"
+                  class="comment-trigger-btn flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
+            💬 <span>${data.commentsCount || 0}</span>
+          </button>
+
+          <button data-action="toggle-translate" data-id="${id}"
+                  class="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
+            🌐 Translate
+          </button>
+
+          ${(() => {
+              if (isOwner) {
+                  return `
+                    <button disabled
+                            class="corroborate-btn flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-500 cursor-not-allowed"
+                            title="You cannot corroborate your own report — only other witnesses can strengthen it">
+                      👁️ Your report
+                    </button>`;
+              }
+              return `
+                <button data-action="corroborate" data-id="${id}"
+                        class="corroborate-btn flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-600/15 px-3 py-1.5 text-xs font-medium text-emerald-400 transition hover:bg-emerald-600/25"
+                        title="I saw this too">
+                  👁️ I witnessed this
+                </button>`;
+          })()}
+
+          ${corrScoreHTML}
+        </div>
+
+        <div class="flex items-center gap-4 text-xs">
+          ${hasPack ? renderDownloadPackButton(id) : ''}
+          <button data-action="report" data-id="${id}" class="text-red-400/80 transition hover:text-red-400">
+            Report
+          </button>
+          <button data-action="share" data-id="${id}" class="text-emerald-400 transition hover:text-emerald-300">
+            Share
+          </button>
+        </div>
+      </div>
+
+      <div class="reply-input-area mt-3"></div>
+    `;
+
+    applyPostDoorDecorations(postEl, data, currentUser);
+    container.appendChild(postEl);
+}
