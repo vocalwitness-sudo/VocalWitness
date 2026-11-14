@@ -127,15 +127,15 @@ export async function submitTestimony({
   };
 
   // ===== UNIFIED MEDIA SEAL =====
-  if (imageFile) {
-    showToast("🛡️ Sealing image...", "info");
-    const up = await processAndUploadMedia(imageFile, folder, reportProgress);
-    imageUrl = up?.publicUrl;
-    imageHash = up?.hash;
-    if (!imageUrl || !imageHash) {
-      throw new Error("Image upload or hash failed. Seal aborted.");
-    }
+ if (imageFile) {
+  showToast("🛡️ Sealing image...", "info");
+  const up = await processAndUploadMedia(imageFile, folder, reportProgress);
+  if (!up?.publicUrl || !up?.hash) {
+    throw new Error("Image upload or hash failed. Seal aborted.");
   }
+  imageUrl = up.publicUrl;
+  imageHash = up.hash;
+}
 
   if (videoFile) {
     showToast("🛡️ Sealing video...", "info");
@@ -213,6 +213,13 @@ export async function submitTestimony({
   // Determine phone verification status to pass to server
   const token = await user.getIdTokenResult().catch(() => ({ claims: {} }));
   const authorPhoneVerified = phoneOk;
+
+  // Final integrity gate – never call server with broken media
+if ((imageFile && (!imageUrl || !imageHash)) ||
+    (videoFile && (!videoUrl || !videoHash)) ||
+    (audioFile && (!audioUrl || !audioHash))) {
+  throw new Error("Media seal incomplete. Aborting submit.");
+}
 
   let response;
   try {
