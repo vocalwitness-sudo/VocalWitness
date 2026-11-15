@@ -1,4 +1,6 @@
 // js/circle.js - My Circle / Trusted Voices + Witness People Grid
+// Batch 2: empty people grid + richer circleEmptyMessage + CTAs
+
 import { db, auth } from './firebase-config.js';
 import {
   doc,
@@ -177,7 +179,55 @@ export async function untrustUser(targetUid) {
 }
 
 export function circleEmptyMessage() {
-  return 'Follow voices you trust to build your high-signal feed.';
+  return 'Follow voices you trust to build your high-signal feed. Find verified people on the Witness tab.';
+}
+
+/**
+ * HTML for empty My Circle list (optional use by whoever paints #circle-list)
+ */
+export function circleEmptyHTML() {
+  return `
+    <div class="rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/40 px-6 py-14 text-center">
+      <p class="text-4xl mb-3">👥</p>
+      <p class="font-medium text-zinc-300">Your circle is empty</p>
+      <p class="mt-2 text-sm text-zinc-500 max-w-sm mx-auto">${circleEmptyMessage()}</p>
+      <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <button type="button" id="circle-empty-witness"
+          class="inline-flex items-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-sm font-semibold text-amber-300 hover:bg-amber-500/20 active:scale-95">
+          🛡️ Find verified voices
+        </button>
+        <button type="button" id="circle-empty-phone"
+          class="inline-flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm font-medium text-zinc-200 hover:bg-zinc-700 active:scale-95">
+          📱 Verify phone
+        </button>
+      </div>
+    </div>`;
+}
+
+export function wireCircleEmptyCTAs(root = document) {
+  root.querySelector('#circle-empty-witness')?.addEventListener('click', () => {
+    if (typeof window.switchTab === 'function') window.switchTab('witness');
+  });
+  root.querySelector('#circle-empty-phone')?.addEventListener('click', () => {
+    const btn =
+      document.getElementById('startPhoneVerificationBtn') ||
+      document.getElementById('phone-verify-btn') ||
+      document.querySelector('[data-action="phone-verify"]');
+    if (btn) btn.click();
+    else if (typeof window.showAuthModal === 'function' && !auth.currentUser) {
+      window.showAuthModal();
+    }
+  });
+}
+
+/**
+ * Paint #circle-list empty or with message. Call after loadCircle when list renderer is thin.
+ */
+export function renderCircleListEmpty() {
+  const list = document.getElementById('circle-list');
+  if (!list) return;
+  list.innerHTML = circleEmptyHTML();
+  wireCircleEmptyCTAs(list);
 }
 
 // ====================== WITNESS PEOPLE GRID ======================
@@ -200,9 +250,32 @@ function renderWitnessGrid(people) {
     grid.innerHTML = `
       <div class="col-span-full py-16 text-center text-zinc-500">
         <p class="text-4xl mb-3">🛡️</p>
-        <p>No verified voices found yet.</p>
-        <p class="text-sm mt-1">Be the first to complete Higher Trust verification.</p>
+        <p class="font-medium text-zinc-300">No verified voices found yet.</p>
+        <p class="text-sm mt-1 text-zinc-500">Be the first to complete Higher Trust or phone verification.</p>
+        <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button type="button" id="people-empty-phone"
+            class="inline-flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/20 active:scale-95">
+            📱 Verify phone → Citizen Circle
+          </button>
+          <button type="button" id="people-empty-square"
+            class="inline-flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm font-medium text-zinc-200 hover:bg-zinc-700 active:scale-95">
+            🗣️ Go to the Square
+          </button>
+        </div>
       </div>`;
+
+    document.getElementById('people-empty-phone')?.addEventListener('click', () => {
+      const btn =
+        document.getElementById('startPhoneVerificationBtn') ||
+        document.getElementById('phone-verify-btn');
+      if (btn) btn.click();
+      else if (typeof window.showAuthModal === 'function' && !auth.currentUser) {
+        window.showAuthModal();
+      }
+    });
+    document.getElementById('people-empty-square')?.addEventListener('click', () => {
+      if (typeof window.switchTab === 'function') window.switchTab('square');
+    });
     return;
   }
 
@@ -254,7 +327,6 @@ function renderWitnessGrid(people) {
     )
     .join('');
 
-  // Wire follow/trust once per render
   grid.querySelectorAll('[data-action="follow"]').forEach((btn) => {
     btn.addEventListener('click', async (e) => {
       e.preventDefault();
@@ -311,7 +383,6 @@ export async function loadVerifiedWitnesses(filter = 'all') {
       <p>Loading verified voices…</p>
     </div>`;
 
-  // Ensure circle cache is warm so Follow/Trust labels are accurate
   try {
     await loadCircle();
   } catch (_) {}
@@ -376,10 +447,10 @@ export async function loadVerifiedWitnesses(filter = 'all') {
   }
 }
 
-// Optional globals for HTML onclick / other modules
 window.loadCircle = loadCircle;
 window.followUser = followUser;
 window.unfollowUser = unfollowUser;
 window.trustUser = trustUser;
 window.untrustUser = untrustUser;
 window.loadVerifiedWitnesses = loadVerifiedWitnesses;
+window.renderCircleListEmpty = renderCircleListEmpty;
