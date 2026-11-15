@@ -28,11 +28,6 @@ export function wireIndexPage() {
   if (window.__vwIndexWired) return;
   window.__vwIndexWired = true;
 
-  // ---------- Data Saver ----------
-  on(document.getElementById('data-saver-btn'), 'click', () => window.toggleDataSaver?.());
-  on(document.getElementById('data-saver-btn-mobile'), 'click', () => window.toggleDataSaver?.());
-  on(document.getElementById('footer-data-saver-btn'), 'click', () => window.toggleDataSaver?.());
-
   // ---------- Support ----------
   // Prefer openSupportModal (defined in main.js)
   const openSupport = () => {
