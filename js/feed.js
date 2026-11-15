@@ -240,7 +240,6 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
         <div class="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent"></div>
         <p class="text-sm">Loading reports from the Square...</p>
     </div>`;
-
     window.addEventListener('feed-set-sort', (e) => {
         const sort = e.detail?.sort;
         if (!sort) return;
@@ -648,6 +647,11 @@ const SQUARE_PROMPTS = [
     },
 ];
 
+window.addEventListener('data-saver-changed', () => {
+  const el = document.getElementById('testimonies-feed') || document.getElementById('feed-container');
+  if (el && typeof applySearchAndFilter === 'function') applySearchAndFilter(el);
+});
+
 function fillComposerFromPrompt(text) {
     const input = document.getElementById('mainInput');
     if (input) {
@@ -933,8 +937,10 @@ function renderSinglePostDOM(id, data, container) {
     if (data.videoUrl) {
         mediaHTML = `
             <div class="mt-5 rounded-2xl overflow-hidden border border-zinc-700 bg-black">
-                <video controls playsinline class="w-full max-h-96 object-cover" preload="metadata"
-                        src="${escapeHTML(data.videoUrl)}"></video>
+                <video controls playsinline
+       class="w-full object-cover ${dataSaverOn ? 'max-h-56' : 'max-h-96'}"
+       preload="${dataSaverOn ? 'none' : 'metadata'}"
+       src="${escapeHTML(data.videoUrl)}"></video>
             </div>`;
     } else if (data.imageUrl) {
         mediaHTML = `
@@ -1074,7 +1080,8 @@ function renderSinglePostDOM(id, data, container) {
 
       <!-- Media -->
       ${mediaHTML}
-
+      const dataSaverOn = localStorage.getItem('vw_data_saver') === 'true';
+      
       <!-- Translation Box -->
       <div id="translate-box-${id}" class="mt-4 hidden rounded-xl border border-zinc-800 bg-zinc-950 p-3">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
