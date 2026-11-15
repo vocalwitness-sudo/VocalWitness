@@ -1,6 +1,6 @@
 // js/witness-tab.js
 // Witness Voice tab — sealed higher-trust reports + citizen reports section
-// Clean version (People sub-tab removed)
+// Batch 2: empty states include clear CTAs (no passive “waiting only”)
 
 import { db } from './firebase-config.js';
 import {
@@ -32,6 +32,27 @@ function formatDate(data) {
   if (data?.timestamp?.toDate) return data.timestamp.toDate().toLocaleString();
   if (typeof data?.createdAt === 'string') return new Date(data.createdAt).toLocaleString();
   return 'N/A';
+}
+
+/** Focus Square composer / publish path */
+function openPublishComposer() {
+  if (typeof window.switchTab === 'function') {
+    try {
+      window.switchTab('square');
+    } catch (_) {}
+  }
+  if (typeof window.expandComposer === 'function') {
+    try {
+      window.expandComposer();
+    } catch (_) {}
+  }
+  const input = document.getElementById('mainInput');
+  if (input) {
+    input.focus();
+    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } else {
+    document.getElementById('btn-voice')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 }
 
 /**
@@ -93,21 +114,12 @@ export function loadHigherTrustReports() {
     witnessReportsUnsub = null;
   }
 
-  // Primary query – adjust field names if your publish path is different
   const q = query(
     collection(db, 'testimonies'),
     where('channel', 'in', ['witness-voice', 'witness_voice']),
     orderBy('createdAt', 'desc'),
     limit(30)
   );
-
-  // Alternative if you currently use isZkVerified:
-  // const q = query(
-  //   collection(db, 'testimonies'),
-  //   where('isZkVerified', '==', true),
-  //   orderBy('createdAt', 'desc'),
-  //   limit(30)
-  // );
 
   witnessReportsUnsub = onSnapshot(
     q,
@@ -116,11 +128,26 @@ export function loadHigherTrustReports() {
         feed.innerHTML = `
           <div class="py-14 text-center text-zinc-500">
             <p class="text-4xl mb-3">🛡️</p>
-            <p class="font-medium">No Witness Voice reports in the field yet.</p>
-            <p class="text-xs text-zinc-600 mt-1">
+            <p class="font-medium text-zinc-300">No Witness Voice reports in the field yet.</p>
+            <p class="text-xs text-zinc-600 mt-1 max-w-sm mx-auto">
               Be among the first to publish a cryptographically sealed observation.
             </p>
+            <button type="button" id="witness-empty-publish"
+              class="mt-5 inline-flex items-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/15 px-4 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-500/25 active:scale-95">
+              🔬 Publish Witness Voice
+            </button>
+            <button type="button" id="witness-empty-square"
+              class="mt-3 block mx-auto text-xs text-zinc-500 underline hover:text-zinc-300">
+              Or speak as a Citizen on the Square
+            </button>
           </div>`;
+
+        document.getElementById('witness-empty-publish')?.addEventListener('click', () => {
+          openPublishComposer();
+        });
+        document.getElementById('witness-empty-square')?.addEventListener('click', () => {
+          openPublishComposer();
+        });
         return;
       }
 
@@ -178,8 +205,15 @@ export function loadCitizenReports() {
         feed.innerHTML = `
           <div class="py-10 text-center text-zinc-500">
             <p class="text-3xl mb-2">🗣️</p>
-            <p class="text-sm">No citizen reports yet.</p>
+            <p class="text-sm text-zinc-400">No citizen reports yet.</p>
+            <button type="button" id="citizen-empty-publish"
+              class="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-bold text-black hover:bg-emerald-400 active:scale-95">
+              Speak on the Square
+            </button>
           </div>`;
+        document.getElementById('citizen-empty-publish')?.addEventListener('click', () => {
+          openPublishComposer();
+        });
         return;
       }
 
