@@ -1050,33 +1050,36 @@ function renderSinglePostDOM(id, data, container) {
         ${escapeHTML(headline)}
       </h3>
 
-      <!-- Content (collapsed on home feed; Read more expands) -->
-      ${data.content ? (() => {
-        const full = String(data.content);
-        const LIMIT = 180;
-        const needsMore = full.length > LIMIT;
-        const preview = needsMore
-          ? full.slice(0, LIMIT).replace(/\s+\S*$/, '') + '…'
-          : full;
-        return `
-        <div class="mt-2">
-          <p id="post-text-${id}"
-             class="text-sm text-zinc-300 leading-relaxed whitespace-pre-line"
-             data-full="${escapeHTML(full).replace(/"/g, '&quot;')}"
-             data-preview="${escapeHTML(preview).replace(/"/g, '&quot;')}"
-             data-expanded="false">
-            ${escapeHTML(preview)}
-          </p>
-          ${needsMore ? `
-            <button type="button"
-                    data-action="toggle-more"
-                    data-id="${id}"
-                    class="mt-1.5 text-xs font-medium text-emerald-400 hover:text-emerald-300 transition">
-              Read more
-            </button>
-          ` : ''}
-        </div>`;
-      })() : ''}
+   <!-- Content (collapsed on home feed; Read more expands) -->
+      ${(() => {
+          const rawBody = String(data.content || data.text || data.body || '');
+          const LIMIT = 280;
+          const needsMore = rawBody.length > LIMIT;
+          const preview = needsMore
+              ? rawBody.slice(0, LIMIT).replace(/\s+\S*$/, '') + '…'
+              : rawBody;
+          
+          if (!rawBody) return '';
+
+          return `
+          <div class="mt-2">
+            <p id="post-text-${id}"
+               class="text-sm text-zinc-300 leading-relaxed whitespace-pre-line"
+               data-full="${escapeHTML(rawBody).replace(/"/g, '&quot;')}"
+               data-preview="${escapeHTML(preview).replace(/"/g, '&quot;')}"
+               data-expanded="false">
+              ${escapeHTML(preview)}
+            </p>
+            ${needsMore ? `
+              <button type="button"
+                      data-action="toggle-more"
+                      data-id="${id}"
+                      class="mt-1.5 text-xs font-medium text-emerald-400 hover:text-emerald-300 transition">
+                Read more
+              </button>
+            ` : ''}
+          </div>`;
+      })()}
 
       <!-- Media -->
       ${mediaHTML}
