@@ -330,10 +330,13 @@ async function handleCommentSubmission() {
     }
 
     const submitBtn = document.getElementById('submitCommentBtn');
-    submitBtn.disabled = true;
+    if (submitBtn) submitBtn.disabled = true;
 
     try {
-        const userTierData = await getUserTierData(user.uid).catch(() => ({ tier: 'citizen', reputation: 0 }));
+        const userTierData = await getUserTierData(user.uid).catch(() => ({
+            tier: 'citizen',
+            reputation: 0
+        }));
 
         const commentData = {
             postId: currentPostId,
@@ -349,28 +352,37 @@ async function handleCommentSubmission() {
             createdAt: serverTimestamp()
         };
 
-        // Transaction: create comment + increment counter safely
-       await addDoc(
-  collection(db, "testimonies", currentPostId, "comments"),
-  commentData
-);
-        await deleteDoc(doc(db, "testimonies", currentPostId, "comments", commentId));
+        // Safe transaction: create comment + increment counter
+        await runTransaction(db, async (transaction) => {
+            const commentRef = doc(collection(db, "testimonies", currentPostId, "comments"));
+            transaction.set(commentRef, commentData);
 
-        await logAuditEvent("COMMENT_ADDED", { postId: currentPostId, isAnonymous: commentData.isAnonymous });
+            const testimonyRef = doc(db, "testimonies", currentPostId);
+            transaction.update(testimonyRef, {
+                commentsCount: increment(1)
+            });
+        });
 
-        input.value = '';
+        await logAuditEvent("COMMENT_ADDED", {
+            postId: currentPostId,
+            isAnonymous: commentData.isAnonymous
+        });
+
+        if (input) input.value = '';
         cancelReplyTarget();
         showToast(t('comment_published') || "Comment published to testimony stream.", "success");
-   } catch (err) {
-  console.error("[VocalWitness] Failed to post comment:", err);
-  const code = err?.code || "";
-  if (code === "permission-denied") {
-    showToast("Could not publish: sign in and check permissions.", "error");
-  } else {
-    showToast(err?.message || "Failed to publish comment.", "error");
-  }
+    } catch (err) {
+        console.error("[VocalWitness] Failed to post comment:", err);
+        const code = err?.code || "";
+        if (code === "permission-denied") {
+            showToast("Could not publish: sign in and check permissions.", "error");
+        } else {
+            showToast(err?.message || "Failed to publish comment.", "error");
+        }
+    } finally {
+        if (submitBtn) submitBtn.disabled = false;
+    }
 }
-
 /**
  * Like handler – any signed-in user can like (rules updated)
  */
@@ -400,7 +412,9 @@ async function handleCommentLike(commentId, btn) {
 }
 
 async function handleCommentDelete(commentId) {
-    if (!confirm(t('confirm_comment_delete') || "Permanently remove this response from the record?")) return;
+    if (!confirm(t('confirm_comment_delete') || "Permanently remove this response from the record?")) {
+        return;
+    }
 
     try {
         await runTransaction(db, async (transaction) => {
@@ -413,7 +427,11 @@ async function handleCommentDelete(commentId) {
             });
         });
 
-        await logAuditEvent("COMMENT_DELETED", { postId: currentPostId, commentId });
+        await logAuditEvent("COMMENT_DELETED", {
+            postId: currentPostId,
+            commentId
+        });
+
         showToast(t('comment_deleted') || "Comment removed", "info");
     } catch (err) {
         console.error("[VocalWitness] Comment deletion failed:", err);
