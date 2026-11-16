@@ -25,6 +25,20 @@ jobs:
           npm install -D tailwindcss @tailwindcss/cli
           npx @tailwindcss/cli -i ./input.css -o ./style.css --minify
 
+      # -------- Batch 6: fail BEFORE any Firebase deploy --------
+      - name: Syntax check (JS parse errors)
+        run: |
+          if [ -f scripts/syntax-check.mjs ]; then
+            node scripts/syntax-check.mjs
+          else
+            echo "scripts/syntax-check.mjs missing — running node --check on js/"
+            find js -name '*.js' -print0 | xargs -0 -n1 node --check
+          fi
+
+      - name: ESLint (non-blocking optional)
+        continue-on-error: true
+        run: npx eslint js functions --no-error-on-unmatched-pattern || true
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -41,7 +55,6 @@ jobs:
             --force \
             --non-interactive
 
-      # Hosting first so frontend changes always go live
       - name: Deploy to Firebase Hosting (Live)
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -51,10 +64,6 @@ jobs:
           channelId: live
           entryPoint: .
           firebaseToolsVersion: latest
-
-      # =====================================================
-      # FUNCTIONS – very small batches to stay under CPU quota
-      # =====================================================
 
       - name: Deploy Functions (Batch 1a - getUploadUrl alone)
         env:
