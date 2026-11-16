@@ -95,7 +95,7 @@ export function initLiveArena() {
     }
   });
 
-  if (roomsUnsubscribe) roomsUnsubscribe();
+if (roomsUnsubscribe) roomsUnsubscribe();
   const roomsQuery = query(
     collection(db, 'liveRooms'),
     where('isLive', '==', true),
@@ -109,18 +109,31 @@ export function initLiveArena() {
       applyFilterAndRender();
     },
     (err) => {
-      console.error('[LiveArena] rooms listener error:', err);
-      const grid = document.getElementById('liveRoomsGrid');
-      if (grid) {
-        grid.innerHTML = `
-          <div class="col-span-full py-16 text-center text-red-400">
-            <p class="font-medium">Could not load live rooms</p>
-            <p class="text-sm text-zinc-500 mt-1">Check connection or permissions, then refresh.</p>
-          </div>`;
-      }
+      console.warn('[LiveArena] Index building or query error, falling back without orderBy:', err);
+      
+      // Fallback query without orderBy (handles missing index gracefully)
+      roomsUnsubscribe = onSnapshot(
+        query(collection(db, 'liveRooms'), where('isLive', '==', true), limit(80)),
+        (snap) => {
+          allRoomsCache = snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .sort((a, b) => (b.participantCount || 0) - (a.participantCount || 0));
+          applyFilterAndRender();
+        },
+        (err2) => {
+          console.error('[LiveArena] rooms listener fallback error:', err2);
+          const grid = document.getElementById('liveRoomsGrid');
+          if (grid) {
+            grid.innerHTML = `
+              <div class="col-span-full py-16 text-center text-red-400">
+                <p class="font-medium">Could not load live rooms</p>
+                <p class="text-sm text-zinc-500 mt-1">Check connection or permissions, then refresh.</p>
+              </div>`;
+          }
+        }
+      );
     }
   );
-
   const createBtn = document.getElementById('createRoomBtn');
   const createModal = document.getElementById('createRoomModal');
   const closeCreateModalBtn = document.getElementById('closeCreateRoomModalBtn');
