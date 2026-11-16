@@ -103,6 +103,14 @@
         { "fieldPath": "groupId", "order": "ASCENDING" },
         { "fieldPath": "eventTime", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "liveRooms",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isLive", "order": "ASCENDING" },
+        { "fieldPath": "participantCount", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
