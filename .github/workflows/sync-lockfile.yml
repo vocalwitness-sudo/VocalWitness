@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   sync-lockfile:
@@ -21,34 +22,27 @@ jobs:
         with:
           node-version: 22
 
-      - name: Force-regenerate lockfile
+      - name: Force-regenerate lockfiles
         run: |
           set -e
           rm -rf node_modules package-lock.json
-          npm install --package-lock-only
           npm install --no-fund --no-audit
           if [ -f functions/package.json ]; then
             cd functions
             rm -rf node_modules package-lock.json
-            npm install --package-lock-only
             npm install --no-fund --no-audit
             cd ..
           fi
-          echo "Lockfile regenerated."
-          ls -la package-lock.json
+          echo "=== root lock head ==="
+          head -n 40 package-lock.json
 
-      - name: Commit and push
-        run: |
-          set -e
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json
-          if [ -f functions/package-lock.json ]; then
-            git add functions/package-lock.json
-          fi
-          if git diff --staged --quiet; then
-            echo "No lockfile changes to commit."
-          else
-            git commit -m "chore: regenerate package-lock.json"
-            git push origin HEAD:main
-          fi
+      - name: Commit on branch and open PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: regenerate package-lock.json"
+          title: "chore: sync package-lock.json with package.json"
+          body: |
+            Regenerates root and functions lockfiles so `npm ci` works in CI/deploy.
+          branch: chore/sync-package-lock
+          delete-branch: true
