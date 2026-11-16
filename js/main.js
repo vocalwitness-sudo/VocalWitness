@@ -368,6 +368,10 @@ function createDropdown(btnId, menuId) {
     }
   });
 
+  window.addEventListener('resize', () => {
+  syncHeaderOffset();
+});
+
   btn.setAttribute('data-dropdown-btn', '');
   menu.setAttribute('data-dropdown-menu', '');
   console.log(`[dropdown] Wired #${btnId} → #${menuId}`);
@@ -1585,6 +1589,7 @@ async function bootstrap() {
     setTimeout(() => {
       hideSplash();
       removeSplash();
+       syncHeaderOffset(); 
     }, 300);
 
   } catch (e) {
@@ -1637,7 +1642,18 @@ function hideSplash() {
     splash.remove();
   }, 450);
 }
-
+/** Measure real header height so body padding matches phone layout */
+function syncHeaderOffset() {
+  const h = document.getElementById('main-header');
+  if (!h) return;
+  const px = Math.ceil(h.getBoundingClientRect().height);
+  if (px < 40) return;
+  if (window.innerWidth < 768) {
+    document.documentElement.style.setProperty('--header-height-mobile', px + 'px');
+  } else {
+    document.documentElement.style.setProperty('--header-height-desktop', px + 'px');
+  }
+}
 /* ====================== DOM READY ====================== */
 document.addEventListener('DOMContentLoaded', async () => {
   // Always clear splash within 4s even if bootstrap hangs (phones)
@@ -1660,6 +1676,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       hideSplash();
       removeSplash();
+      syncHeaderOffset();
     } catch (_) {}
   }
 
