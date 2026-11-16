@@ -27,7 +27,7 @@ import {
 import { generateSha256Hash } from './utils.js';
 import { getAudioForPublish, uploadForensicMedia } from './media.js';
 import { initLiveArena } from './live-arena.js';
-import { loadCircle, loadVerifiedWitnesses } from './circle.js';
+import { loadCircle, hasCircle, renderCircleListEmpty, loadVerifiedWitnesses } from './circle.js';
 import { initWitnessTab, destroyWitnessTab } from './witness-tab.js';
 import {
   collection, addDoc, doc, getDoc, setDoc, updateDoc,
@@ -36,7 +36,6 @@ import {
 import { submitTestimony } from './createPost.js';
 import './phoneVerification.js';
 import { initErrorTracking } from './observability.js';
-
 // After Firebase is ready
 initErrorTracking();
 
@@ -246,9 +245,13 @@ if (tab === 'mycircle') {
       if (typeof loadCircle === 'function') {
         loadCircle(true).catch((e) => console.warn('[Tab] loadCircle', e));
       }
+  
       if (typeof window.renderCircleList === 'function') {
         window.renderCircleList();
       }
+  await loadCircle();
+if (!hasCircle()) renderCircleListEmpty();
+  }
     }
 
     // ===== WITNESS VOICE =====
