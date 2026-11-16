@@ -350,27 +350,25 @@ async function handleCommentSubmission() {
         };
 
         // Transaction: create comment + increment counter safely
-        await runTransaction(db, async (transaction) => {
-            const commentRef = doc(collection(db, "testimonies", currentPostId, "comments"));
-            transaction.set(commentRef, commentData);
-
-            const testimonyRef = doc(db, "testimonies", currentPostId);
-            transaction.update(testimonyRef, {
-                commentsCount: increment(1)
-            });
-        });
+       await addDoc(
+  collection(db, "testimonies", currentPostId, "comments"),
+  commentData
+);
+        await deleteDoc(doc(db, "testimonies", currentPostId, "comments", commentId));
 
         await logAuditEvent("COMMENT_ADDED", { postId: currentPostId, isAnonymous: commentData.isAnonymous });
 
         input.value = '';
         cancelReplyTarget();
         showToast(t('comment_published') || "Comment published to testimony stream.", "success");
-    } catch (err) {
-        console.error("[VocalWitness] Failed to post comment:", err);
-        showToast("Failed to publish comment.", "error");
-    } finally {
-        submitBtn.disabled = false;
-    }
+   } catch (err) {
+  console.error("[VocalWitness] Failed to post comment:", err);
+  const code = err?.code || "";
+  if (code === "permission-denied") {
+    showToast("Could not publish: sign in and check permissions.", "error");
+  } else {
+    showToast(err?.message || "Failed to publish comment.", "error");
+  }
 }
 
 /**
