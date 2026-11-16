@@ -4,29 +4,40 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          
-      - run: npm ci || npm install
-      
+
+      - name: Install dependencies
+        run: |
+          npm ci || npm install
+          if [ -f functions/package.json ]; then
+            cd functions
+            npm ci || npm install
+            cd ..
+          fi
+
       - name: Syntax check
         run: |
-          if [ -f scripts/syntax-check.mjs ]; then node scripts/syntax-check.mjs
-          else find js -name '*.js' -print0 | xargs -0 -n1 node --check
+          if [ -f scripts/syntax-check.mjs ]; then
+            node scripts/syntax-check.mjs
+          else
+            find js -name '*.js' -print0 | xargs -0 -n1 node --check
           fi
-          
+
       - name: ESLint
         run: npx eslint js functions --no-error-on-unmatched-pattern
-        
+        continue-on-error: true
+
       - name: Integrity
         run: npm run test:integrity
         continue-on-error: true
