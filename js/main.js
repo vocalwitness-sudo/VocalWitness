@@ -241,19 +241,20 @@ if (previousTab === 'witness' && tab !== 'witness' && typeof destroyWitnessTab =
     if (tab === 'ledger' && typeof loadEvidenceLedger === 'function') {
       loadEvidenceLedger();
     }
-if (tab === 'mycircle') {
+
+    if (tab === 'mycircle') {
       if (typeof loadCircle === 'function') {
-        loadCircle(true).catch((e) => console.warn('[Tab] loadCircle', e));
+        await loadCircle(true).catch((e) => console.warn('[Tab] loadCircle', e));
       }
-  
+
       if (typeof window.renderCircleList === 'function') {
         window.renderCircleList();
       }
-  await loadCircle();
-if (!hasCircle()) renderCircleListEmpty();
-  }
-    }
 
+      if (!hasCircle()) {
+        renderCircleListEmpty();
+      }
+    }
     // ===== WITNESS VOICE =====
     if (tab === 'witness') {
       if (typeof initWitnessTab === 'function') {
