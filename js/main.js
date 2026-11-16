@@ -1248,29 +1248,14 @@ function setupEventListeners() {
   window.listenersInitialized = true;
   console.log("✅ Wiring application listeners...");
 
-  // Global click delegation (data-action + tabs)
-  document.addEventListener('click', (e) => {
-    const tabBtn = e.target.closest('#main-nav button[data-tab]');
-    if (tabBtn && typeof window.switchTab === 'function') {
-      e.preventDefault();
-      window.switchTab(tabBtn.dataset.tab);
-      return;
-    }
+  // Tabs: owned by wireTabButtons only — do not handle here.
+  // Data Saver: owned by initDataSaver only — do not handle here.
+  // Support header buttons: owned by ui-events wireIndexPage — do not handle here.
 
+  // Global click delegation for data-action elements
+  document.addEventListener('click', (e) => {
     const actionTarget = e.target.closest('[data-action]');
-    if (!actionTarget) {
-      if (e.target.closest('#data-saver-btn') || e.target.closest('#data-saver-btn-mobile')) {
-        e.preventDefault();
-        if (typeof window.toggleDataSaver === 'function') window.toggleDataSaver();
-        return;
-      }
-      if (e.target.closest('#openSupportModalBtn') || e.target.closest('#openSupportModalBtnMobile')) {
-        e.preventDefault();
-        if (typeof window.openSupportModal === 'function') window.openSupportModal();
-        return;
-      }
-      return;
-    }
+    if (!actionTarget) return;
 
     const action = actionTarget.dataset.action;
     switch (action) {
@@ -1304,7 +1289,9 @@ function setupEventListeners() {
           view.classList.add('hidden');
         });
         document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-        if (typeof window.initBookmarksView === 'function') {
+        if (typeof window.openBookmarks === 'function') {
+          window.openBookmarks();
+        } else if (typeof window.initBookmarksView === 'function') {
           window.initBookmarksView();
         } else if (typeof initBookmarksView === 'function') {
           initBookmarksView();
@@ -1340,25 +1327,27 @@ function setupEventListeners() {
     }
   });
 
-// Header events from auth.js
-if (typeof bindHeaderEvents === 'function') {
-  bindHeaderEvents();
-}
+  // Header events from auth.js
+  if (typeof bindHeaderEvents === 'function') {
+    bindHeaderEvents();
+  }
 
-// MFA challenge modal handlers
-if (typeof bindMfaChallengeEvents === 'function') {
-  bindMfaChallengeEvents();
-}
+  // MFA challenge modal handlers
+  if (typeof bindMfaChallengeEvents === 'function') {
+    bindMfaChallengeEvents();
+  }
 
   // Composer
   if (typeof initComposer === 'function') {
     initComposer();
   }
 
+  // Dropdowns & Chrome
+  if (typeof initAllDropdowns === 'function') initAllDropdowns();
+  if (typeof initNavigationChrome === 'function') initNavigationChrome();
 
   console.log("✅ Application listeners active");
-} // ← function ends here
-
+}
 /* ====================== MOBILE + GLOBAL SEARCH ====================== */
 function initHeaderSearch() {
   const mobileSearch = document.getElementById('searchInputMobile') ||
