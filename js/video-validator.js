@@ -146,17 +146,18 @@ export async function inspectAndValidateVideo(file) {
             });
         };
 
-        videoElement.onerror = () => {
-            clearTimeout(timeoutId);
-            cleanup();
-            // Non-blocking fallback: pass stream but flag for server check
-            resolve({
-                valid: true,
-                provenance: provenanceStatus,
-                editorDetected,
-                detectedSignatures
-            });
-        };
+       videoElement.onerror = () => {
+  clearTimeout(timeoutId);
+  cleanup();
+  resolve({
+    valid: false,
+    reason: 'UNREADABLE_STREAM',
+    message: 'Could not read this video. Re-export as MP4/WebM and try again.',
+    provenance: provenanceStatus,
+    editorDetected,
+    detectedSignatures
+  });
+};
     });
 }
 
