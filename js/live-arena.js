@@ -124,16 +124,22 @@ if (roomsUnsubscribe) roomsUnsubscribe();
           console.error('[LiveArena] rooms listener fallback error:', err2);
           const grid = document.getElementById('liveRoomsGrid');
           if (grid) {
+            const needIndex = /index/i.test(err2?.message || err?.message || '');
             grid.innerHTML = `
               <div class="col-span-full py-16 text-center text-red-400">
                 <p class="font-medium">Could not load live rooms</p>
-                <p class="text-sm text-zinc-500 mt-1">Check connection or permissions, then refresh.</p>
+                <p class="text-sm text-zinc-500 mt-1">
+                  ${needIndex
+                    ? 'Firestore index missing for isLive + participantCount. Deploy indexes or use the link in the browser console.'
+                    : (err2?.message || 'Check connection or permissions, then refresh.')}
+                </p>
               </div>`;
           }
         }
       );
     }
   );
+
   const createBtn = document.getElementById('createRoomBtn');
   const createModal = document.getElementById('createRoomModal');
   const closeCreateModalBtn = document.getElementById('closeCreateRoomModalBtn');
