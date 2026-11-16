@@ -1243,14 +1243,11 @@ function escapeHtml(str) {
 }
 
 /* ====================== SETUP EVENT LISTENERS ====================== */
+/* ====================== SETUP EVENT LISTENERS ====================== */
 function setupEventListeners() {
   if (window.listenersInitialized) return;
   window.listenersInitialized = true;
   console.log("✅ Wiring application listeners...");
-
-  // Tabs: owned by wireTabButtons only — do not handle here.
-  // Data Saver: owned by initDataSaver only — do not handle here.
-  // Support header buttons: owned by ui-events wireIndexPage — do not handle here.
 
   // Global click delegation for data-action elements
   document.addEventListener('click', (e) => {
@@ -1259,16 +1256,6 @@ function setupEventListeners() {
 
     const action = actionTarget.dataset.action;
     switch (action) {
-      case 'toggle-data-saver':
-        e.preventDefault();
-        if (typeof window.toggleDataSaver === 'function') window.toggleDataSaver();
-        break;
-
-      case 'open-support-modal':
-        e.preventDefault();
-        if (typeof window.openSupportModal === 'function') window.openSupportModal();
-        break;
-
       case 'open-auth-modal':
         e.preventDefault();
         if (typeof window.openAuthModal === 'function') window.openAuthModal();
