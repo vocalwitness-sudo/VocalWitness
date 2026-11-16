@@ -238,13 +238,20 @@ function renderRooms(rooms) {
   const grid = document.getElementById('liveRoomsGrid');
   if (!grid) return;
 
-  if (!rooms.length) {
+if (!rooms.length) {
     grid.innerHTML = `
       <div class="col-span-full py-20 text-center text-zinc-500">
         <div class="text-6xl mb-5 opacity-70">🌍</div>
         <p class="text-xl font-medium text-zinc-300">No live rooms yet</p>
         <p class="text-sm mt-2 text-zinc-500">Be the first to open a stage for the world</p>
+        <button type="button" id="arena-empty-create"
+          class="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-sky-500/25 hover:brightness-110 active:scale-95">
+          + Start a Room
+        </button>
       </div>`;
+    document.getElementById('arena-empty-create')?.addEventListener('click', () => {
+      document.getElementById('createRoomBtn')?.click();
+    });
     return;
   }
 
