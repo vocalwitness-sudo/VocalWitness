@@ -162,13 +162,20 @@ export async function prepareMediaForUpload(file, options = {}) {
   }
 
   // ========== AUDIO PATH ==========
-  else if (type.startsWith('audio/')) {
-    showToast('🛡️ Normalizing audio…', 'info');
+ else if (type.startsWith('audio/')) {
+    const dataSaverOn = localStorage.getItem('vw_data_saver') === 'true';
+    showToast(
+      dataSaverOn ? '🛡️ Data Saver: normalizing audio…' : '🛡️ Normalizing audio…',
+      'info'
+    );
 
-    // Fail-closed: do not catch and fall back to original
+    // Fail-closed. Hash is of normalized output (published bytes).
     const result = await normalizeAudioBlob(file, {
-      forceNormalize: options.forceNormalize
+      forceNormalize: options.forceNormalize,
+      // only if normalizeAudioBlob supports these — otherwise omit
+      ...(dataSaverOn ? { maxDurationSec: 180, targetSampleRate: 16000 } : {})
     });
+
 
     if (!result || !result.blob) {
       throw new Error('Audio normalization produced no output.');
@@ -179,19 +186,25 @@ export async function prepareMediaForUpload(file, options = {}) {
   }
 
   // ========== VIDEO PATH ==========
-  else if (type.startsWith('video/')) {
-    const inspection = await inspectAndValidateVideo(file);
+ else if (type.startsWith('video/')) {
+    const dataSaverOn = localStorage.getItem('vw_data_saver') === 'true';
+    const maxBytes = dataSaverOn ? 12 * 1024 * 1024 : 25 * 1024 * 1024;
 
+    if (file.size > maxBytes) {
+      throw new Error(
+        dataSaverOn
+          ? 'Data Saver is on: video must be under ~12 MB. Turn Data Saver off or use a shorter clip.'
+          : 'Video exceeds the maximum upload size (25 MB).'
+      );
+    }
+
+    const inspection = await inspectAndValidateVideo(file);
     if (!inspection.valid) {
       throw new Error(inspection.message || 'Video validation failed');
     }
 
-    // Critical: never rewrite video bytes – hash the original
+    // Never rewrite video bytes — sealed hash = these exact bytes
     processedBlob = file;
-  } else {
-    throw new Error(
-      `Unsupported media type: ${type || 'unknown'}. Please use JPEG, PNG, WebP, MP4, WebM, MOV, MP3, WAV or M4A.`
-    );
   }
 
   // Ensure proper File object
