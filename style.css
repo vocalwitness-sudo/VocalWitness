@@ -12,8 +12,9 @@
   --text-primary: #f8fafc;
   --text-muted: #94a3b8;
   --border-subtle: rgba(255, 255, 255, 0.07);
-  --header-height-desktop: 64px;
-  --header-height-mobile: 108px;
+   --header-height-desktop: 64px;
+  --header-height-mobile: calc(108px + env(safe-area-inset-top, 0px));
+  --touch-min: 44px;
   --radius: 14px;
   --radius-sm: 10px;
 }
@@ -672,5 +673,35 @@ label[for],
   #removeMediaBtn {
     min-width: 44px;
     min-height: 44px;
+  }
+}
+/* ====================== BATCH 4 — PHONE / TOUCH POLISH ====================== */
+@media (max-width: 767px) {
+  #main-header button,
+  #main-header select,
+  #notification-btn-mobile,
+  #data-saver-btn-mobile,
+  #bookmarks-nav-btn-mobile,
+  #openAuthModalBtnMobile,
+  #userProfileBtnMobile {
+    min-height: var(--touch-min, 44px);
+    min-width: var(--touch-min, 44px);
+  }
+
+  #notification-dropdown,
+  #notification-dropdown-mobile,
+  #more-menu {
+    max-width: min(20rem, calc(100vw - 1rem));
+    right: 0.5rem !important;
+    left: auto !important;
+  }
+}
+
+@media (hover: none) {
+  button:active,
+  [role="button"]:active,
+  .nav-tab:active {
+    opacity: 0.88;
+    transform: scale(0.97);
   }
 }
