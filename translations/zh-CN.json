@@ -2,28 +2,22 @@
   "appTitle": "VocalWitness",
   "appSubtitle": "公民报道 • 真实证据",
   "pageTitle": "VocalWitness • 公民报道 • 真实证据",
-
   "legalLabel": "重要提示：",
   "privacyWarning": "VocalWitness 是一个受保护的公共广场。我们不收集身份证、护照或个人数据。",
-
   "placeholder": "你看到了什么或经历了什么？分享事实...",
   "postButton": "发布报道",
   "searchPlaceholder": "搜索报道、新闻、话题标签或人物...",
-
   "citizenTalk": "开放对话",
   "trueWitness": "已验证报道",
   "liveArena": "实时现场",
   "groups": "群组",
-
   "photoForensic": "📸 添加照片",
   "voiceTestimony": "🎤 录制语音",
-
   "supportPlatform": "支持",
   "about": "关于",
   "safety": "安全",
   "privacy": "隐私",
   "terms": "条款",
-
   "myDigitalPassport": "我的个人资料",
   "editProfile": "✏️ 编辑资料",
   "changePassword": "🔑 修改密码",
@@ -31,7 +25,6 @@
   "signOut": "登出",
   "signIn": "登录",
   "signUp": "创建账号",
-
   "createGroup": "创建新群组",
   "createGroupBtn": "创建群组",
   "cultivateSquare": "支持公共广场",
@@ -43,7 +36,6 @@
   "maybeLater": "以后再说",
   "becomeSteward": "🌱 成为守护者",
   "cancel": "取消",
-
   "daoProposal": "守护者提案",
   "submitProposal": "提交提案",
   "moderationDashboard": "审核面板",
@@ -52,14 +44,12 @@
   "trustLevel": "信任等级",
   "currentCircle": "当前圈子",
   "level": "级别",
-
   "loading": "加载中...",
   "success": "成功",
   "error": "错误",
   "warning": "警告",
   "postPublished": "报道发布成功！",
   "postFailed": "发布报道失败",
-
   "privacyLink": "🔒 隐私至上",
   "supportBtn": "支持",
   "joinBtn": "加入",
@@ -69,7 +59,6 @@
   "backToSquare": "← 返回广场",
   "backToSquareText": "返回广场",
   "backToVocalWitness": "← 返回 VocalWitness",
-
   "identity": {
     "anonymous_title": "私密模式",
     "anonymous_desc": "位置、设备详情和语音特征在发布前将被自动移除。",
@@ -82,14 +71,12 @@
     "confirm_bold": "我明白，启用完整证据",
     "cancel": "取消"
   },
-
   "composer": {
     "scrubbing_active": "🛡️ 隐私保护已激活：位置和设备详情将被移除。",
     "preserving_active": "⚡ 完整证据模式：将保留原始详情。",
     "audio_normalized": "🎵 音频已清洗以保证清晰度。",
     "audio_raw": "🎙️ 录制了原始音频。"
   },
-
   "supportModal": {
     "title": "支持公共广场",
     "description": "帮助保持 VocalWitness 自由且独立。你的支持让平台得以持续运行。",
@@ -98,7 +85,6 @@
     "warning": "仅可通过 TRC-20 网络发送 USDT。",
     "closeButton": "关闭"
   },
-
   "authModal": {
     "title": "加入 VocalWitness",
     "subtitle": "创建你的账号以进行报道、关注受信声音并发布内容。",
@@ -106,7 +92,6 @@
     "anonymousBtn": "匿名继续",
     "cancelBtn": "取消并继续浏览"
   },
-
   "toast": {
     "nodeConnected": "已通过 Google 登录",
     "anonymousInit": "匿名模式已就绪",
@@ -116,7 +101,6 @@
     "signInCancelled": "登录已取消。",
     "requireAuth": "请登录以继续。"
   },
-
   "profile": {
     "title": "用户个人资料",
     "reputation": "声誉",
@@ -144,7 +128,6 @@
     "stat_hashes": "已保护",
     "stat_rep": "声誉评分"
   },
-
   "accountSettings": "账号设置",
   "securityHeader": "安全与访问",
   "passwordLabel": "密码",
@@ -161,14 +144,12 @@
   "exportLabel": "导出个人资料",
   "exportSub": "下载你的账号摘要",
   "exportBtn": "下载 PDF",
-
   "displayName": "显示名称",
   "username": "用户名",
   "region": "地区 / 位置",
   "bio": "个人简介",
   "save": "保存",
   "saveChanges": "保存更改",
-
   "common": {
     "verified": "已验证",
     "not_verified": "未验证",
@@ -178,7 +159,6 @@
     "cancel": "取消",
     "close": "关闭"
   },
-
   "trueWitnessTitle": "已验证报道 • VocalWitness",
   "trueWitnessSubtitle": "更高信任度 • 受保护",
   "zkVerifiedTestimonies": "高信任度报道",
@@ -187,12 +167,10 @@
   "trustScore": "信任评分",
   "forensicProof": "保护证明",
   "viewFullTestimony": "查看完整报道",
-
   "myProfileTitle": "我的个人资料 | VocalWitness",
   "myProfile": "我的个人资料",
   "loadingProfile": "正在加载你的个人资料...",
   "settings": "设置",
-
   "publicSquareTab": "公共广场",
   "publicSquareDesc": "分享你所见",
   "evidenceLedgerTab": "公共记录",
@@ -204,7 +182,6 @@
   "verifiedWitnessesTab": "受信声音",
   "verifiedWitnessesDesc": "已验证的报道者",
   "moreOptionsBtn": "更多",
-
   "myTestimoniesMenu": "我的报道",
   "groupsMenu": "群组",
   "trueWitnessMenu": "已验证报道",
@@ -212,7 +189,6 @@
   "privacyPolicyMenu": "隐私",
   "termsOfServiceMenu": "条款",
   "safetyGuidelinesMenu": "安全",
-
   "shareTestimonyTitle": "分享你所见",
   "publicSquareSubtitle": "公共广场",
   "mainInputPlaceholder": "你看到了什么或经历了什么？分享事实...",
@@ -229,7 +205,6 @@
   "sortLatest": "最新",
   "sortVerified": "优先显示已验证",
   "sortTrending": "热门",
-
   "aboutPageTitle": "关于 VocalWitness • 公民报道",
   "aboutTitle": "关于 VocalWitness",
   "aboutSubtitle": "你的声音。你的真相。受到保护。",
@@ -256,7 +231,6 @@
   "trustStep3Desc": "VocalWitness 是一个中立的公共广场。我们不编辑帖子或推波助澜某些故事。证据本身说明一切。",
   "aboutQuote": "“在喧嚣的时代，最清晰的声音是那个能够证明从未被篡改的声音。”",
   "footerCopyright": "© 2026 VocalWitness • 公民报道 • 真实证据",
-
   "privacyPageTitle": "隐私政策 • VocalWitness",
   "privacyTitle": "隐私政策",
   "privacyLastUpdated": "最后更新：2026年8月25日",
@@ -296,7 +270,6 @@
   "privacySec8Title": "8. 知识产权",
   "privacySec8Text": "VocalWitness 平台，包括其软件、设计、名称和徽标，是 VocalWitness 的专属知识产权。未经许可，不得复制或重复使用。",
   "panicExit": "快速退出",
-
   "termsPageTitle": "服务条款 • VocalWitness",
   "termsTitle": "服务条款",
   "termsLastUpdated": "最后更新：2026年8月25日",
@@ -330,7 +303,6 @@
   "termsSection10Title": "10. 知识产权",
   "termsSection10Text": "VocalWitness 平台的所有权利（包括其软件、设计、名称和徽标）仍然是 VocalWitness 的专属财产。",
   "termsSection10Text2": "未经书面许可，不得复制、修改或商业利用平台的任何部分。",
-
   "safetyPageTitle": "安全与你的权利 • VocalWitness",
   "safetyTitle": "安全与你的权利",
   "safetySubtitle": "在捕获和分享证据时保护你的身份、位置和数字足迹的实用协议。",
@@ -375,7 +347,6 @@
   "physicalTip2": "清除浏览器数据：如果使用共享设备或高风险设备，请在提交记录后立即清除本地存储和浏览器缓存。",
   "goldenRuleTitle": "公民目击的黄金法则",
   "goldenRuleText": "切勿让自己陷入即时的人身危险来捕获证据。首先确保你的身体安全。一旦你处于受保护的位置，就可以使用密码学工具来公证并与世界分享你的记录。",
-
   "ledgerIntegrityTitle": "公共记录保护",
   "ledgerIntegrityPara1": "一旦报道发布，规则使得任何人几乎不可能修改或删除原文。",
   "ledgerIntegrityPoint1": "数据库规则阻止对记录的更新和删除。",
@@ -383,7 +354,6 @@
   "ledgerIntegrityPoint3": "记录彼此链接以获得额外保护。",
   "ledgerIntegrityClarification": "重要提示：这是强大的应用层保护，而不是完整的公共区块链。数据存放在安全的云存储中。",
   "ledgerIntegrityFuture": "未来选项：我们可能会添加额外的公共锚定。此功能尚未激活。",
-
   "verifyPageTitle": "VocalWitness • 证据验证门户",
   "legalBannerText": "VocalWitness 是一个未经操纵的去中心化分发媒介。验证检查的是完整性哈希，而不是现实世界的真相。",
   "verifyHeaderTitle": "🔍 证据验证器",
