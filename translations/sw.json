@@ -369,4 +369,22 @@
   "btn_refresh": "Anzisha Upya",
   "ledger_info_title": "Taarifa zako zipo salama",
   "ledger_info_desc": "Kila taarifa imefungwa kiusalama na kuunganishwa kwenye daftari. Pindi inapochapishwa, hakuna mtu anayeweza kubadilisha au kufuta ya asili."
+
+  "safetySubtitle": "Miongozo ya vitendo kulinda utambulisho wako, eneo lako, na alama zako za kidijitali unapochukua na kushiriki ushahidi.",
+  "threatModelTitle": "Elewa Mfumo Wako wa Vitisho",
+  "threatModelDesc": "VocalWitness huondoa metadata ya EXIF kwenye kivinjari chako na hutoa uthibitisho wa hiari wa kuaminika zaidi. Teknolojia pekee haiwezi kuzuia hatari zote. Kwa kuripoti hatari kubwa, tumia usalama wa ziada wa kiutendaji.",
+  "networkSafetyTitle": "Uunganisho wa Mtandao na Kuficha IP",
+  "networkTip1": "Tumia Tor au VPN inayoaminika: Ficha eneo lako halisi na anwani ya IP kutoka kwa wapelelezi wa mtandao kabla ya kufungua VocalWitness.",
+  "networkTip2": "Epuka Wi-Fi za umma au za kibinafsi: Usipakie vifaa nyeti vya watoa taarifa kupitia mtandao wa nyumbani au akaunti za simu zilizosajiliwa moja kwa moja kwa kitambulisho chako cha serikali.",
+  "mediaSafetyTitle": "Ulinzi wa Vyombo vya Habari na Metadata",
+  "mediaTip1": "Kusafisha Kiotomatiki: VocalWitness huondoa metadata ya EXIF (aina ya kamera, viwianishi vya GPS) ndani ya kivinjari chako. Hata hivyo, kagua usuli wako kwa macho ili kuepuka miakisi inayotambulika, alama za barabara, au nyaraka za faragha.",
+  "mediaTip2": "Kuficha Sauti na Nyuso: Unaporekodi video au sauti katika mazingira magumu, ficha nyuso za watu ambao hawakukubali na ubadilishe sauti yako kabla ya kuchapisha.",
+  "identitySafetyTitle": "Usiri wa Utambulisho na Akaunti",
+  "identityTip1": "Jina Bandia: Chagua jina la mtumiaji ambalo halihusiani kabisa na jina lako halisi, mitandao jamii, au barua pepe yako binafsi.",
+  "identityTip2": "Uthibitisho wa Kuaminika Zaidi: Pendelea chaguo kali zaidi za uthibitisho zinapopatikana. Njia zingine hutumia uthibitisho halisi wa maarifa sifuri; zingine hutumia ukaguzi rahisi wa kihesabu cha siri — angalia beji kwenye kila ripoti.",
+  "physicalSafetyTitle": "Usalama wa Kifaa na Mwili",
+  "physicalTip1": "Hifadhi Salama ya Kifaa: Weka simu yako ya mkononi ikiwa imesimbwa na kwa nywila (epuka alama za vidole au kufungua kwa uso katika maeneo ambapo mamlaka zinaweza kulazimisha ufunguzi wa kibayometriki).",
+  "physicalTip2": "Futa Data ya Kivinjari: Ikiwa unatumia kifaa cha pamoja au kilicho hatarini, futa hifadhi ya ndani na akiba ya kivinjari mara tu baada ya kuwasilisha rekodi yako.",
+  "goldenRuleTitle": "Kanuni ya Dhahabu ya Shahada wa Raia",
+  "goldenRuleText": "Usijiweke kamwe katika hatari ya kimwili ya moja kwa moja ili kupata ushahidi. Linda usalama wako kwanza. Kisha tumia zana zinazopatikana kuweka wakati na kushiriki rekodi inayoweza kuthibitishwa."
 }
