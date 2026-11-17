@@ -369,4 +369,22 @@
   "btn_refresh": "Actualiser",
   "ledger_info_title": "Vos signalements restent en sécurité",
   "ledger_info_desc": "Chaque signalement est scellé cryptographiquement et lié au registre. Une fois publié, l'original ne peut être ni modifié ni supprimé par quiconque."
+
+  "safetySubtitle": "Ka'idoji masu amfani don kare shaida, wurin zama, da kuma bayanan kafar sadarwarka lokacin da kake ɗauka da raba hujja.",
+  "threatModelTitle": "Fahimci Matsayin Hatsarin da Kake Ciki",
+  "threatModelDesc": "VocalWitness tana cire bayanan EXIF daga burauzanka kuma tana ba da zaɓin tabbatarwa mai ƙarfi. Fasaha kaɗai ba za ta iya hana dukkan haɗari ba. Don rahotanni masu hatari, yi amfani da kariyar tsaro ta musamman.",
+  "networkSafetyTitle": "Haɗin Yanar Gizo da Boye Adireshin IP",
+  "networkTip1": "Yi amfani da Tor ko ingantaccen VPN: Boyeini da adireshin IP ɗinka daga masu leƙen asiri kafin shiga VocalWitness.",
+  "networkTip2": "Guji amfani da Wi-Fi na jama'a ko na gida idan kuna aika bayanan sirri masu tsanani waɗanda aka yi rijista da sunanka na ainihi.",
+  "mediaSafetyTitle": "Kare Hotuna da Bidiyo da Bayanansu",
+  "mediaTip1": "Sharewa ta atomatik: VocalWitness tana cire bayanan EXIF (irin kyamara, wurin GPS) a cikin burauzanka. Duk da haka, bincika hotonka don guje wa alamomin hanya na musamman ko takardun sirri.",
+  "mediaTip2": "Boye Mury da Fuskoki: Lokacin rikodin bidiyo ko sauti a wurare masu tsauri, ɓoye fuskokin mutanen da ba su yarda ba kuma sauya sautin muryarka kafin wallafawa.",
+  "identitySafetyTitle": "Tsaron Sunan Mai Amfani da Asusu",
+  "identityTip1": "Zaɓi Sunan Rufa-Asiri: Zaɓi sunan da ba shi da alaƙa dainihin sunanka, shafukan sada zumunta, ko imel ɗinka na sirri.",
+  "identityTip2": "Tabbatarwa Mai Ƙarfi: Zaɓi hanyoyin tabbatarwa masu ƙarfi idan akwai su. Wasu suna amfani da ingantattun hanyoyin sifili (zero-knowledge), wasu kuma suna amfani da sauƙaƙan lissafi — duba tambarin da ke kan kowane rahoto.",
+  "physicalSafetyTitle": "Tsaron Jiki da Kula da Na'ura",
+  "physicalTip1": "Adana Na'ura Cikin Tsaro: Ka riƙe wayarka ta hannu a kulle da kalmar sirri (guje wa buɗewa da yatsa ko fuska idan hukumomi za su iya tilasta muku buɗewa).",
+  "physicalTip2": "Share Bayanar Burauza: Idan kuna amfani da na'urar wani ko mai haɗari, ku share bayanan da suka adana a burauza nan da nan bayan kunikawa rahotonku.",
+  "goldenRuleTitle": "Dokar Zinare ta Dan Kasa Mai Shaidar Gaskiya",
+  "goldenRuleText": "Kada ka taɓa sanya kanka cikin haɗarin jiki saboda kawai zaka ɗauki hujja. Kare lafiyar kanka tukunna. Sannan ka yi amfani da kayan aikin da ake da su domin sanya lokaci da raba ingantaccen rikodi."
 }
