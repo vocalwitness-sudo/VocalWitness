@@ -369,4 +369,23 @@
   "btn_refresh": "Sake Loda",
   "ledger_info_title": "Akụkọ gị nọ na nchekwa",
   "ledger_info_desc": "A na-emchie akụkọ ọ bụla na nchekwa nzuzo wee jikọta ya na akwụkwọ ahụ. Mgbe e bipụtara ya, enweghị onye nwere ike ịdozie ma ọ bụ hichapụ izizi."
+
+  "safetySubtitle": "Usoro bara uru iji chebe njirimara gị, ebe ịnọ, na akara aka dijitalụ gị mgbe ị na-ewere ma na-ekekọrịta ihe akaebe.",
+  "threatModelTitle": "Gbalịa Ghọta Ihe Iere Nwere Ike Ime Gị",
+  "threatModelDesc": "VocalWitness na-ewepụ data EXIF n'ime ihe nchọgharị gị ma na-enye nkwenye dị elu nke nhọrọ. Teknụzụ naanị ya agaghị enwe ike igbochi ihe egwu niile. Maka akụkọ nwere nnukwu nchegbu, jiri nchekwa ọrụ ọzọ.",
+  "networkSafetyTitle": "Njikọ Netwọk na Ịzochi IP",
+  "networkTip1": "Jiri Tor ma ọ bụ VPN a pụrụ ịtụ kwasị obi: Zoo ebe ị nọ n'ezie na adreesị IP gị site n'aka ndị nledo netwọk tupu ịga na VocalWitness.",
+  "networkTip2": "Zere iji Wi-Fi ọha ma ọ bụ nkeonwe: ebugola ihe gbasara onye na-ekpughe ihe nzuzo (whistleblower) site na netwọk ezinụlọ ma ọ bụ akaụntụ ekwentị aha gị gọọmentị debanyere aha na ya.",
+  "mediaSafetyTitle": "Nchebe Mgbasa Ozi na Data Metadata",
+  "mediaTip1": "Ihicha na-akpaghị aka: VocalWitness na-ewepụ data EXIF (ụdị igwe foto, ebe GPS) n'ime ihe nchọgharị gị. Agbanyeghị, nyochaa ndabere gị iji hụ ma enwere ihe ngosi ma ọ bụ akwụkwọ nzuzo nwere ike ịmata gị.",
+  "mediaTip2": "Ịzochi Olu na Ihu: Mgbe ị na-edekọ vidiyo ma ọ bụ olu n'ebe nwere nnukwu nsogbu, kpuchie ihu ndị na-ekwughị mba ma gbanwee ụda olu gị tupu ibipụta ya.",
+  "identitySafetyTitle": "Nzuzo Njirimara na Akaụntụ",
+  "identityTip1": "Aha Njirimara Pseudonymous: Họrọ aha njirimara na-enweghị njikọ ọ bụla na ezigbo aha gị, mgbasa ozi ọha, ma ọ bụ adreesị ozi-e nkeonwe gị.",
+  "identityTip2": "Nkwenye Dị Elu: Họrọ nhọrọ nkwenye siri ike karị ma ọ bụrụ na ha dị. Ụzọ ụfọdụ na-eji ezi ihe akaebe nke amamihe efu (zero-knowledge proofs); ndị ọzọ na-eji nyocha crypto dị mfe — lelee akara ngosi dị na akụkọ ọ bụla.",
+  "physicalSafetyTitle": "Nchekwa Ahụ na Ịhụ Maka Ngwaọrụ",
+  "physicalTip1": "Nchekwa Ngwaọrụ Chekwaa: Debe ekwentị mkpanaaka gị ka e kpuchie ya ma nwee paswọọdụ (zere iji mkpịsị aka ma ọ bụ ihu meghee ebe ndị ọchịchị nwere ike iji ike mepee ya).",
+  "physicalSafetyTitle": "Nchekwa Ahụ na Ịhụ Maka Ngwaọrụ",
+  "physicalTip2": "Hichapụ Data Ihe Nchọgharị: Ọ bụrụ na ị na-eji ngwaọrụ onye ọzọ ma ọ bụ ebe nwere nnukwu egwu, hichapụ nchekwa mpaghara na cache ihe nchọgharị ngwa ngwa mgbe i nyere akụkọ gị.",
+  "goldenRuleTitle": "Iwu Ọlaedo nke Onye Nkwado Amaala",
+  "goldenRuleText": "Etinyela onwe gị n'ihe egwu anụ ahụ ozugbo iji nweta ihe akaebe. Chebe nchekwa gị mbụ. Wee jiri ngwa ọrụ dị iji tinye oge ma kekọrịta ndekọ a pụrụ ịtụkwasị obi."
 }
