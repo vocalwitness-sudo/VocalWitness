@@ -36,7 +36,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0",
   authDomain: isCustomDomain ? "vocalwitness.com" : "vocalwitness-3affa.firebaseapp.com",
   projectId: "vocalwitness-3affa",
-  storageBucket: "vocalwitness-3affa.appspot.com",
+ storageBucket: "vocalwitness-3affa.firebasestorage.app",
   messagingSenderId: "108466981866",
   appId: "1:108466981866:web:b53360ad44012a576c8093"
 };
