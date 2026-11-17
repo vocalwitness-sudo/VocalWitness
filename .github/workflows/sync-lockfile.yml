@@ -10,41 +10,25 @@ jobs:
   sync-lockfile:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Force-regenerate lockfiles
+      - name: Regenerate lockfiles
         run: |
-          set -e
           rm -rf node_modules package-lock.json
-          npm install --no-fund --no-audit
-          if [ -f functions/package.json ]; then
-            cd functions
-            rm -rf node_modules package-lock.json
-            npm install --no-fund --no-audit
-            cd ..
-          fi
+          npm install
+          cd functions
+          rm -rf node_modules package-lock.json
+          npm install
+          cd ..
 
-      - name: Commit and push to main
+      - name: Commit and push
         run: |
-          set -e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json
-          if [ -f functions/package-lock.json ]; then
-            git add functions/package-lock.json
-          fi
-          if git diff --staged --quiet; then
-            echo "No lockfile changes to commit."
-          else
-            git commit -m "chore: regenerate package-lock.json"
-            git push origin HEAD:main
-          fi
+          git add package-lock.json functions/package-lock.json
+          git commit -m "chore: regenerate package-lock.json" || echo "No changes"
+          git push
