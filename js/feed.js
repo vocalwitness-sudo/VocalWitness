@@ -803,6 +803,9 @@ function renderFilteredPosts(posts, container) {
 }
 
 function renderSinglePostDOM(id, data, container) {
+    // 1. Move dataSaverOn to the very top to avoid TDZ / reference errors
+    const dataSaverOn = localStorage.getItem('vw_data_saver') === 'true';
+
     const currentUser = auth.currentUser || state.currentUser;
     const isOwner = currentUser && currentUser.uid === data.authorId;
 
@@ -938,9 +941,9 @@ function renderSinglePostDOM(id, data, container) {
         mediaHTML = `
             <div class="mt-5 rounded-2xl overflow-hidden border border-zinc-700 bg-black">
                 <video controls playsinline
-       class="w-full object-cover ${dataSaverOn ? 'max-h-56' : 'max-h-96'}"
-       preload="${dataSaverOn ? 'none' : 'metadata'}"
-       src="${escapeHTML(data.videoUrl)}"></video>
+                       class="w-full object-cover ${dataSaverOn ? 'max-h-56' : 'max-h-96'}"
+                       preload="${dataSaverOn ? 'none' : 'metadata'}"
+                       src="${escapeHTML(data.videoUrl)}"></video>
             </div>`;
     } else if (data.imageUrl) {
         mediaHTML = `
@@ -991,7 +994,7 @@ function renderSinglePostDOM(id, data, container) {
               🔒
             </button>
         `;
-    } else if (isStewardUserCache) {
+    } else if (typeof isStewardUserCache !== 'undefined' && isStewardUserCache) {
         ownerControlsHTML = `
             <button data-action="hide" data-id="${id}" title="Hide (Steward)"
                     class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition text-xs">
@@ -999,7 +1002,8 @@ function renderSinglePostDOM(id, data, container) {
             </button>
         `;
     }
-   const corrCount = data.corroborationCount || 0;
+    
+    const corrCount = data.corroborationCount || 0;
     const corrScoreHTML = corrCount > 0
         ? `<span class="corr-score text-[11px] text-emerald-400/90 font-medium tracking-tight">
                Witnessed by ${corrCount} Citizen${corrCount === 1 ? '' : 's'}
@@ -1020,7 +1024,7 @@ function renderSinglePostDOM(id, data, container) {
               ${pinnedBadge}
             </div>
             <p class="text-xs text-zinc-500 mt-0.5">
-              ${formattedDate}${getEditedLabel(data)}
+              ${formattedDate}${typeof getEditedLabel === 'function' ? getEditedLabel(data) : ''}
             </p>
           </div>
         </div>
@@ -1050,7 +1054,7 @@ function renderSinglePostDOM(id, data, container) {
         ${escapeHTML(headline)}
       </h3>
 
-   <!-- Content (collapsed on home feed; Read more expands) -->
+      <!-- Content -->
       ${(() => {
           const rawBody = String(data.content || data.text || data.body || '');
           const LIMIT = 280;
@@ -1083,8 +1087,7 @@ function renderSinglePostDOM(id, data, container) {
 
       <!-- Media -->
       ${mediaHTML}
-      const dataSaverOn = localStorage.getItem('vw_data_saver') === 'true';
-      
+
       <!-- Translation Box -->
       <div id="translate-box-${id}" class="mt-4 hidden rounded-xl border border-zinc-800 bg-zinc-950 p-3">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -1156,7 +1159,7 @@ function renderSinglePostDOM(id, data, container) {
         </div>
 
         <div class="flex items-center gap-4 text-xs">
-          ${hasPack ? renderDownloadPackButton(id) : ''}
+          ${hasPack && typeof renderDownloadPackButton === 'function' ? renderDownloadPackButton(id) : ''}
           <button data-action="report" data-id="${id}" class="text-red-400/80 transition hover:text-red-400">
             Report
           </button>
@@ -1174,6 +1177,9 @@ function renderSinglePostDOM(id, data, container) {
       syncReactionButtonState(id, postEl);
     }
 
-    applyPostDoorDecorations(postEl, data, currentUser);
+    if (typeof applyPostDoorDecorations === 'function') {
+      applyPostDoorDecorations(postEl, data, currentUser);
+    }
+    
     container.appendChild(postEl);
 }
