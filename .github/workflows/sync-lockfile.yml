@@ -32,8 +32,6 @@ jobs:
             npm install --no-fund --no-audit
             cd ..
           fi
-          echo "=== root lock head ==="
-          head -n 40 package-lock.json
 
       - name: Commit and push to main
         run: |
@@ -46,7 +44,7 @@ jobs:
           fi
           if git diff --staged --quiet; then
             echo "No lockfile changes to commit."
-            exit 0
+          else
+            git commit -m "chore: regenerate package-lock.json"
+            git push origin HEAD:main
           fi
-          git commit -m "chore: regenerate package-lock.json"
-          git push origin HEAD:main
