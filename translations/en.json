@@ -386,4 +386,22 @@
   "btn_refresh": "Refresh",
   "ledger_info_title": "Your reports stay safe",
   "ledger_info_desc": "Every report is cryptographically sealed and linked to the ledger. Media and hashes cannot be changed by ordinary users after publish. Text may be corrected for 30 minutes; after that only soft-hide is allowed."
+
+  "safetySubtitle": "Àwọn ìlànà tó wúlò láti dáàbò bo ìdánimọ̀ rẹ, ibi tí o wà, àti àmì nọ́mbà rẹ nígbà tí o bá ń gba ẹ̀rí tí o sì ń pín in.",
+  "threatModelTitle": "Lóye Ohun Tó Lè Wà Ní Ǹkan Tí O Ń ṣe (Threat Model)",
+  "threatModelDesc": "VocalWitness ń yọ àwọn ìsọfúnni EXIF kúrò nínú ẹ̀rọ àwárí (browser) rẹ ó sì ń pèsè ìfọwọ́sọ́pọ̀ ààbò tó ga jù lọ bí o bá fẹ́. Ìtẹ̀síwájú ẹ̀rọ nìkan kò lè dènà gbogbo ewu. Fún jíjábọ̀ lórí àwọn ohun tó léwu jù lọ, lo ààbò mìíràn.",
+  "networkSafetyTitle": "Àsopọ̀ Íńtánẹ́ẹ̀tì àti Ìpamọ́ IP (IP Masking)",
+  "networkTip1": "Lo Tor tàbí VPN tó dájú: Fi ibi tí o wà nítòótọ́ àti nọ́mbà IP rẹ pamọ́ lọ́wọ́ àwọn olùwòran lórí Íńtánẹ́ẹ̀tì kí o tó lọ sí VocalWitness.",
+  "networkTip2": "Yẹra fún Wi-Fi àwùjọ tàbí ti ara ẹni: Má ṣe gbe àwọn ìwé ìkọkọ́ tàbí ohun ìkọ̀là sílẹ̀ lórí fọònù tí a fi orúkọ gidi ìjọba rẹ sí.",
+  "mediaSafetyTitle": "Ààbò Fídíò, Fọ́tò àti Ìsọfúnni Wọn",
+  "mediaTip1": "Yiyọ Àwọn Ìsọfúnni Nípa Ẹ̀rọ Ⱬ túnṣe: VocalWitness ń yọ oríṣi ẹ̀rọ fọ́tò tàbí GPS kúrò nínú fọ́tò rẹ nípasẹ̀ ẹ̀rọ àwárí rẹ. Síbẹ̀síbẹ̀, yẹ fọ́tò rẹ wò dáadáa kí o má bàa ní àwọn àmì tàbí ìwé tó lè fi ọ hàn.",
+  "mediaTip2": "Ìpamọ́ Ohùn àti Ojú: Nígbà tí o bá ń gbílẹ̀ fídíò tàbí ohùn ní àwọn ibi tó léwu, bo ojú àwọn èèyàn tí kò fohùn ṣọ̀kan mọ́lẹ̀ kí o sì yí ohùn rẹ padà díẹ̀ kí o tó gbé e jáde.",
+  "identitySafetyTitle": "Ìpamọ́ Ìdánimọ̀ àti Àkántì",
+  "identityTip1": "Orúkọ Ìpamọ́ (Pseudonym): Yan orúkọ lórí ẹ̀rọ tí kò ní í ṣe rárá pẹ̀lú gidi orúkọ rẹ, àwọn ojú opo ayélujára rẹ, tàbí àmì ìwé ìpamọ́ rẹ.",
+  "identityTip2": "Ìfọwọ́sọ́pọ̀ Tóbẹ́ẹ̀: Yan àwọn ọ̀nà ààbò tó le koko nígbà tí wọ́n bá wà. Àwọn mìíràn ń lo ọ̀nà ìmọ̀ ìjìnlẹ̀ títù (zero-knowledge proofs); àwọn mìíràn ń lo àyẹ̀wò rírọrùn — wo àmì tó wà lórí ìròyìn kọ̀ọ̀kan.",
+  "physicalSafetyTitle": "Ààbò Ara Ẹni àti Ìtọ́jú Ẹ̀rọ",
+  "physicalTip1": "Ìpamọ́ Ẹ̀rọ Láìléwu: Pa fọònù rẹ mọ́ pẹ̀lú ààbò (yẹra fún ṣíṣí fọònù pẹ̀lú ìka tàbí ojú ní àwọn ibi tí àwọn aṣẹ ẹ̀ṣọ́ lè fi agbára mú ọ láti ṣí i).",
+  "physicalTip2": "Pa Ìsọfúnni Ẹ̀rọ Àwárí Rẹ Rẹ́: Bí o bá ń lo ẹ̀rọ ẹlòmíràn tàbí ẹ̀rọ tó wà nínú ewu, pa gbogbo ohun tó wà nínú ẹ̀rọ àwárí rẹ rẹ́ lẹ́sẹ̀ kẹsẹ̀ lẹ́yìn tí o bá fi ìròyìn rẹ sílẹ̀.",
+  "goldenRuleTitle": "Òfin Àwúlu fún Ọmọ Ilẹ̀ Tí Ó Ń Jẹ́rìí",
+  "goldenRuleText": "Má ṣe fi ara rẹ sí ewu ti ara fún ìgbà díẹ̀ láti gba ẹ̀rí. Dáàbò bo ara rẹ kọ́kọ́. Lẹ́yìn náà, lo àwọn ohun èlò tó wà láti fi àkókò sí i kí o sì pín ìròyìn tó jẹ́ òtítọ́."
 }
