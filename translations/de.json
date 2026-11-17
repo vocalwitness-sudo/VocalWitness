@@ -416,4 +416,22 @@
   "btn_refresh": "Aktualisieren",
   "ledger_info_title": "Deine Berichte bleiben sicher",
   "ledger_info_desc": "Jeder Bericht ist kryptografisch versiegelt und mit dem Register verknüpft. Nach der Veröffentlichung kann das Original von niemandem bearbeitet oder gelöscht werden."
+
+  "safetySubtitle": "Praktische Protokolle zum Schutz Ihrer Identität, Ihres Standorts und Ihres digitalen Fußabdrucks beim Erfassen und Teilen von Beweisen.",
+  "threatModelTitle": "Verstehen Sie Ihr Bedrohungsmodell",
+  "threatModelDesc": "VocalWitness entfernt EXIF-Metadaten im Browser und bietet eine optionale Verifizierung mit höherem Vertrauen. Technologie allein kann nicht jede Offenlegung verhindern. Nutzen Sie bei risikoreichen Meldungen zusätzliche operative Sicherheit.",
+  "networkSafetyTitle": "Netzwerkverbindung & IP-Maskierung",
+  "networkTip1": "Verwenden Sie Tor oder ein vertrauenswürdiges VPN: Verbergen Sie Ihren physischen Standort und Ihre IP-Adresse vor Netzwerk-Lauschern, bevor Sie VocalWitness aufrufen.",
+  "networkTip2": "Vermeiden Sie öffentliches oder persönliches WLAN: Laden Sie keine sensiblen Whistleblower-Materialien über Ihren Heim-Breitbandanschluss oder persönliche Mobilfunkkonten hoch, die direkt auf Ihren amtlichen Ausweis registriert sind.",
+  "mediaSafetyTitle": "Medien- & Metadatenschutz",
+  "mediaTip1": "Automatisierte Bereinigung: VocalWitness entfernt EXIF-Metadaten (Kameramodell, GPS-Koordinaten) lokal in Ihrem Browser. Überprüfen Sie dennoch Ihren Hintergrund visuell auf identifizierbare Spiegelungen, markante Straßenschilder oder private Dokumente.",
+  "mediaTip2": "Stimm- & Gesichtsanonymisierung: Wenn Sie Videos oder Audios in feindlichen Umgebungen aufnehmen, machen Sie die Gesichter unbeteiligter Personen unkenntlich und verändern Sie markante Stimmmuster vor der Veröffentlichung.",
+  "identitySafetyTitle": "Identitäts- & Kontodiskretion",
+  "identityTip1": "Pseudonymer Benutzername: Wählen Sie einen Benutzernamen, der in keinerlei Verbindung zu Ihrem echten Namen, Ihren Social-Media-Profilen oder Ihrer persönlichen E-Mail-Adresse steht.",
+  "identityTip2": "Verifizierung mit höherem Vertrauen: Bevorzugen Sie stärkere Verifizierungsoptionen, sofern verfügbar. Einige Wege nutzen echte Zero-Knowledge-Proofs, andere einfachere kryptografische Prüfungen – achten Sie auf das Abzeichen bei jedem Bericht.",
+  "physicalSafetyTitle": "Physische Sicherheit & Gerätehandhabung",
+  "physicalTip1": "Sichere Gerätespeicherung: Halten Sie Ihr Mobiltelefon verschlüsselt und mit einem Passcode gesichert (vermeiden Sie Biometrie wie Fingerabdruck/Gesichtserkennung in Regionen, in denen Behörden eine biometrische Entsperrung erzwingen können).",
+  "physicalTip2": "Browserdaten löschen: Wenn Sie ein gemeinsam genutztes oder gefährdetes Gerät verwenden, löschen Sie den lokalen Speicher und den Browser-Cache sofort nach dem Absenden Ihres Berichts.",
+  "goldenRuleTitle": "Die goldene Regel für Bürgerzeugen",
+  "goldenRuleText": "Bringen Sie sich niemals in unmittelbare physische Gefahr, um Beweise zu sichern. Sichern Sie zuerst Ihre eigene Sicherheit. Nutzen Sie anschließend die verfügbaren Tools, um eine verifizierbare Aufzeichnung mit Zeitstempel zu versehen und zu teilen."
 }
