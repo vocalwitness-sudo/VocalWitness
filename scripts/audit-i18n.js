@@ -4,8 +4,12 @@
  * Exits with code 1 if missing keys are found (ideal for CI/CD checks).
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const TRANSLATIONS_DIR = path.join(__dirname, '../translations');
 const BASE_LANG = 'en';
@@ -78,7 +82,7 @@ function auditTranslations() {
   console.log('\n----------------------------------------');
   if (hasErrors) {
     console.log('❌ Audit complete: Missing translation keys detected.');
-    process.exit(1); // Fails CI/CD pipeline if keys are missing
+    process.exit(1);
   } else {
     console.log('✨ Audit complete: All translation files are 100% complete!');
     process.exit(0);
