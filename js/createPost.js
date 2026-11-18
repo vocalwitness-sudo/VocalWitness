@@ -206,19 +206,20 @@ export async function submitTestimony({
 
   showToast("Sealing on server...", "info");
 
-  // Force a fresh App Check token before calling the secure function
+// Force a fresh App Check token
   try {
     const { getToken } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-app-check.js");
     const { appCheck } = await import('./firebase-config.js');
     if (appCheck) {
       const result = await getToken(appCheck, true); // forceRefresh
-      console.log("[AppCheck] token obtained, length:", result?.token?.length || 0);
+      console.log("[AppCheck] token length:", result?.token?.length || 0);
+    } else {
+      console.warn("[AppCheck] appCheck instance is null");
     }
   } catch (err) {
-    console.warn("[AppCheck] getToken failed (continuing):", err?.message || err);
+    console.warn("[AppCheck] getToken failed:", err?.message || err);
   }
 
-  // Initialize functions instance (only once)
   const functions = getFunctions(app, 'us-central1');
   const submitSecure = httpsCallable(functions, "submitTestimonySecure");
 
