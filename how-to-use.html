@@ -1,97 +1,60 @@
-# How to Use VocalWitness
+<!DOCTYPE html>
+<html lang="en-NG">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Use • VocalWitness</title>
+    <link rel="stylesheet" href="./style.css">
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: #e4e4e7; }
+        .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
+    </style>
+</head>
+<body class="min-h-screen p-6 md:p-12 pb-24">
+    <div class="max-w-3xl mx-auto">
 
-VocalWitness is a public square for sealed citizen reports.  
-Anyone can speak. Once a report is sealed, the media and core record are protected from ordinary editing or hard deletion.
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-10 glass rounded-3xl p-4">
+            <div class="flex items-center gap-3">
+                <a href="/" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back">⬅️</a>
+                <h1 class="text-2xl font-bold tracking-tight text-white">VocalWitness</h1>
+            </div>
+            <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                <option value="en">🇬🇧 English</option>
+                <option value="pcm">🇳🇬 Naija Pidgin</option>
+                <option value="ha">🇳🇬 Hausa</option>
+                <option value="yo">🇳🇬 Yorùbá</option>
+                <option value="ig">🇳🇬 Igbo</option>
+                <option value="sw">🇹🇿 Kiswahili</option>
+                <option value="ar">🇸🇦 العربية</option>
+                <option value="fr">🇫🇷 Français</option>
+            </select>
+        </div>
 
----
+        <header class="mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold tracking-tighter text-white mb-3">How to Use VocalWitness</h1>
+            <p class="text-xl text-zinc-400">Simple steps to seal and share what you witnessed.</p>
+        </header>
 
-### 1. Post a Citizen Report (Public Square)
+        <!-- PASTE THE HOW-TO-USE CONTENT HERE -->
 
-1. Go to the Public Square on the home page.
-2. Write what you saw or experienced (max 3,000 characters).
-3. Optionally add a photo, short video, or live voice recording.
-4. Choose whether to post as yourself or anonymously (if available).
-5. Tap **Publish Report**.
+        <!-- Footer links -->
+        <div class="flex flex-wrap justify-center gap-4 text-sm text-zinc-400 mt-16 mb-10">
+            <a href="/faq" class="hover:text-emerald-400">FAQ</a>
+            <a href="/about" class="hover:text-emerald-400">About</a>
+            <a href="/verify" class="hover:text-emerald-400">Verify</a>
+            <a href="/transparency" class="hover:text-emerald-400">Transparency</a>
+            <a href="/safety" class="hover:text-emerald-400">Safety</a>
+            <a href="/privacy" class="hover:text-emerald-400">Privacy</a>
+        </div>
 
-What happens next:
-- Your media is cleaned and hashed on your device.
-- The report is sealed and added to the public record.
-- You can edit the **text only** for 30 minutes.
-- After 30 minutes, you can only soft-hide the report.  
-  Media, hashes, and the seal cannot be changed by ordinary users.
+    </div>
 
----
-
-### 2. Post a higher-integrity Witness Voice report
-
-Use **Witness Voice** when you want stronger integrity for first-hand observations.
-
-1. Open the Witness Voice page.
-2. Record your voice or write your observation.
-3. Optionally attach photo or video.
-4. The system hashes the final media on your device before upload.
-5. Publish once. The report is sealed.
-
-Witness Voice reports carry higher weight in the system and are designed for independent verification.
-
----
-
-### 3. Download and share an Evidence Pack
-
-After publishing:
-1. Click **Download Evidence Pack**.
-2. You receive a JSON file containing:
-   - Text hash
-   - Media hashes
-   - Pack core hash
-   - Timestamps and verification instructions
-3. Share the link or the JSON file with journalists, NGOs, or anyone who needs to verify.
-
-Anyone can verify without an account.
-
----
-
-### 4. How anyone can verify a report
-
-**Online (easiest)**  
-- Open the shared link or go to the Verify page.  
-- Paste the report ID + hash, or drop the Evidence Pack JSON.  
-- You can also drop the original media file to check the hash.
-
-**Offline**  
-1. Download the media file and the Evidence Pack.  
-2. Compute the SHA-256 of the media file on your computer.  
-3. Compare it with the hash inside the Evidence Pack.  
-4. Do the same for the text body.
-
----
-
-### 5. Build your Circle
-
-- Follow people whose reports you trust.
-- Higher trust levels (phone verification and Witness Circle) unlock stronger circle features.
-- Your circle helps you see reports from voices you choose.
-
----
-
-### 6. Live Arena
-
-- Start or join real-time community rooms.
-- Useful for ongoing events or group reporting.
-- Verified citizens have higher limits.
-
----
-
-### 7. Useful tips
-
-- Turn on **Data Saver** if you are on a slow or expensive connection.  
-  Images and audio will be compressed more aggressively.
-- Always speak clearly when recording live voice — it carries stronger evidence weight.
-- Never post something you did not personally witness if you are using the higher-integrity channels.
-- Keep your Evidence Packs. They are your permanent verification files.
-
----
-
-### Need more help?
-
-See the [FAQ](/faq) for common questions about sealing, privacy, verification, and trust levels.
+    <script type="module">
+        import { initLanguage } from './js/i18n.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof initLanguage === 'function') initLanguage();
+        });
+    </script>
+</body>
+</html>
