@@ -8,6 +8,8 @@ import { analyzeReportContent } from './moderation.js';
 import { processAndUploadMedia } from './media-pipeline.js';
 import { parsePostMetadata } from './utils/parser.js';
 import { createEvidencePack } from './evidence-pack.js';
+import { getToken } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app-check.js";
+import { appCheck } from './firebase-config.js';
 
 async function isPhoneCircleUser() {
   const user = auth.currentUser;
@@ -205,6 +207,19 @@ export async function submitTestimony({
   }
 
   showToast("Sealing on server...", "info");
+
+  // Force a fresh App Check token
+if (appCheck) {
+  try {
+    const { token } = await getToken(appCheck, true); // forceRefresh
+    console.log("[AppCheck] token obtained, length:", token?.length || 0);
+  } catch (err) {
+    console.error("[AppCheck] getToken failed:", err?.message || err);
+  }
+}
+
+const functions = getFunctions(app, 'us-central1');
+const submitSecure = httpsCallable(functions, "submitTestimonySecure");
 
   // Initialize functions instance safely before calling
   const functions = getFunctions(app, 'us-central1');
