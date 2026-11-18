@@ -30,3 +30,6 @@ serviceAccountKey.json
 *input.json
 *secret*.json
 *.priv
+
+# Production build output
+dist
