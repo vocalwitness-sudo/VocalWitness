@@ -15,7 +15,7 @@
     "test": "npx playwright test",
     "test:integrity": "node tests/integrity-core.js",
     "test:ci": "npm run syntax:js && npm run test:integrity && npx playwright test --project=chromium",
-    "deploy": "npm run audit:i18n && firebase deploy",
+    "deploy": "npm run audit:i18n && npm run build:css && firebase deploy",
     "deploy:hosting": "npm run audit:i18n && npm run build:css && firebase deploy --only hosting",
     "deploy:functions": "firebase deploy --only functions",
     "logs": "firebase functions:log",
