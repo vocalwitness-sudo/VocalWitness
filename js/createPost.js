@@ -8,8 +8,6 @@ import { analyzeReportContent } from './moderation.js';
 import { processAndUploadMedia } from './media-pipeline.js';
 import { parsePostMetadata } from './utils/parser.js';
 import { createEvidencePack } from './evidence-pack.js';
-import { getToken } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app-check.js";
-import { appCheck } from './firebase-config.js';
 
 async function isPhoneCircleUser() {
   const user = auth.currentUser;
@@ -37,8 +35,8 @@ function normalizeChannel(channel) {
 }
 
 /**
- * Canonical publish entry — ALWAYS goes through submitTestimonySecure.
- * Hash is always of the processed bytes that were actually uploaded.
+- Canonical publish entry — ALWAYS goes through submitTestimonySecure.
+- Hash is always of the processed bytes that were actually uploaded.
  */
 export async function submitTestimony({
   content = '',
@@ -129,15 +127,15 @@ export async function submitTestimony({
   };
 
   // ===== UNIFIED MEDIA SEAL =====
- if (imageFile) {
-  showToast("🛡️ Sealing image...", "info");
-  const up = await processAndUploadMedia(imageFile, folder, reportProgress);
-  if (!up?.publicUrl || !up?.hash) {
-    throw new Error("Image upload or hash failed. Seal aborted.");
+  if (imageFile) {
+    showToast("🛡️ Sealing image...", "info");
+    const up = await processAndUploadMedia(imageFile, folder, reportProgress);
+    if (!up?.publicUrl || !up?.hash) {
+      throw new Error("Image upload or hash failed. Seal aborted.");
+    }
+    imageUrl = up.publicUrl;
+    imageHash = up.hash;
   }
-  imageUrl = up.publicUrl;
-  imageHash = up.hash;
-}
 
   if (videoFile) {
     showToast("🛡️ Sealing video...", "info");
@@ -208,20 +206,19 @@ export async function submitTestimony({
 
   showToast("Sealing on server...", "info");
 
-  // Force a fresh App Check token
-if (appCheck) {
+  // Force a fresh App Check token before calling the secure function
   try {
-    const { token } = await getToken(appCheck, true); // forceRefresh
-    console.log("[AppCheck] token obtained, length:", token?.length || 0);
+    const { getToken } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-app-check.js");
+    const { appCheck } = await import('./firebase-config.js');
+    if (appCheck) {
+      const result = await getToken(appCheck, true); // forceRefresh
+      console.log("[AppCheck] token obtained, length:", result?.token?.length || 0);
+    }
   } catch (err) {
-    console.error("[AppCheck] getToken failed:", err?.message || err);
+    console.warn("[AppCheck] getToken failed (continuing):", err?.message || err);
   }
-}
 
-const functions = getFunctions(app, 'us-central1');
-const submitSecure = httpsCallable(functions, "submitTestimonySecure");
-
-  // Initialize functions instance safely before calling
+  // Initialize functions instance (only once)
   const functions = getFunctions(app, 'us-central1');
   const submitSecure = httpsCallable(functions, "submitTestimonySecure");
 
@@ -230,11 +227,11 @@ const submitSecure = httpsCallable(functions, "submitTestimonySecure");
   const authorPhoneVerified = phoneOk;
 
   // Final integrity gate – never call server with broken media
-if ((imageFile && (!imageUrl || !imageHash)) ||
-    (videoFile && (!videoUrl || !videoHash)) ||
-    (audioFile && (!audioUrl || !audioHash))) {
-  throw new Error("Media seal incomplete. Aborting submit.");
-}
+  if ((imageFile && (!imageUrl || !imageHash)) ||
+      (videoFile && (!videoUrl || !videoHash)) ||
+      (audioFile && (!audioUrl || !audioHash))) {
+    throw new Error("Media seal incomplete. Aborting submit.");
+  }
 
   let response;
   try {
