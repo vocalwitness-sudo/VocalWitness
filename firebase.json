@@ -7,7 +7,7 @@
     "rules": "storage.rules"
   },
   "hosting": {
-    "public": ".",
+    "public": "dist",
     "cleanUrls": true,
     "trailingSlash": false,
     "rewrites": [
@@ -46,7 +46,12 @@
       "vite.config.js",
       "input.css",
       "DEPLOY_CHECKLIST.md",
-      "*.md"
+      "*.md",
+      "scripts/**",
+      "tests/**",
+      "circuits/**",
+      ".env",
+      ".firebaserc"
     ],
     "headers": [
       {
