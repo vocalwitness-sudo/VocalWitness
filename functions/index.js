@@ -45,6 +45,7 @@ import {
   createTranscribeAudioWitness,
   createSummarizeReport,
 } from "./callable/aiTools.js";
+import { createModeratePostContent } from "./callable/moderatePostContent.js";
 import { createInitializePaystack } from "./callable/paystack.js";
 import { createPaystackWebhook } from "./http/paystackWebhook.js";
 
@@ -227,6 +228,11 @@ export const transcribeAudioWitness = createTranscribeAudioWitness({
 });
 
 export const summarizeReport = createSummarizeReport({
+  allowedOrigins,
+  geminiApiKey,
+});
+
+export const moderatePostContent = createModeratePostContent({
   allowedOrigins,
   geminiApiKey,
 });
