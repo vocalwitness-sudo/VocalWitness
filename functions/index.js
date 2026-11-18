@@ -1391,12 +1391,15 @@ export const generateZKProof = onCall(
 export const submitTestimonySecure = onCall(
   { 
     cors: allowedOrigins,
-    consumeAppCheckToken: true   // ← add this
+    consumeAppCheckToken: true,
+    enforceAppCheck: true // ← This is the official Firebase standard way!
   },
   async (request) => {
-    // Optional extra guard (matches getPresignedUrl style):
-    if (!request.app) {
-      throw new HttpsError("unauthenticated", "App Check required.");
+    // Firebase automatically rejects requests missing a valid App Check token
+    // with a clean 401 before your code even executes, saving compute time.
+
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "User must be authenticated.");
     }
 
     const uid = request.auth.uid;
