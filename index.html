@@ -850,7 +850,7 @@
     </div>
   </div>
 </div>
-<!-- ========== 1. PUBLIC SQUARE ========== -->
+<!-- ====================== 1. PUBLIC SQUARE ====================== -->
 <section id="public-square" 
          data-view="citizenTalkView" 
          role="tabpanel" 
@@ -1143,6 +1143,25 @@
     Safe verification file with cryptographic hashes. No app installed.
   </p>
 </div>
+
+  <!-- Posts stream container -->
+  <div id="posts-container" class="space-y-4">
+    <!-- Dynamic posts render here -->
+  </div>
+
+  <!-- FAQ/How To Use (Empty Square State for first-time users) -->
+  <div id="empty-square-state" class="hidden rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8 text-center">
+    <h3 class="text-base font-semibold text-white">The Square is quiet</h3>
+    <p class="mt-1 text-sm text-zinc-400">No testimonies have been published in this channel yet. Be the first to share your report.</p>
+    <p class="mt-4 text-sm text-zinc-400">
+      New here? 
+      <a href="/how-to-use" class="text-emerald-400 hover:underline">See How to Use →</a> 
+      or read the 
+      <a href="/faq" class="text-emerald-400 hover:underline">FAQ</a>.
+    </p>
+  </div>
+
+</section>
 
   <!-- ==================================================
        FEED (now right under the composer)
