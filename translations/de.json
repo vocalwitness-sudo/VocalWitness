@@ -2,28 +2,22 @@
   "appTitle": "VocalWitness",
   "appSubtitle": "Bürgerberichte • Echte Beweise",
   "pageTitle": "VocalWitness • Bürgerberichte • Echte Beweise",
-
   "legalLabel": "Wichtiger Hinweis:",
   "privacyWarning": "VocalWitness ist ein geschützter öffentlicher Raum. Wir sammeln keine Personalausweise, Pässe oder persönliche Daten.",
-
   "placeholder": "Was hast du gesehen oder erlebt? Teile die Fakten...",
   "postButton": "Bericht veröffentlichen",
   "searchPlaceholder": "Berichte, Nachrichten, Hashtags oder Personen suchen...",
-
   "citizenTalk": "Offener Talk",
   "trueWitness": "Verifizierte Berichte",
   "liveArena": "Live-Arena",
   "groups": "Gruppen",
-
   "photoForensic": "📸 Foto hinzufügen",
   "voiceTestimony": "🎤 Sprachnachricht aufnehmen",
-
   "supportPlatform": "Unterstützen",
   "about": "Über uns",
   "safety": "Sicherheit",
   "privacy": "Datenschutz",
   "terms": "AGB",
-
   "myDigitalPassport": "Mein Profil",
   "editProfile": "✏️ Profil bearbeiten",
   "changePassword": "🔑 Passwort ändern",
@@ -31,7 +25,6 @@
   "signOut": "Abmelden",
   "signIn": "Anmelden",
   "signUp": "Konto erstellen",
-
   "createGroup": "Neue Gruppe erstellen",
   "createGroupBtn": "Gruppe erstellen",
   "cultivateSquare": "Den öffentlichen Raum unterstützen",
@@ -43,7 +36,6 @@
   "maybeLater": "Vielleicht später",
   "becomeSteward": "🌱 Wächter werden",
   "cancel": "Abbrechen",
-
   "daoProposal": "Wächter-Vorschlag",
   "submitProposal": "Vorschlag einreichen",
   "moderationDashboard": "Moderations-Dashboard",
@@ -52,14 +44,12 @@
   "trustLevel": "Vertrauensstufe",
   "currentCircle": "Aktueller Kreis",
   "level": "Stufe",
-
   "loading": "Lädt...",
   "success": "Erfolg",
   "error": "Fehler",
   "warning": "Warnung",
   "postPublished": "Bericht erfolgreich veröffentlicht!",
   "postFailed": "Veröffentlichung des Berichts fehlgeschlagen",
-
   "privacyLink": "🔒 Datenschutz geht vor",
   "supportBtn": "Unterstützen",
   "joinBtn": "Beitreten",
@@ -69,7 +59,6 @@
   "backToSquare": "← Zurück zum Platz",
   "backToSquareText": "Zurück zum Platz",
   "backToVocalWitness": "← Zurück zu VocalWitness",
-
   "identity": {
     "anonymous_title": "Privater Modus",
     "anonymous_desc": "Standort, Gerätedetails und Sprachmuster werden vor der Veröffentlichung automatisch entfernt.",
@@ -82,14 +71,12 @@
     "confirm_bold": "Ich verstehe, volle Beweise aktivieren",
     "cancel": "Abbrechen"
   },
-
   "composer": {
     "scrubbing_active": "🛡️ Datenschutz aktiv: Standort und Gerätedetails werden entfernt.",
     "preserving_active": "⚡ Voller Beweismodus: Ursprüngliche Details werden beibehalten.",
     "audio_normalized": "🎵 Audio für Klarheit bereinigt.",
     "audio_raw": "🎙️ Originalaudio aufgenommen."
   },
-
   "supportModal": {
     "title": "Den öffentlichen Raum unterstützen",
     "description": "Hilf mit, VocalWitness frei und unabhängig zu halten. Deine Unterstützung hält die Plattform am Laufen.",
@@ -98,7 +85,6 @@
     "warning": "Sende nur USDT über das TRC-20-Netzwerk.",
     "closeButton": "Schließen"
   },
-
   "authModal": {
     "title": "Bei VocalWitness mitmachen",
     "subtitle": "Erstelle dein Konto, um zu berichten, vertrauenswürdigen Stimmen zu folgen und zu veröffentlichen.",
@@ -106,7 +92,6 @@
     "anonymousBtn": "Anonym fortfahren",
     "cancelBtn": "Abbrechen & weiter stöbern"
   },
-
   "toast": {
     "nodeConnected": "Mit Google angemeldet",
     "anonymousInit": "Anonymer Modus bereit",
@@ -116,7 +101,6 @@
     "signInCancelled": "Anmeldung abgebrochen.",
     "requireAuth": "Bitte melde dich an, um fortzufahren."
   },
-
   "profile": {
     "title": "Benutzerprofil",
     "reputation": "Reputation",
@@ -144,7 +128,6 @@
     "stat_hashes": "Geschützt",
     "stat_rep": "Ruf-Score"
   },
-
   "accountSettings": "Kontoeinstellungen",
   "securityHeader": "Sicherheit & Zugriff",
   "passwordLabel": "Passwort",
@@ -161,14 +144,12 @@
   "exportLabel": "Profil exportieren",
   "exportSub": "Eine Zusammenfassung deines Kontos herunterladen",
   "exportBtn": "PDF herunterladen",
-
   "displayName": "Anzeigename",
   "username": "Benutzername",
   "region": "Region / Standort",
   "bio": "Bio",
   "save": "Speichern",
   "saveChanges": "Änderungen speichern",
-
   "common": {
     "verified": "Verifiziert",
     "not_verified": "Nicht verifiziert",
@@ -178,7 +159,6 @@
     "cancel": "Abbrechen",
     "close": "Schließen"
   },
-
   "trueWitnessTitle": "Verifizierte Berichte • VocalWitness",
   "trueWitnessSubtitle": "Höheres Vertrauen • Geschützt",
   "zkVerifiedTestimonies": "Berichte mit höherem Vertrauen",
@@ -187,12 +167,10 @@
   "trustScore": "Vertrauenswert",
   "forensicProof": "Schutznachweis",
   "viewFullTestimony": "Vollständigen Bericht anzeigen",
-
   "myProfileTitle": "Mein Profil | VocalWitness",
   "myProfile": "Mein Profil",
   "loadingProfile": "Dein Profil wird geladen...",
   "settings": "Einstellungen",
-
   "publicSquareTab": "Öffentlicher Platz",
   "publicSquareDesc": "Teile, was du siehst",
   "evidenceLedgerTab": "Öffentliches Register",
@@ -204,7 +182,6 @@
   "verifiedWitnessesTab": "Vertrauenswürdige Stimmen",
   "verifiedWitnessesDesc": "Verifizierte Reporter",
   "moreOptionsBtn": "Mehr",
-
   "myTestimoniesMenu": "Meine Berichte",
   "groupsMenu": "Gruppen",
   "trueWitnessMenu": "Verifizierte Berichte",
@@ -212,7 +189,6 @@
   "privacyPolicyMenu": "Datenschutz",
   "termsOfServiceMenu": "AGB",
   "safetyGuidelinesMenu": "Sicherheit",
-
   "shareTestimonyTitle": "Teile, was du gesehen hast",
   "publicSquareSubtitle": "Öffentlicher Platz",
   "mainInputPlaceholder": "Was hast du gesehen oder erlebt? Teile die Fakten...",
@@ -229,7 +205,6 @@
   "sortLatest": "Neueste",
   "sortVerified": "Zuerst verifiziert",
   "sortTrending": "Im Trend",
-
   "aboutPageTitle": "Über VocalWitness • Bürgerberichte",
   "aboutTitle": "Über VocalWitness",
   "aboutSubtitle": "Deine Stimme. Deine Wahrheit. Geschützt.",
@@ -256,7 +231,6 @@
   "trustStep3Desc": "VocalWitness ist ein neutraler öffentlicher Platz. Wir bearbeiten keine Beiträge und pushen keine bestimmten Geschichten. Die Beweise sprechen für sich.",
   "aboutQuote": "„Im Zeitalter des Lärms ist die klarste Stimme diejenige, die beweisen kann, dass sie niemals verändert wurde.“",
   "footerCopyright": "© 2026 VocalWitness • Bürgerberichte • Echte Beweise",
-
   "privacyPageTitle": "Datenschutzrichtlinie • VocalWitness",
   "privacyTitle": "Datenschutzrichtlinie",
   "privacyLastUpdated": "Zuletzt aktualisiert: 25. August 2026",
@@ -296,7 +270,6 @@
   "privacySec8Title": "8. Geistiges Eigentum",
   "privacySec8Text": "Die Plattform VocalWitness, einschließlich ihrer Software, ihres Designs, ihres Namens und Logos, ist das ausschließliche geistige Eigentum von VocalWitness. Du darfst sie ohne Erlaubnis weder kopieren noch wiederverwenden.",
   "panicExit": "Schneller Ausgang",
-
   "termsPageTitle": "Nutzungsbedingungen • VocalWitness",
   "termsTitle": "Nutzungsbedingungen",
   "termsLastUpdated": "Zuletzt aktualisiert: 25. August 2026",
@@ -330,10 +303,9 @@
   "termsSection10Title": "10. Geistiges Eigentum",
   "termsSection10Text": "Alle Rechte an der Plattform VocalWitness, einschließlich Software, Design, Name und Logo, verbleiben im ausschließlichen Eigentum von VocalWitness.",
   "termsSection10Text2": "Du darfst keinen Teil der Plattform ohne schriftliche Genehmigung kopieren, modifizieren oder kommerziell nutzen.",
-
   "safetyPageTitle": "Sicherheit & Deine Rechte • VocalWitness",
   "safetyTitle": "Sicherheit & Deine Rechte",
-  "safetySubtitle": "Praktische Protokolle zum Schutz deiner Identität, deines Standorts und digitalen Fußabdrucks beim Erfassen und Teilen von Beweisen.",
+  "safetySubtitle": "Praktische Protokolle zum Schutz Ihrer Identität, Ihres Standorts und Ihres digitalen Fußabdrucks beim Erfassen und Teilen von Beweisen.",
   "divineNaturalLawTitle": "Dein Recht, die Wahrheit zu sagen",
   "divineNaturalLawDesc": "Jede Person hat das Recht zu teilen, was sie miterlebt hat. Dies ist nach Artikel 19 der Allgemeinen Erklärung der Menschenrechte geschützt.",
   "safetySecuredBy": "Geschützt durch:",
@@ -359,23 +331,22 @@
   "safetyModTier2": "Höheres Vertrauen – Stärkerer Schutz und Reputation.",
   "safetyGoalTitle": "Unser Ziel:",
   "safetyGoalText": "Ein sicherer öffentlicher Platz, an dem echte Berichte geteilt werden können und Menschen durch Design geschützt sind.",
-  "threatModelTitle": "Verstehe dein Bedrohungsmodell",
-  "threatModelDesc": "Obwohl VocalWitness EXIF-Metadaten automatisch bereinigt und clientseitige Zero-Knowledge-Beweise verwendet, kann Technologie allein keine versehentliche persönliche Exposierung verhindern. Wenn du risikoreiche Aussagen oder Beweise unter feindlicher Überwachung einreichst, befolge diese bewährten Praktiken für die operative Sicherheit.",
+  "threatModelTitle": "Verstehen Sie Ihr Bedrohungsmodell",
+  "threatModelDesc": "VocalWitness entfernt EXIF-Metadaten im Browser und bietet eine optionale Verifizierung mit höherem Vertrauen. Technologie allein kann nicht jede Offenlegung verhindern. Nutzen Sie bei risikoreichen Meldungen zusätzliche operative Sicherheit.",
   "networkSafetyTitle": "Netzwerkverbindung & IP-Maskierung",
-  "networkTip1": "Verwende Tor oder ein vertrauenswürdiges VPN: Verstecke deinen physischen Standort und deine IP-Adresse vor Netzwerkschnüfflern, bevor du zu VocalWitness navigierst.",
-  "networkTip2": "Vermeide öffentliches persönliches WLAN: Lade keine sensiblen Whistleblower-Materialien über Heimbreitband oder persönliche Mobilfunkkonten hoch, die direkt auf deine amtliche ID registriert sind.",
+  "networkTip1": "Verwenden Sie Tor oder ein vertrauenswürdiges VPN: Verbergen Sie Ihren physischen Standort und Ihre IP-Adresse vor Netzwerk-Lauschern, bevor Sie VocalWitness aufrufen.",
+  "networkTip2": "Vermeiden Sie öffentliches oder persönliches WLAN: Laden Sie keine sensiblen Whistleblower-Materialien über Ihren Heim-Breitbandanschluss oder persönliche Mobilfunkkonten hoch, die direkt auf Ihren amtlichen Ausweis registriert sind.",
   "mediaSafetyTitle": "Medien- & Metadatenschutz",
-  "mediaTip1": "Automatisierte Bereinigung: VocalWitness entfernt EXIF-Metadaten (Kameramodell, GPS-Koordinaten) lokal in deinem Browser. Überprüfe deinen Hintergrund jedoch visuell auf erkennbare Spiegelungen, eindeutige Straßenschilder oder private Dokumente.",
-  "mediaTip2": "Sprach- & Gesichtsanonymisierung: Wenn du Video- oder Audioaufnahmen in feindlichen Umgebungen machst, vergleiche Gesichter nicht einwilligender Unbeteiligter und verändere eindeutige Sprachmuster vor der Veröffentlichung.",
+  "mediaTip1": "Automatisierte Bereinigung: VocalWitness entfernt EXIF-Metadaten (Kameramodell, GPS-Koordinaten) lokal in Ihrem Browser. Überprüfen Sie dennoch Ihren Hintergrund visuell auf identifizierbare Spiegelungen, markante Straßenschilder oder private Dokumente.",
+  "mediaTip2": "Stimm- & Gesichtsanonymisierung: Wenn Sie Videos oder Audios in feindlichen Umgebungen aufnehmen, machen Sie die Gesichter unbeteiligter Personen unkenntlich und verändern Sie markante Stimmmuster vor der Veröffentlichung.",
   "identitySafetyTitle": "Identitäts- & Kontodiskretion",
-  "identityTip1": "Pseudonymer Name: Wähle einen Benutzernamen, der völlig unverbunden mit deinem echten Namen, sozialen Profilen oder deiner persönlichen E-Mail-Adresse ist.",
-  "identityTip2": "Zero-Knowledge-Verifizierung: Nutze True-Witness-ZK-Verifizierungsoptionen, um Vertrauen aufzubauen, ohne persönliche Kontaktdaten mit deinen Einreichungen zu verknüpfen.",
+  "identityTip1": "Pseudonymer Benutzername: Wählen Sie einen Benutzernamen, der in keinerlei Verbindung zu Ihrem echten Namen, Ihren Social-Media-Profilen oder Ihrer persönlichen E-Mail-Adresse steht.",
+  "identityTip2": "Verifizierung mit höherem Vertrauen: Bevorzugen Sie stärkere Verifizierungsoptionen, sofern verfügbar. Einige Wege nutzen echte Zero-Knowledge-Proofs, andere einfachere kryptografische Prüfungen – achten Sie auf das Abzeichen bei jedem Bericht.",
   "physicalSafetyTitle": "Physische Sicherheit & Gerätehandhabung",
-  "physicalTip1": "Sicherer Gerätespeicher: Halte dein Mobiltelefon verschlüsselt und mit einem Passcode versehen (vermeide Biometrie wie Fingerabdruck/Gesichtsentsperrung in Regionen, in denen Behörden eine biometrische Entsperrung erzwingen können).",
-  "physicalTip2": "Browserdaten löschen: Wenn du ein gemeinsam genutztes oder gefährdetes Gerät verwendest, lösche den lokalen Speicher und Cache sofort nach dem Einreichen deines Datensatzes.",
-  "goldenRuleTitle": "Die goldene Regel des Bürgerbezeugens",
-  "goldenRuleText": "Begib dich niemals in unmittelbare physische Gefahr, um Beweise zu erfassen. Sichere zuerst deine physische Sicherheit. Sobald du an einem geschützten Ort bist, verwende kryptografische Werkzeuge, um deinen Datensatz zu notarisieren und mit der Welt zu teilen.",
-
+  "physicalTip1": "Sichere Gerätespeicherung: Halten Sie Ihr Mobiltelefon verschlüsselt und mit einem Passcode gesichert (vermeiden Sie Biometrie wie Fingerabdruck/Gesichtserkennung in Regionen, in denen Behörden eine biometrische Entsperrung erzwingen können).",
+  "physicalTip2": "Browserdaten löschen: Wenn Sie ein gemeinsam genutztes oder gefährdetes Gerät verwenden, löschen Sie den lokalen Speicher und den Browser-Cache sofort nach dem Absenden Ihres Berichts.",
+  "goldenRuleTitle": "Die goldene Regel für Bürgerzeugen",
+  "goldenRuleText": "Bringen Sie sich niemals in unmittelbare physische Gefahr, um Beweise zu sichern. Sichern Sie zuerst Ihre eigene Sicherheit. Nutzen Sie anschließend die verfügbaren Tools, um eine verifizierbare Aufzeichnung mit Zeitstempel zu versehen und zu teilen.",
   "ledgerIntegrityTitle": "Schutz des öffentlichen Registers",
   "ledgerIntegrityPara1": "Sobald ein Bericht veröffentlicht ist, machen die Regeln es extrem schwierig für jemanden, das Original zu bearbeiten oder zu löschen.",
   "ledgerIntegrityPoint1": "Datenbankregeln blockieren Aktualisierungen und Löschungen des Datensatzes.",
@@ -383,7 +354,6 @@
   "ledgerIntegrityPoint3": "Datensätze werden für zusätzlichen Schutz miteinander verknüpft.",
   "ledgerIntegrityClarification": "Wichtig: Dies ist ein starker Schutz auf Anwendungsebene, keine vollständige öffentliche Blockchain. Die Daten befinden sich in sicherem Cloud-Speicher.",
   "ledgerIntegrityFuture": "Zukunftsoption: Wir fügen möglicherweise zusätzliche öffentliche Verankerungen hinzu. Dies ist noch nicht aktiv.",
-
   "verifyPageTitle": "VocalWitness • Beweis-Verifizierungsportal",
   "legalBannerText": "VocalWitness ist ein nicht manipuliertes, dezentrales Distributionsmedium. Verifizierungsprüfungen überprüfen die Integritätsschriftsätze, nicht die reale Wahrheit.",
   "verifyHeaderTitle": "🔍 Beweis-Prüfer",
@@ -416,22 +386,4 @@
   "btn_refresh": "Aktualisieren",
   "ledger_info_title": "Deine Berichte bleiben sicher",
   "ledger_info_desc": "Jeder Bericht ist kryptografisch versiegelt und mit dem Register verknüpft. Nach der Veröffentlichung kann das Original von niemandem bearbeitet oder gelöscht werden."
-
-  "safetySubtitle": "Praktische Protokolle zum Schutz Ihrer Identität, Ihres Standorts und Ihres digitalen Fußabdrucks beim Erfassen und Teilen von Beweisen.",
-  "threatModelTitle": "Verstehen Sie Ihr Bedrohungsmodell",
-  "threatModelDesc": "VocalWitness entfernt EXIF-Metadaten im Browser und bietet eine optionale Verifizierung mit höherem Vertrauen. Technologie allein kann nicht jede Offenlegung verhindern. Nutzen Sie bei risikoreichen Meldungen zusätzliche operative Sicherheit.",
-  "networkSafetyTitle": "Netzwerkverbindung & IP-Maskierung",
-  "networkTip1": "Verwenden Sie Tor oder ein vertrauenswürdiges VPN: Verbergen Sie Ihren physischen Standort und Ihre IP-Adresse vor Netzwerk-Lauschern, bevor Sie VocalWitness aufrufen.",
-  "networkTip2": "Vermeiden Sie öffentliches oder persönliches WLAN: Laden Sie keine sensiblen Whistleblower-Materialien über Ihren Heim-Breitbandanschluss oder persönliche Mobilfunkkonten hoch, die direkt auf Ihren amtlichen Ausweis registriert sind.",
-  "mediaSafetyTitle": "Medien- & Metadatenschutz",
-  "mediaTip1": "Automatisierte Bereinigung: VocalWitness entfernt EXIF-Metadaten (Kameramodell, GPS-Koordinaten) lokal in Ihrem Browser. Überprüfen Sie dennoch Ihren Hintergrund visuell auf identifizierbare Spiegelungen, markante Straßenschilder oder private Dokumente.",
-  "mediaTip2": "Stimm- & Gesichtsanonymisierung: Wenn Sie Videos oder Audios in feindlichen Umgebungen aufnehmen, machen Sie die Gesichter unbeteiligter Personen unkenntlich und verändern Sie markante Stimmmuster vor der Veröffentlichung.",
-  "identitySafetyTitle": "Identitäts- & Kontodiskretion",
-  "identityTip1": "Pseudonymer Benutzername: Wählen Sie einen Benutzernamen, der in keinerlei Verbindung zu Ihrem echten Namen, Ihren Social-Media-Profilen oder Ihrer persönlichen E-Mail-Adresse steht.",
-  "identityTip2": "Verifizierung mit höherem Vertrauen: Bevorzugen Sie stärkere Verifizierungsoptionen, sofern verfügbar. Einige Wege nutzen echte Zero-Knowledge-Proofs, andere einfachere kryptografische Prüfungen – achten Sie auf das Abzeichen bei jedem Bericht.",
-  "physicalSafetyTitle": "Physische Sicherheit & Gerätehandhabung",
-  "physicalTip1": "Sichere Gerätespeicherung: Halten Sie Ihr Mobiltelefon verschlüsselt und mit einem Passcode gesichert (vermeiden Sie Biometrie wie Fingerabdruck/Gesichtserkennung in Regionen, in denen Behörden eine biometrische Entsperrung erzwingen können).",
-  "physicalTip2": "Browserdaten löschen: Wenn Sie ein gemeinsam genutztes oder gefährdetes Gerät verwenden, löschen Sie den lokalen Speicher und den Browser-Cache sofort nach dem Absenden Ihres Berichts.",
-  "goldenRuleTitle": "Die goldene Regel für Bürgerzeugen",
-  "goldenRuleText": "Bringen Sie sich niemals in unmittelbare physische Gefahr, um Beweise zu sichern. Sichern Sie zuerst Ihre eigene Sicherheit. Nutzen Sie anschließend die verfügbaren Tools, um eine verifizierbare Aufzeichnung mit Zeitstempel zu versehen und zu teilen."
 }
