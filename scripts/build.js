@@ -78,5 +78,15 @@ for (const item of toCopy) {
   console.log(`✅ Copied: ${item}`);
 }
 
+// 5. Create missing icon-192.png from logo.png (fixes 404 + Manifest error)
+const logoSrc = path.resolve(DIST, "logo.png");
+const iconDest = path.resolve(DIST, "icon-192.png");
+
+if (fs.existsSync(logoSrc)) {
+  fs.copyFileSync(logoSrc, iconDest);
+  console.log("✅ Created: icon-192.png (from logo.png)");
+} else {
+  console.warn("⚠️  logo.png not found – icon-192.png was not created");
+}
+
 console.log("\n✨ Production build complete → /dist");
-console.log("You can now deploy with: firebase deploy --only hosting");
