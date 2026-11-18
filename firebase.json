@@ -33,6 +33,9 @@
       { "source": "/journalist-verify", "destination": "/journalist-verify.html" },
       { "source": "/docs/journalist-verification.md", "destination": "/journalist-verify.html" },
       { "source": "/p/**", "function": "ogPost" },
+      { "source": "/how-to-use", "destination": "/how-to-use.html" },
+     { "source": "/faq", "destination": "/faq.html" },
+
       { "source": "/share/**", "function": "ogPost" }
     ],
     "ignore": [
