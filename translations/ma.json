@@ -2,28 +2,22 @@
   "appTitle": "VocalWitness",
   "appSubtitle": " የዜጎች ሪፖርት • እውነተኛ ማስረጃ",
   "pageTitle": "VocalWitness • የዜጎች ሪፖርት • እውነተኛ ማስረጃ",
-
   "legalLabel": "ጠቃሚ ማስታወሻ፡",
   "privacyWarning": "VocalWitness የተጠበቀ የህዝብ አደባባይ ነው። መታወቂያዎችን፣ ፓስፖርቶችን ወይም የግል መረጃዎችን አንሰበስብም።",
-
   "placeholder": "ምን አዩ ወይም አጋጠመዎት? حقائق ያጋሩ...",
   "postButton": "ሪፖርት አሳትም",
   "searchPlaceholder": "ሪፖርቶችን፣ ዜናዎችን፣ ሃሽታጎችን ወይም ሰዎችን ይፈልጉ...",
-
   "citizenTalk": "ክፍት ውይይት",
   "trueWitness": "የተረጋገጡ ሪፖርቶች",
   "liveArena": "ቀጥታ መድረክ",
   "groups": "ምድቦች",
-
   "photoForensic": "📸 ፎቶ አክል",
   "voiceTestimony": "🎤 ድምፅ መዝግብ",
-
   "supportPlatform": "ድጋፍ",
   "about": "ስለ እኛ",
   "safety": "ደህንነት",
   "privacy": "ግላዊነት",
   "terms": "ደንቦች",
-
   "myDigitalPassport": "የግል መገለጫዬ",
   "editProfile": "✏️ መገለጫ አስተካክል",
   "changePassword": "🔑 የይለፍ ቃል ቀይር",
@@ -31,7 +25,6 @@
   "signOut": "ውጣ",
   "signIn": "ግባ",
   "signUp": "አካውንት ፍጠር",
-
   "createGroup": "አዲስ ቡድን ፍጠር",
   "createGroupBtn": "ቡድን ፍጠር",
   "cultivateSquare": "የህዝብ አደባባዩን ደግፍ",
@@ -43,7 +36,6 @@
   "maybeLater": "በኋላ",
   "becomeSteward": "🌱 ጠባቂ ሁን",
   "cancel": "ይቅር",
-
   "daoProposal": "የጠባቂዎች ሃሳብ",
   "submitProposal": "ሃሳብ አቅርብ",
   "moderationDashboard": "የቁጥጥር ዳሽቦርድ",
@@ -52,14 +44,12 @@
   "trustLevel": "የእምነት ደረጃ",
   "currentCircle": "የአሁኑ ክበብ",
   "level": "ደረጃ",
-
   "loading": " በመጫን ላይ...",
   "success": "ተሳክቷል",
   "error": "ስህተት",
   "warning": "ማስጠንቀቂያ",
   "postPublished": "ሪፖርቱ በተሳካ ሁኔታ ታትሟል!",
   "postFailed": "ሪፖርቱን ማተም አልተሳካም",
-
   "privacyLink": "🔒 ግላዊነት ቀዳሚ ነው",
   "supportBtn": "ድጋፍ",
   "joinBtn": "ተቀላቀል",
@@ -69,7 +59,6 @@
   "backToSquare": "← ወደ አደባባይ ተመለስ",
   "backToSquareText": "ወደ አደባባይ ተመለስ",
   "backToVocalWitness": "← ወደ VocalWitness ተመለስ",
-
   "identity": {
     "anonymous_title": "የግል ሁኔታ",
     "anonymous_desc": "ከማተሙ በፊት መገኛ አካባቢ፣ የመሳሪያ ዝርዝሮች እና የድምፅ ንድፎች በራስ-ሰር ይወገዳሉ።",
@@ -82,14 +71,12 @@
     "confirm_bold": "ገባኝ፣ ሙሉ ማስረጃን አንቃ",
     "cancel": "ይቅር"
   },
-
   "composer": {
     "scrubbing_active": "🛡️ የግላዊነት ጥበቃ ንቁ ነው፡ የመገኛ ቦታ እና የመሳሪያ ዝርዝሮች ይወገዳሉ።",
     "preserving_active": "⚡ ሙሉ የማስረጃ ሁኔታ፡ የመጀመሪያ ዝርዝሮች ይጠበቃሉ።",
     "audio_normalized": "🎵 ድምፅ ለግልጽነት ተስተካክሏል።",
     "audio_raw": "🎙️ ኦሪጅናል ድምፅ ተመዝግቧል።"
   },
-
   "supportModal": {
     "title": "የህዝብ አደባባዩን ደግፍ",
     "description": "VocalWitness ነፃ እና ገለልተኛ ሆኖ እንዲቀጥል እርዳው። የእርስዎ ድጋፍ መድረኩ እንዲሰራ ያደርጋል።",
@@ -98,7 +85,6 @@
     "warning": "እባክዎ USDT በTRC-20 ኔትወርክ ብቻ ይላኩ።",
     "closeButton": "ዝጋ"
   },
-
   "authModal": {
     "title": "VocalWitness ን ይቀላቀሉ",
     "subtitle": "ሪፖርት ለማድረግ፣ የታመኑ ድምጾችን ለመከተል እና ለማተም አካውንት ይፍጠሩ።",
@@ -106,7 +92,6 @@
     "anonymousBtn": "ሳይታወቁ ይቀጥሉ",
     "cancelBtn": "ሰርዝ እና ማሰስዎን ይቀጥሉ"
   },
-
   "toast": {
     "nodeConnected": "በGoogle ገብተዋል",
     "anonymousInit": "የግል ሁኔታ ዝግጁ ነው",
@@ -116,7 +101,6 @@
     "signInCancelled": "መግባት ተሰርዟል።",
     "requireAuth": "ለመቀጠል እባክዎ ይግቡ።"
   },
-
   "profile": {
     "title": "የተጠቃሚ መገለጫ",
     "reputation": "ዝና",
@@ -144,7 +128,6 @@
     "stat_hashes": "የተጠበቁ",
     "stat_rep": "የዝና ውጤት"
   },
-
   "accountSettings": "የአካውንት ቅንብሮች",
   "securityHeader": "ደህንነት እና መዳረሻ",
   "passwordLabel": "የይለፍ ቃል",
@@ -161,14 +144,12 @@
   "exportLabel": "መገለጫ ላክ",
   "exportSub": "የአካውንትዎን ማጠቃለያ ያውርዱ",
   "exportBtn": "PDF አውርድ",
-
   "displayName": "የመታወቂያ ስም",
   "username": "የተጠቃሚ ስም",
   "region": "ክልል / መገኛ",
   "bio": "ስለ እኔ",
   "save": "አስቀምጥ",
   "saveChanges": "ለውጦችን አስቀምጥ",
-
   "common": {
     "verified": "የተረጋገጠ",
     "not_verified": "ያልተረጋገጠ",
@@ -178,7 +159,6 @@
     "cancel": "ይቅር",
     "close": "ዝጋ"
   },
-
   "trueWitnessTitle": "የተረጋገጡ ሪፖርቶች • VocalWitness",
   "trueWitnessSubtitle": "ከፍተኛ እምነት • የተጠበቀ",
   "zkVerifiedTestimonies": "ከፍተኛ እምነት ያላቸው ሪፖርቶች",
@@ -187,12 +167,10 @@
   "trustScore": "የእምነት ውጤት",
   "forensicProof": "የጥበቃ ማረጋገጫ",
   "viewFullTestimony": "ሙሉ ሪፖርቱን ይመልከቱ",
-
   "myProfileTitle": "የግል መገለጫዬ | VocalWitness",
   "myProfile": "የግል መገለጫዬ",
   "loadingProfile": "መገለጫዎን በመጫን ላይ...",
   "settings": "ቅንብሮች",
-
   "publicSquareTab": "የህዝብ አደባባይ",
   "publicSquareDesc": "ያዩትን ያጋሩ",
   "evidenceLedgerTab": "የህዝብ መዝገብ",
@@ -204,7 +182,6 @@
   "verifiedWitnessesTab": "የታመኑ ድምጾች",
   "verifiedWitnessesDesc": "የተረጋገጡ ሪፖርተሮች",
   "moreOptionsBtn": "ተጨማሪ",
-
   "myTestimoniesMenu": "የእኔ ሪፖርቶች",
   "groupsMenu": "ምድቦች",
   "trueWitnessMenu": "የተረጋገጡ ሪፖርቶች",
@@ -212,7 +189,6 @@
   "privacyPolicyMenu": "ግላዊነት",
   "termsOfServiceMenu": "ደንቦች",
   "safetyGuidelinesMenu": "ደህንነት",
-
   "shareTestimonyTitle": "ያዩትን ያጋሩ",
   "publicSquareSubtitle": "የህዝብ አደባባይ",
   "mainInputPlaceholder": "ምን አዩ ወይም አጋጠመዎት? حقائق ያጋሩ...",
@@ -229,7 +205,6 @@
   "sortLatest": "የቅርብ ጊዜ",
   "sortVerified": "የተረጋገጡ ቀድመው",
   "sortTrending": "ታዋቂ",
-
   "aboutPageTitle": "ስለ VocalWitness • የዜጎች ሪፖርት",
   "aboutTitle": "ስለ VocalWitness",
   "aboutSubtitle": "ድምጽዎ። እውነትዎ። የተጠበቀ።",
@@ -256,7 +231,6 @@
   "trustStep3Desc": "VocalWitness ገለልተኛ የህዝብ አደባባይ ነው። ልጥፎችን አናስተካክልም ወይም የተወሰኑ ታሪኮችን አንገፋፋም። ማስረጃዎቹ በራሳቸው ይናገራሉ።",
   "aboutQuote": "\"በጩኸት ዘመን፣ በጣም ግልጽ የሆነው ድምጽ ፈጽሞ ያልተቀየረ መሆኑን ማረጋገጥ የሚችለው ነው።\"",
   "footerCopyright": "© 2026 VocalWitness • የዜጎች ሪፖርት • እውነተኛ ማስረጃ",
-
   "privacyPageTitle": "የግላዊነት ፖሊሲ • VocalWitness",
   "privacyTitle": "የግላዊነት ፖሊሲ",
   "privacyLastUpdated": "የመጨረሻ ማሻሻያ፡ ነሐሴ 25 ቀን 2026",
@@ -296,7 +270,6 @@
   "privacySec8Title": "8. የአእምሮ ንብረት",
   "privacySec8Text": "የVocalWitness መድረክ ሶፍትዌሩን፣ ዲዛይኑን፣ ስሙን እና አርማውን ጨምሮ የVocalWitness ብቻ ንብረት ነው። ያለ ፈቃድ መቅዳት ወይም እንደገና መጠቀም አይችሉም።",
   "panicExit": "ፈጣን መውጫ",
-
   "termsPageTitle": "የአገልግሎት ውሎች • VocalWitness",
   "termsTitle": "የአገልግሎት ውሎች",
   "termsLastUpdated": "የመጨረሻ ማሻሻያ፡ ነሐሴ 25 ቀን 2026",
@@ -330,10 +303,9 @@
   "termsSection10Title": "10. የአእምሮ ንብረት",
   "termsSection10Text": "የVocalWitness መድረክ ሶፍትዌሩን፣ ዲዛይኑን፣ ስሙን እና አርማውን ጨምሮ ሁሉም መብቶች የVocalWitness ብቻ ንብረት ሆኖ ይቀጥላሉ።",
   "termsSection10Text2": "ያለ ጽሁፍ ፈቃድ የመድረኩን ክፍል መቅዳት፣ ማሻሻል ወይም በንግድ መጠቀም አይችሉም።",
-
   "safetyPageTitle": "ደህንነት እና መብቶችዎ • VocalWitness",
   "safetyTitle": "ደህንነት እና መብቶችዎ",
-  "safetySubtitle": "ማስረጃዎችን ሲይዙ እና ሲያጋሩ ማንነትዎን፣ መገኛ ቦታዎን እና ዲጂታል አሻራዎን ለመጠበቅ የሚረዱ ተግባራዊ ፕሮቶኮሎች።",
+  "safetySubtitle": "ማስረጃዎችን ሲቀርጹ እና ሲያጋሩ ማንነትዎን፣ አካባቢዎን እና ዲጂታል አሻራዎን ለመጠበቅ የሚረዱ ተግባራዊ መመሪያዎች።",
   "divineNaturalLawTitle": "እውነትን የመናገር መብትዎ",
   "divineNaturalLawDesc": "እያንዳንዱ ሰው ያየውን የማጋራት መብት አለው። ይህ በአለም አቀፍ የሰብአዊ መብቶች አዋጅ አንቀጽ 19 ስር የተጠበቀ ነው።",
   "safetySecuredBy": "የተጠበቀው በ:",
@@ -359,23 +331,22 @@
   "safetyModTier2": "ከፍተኛ እምነት – ጠንካራ ጥበቃ እና ዝና።",
   "safetyGoalTitle": "ግባችን:",
   "safetyGoalText": "እውነተኛ ሪፖርቶች የሚጋሩበት እና ሰዎች በዲዛይን የሚጠበቁበት ደህንነቱ የተጠበቀ የህዝብ አደባባይ።",
-  "threatModelTitle": "የአደጋ ስጋት ሞዴልዎን ይረዱ",
-  "threatModelDesc": "VocalWitness የEXIF ሜታዳታዎችን በራስ-ሰር ቢያጸዳም እና በደንበኛ ወገን ያሉ የዜሮ-እውቀት ማረጋገጫዎችን ቢጠቀምም፣ ቴክኖሎጂ ብቻውን በአጋጣሚ የግል መጋለጥን መከላከል አይችልም። በጠላት ክትትል ስር ከፍተኛ አደጋ ያላቸውን ምስክርነቶች ወይም ማስረጃዎች እያቀረቡ ከሆነ፣ እነዚህን የოንላይን ደህንነት ምርጥ ልምዶች ይከተሉ።",
-  "networkSafetyTitle": "የኔትወርክ ግንኙነት እና IP መሸፈኛ",
-  "networkTip1": "Tor ወይም የታመነ VPN ይጠቀሙ: ወደ VocalWitness ከመሄድዎ በፊት አካላዊ መገኛ ቦታዎን እና የIP አድራሻዎን ከኔትወርክ ጠላፊዎች ይደብቁ።",
-  "networkTip2": "የህዝብ የግል Wi-Fi ያስወግዱ: ሚስጥራዊ የሆኑ መረጃዎችን በቀጥታ በመንግስት መታወቂያዎ ከተመዘገቡ የቤት ብሮድባንድ ወይም የግል የሞባይል አካውንቶች ላይ አይስቀሉ።",
-  "mediaSafetyTitle": "የሚዲያ እና ሜታዳታ ጥበቃ",
-  "mediaTip1": "ራስ-ሰር ማጽዳት: VocalWitness የEXIF ሜታዳታዎችን (የካሜራ ሞዴል፣ የጂፒኤስ መጋጠሚያዎች) በአሳሽዎ ውስጥ በአካባቢያዊ ሁኔታ ያስወግዳል። ሆኖም ግን፣ ሊታወቁ የሚችሉ ነጸብራቆችን፣ ልዩ የመንገድ ምልክቶችን ወይም የግል ሰነዶችን ከኋላ በኩል በእይታ ያረጋግጡ።",
-  "mediaTip2": "የድምፅ እና የፊት ማንነት ማሳጣት: በጠላቶች በተሞሉ አካባቢዎች ቪዲዮ ወይም ድምፅ ሲመዘግቡ፣ ፈቃደኛ ያልሆኑ ተመልካቾችን ፊት ያደበዝዙ እና ከማተሙ በፊት የተለዩ የድምፅ ንድፎችን ይቀይሩ።",
+  "threatModelTitle": "የስጋት ሁኔታዎን ይረዱ",
+  "threatModelDesc": "VocalWitness በአሳሹ (browser) ውስጥ የEXIF መረጃዎችን ያስወግዳል እንዲሁም አማራጭ ከፍተኛ እምነት ያለው ማረጋገጫ ይሰጣል። ቴክኖሎጂ ብቻውን ሁሉንም ተጋላጭነት መከላከል አይችልም። ከፍተኛ ስጋት ላለባቸው ሪፖርቶች ተጨማሪ የደህንነት ጥንቃቄዎችን ይጠቀሙ።",
+  "networkSafetyTitle": "የኔትወርክ ግንኙነት እና የIP መደበቅ",
+  "networkTip1": "Tor ወይም ታማኝ VPN ይጠቀሙ፡ ወደ VocalWitness ከመግባትዎ በፊት ትክክለኛ ቦታዎን እና የIP አድራሻዎን ከኔትወርክ ሰላዮች ይደብቁ።",
+  "networkTip2": "የህዝብ ወይም የግል ዋይ-ፋይን (Wi-Fi) ያስወግዱ፡ ሚስጥራዊ የመረጃ መጠቆሚያ ሰነዶችን በቤትዎ ብሮድባንድ ወይም በመንግስት መታወቂያዎ በተመዘገቡ የግል የሞባይል አካውንቶች አይጫኑ።",
+  "mediaSafetyTitle": "የሚዲያ እና የሜታዳታ (Metadata) ጥበቃ",
+  "mediaTip1": "በራስ-ሰር ማጽዳት፡ VocalWitness የEXIF መረጃዎችን (የካሜራ ሞዴል፣ የGPS መገኛ) በአሳሽዎ ውስጥ ያስወግዳል። ሆኖም ማንነትን ሊገልጹ የሚችሉ ነጸብራቆች፣ ልዩ የመንገድ ምልክቶች ወይም የግል ሰነዶች አለመኖራቸውን በአይንዎ ያረጋግጡ።",
+  "mediaTip2": "ድምጽን እና ፊትን መደበቅ፡ አስቸጋሪ በሆኑ አካባቢዎች ቪዲዮ ወይም ድምጽ ሲቀርጹ ፈቃደኛ ያልሆኑ መንገደኞችን ፊት ያደብዝዙ እንዲሁም ከመለጠፍዎ በፊት የድምጽ ቃናዎን ይቀይሩ።",
   "identitySafetyTitle": "የማንነት እና የአካውንት ጥንቃቄ",
-  "identityTip1": "የውሸት ስም (Pseudonym): ከእውነተኛ ስምዎ፣ ከማህበራዊ ሚዲያ መለያዎችዎ ወይም ከግል ኢሜይል አድራሻዎ ጋር ፈጽሞ የማይገናኝ የተጠቃሚ ስም ይምረጡ።",
-  "identityTip2": "የዜሮ-እውቀት ማረጋገጫ: የግል እውቂያ ዝርዝሮችን ከማስረከቢያዎችዎ ጋር ሳያያይዙ እምነትን ለመገንባት የTrue Witness ዜሮ-እውቀት ማረጋገጫ አማራጮችን ይጠቀሙ።",
+  "identityTip1": "የብዕር ስም (Pseudonymous Handle)፡ ከእውነተኛ ስምዎ፣ ከማህበራዊ ሚዲያ አካውንቶችዎ ወይም ከግል ኢሜልዎ ጋር ምንም ግንኙነት የሌለው የተጠቃሚ ስም ይምረጡ።",
+  "identityTip2": "ከፍተኛ እምነት ያለው ማረጋገጫ፡ ሲገኙ ጠንካራ የማረጋገጫ አማራጮችን ይምረጡ። አንዳንድ መንገዶች ትክክለኛ የzero-knowledge ማረጋገጫዎችን ይጠቀማሉ፤ ሌሎች ደግሞ ቀለል ያሉ ክሪፕቶግራፊክ ፍተሻዎችን ይጠቀማሉ — በእያንዳንዱ ሪፖርት ላይ ያለውን ባጅ ያረጋግጡ።",
   "physicalSafetyTitle": "አካላዊ ደህንነት እና የመሳሪያ አያያዝ",
-  "physicalTip1": "ደህንነቱ የተጠበቀ የመሳሪያ ማከማቻ: ሞባይል ስልክዎ የተመሰጠረ እና በይለፍ ቃል የተጠበቀ ያድርጉት (ባለስልጣናት የባዮሜትሪክ መክፈቻን ሊያስገድዱባቸው በሚችሉ አካባቢዎች የጣት አሻራ/የፊት መክፈቻዎችን ያስወግዱ)።",
-  "physicalTip2": "የአሳሽ መረጃን አጽዳ: የተጋራ ወይም አደገኛ መሳሪያ እየተጠቀሙ ከሆነ፣ መዝገብዎን ካስገቡ በኋላ ወዲያውኑ የአካባቢ ማከማቻውን እና የአሳሽ መሸጎጫውን ያጽዱ።",
+  "physicalTip1": "ደህንነቱ የተጠበቀ የመሳሪያ ማከማቻ፡ ሞባይል ስልክዎን ኢንክሪፕት (encrypt) ያድርጉ እና በይለፍ ቃል ይቆልፉ (ባለስልጣናት በግዳጅ ሊያስከፍቱ በሚችሉባቸው አካባቢዎች እንደ አሻራ ወይም የፊት መክፈቻ ያሉ ባዮሜትሪኮችን ያስወግዱ)።",
+  "physicalTip2": "የአሳሽ (Browser) መረጃን ያጽዱ፡ የጋራ ወይም ለስጋት የተጋለጠ መሳሪያ የሚጠቀሙ ከሆነ ሪፖርትዎን እንዳስገቡ ወዲያውኑ የአሳሹን ማከማቻ እና ካሽ (cache) ያጽዱ።",
   "goldenRuleTitle": "የዜጋ ምስክርነት ወርቃማ ህግ",
-  "goldenRuleText": "ማስረጃዎችን ለመያዝ ፈጽሞ እራስዎን ወዲያውኑ በአካላዊ አደጋ ውስጥ አያስገቡ። አካላዊ ደህንነትዎን በመጀመሪያ ይጠብቁ። አንዴ ደህንነቱ በተጠበቀ ቦታ ላይ ከሆኑ፣ መዝገብዎን ለዓለም ለማካፈል ምስጢራዊ (კრიፕቶግራፊክ) መሳሪያዎችን ይጠቀሙ።",
-
+  "goldenRuleText": "ማስረጃ ለመያዝ ሲሉ እራስዎን በፍጹም ለቀጥተኛ አካላዊ አደጋ አያጋልጡ። መጀመሪያ ደህንነትዎን ያረጋግጡ። ከዚያም የጊዜ ማህተም ለማድረግ እና ሊረጋገጥ የሚችል መዝገብ ለማጋራት ያሉትን መሳሪያዎች ይጠቀሙ።",
   "ledgerIntegrityTitle": "የህዝብ መዝገብ ጥበቃ",
   "ledgerIntegrityPara1": "ሪፖርት አንዴ ከታተመ፣ ደንቦቹ ማንም ሰው ኦሪጅናሉን እንዲያስተካክል ወይም እንዲሰርዝ እጅግ ከባድ ያደርጉታል።",
   "ledgerIntegrityPoint1": "የመረጃ ቋት ደንቦች በመዝገቡ ላይ የሚደረጉ ማሻሻዎችን እና ስረዛዎችን ያግዳሉ።",
@@ -383,7 +354,6 @@
   "ledgerIntegrityPoint3": "ለተጨማሪ ጥበቃ መዝገቦች እርስ በእርሳቸው ይያያዛሉ።",
   "ledgerIntegrityClarification": "አስፈላጊ: ይህ ጠንካራ የመተግበሪያ ደረጃ ጥበቃ እንጂ ሙሉ የህዝብ ብሎክቼይን አይደለም። መረጃው ደህንነቱ በተጠበቀ የደመና ማከማቻ ውስጥ ይኖራል።",
   "ledgerIntegrityFuture": "የወደፊት አማራጭ: ተጨማሪ የህዝብ መልህቆችን ልንጨምር እንችላለን። ይህ ገና ንቁ አይደለም።",
-
   "verifyPageTitle": "VocalWitness • የማስረጃ ማረጋገጫ ፖርታል",
   "legalBannerText": "VocalWitness ያልተበረዘ ያልተማከለ የማሰራጫ መካከለኛ ነው። የማረጋገጫ ምርመራዎች የእውነተኛ ዓለም እውነትን ሳይሆን የታማኝነት ሃሾችን ይፈትሻሉ።",
   "verifyHeaderTitle": "🔍 የማስረጃ ማረጋገጫ",
@@ -416,22 +386,4 @@
   "btn_refresh": "አድስ",
   "ledger_info_title": "ሪፖርቶችዎ ደህና ሆኖ ይቀጥላሉ",
   "ledger_info_desc": "እያንዳንዱ ሪፖርት በምስጢር የታሸገ እና ከሰንንደሩ ጋር የተገናኘ ነው። አንዴ ከታተመ በኋላ ኦሪጅናሉ በማንም ሊስተካከል ወይም ሊሰረዝ አይችልም።"
-
-  "safetySubtitle": "ማስረጃዎችን ሲቀርጹ እና ሲያጋሩ ማንነትዎን፣ አካባቢዎን እና ዲጂታል አሻራዎን ለመጠበቅ የሚረዱ ተግባራዊ መመሪያዎች።",
-  "threatModelTitle": "የስጋት ሁኔታዎን ይረዱ",
-  "threatModelDesc": "VocalWitness በአሳሹ (browser) ውስጥ የEXIF መረጃዎችን ያስወግዳል እንዲሁም አማራጭ ከፍተኛ እምነት ያለው ማረጋገጫ ይሰጣል። ቴክኖሎጂ ብቻውን ሁሉንም ተጋላጭነት መከላከል አይችልም። ከፍተኛ ስጋት ላለባቸው ሪፖርቶች ተጨማሪ የደህንነት ጥንቃቄዎችን ይጠቀሙ።",
-  "networkSafetyTitle": "የኔትወርክ ግንኙነት እና የIP መደበቅ",
-  "networkTip1": "Tor ወይም ታማኝ VPN ይጠቀሙ፡ ወደ VocalWitness ከመግባትዎ በፊት ትክክለኛ ቦታዎን እና የIP አድራሻዎን ከኔትወርክ ሰላዮች ይደብቁ።",
-  "networkTip2": "የህዝብ ወይም የግል ዋይ-ፋይን (Wi-Fi) ያስወግዱ፡ ሚስጥራዊ የመረጃ መጠቆሚያ ሰነዶችን በቤትዎ ብሮድባንድ ወይም በመንግስት መታወቂያዎ በተመዘገቡ የግል የሞባይል አካውንቶች አይጫኑ።",
-  "mediaSafetyTitle": "የሚዲያ እና የሜታዳታ (Metadata) ጥበቃ",
-  "mediaTip1": "በራስ-ሰር ማጽዳት፡ VocalWitness የEXIF መረጃዎችን (የካሜራ ሞዴል፣ የGPS መገኛ) በአሳሽዎ ውስጥ ያስወግዳል። ሆኖም ማንነትን ሊገልጹ የሚችሉ ነጸብራቆች፣ ልዩ የመንገድ ምልክቶች ወይም የግል ሰነዶች አለመኖራቸውን በአይንዎ ያረጋግጡ።",
-  "mediaTip2": "ድምጽን እና ፊትን መደበቅ፡ አስቸጋሪ በሆኑ አካባቢዎች ቪዲዮ ወይም ድምጽ ሲቀርጹ ፈቃደኛ ያልሆኑ መንገደኞችን ፊት ያደብዝዙ እንዲሁም ከመለጠፍዎ በፊት የድምጽ ቃናዎን ይቀይሩ።",
-  "identitySafetyTitle": "የማንነት እና የአካውንት ጥንቃቄ",
-  "identityTip1": "የብዕር ስም (Pseudonymous Handle)፡ ከእውነተኛ ስምዎ፣ ከማህበራዊ ሚዲያ አካውንቶችዎ ወይም ከግል ኢሜልዎ ጋር ምንም ግንኙነት የሌለው የተጠቃሚ ስም ይምረጡ።",
-  "identityTip2": "ከፍተኛ እምነት ያለው ማረጋገጫ፡ ሲገኙ ጠንካራ የማረጋገጫ አማራጮችን ይምረጡ። አንዳንድ መንገዶች ትክክለኛ የzero-knowledge ማረጋገጫዎችን ይጠቀማሉ፤ ሌሎች ደግሞ ቀለል ያሉ ክሪፕቶግራፊክ ፍተሻዎችን ይጠቀማሉ — በእያንዳንዱ ሪፖርት ላይ ያለውን ባጅ ያረጋግጡ።",
-  "physicalSafetyTitle": "አካላዊ ደህንነት እና የመሳሪያ አያያዝ",
-  "physicalTip1": "ደህንነቱ የተጠበቀ የመሳሪያ ማከማቻ፡ ሞባይል ስልክዎን ኢንክሪፕት (encrypt) ያድርጉ እና በይለፍ ቃል ይቆልፉ (ባለስልጣናት በግዳጅ ሊያስከፍቱ በሚችሉባቸው አካባቢዎች እንደ አሻራ ወይም የፊት መክፈቻ ያሉ ባዮሜትሪኮችን ያስወግዱ)።",
-  "physicalTip2": "የአሳሽ (Browser) መረጃን ያጽዱ፡ የጋራ ወይም ለስጋት የተጋለጠ መሳሪያ የሚጠቀሙ ከሆነ ሪፖርትዎን እንዳስገቡ ወዲያውኑ የአሳሹን ማከማቻ እና ካሽ (cache) ያጽዱ።",
-  "goldenRuleTitle": "የዜጋ ምስክርነት ወርቃማ ህግ",
-  "goldenRuleText": "ማስረጃ ለመያዝ ሲሉ እራስዎን በፍጹም ለቀጥተኛ አካላዊ አደጋ አያጋልጡ። መጀመሪያ ደህንነትዎን ያረጋግጡ። ከዚያም የጊዜ ማህተም ለማድረግ እና ሊረጋገጥ የሚችል መዝገብ ለማጋራት ያሉትን መሳሪያዎች ይጠቀሙ።"
 }
