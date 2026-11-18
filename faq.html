@@ -1,120 +1,60 @@
-# Frequently Asked Questions
+<!DOCTYPE html>
+<html lang="en-NG">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ • VocalWitness</title>
+    <link rel="stylesheet" href="./style.css">
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: #e4e4e7; }
+        .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
+    </style>
+</head>
+<body class="min-h-screen p-6 md:p-12 pb-24">
+    <div class="max-w-3xl mx-auto">
 
-### What is VocalWitness?
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-10 glass rounded-3xl p-4">
+            <div class="flex items-center gap-3">
+                <a href="/" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back">⬅️</a>
+                <h1 class="text-2xl font-bold tracking-tight text-white">VocalWitness</h1>
+            </div>
+            <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                <option value="en">🇬🇧 English</option>
+                <option value="pcm">🇳🇬 Naija Pidgin</option>
+                <option value="ha">🇳🇬 Hausa</option>
+                <option value="yo">🇳🇬 Yorùbá</option>
+                <option value="ig">🇳🇬 Igbo</option>
+                <option value="sw">🇹🇿 Kiswahili</option>
+                <option value="ar">🇸🇦 العربية</option>
+                <option value="fr">🇫🇷 Français</option>
+            </select>
+        </div>
 
-VocalWitness is a privacy-first public square where anyone can publish sealed citizen reports.  
-Once a report is sealed, ordinary users (including the author) cannot change the media, hashes, or core record.  
-Text can only be corrected for 30 minutes. After that only soft-hide is allowed.
+        <header class="mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold tracking-tighter text-white mb-3">Frequently Asked Questions</h1>
+            <p class="text-xl text-zinc-400">Clear answers about sealing, privacy, and verification.</p>
+        </header>
 
----
+        <!-- PASTE THE FAQ CONTENT HERE -->
 
-### What does “sealed” mean?
+        <!-- Footer links -->
+        <div class="flex flex-wrap justify-center gap-4 text-sm text-zinc-400 mt-16 mb-10">
+            <a href="/how-to-use" class="hover:text-emerald-400">How to Use</a>
+            <a href="/about" class="hover:text-emerald-400">About</a>
+            <a href="/verify" class="hover:text-emerald-400">Verify</a>
+            <a href="/transparency" class="hover:text-emerald-400">Transparency</a>
+            <a href="/safety" class="hover:text-emerald-400">Safety</a>
+            <a href="/privacy" class="hover:text-emerald-400">Privacy</a>
+        </div>
 
-When you publish:
-- Media is cleaned (EXIF removed from photos, audio normalized) and hashed on your device.
-- The final uploaded bytes receive a SHA-256 fingerprint.
-- The report is protected by strict server rules so the seal cannot be broken by ordinary users.
+    </div>
 
-Sealed means the bits are protected. It does **not** mean the event is proven true.
-
----
-
-### Can I edit or delete my report later?
-
-- Text: editable for 30 minutes only.
-- After 30 minutes: you can soft-hide the report (it disappears from normal feeds but remains in the sealed record).
-- Hard delete of sealed evidence is not available to authors. This keeps the record verifiable.
-
----
-
-### Does the hash prove that the event really happened?
-
-No.  
-Hashes and Evidence Packs only prove that the digital file has not been changed after it was sealed.  
-They do not prove that the real-world event occurred.  
-Integrity ≠ truth.
-
----
-
-### Is this a blockchain?
-
-No.  
-VocalWitness uses **application-level sealing** (client hashing + strict Firestore and Storage rules) plus optional daily public timestamping of the ledger root (OpenTimestamps).  
-It is not a public blockchain.
-
----
-
-### Why do you scrub EXIF and normalize audio?
-
-- Photos: EXIF (location, device info, etc.) is removed by default to protect privacy.
-- Audio: normalized so the published version is consistent and the hash matches the exact bytes that were uploaded.
-- Video: structural validation only — the original bytes are kept so the hash remains exact.
-
----
-
-### What is the difference between Public Square and Witness Voice?
-
-- **Public Square**: Open citizen reporting. Anyone can post.
-- **Witness Voice**: Higher-integrity channel for first-hand observations. Media and text are hashed on-device with stronger sealing expectations.
-
----
-
-### What is Phone Verification / Citizen Circle / Witness Circle?
-
-- **Phone verification** raises your trust level and unlocks stronger features (Citizen Circle).
-- **Witness Circle** (Higher Trust) is earned through platform checks and optional zero-knowledge membership proof. It is not for sale.
-- These tiers affect visibility and privileges. They do not change the sealing rules of individual reports.
-
----
-
-### Is my phone number made public?
-
-No.  
-Phone numbers are used only for anti-spam and trust scoring. They are not written onto the public sealed ledger as your identity.
-
----
-
-### Can moderators delete reports?
-
-Moderators can soft-hide or take limited actions for safety and legal reasons.  
-Sealed evidence is designed so that ordinary hard deletion by users or low-level accounts is blocked.  
-Serious cases follow the platform’s safety and moderation process.
-
----
-
-### How do journalists or NGOs verify evidence?
-
-1. Open the shared link or the Verify page.
-2. Download the Evidence Pack (JSON).
-3. Re-download the media and check the SHA-256 hashes.
-4. Follow the instructions inside the Evidence Pack.
-
-A detailed guide is available on the Journalist Verification page.
-
----
-
-### What happens if I post false or harmful content?
-
-False, misleading, or harmful reports can result in content being hidden, account restrictions, or permanent bans.  
-The sealed record remains for accountability where appropriate.
-
----
-
-### Is the platform free? How is it funded?
-
-Basic use is free.  
-Optional support from citizens helps keep the Square independent.  
-Higher trust levels are earned, not purchased.
-
----
-
-### Which languages are supported?
-
-The interface supports multiple languages including English, and several others (Hindi, Chinese, Amharic, German, Indonesian, and more).  
-You can change language in your profile or settings.
-
----
-
-### Still have questions?
-
-Contact us through the Feedback link or check the [How to Use](/how-to-use) guide for step-by-step instructions.
+    <script type="module">
+        import { initLanguage } from './js/i18n.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof initLanguage === 'function') initLanguage();
+        });
+    </script>
+</body>
+</html>
