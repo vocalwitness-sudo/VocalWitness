@@ -1,0 +1,120 @@
+# Frequently Asked Questions
+
+### What is VocalWitness?
+
+VocalWitness is a privacy-first public square where anyone can publish sealed citizen reports.  
+Once a report is sealed, ordinary users (including the author) cannot change the media, hashes, or core record.  
+Text can only be corrected for 30 minutes. After that only soft-hide is allowed.
+
+---
+
+### What does “sealed” mean?
+
+When you publish:
+- Media is cleaned (EXIF removed from photos, audio normalized) and hashed on your device.
+- The final uploaded bytes receive a SHA-256 fingerprint.
+- The report is protected by strict server rules so the seal cannot be broken by ordinary users.
+
+Sealed means the bits are protected. It does **not** mean the event is proven true.
+
+---
+
+### Can I edit or delete my report later?
+
+- Text: editable for 30 minutes only.
+- After 30 minutes: you can soft-hide the report (it disappears from normal feeds but remains in the sealed record).
+- Hard delete of sealed evidence is not available to authors. This keeps the record verifiable.
+
+---
+
+### Does the hash prove that the event really happened?
+
+No.  
+Hashes and Evidence Packs only prove that the digital file has not been changed after it was sealed.  
+They do not prove that the real-world event occurred.  
+Integrity ≠ truth.
+
+---
+
+### Is this a blockchain?
+
+No.  
+VocalWitness uses **application-level sealing** (client hashing + strict Firestore and Storage rules) plus optional daily public timestamping of the ledger root (OpenTimestamps).  
+It is not a public blockchain.
+
+---
+
+### Why do you scrub EXIF and normalize audio?
+
+- Photos: EXIF (location, device info, etc.) is removed by default to protect privacy.
+- Audio: normalized so the published version is consistent and the hash matches the exact bytes that were uploaded.
+- Video: structural validation only — the original bytes are kept so the hash remains exact.
+
+---
+
+### What is the difference between Public Square and Witness Voice?
+
+- **Public Square**: Open citizen reporting. Anyone can post.
+- **Witness Voice**: Higher-integrity channel for first-hand observations. Media and text are hashed on-device with stronger sealing expectations.
+
+---
+
+### What is Phone Verification / Citizen Circle / Witness Circle?
+
+- **Phone verification** raises your trust level and unlocks stronger features (Citizen Circle).
+- **Witness Circle** (Higher Trust) is earned through platform checks and optional zero-knowledge membership proof. It is not for sale.
+- These tiers affect visibility and privileges. They do not change the sealing rules of individual reports.
+
+---
+
+### Is my phone number made public?
+
+No.  
+Phone numbers are used only for anti-spam and trust scoring. They are not written onto the public sealed ledger as your identity.
+
+---
+
+### Can moderators delete reports?
+
+Moderators can soft-hide or take limited actions for safety and legal reasons.  
+Sealed evidence is designed so that ordinary hard deletion by users or low-level accounts is blocked.  
+Serious cases follow the platform’s safety and moderation process.
+
+---
+
+### How do journalists or NGOs verify evidence?
+
+1. Open the shared link or the Verify page.
+2. Download the Evidence Pack (JSON).
+3. Re-download the media and check the SHA-256 hashes.
+4. Follow the instructions inside the Evidence Pack.
+
+A detailed guide is available on the Journalist Verification page.
+
+---
+
+### What happens if I post false or harmful content?
+
+False, misleading, or harmful reports can result in content being hidden, account restrictions, or permanent bans.  
+The sealed record remains for accountability where appropriate.
+
+---
+
+### Is the platform free? How is it funded?
+
+Basic use is free.  
+Optional support from citizens helps keep the Square independent.  
+Higher trust levels are earned, not purchased.
+
+---
+
+### Which languages are supported?
+
+The interface supports multiple languages including English, and several others (Hindi, Chinese, Amharic, German, Indonesian, and more).  
+You can change language in your profile or settings.
+
+---
+
+### Still have questions?
+
+Contact us through the Feedback link or check the [How to Use](/how-to-use) guide for step-by-step instructions.
