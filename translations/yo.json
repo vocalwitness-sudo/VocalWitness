@@ -1,6 +1,3 @@
-Here is the fully corrected and updated JSON translation file. All the trailing Yoruba blocks, syntax errors (such as missing commas), and mismatched duplicate keys have been cleaned up and fixed, ensuring that the remaining keys are fully polished and consistent:
-
-```json
 {
   "appTitle": "VocalWitness",
   "appSubtitle": "Rabo Oloye • Ẹri Gidi",
@@ -390,5 +387,3 @@ Here is the fully corrected and updated JSON translation file. All the trailing 
   "ledger_info_title": "Awọn rabo rẹ wa ni aabo",
   "ledger_info_desc": "Kọọkan rabo ni a di pẹlu aabo aṣiri ati pe a so mọ sipeelii. Ni igba ti a ba tẹ jade, kosi eniti o le ṣe atunṣe tabi re atilẹba kuro."
 }
-
-```
