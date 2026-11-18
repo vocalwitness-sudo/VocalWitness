@@ -3,8 +3,10 @@ name: Deploy Live
 on:
   workflow_run:
     workflows: ["CI Quality Gates"]
-    types: [completed]
-    branches: [main]
+    types:
+      - completed
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -13,26 +15,25 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'npm'
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci && cd functions && npm ci && cd ..
 
-      - name: Build CSS & Audit i18n
-        run: npm run audit:i18n && npm run build:css
+      - name: Build for Production
+        run: npm run build
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_VOCALWITNESS_3AFFA }}
+          projectId: vocalwitness-3affa
           channelId: live
         env:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
