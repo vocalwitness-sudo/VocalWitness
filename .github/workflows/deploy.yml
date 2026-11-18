@@ -51,7 +51,7 @@ jobs:
       - name: Deploy Critical Cloud Functions
         run: |
           firebase deploy \
-            --only functions:onTestimonyReactionWrite,functions:submitTestimonySecure,functions:moderatePostContent,functions:setUserClaims,functions:confirmPhoneVerification,functions:getUploadUrl \
+            --only functions:submitTestimonySecure,functions:moderatePostContent,functions:setUserClaims,functions:confirmPhoneVerification,functions:getUploadUrl,functions:onLiveRoomParticipantWrite \
             --project vocalwitness-3affa \
             --force \
             --non-interactive
