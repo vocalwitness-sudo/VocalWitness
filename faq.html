@@ -8,6 +8,7 @@
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: #e4e4e7; }
         .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
+        .badge-glass { background: rgba(31, 41, 55, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); }
     </style>
 </head>
 <body class="min-h-screen p-6 md:p-12 pb-24">
@@ -36,16 +37,116 @@
             <p class="text-xl text-zinc-400">Clear answers about sealing, privacy, and verification.</p>
         </header>
 
-        <!-- PASTE THE FAQ CONTENT HERE -->
+        <!-- FAQ items -->
+        <div class="space-y-6">
 
-        <!-- Footer links -->
-        <div class="flex flex-wrap justify-center gap-4 text-sm text-zinc-400 mt-16 mb-10">
+            <section class="glass rounded-3xl p-7">
+                <h2 class="text-xl font-bold text-white mb-3">What is VocalWitness?</h2>
+                <p class="text-zinc-300 leading-relaxed">
+                    A privacy-first public square where anyone can publish sealed citizen reports. 
+                    Once sealed, ordinary users (including the author) cannot change the media, hashes, or core record. 
+                    Text can only be corrected for 30 minutes. After that only soft-hide is allowed.
+                </p>
+            </section>
+
+            <section class="glass rounded-3xl p-7">
+                <h2 class="text-xl font-bold text-white mb-3">What does “sealed” mean?</h2>
+                <p class="text-zinc-300 leading-relaxed">
+                    Media is cleaned and hashed on your device with SHA-256. The final uploaded bytes receive a digital fingerprint. 
+                    Strict server rules protect the seal so ordinary users cannot break it. 
+                    <strong class="text-zinc-100">Sealed means the bits are protected. It does not mean the event is proven true.</strong>
+                </p>
+            </section>
+
+            <section class="glass rounded-3xl p-7">
+                <h2 class="text-xl font-bold text-white mb-3">Can I edit or delete my report later?</h2>
+                <p class="text-zinc-300 leading-relaxed">
+                    Text is editable for 30 minutes only. After that you can soft-hide the report (it disappears from normal feeds but stays in the sealed record). 
+                    Hard delete of sealed evidence is not available to authors. This keeps the record verifiable.
+                </p>
+            </section>
+
+            <section class="glass rounded-3xl p-7">
+                <h2 class="text-xl font-bold text-white mb-3">Does the hash prove that the event really happened?</h2>
+                <p class="text-zinc-300 leading-relaxed">
+                    No. Hashes and Evidence Packs only prove that the digital file has not been changed after it was sealed. 
+                    They do not prove that the real-world event occurred. <strong class="text-zinc-100">Integrity ≠ truth.</strong>
+                </p>
+            </section>
+
+            <section class="glass rounded-3xl p-7">
+                <h2 class="text-xl font-bold text-white mb-3">Is this a blockchain?</h2>
+                <p class="text-zinc-300 leading-relaxed">
+                    No. VocalWitness uses application-level sealing (client hashing + strict rules) plus optional daily public timestamping of the ledger root via OpenTimestamps. 
+                    It is not a public blockchain.
+                </p>
+            </section>
+
+            <section class="glass rounded-3xl p-7">
+                <h2 class="text-xl font-bold text-white mb-3">What is the difference between Public Square and Witness Voice?</h2>
+                <p class="text-zinc-300 leading-relaxed">
+                    <strong class="text-white">Public Square</strong> — open citizen reporting. Anyone can post.<br>
+                    <strong class="text-white">Witness Voice</strong> — higher-integrity channel for first-hand observations. Media and text are hashed on-device with stronger sealing expectations.
+                </p>
+            </section>
+
+            <section class="glass rounded-3xl p-7">
+                <h2 class="text-xl font-bold text-white mb-3">What is Phone Verification / Citizen Circle / Witness Circle?</h2>
+                <p class="text-zinc-300 leading-relaxed">
+                    Phone verification raises your trust level (Citizen Circle) and helps reduce spam. 
+                    Witness Circle (Higher Trust) is earned through platform checks and optional zero-knowledge membership proof. 
+                    These tiers are never for sale.
+                </p>
+            </section>
+
+            <section class="glass rounded-3xl p-7">
+                <h2 class="text-xl font-bold text-white mb-3">Is my phone number made public?</h2>
+                <p class="text-zinc-300 leading-relaxed">
+                    No. Phone numbers are used only for anti-spam and trust scoring. They are not written onto the public sealed ledger as your identity.
+                </p>
+            </section>
+
+            <section class="glass rounded-3xl p-7">
+                <h2 class="text-xl font-bold text-white mb-3">How do journalists or NGOs verify evidence?</h2>
+                <p class="text-zinc-300 leading-relaxed">
+                    Use the <a href="/verify" class="text-emerald-400 hover:underline">Verify</a> page or download the Evidence Pack. 
+                    Full instructions are in the <a href="/journalist-verify" class="text-emerald-400 hover:underline">Journalist Verification Guide</a>.
+                </p>
+            </section>
+
+            <section class="glass rounded-3xl p-7">
+                <h2 class="text-xl font-bold text-white mb-3">Still have questions?</h2>
+                <p class="text-zinc-300 leading-relaxed">
+                    See the step-by-step <a href="/how-to-use" class="text-emerald-400 hover:underline">How to Use</a> guide, 
+                    the <a href="/about" class="text-emerald-400 hover:underline">About</a> page, 
+                    or the <a href="/safety" class="text-emerald-400 hover:underline">Safety</a> and <a href="/privacy" class="text-emerald-400 hover:underline">Privacy</a> pages.
+                </p>
+            </section>
+
+        </div>
+
+        <!-- Cross links -->
+        <section class="glass rounded-3xl p-6 mt-10 mb-10 text-center">
+            <p class="text-zinc-400 mb-4">Continue exploring</p>
+            <div class="flex flex-wrap justify-center gap-4 text-sm">
+                <a href="/how-to-use" class="text-emerald-400 hover:underline font-medium">How to Use</a>
+                <a href="/about" class="text-emerald-400 hover:underline font-medium">About</a>
+                <a href="/verify" class="text-emerald-400 hover:underline font-medium">Verify</a>
+                <a href="/journalist-verify" class="text-emerald-400 hover:underline font-medium">Journalist Guide</a>
+                <a href="/transparency" class="text-emerald-400 hover:underline font-medium">Transparency</a>
+                <a href="/safety" class="text-emerald-400 hover:underline font-medium">Safety</a>
+                <a href="/privacy" class="text-emerald-400 hover:underline font-medium">Privacy</a>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <div class="flex flex-wrap justify-center gap-4 text-sm text-zinc-400 mb-10">
             <a href="/how-to-use" class="hover:text-emerald-400">How to Use</a>
             <a href="/about" class="hover:text-emerald-400">About</a>
-            <a href="/verify" class="hover:text-emerald-400">Verify</a>
             <a href="/transparency" class="hover:text-emerald-400">Transparency</a>
             <a href="/safety" class="hover:text-emerald-400">Safety</a>
             <a href="/privacy" class="hover:text-emerald-400">Privacy</a>
+            <a href="/terms" class="hover:text-emerald-400">Terms</a>
         </div>
 
     </div>
