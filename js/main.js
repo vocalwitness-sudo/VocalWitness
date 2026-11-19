@@ -1146,21 +1146,20 @@ async function fetchCuratedNews() {
     '✅ Verify integrity without revealing identity'
   ];
 
- function restartTickerAnimation(duration = 50) {
-    // More reliable restart across old Android / mobile Chrome
-    tickerEl.classList.remove('ticker-running');
-    tickerEl.style.animation = 'none';
-    tickerEl.style.transform = 'translate3d(0,0,0)';
+function restartTickerAnimation(duration = 50) {
+  if (!tickerEl) return;
 
-    // Force reflow
-    void tickerEl.offsetWidth;
+  tickerEl.classList.remove('ticker-running');
+  tickerEl.style.animation = 'none';
+  tickerEl.style.transform = 'translate3d(0,0,0)';   // ← keep this explicit
 
-    // Apply adaptive duration
-    tickerEl.style.animationDuration = `${duration}s`;
-    tickerEl.style.animation = '';
-    tickerEl.classList.add('ticker-running');
-  }
+  // Force reflow
+  void tickerEl.offsetWidth;
 
+  tickerEl.style.animationDuration = `${duration}s`;
+  tickerEl.style.animation = '';                     // clear it
+  tickerEl.classList.add('ticker-running');
+}
   function applyTicker(items) {
     let list = Array.isArray(items) ? items.filter(Boolean).map(String) : [];
     if (list.length < 4) list = fallbackItems.slice();
