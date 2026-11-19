@@ -1,16 +1,3 @@
-// js/imageScrubber.js - VocalWitness Client-Side EXIF & Metadata Scrubber
-// Mobile-hardened version
-
-import { state, getActiveIdentityConfig } from './app-state.js';
-import { logAuditEvent } from './audit.js';
-
-/**
- * Scrubs EXIF, GPS, and device metadata from an image file based on active identity mode.
- *
- * @param {File|Blob} imageFile - The raw uploaded image file.
- * @param {Object} [options={}] - Configuration options.
- * @returns {Promise<File>} A clean, metadata-free image File
- */
 export async function scrubImageMetadata(imageFile, options = {}) {
     const {
         maxWidth = 2048,
@@ -25,7 +12,6 @@ export async function scrubImageMetadata(imageFile, options = {}) {
     }
 
     // ===== MOBILE HARDENING =====
-    // Accept files even when type is empty (common on iOS/Android pickers)
     const type = (imageFile.type || '').toLowerCase();
     const isProbablyImage =
         type.startsWith('image/') ||
@@ -37,7 +23,6 @@ export async function scrubImageMetadata(imageFile, options = {}) {
         throw new Error('Invalid input: A valid image File or Blob must be provided.');
     }
 
-    // Batch 1 policy: always scrub by default.
     const identity = typeof getActiveIdentityConfig === 'function'
         ? getActiveIdentityConfig()
         : { mode: state?.profileMode || 'ANONYMOUS', scrubMetadata: true };
@@ -54,9 +39,31 @@ export async function scrubImageMetadata(imageFile, options = {}) {
         return imageFile;
     }
 
+    // ========== TRY WORKER FIRST ==========
     try {
-        // 2. Load image into ImageBitmap
-        // 'from-image' bakes EXIF orientation into pixels so mobile photos stay upright
+        const usedWorker = await scrubWithWorker(imageFile, {
+            maxWidth,
+            maxHeight,
+            outputType,
+            quality
+        });
+        if (usedWorker) {
+            await logAuditEvent?.("MEDIA_METADATA_SCRUBBED", {
+                filename: imageFile.name || 'unnamed',
+                mode: identity.mode || state?.profileMode || 'scrub',
+                originalSize: imageFile.size,
+                cleanSize: usedWorker.size,
+                outputType: usedWorker.type,
+                via: 'worker'
+            });
+            return usedWorker;
+        }
+    } catch (workerErr) {
+        console.warn('[ImageScrubber] Worker path failed, falling back:', workerErr?.message || workerErr);
+    }
+
+    // ========== ORIGINAL MAIN-THREAD FALLBACK (exact previous behaviour) ==========
+    try {
         let bitmap;
         try {
             bitmap = await createImageBitmap(imageFile, { imageOrientation: 'from-image' });
@@ -64,7 +71,6 @@ export async function scrubImageMetadata(imageFile, options = {}) {
             bitmap = await createImageBitmap(imageFile);
         }
 
-        // 3. Calculate aspect-ratio preserving scale
         let { width, height } = bitmap;
         if (width > maxWidth || height > maxHeight) {
             const ratio = Math.min(maxWidth / width, maxHeight / height);
@@ -72,7 +78,6 @@ export async function scrubImageMetadata(imageFile, options = {}) {
             height = Math.round(height * ratio);
         }
 
-        // 4. Render onto Canvas (prefer OffscreenCanvas)
         let canvas, ctx;
         if (typeof OffscreenCanvas !== 'undefined') {
             canvas = new OffscreenCanvas(width, height);
@@ -84,26 +89,21 @@ export async function scrubImageMetadata(imageFile, options = {}) {
             ctx = canvas.getContext('2d');
         }
 
-        if (!ctx) {
-            throw new Error('Could not acquire 2D rendering context.');
-        }
+        if (!ctx) throw new Error('Could not acquire 2D rendering context.');
 
         ctx.clearRect(0, 0, width, height);
         ctx.drawImage(bitmap, 0, 0, width, height);
 
-        if (typeof bitmap.close === 'function') {
-            bitmap.close();
-        }
+        if (typeof bitmap.close === 'function') bitmap.close();
 
-        // 5. Export clean Blob
-        const exportBlob = async (type) => {
+        const exportBlob = async (t) => {
             if (canvas.convertToBlob) {
-                return await canvas.convertToBlob({ type, quality });
+                return await canvas.convertToBlob({ type: t, quality });
             }
             return new Promise((resolve, reject) => {
                 canvas.toBlob(
                     (blob) => blob ? resolve(blob) : reject(new Error('toBlob failed')),
-                    type,
+                    t,
                     quality
                 );
             });
@@ -116,7 +116,6 @@ export async function scrubImageMetadata(imageFile, options = {}) {
             cleanBlob = await exportBlob('image/jpeg');
         }
 
-        // 6. Create clean File object
         const ext = (cleanBlob.type || 'image/webp').split('/')[1] || 'webp';
         const baseName = imageFile.name
             ? imageFile.name.replace(/\.[^/.]+$/, '')
@@ -127,13 +126,13 @@ export async function scrubImageMetadata(imageFile, options = {}) {
             lastModified: Date.now()
         });
 
-        // 7. Audit
         await logAuditEvent?.("MEDIA_METADATA_SCRUBBED", {
             filename: imageFile.name || 'unnamed',
             mode: identity.mode || state?.profileMode || 'scrub',
             originalSize: imageFile.size,
             cleanSize: cleanFile.size,
-            outputType: cleanBlob.type
+            outputType: cleanBlob.type,
+            via: 'main'
         });
 
         return cleanFile;
@@ -142,4 +141,85 @@ export async function scrubImageMetadata(imageFile, options = {}) {
         console.error('[ImageScrubber] Metadata removal failed:', err);
         throw new Error(`Failed to scrub photo metadata: ${err.message}`);
     }
+}
+
+/**
+ * Try to scrub using a Web Worker (transferable ImageBitmap).
+ * Returns a clean File on success, or null / throws → caller falls back.
+ */
+async function scrubWithWorker(imageFile, opts) {
+    // Feature detection
+    if (typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined' || typeof createImageBitmap === 'undefined') {
+        return null;
+    }
+
+    let bitmap;
+    try {
+        bitmap = await createImageBitmap(imageFile, { imageOrientation: 'from-image' });
+    } catch {
+        bitmap = await createImageBitmap(imageFile);
+    }
+
+    return new Promise((resolve) => {
+        let settled = false;
+        const finish = (value) => {
+            if (settled) return;
+            settled = true;
+            resolve(value);
+        };
+
+        try {
+            const worker = new Worker(new URL('./image-scrub-worker.js', import.meta.url), { type: 'module' });
+
+            const timeout = setTimeout(() => {
+                worker.terminate();
+                if (typeof bitmap.close === 'function') bitmap.close();
+                finish(null);
+            }, 12000);
+
+            worker.onmessage = (e) => {
+                clearTimeout(timeout);
+                worker.terminate();
+
+                if (!e.data?.ok || !e.data.buffer) {
+                    finish(null);
+                    return;
+                }
+
+                const blob = new Blob([e.data.buffer], { type: e.data.type || 'image/webp' });
+                const ext = (blob.type || 'image/webp').split('/')[1] || 'webp';
+                const baseName = imageFile.name
+                    ? imageFile.name.replace(/\.[^/.]+$/, '')
+                    : 'witness_photo';
+
+                const cleanFile = new File([blob], `${baseName}_clean.${ext}`, {
+                    type: blob.type,
+                    lastModified: Date.now()
+                });
+                finish(cleanFile);
+            };
+
+            worker.onerror = () => {
+                clearTimeout(timeout);
+                worker.terminate();
+                if (typeof bitmap.close === 'function') bitmap.close();
+                finish(null);
+            };
+
+            // Transfer the ImageBitmap (zero-copy)
+            worker.postMessage(
+                {
+                    bitmap,
+                    maxWidth: opts.maxWidth,
+                    maxHeight: opts.maxHeight,
+                    outputType: opts.outputType || 'image/webp',
+                    quality: opts.quality ?? 0.85
+                },
+                [bitmap]
+            );
+        } catch (_) {
+            if (typeof bitmap?.close === 'function') bitmap.close();
+            finish(null);
+        }
+    });
 }
