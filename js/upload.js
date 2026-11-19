@@ -1,15 +1,14 @@
 /**
  * VocalWitness Upload Module (js/upload.js)
- * Batch 1 – Production (Integrity Lock)
+ * Batch 2 – Maximum Resilience (Old phones + flaky networks)
  *
- * Pure transport layer.
- * - No EXIF scrubbing
- * - No HEIC conversion
- * - No compression / normalization
- * - No hashing
+ * Pure transport layer only.
+ * All media preparation & hashing remains the responsibility of media-pipeline.js.
  *
- * All media preparation & hashing is done exclusively by js/media-pipeline.js.
- * This file only talks to Cloudflare R2.
+ * Goals:
+ * - Survive unstable mobile connections
+ * - Survive old Android devices
+ * - Never lose a sealed report because of a temporary network blip
  */
 
 import { showToast } from './utils.js';
@@ -22,7 +21,7 @@ const R2_UPLOAD_ENDPOINT = 'https://media.vocalwitness.com/upload';
 const R2_PUBLIC_BASE = 'https://media.vocalwitness.com';
 
 /**
- * Show / update / hide the upload progress bar in the composer
+ * Show / update / hide the upload progress bar
  */
 export function setUploadProgress(percent, statusText = 'Uploading media...') {
   const box = document.getElementById('upload-progress-container');
@@ -47,68 +46,106 @@ export function setUploadProgress(percent, statusText = 'Uploading media...') {
 }
 
 /**
- * Low-level upload to R2 via XHR.
- * Requires Firebase Auth. Sends App Check token when available.
+ * Low-level resilient upload with automatic retries
+ * This is the heart of the reliability upgrade
  */
-async function executeUpload(blob, keyPath, mimeType, onProgress) {
+async function executeUpload(blob, keyPath, mimeType, onProgress, maxRetries = 3) {
   if (!auth.currentUser) {
     throw new Error('Sign in required to upload media.');
   }
 
-  const xhr = new XMLHttpRequest();
   const targetUrl = `${R2_UPLOAD_ENDPOINT}?key=${encodeURIComponent(keyPath)}`;
+  let lastError = null;
 
-  xhr.open('PUT', targetUrl, true);
-  xhr.setRequestHeader('Content-Type', mimeType || 'application/octet-stream');
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      // Force refresh the ID token on every attempt (very important on long-lived sessions)
+      const idToken = await auth.currentUser.getIdToken(true);
 
-  try {
-    const idToken = await auth.currentUser.getIdToken();
-    xhr.setRequestHeader('Authorization', `Bearer ${idToken}`);
-  } catch (err) {
-    throw new Error('Could not get auth token for upload.');
-  }
+      const publicUrl = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
 
-  try {
-    if (appCheck) {
-      const { token } = await getToken(appCheck, false);
-      if (token) {
-        xhr.setRequestHeader('X-Firebase-AppCheck', token);
-      }
-    }
-  } catch (err) {
-    console.warn('[Upload] App Check token unavailable:', err?.message || err);
-  }
+        xhr.open('PUT', targetUrl, true);
+        xhr.timeout = 120000; // 2 minutes – critical for slow African mobile networks
+        xhr.setRequestHeader('Content-Type', mimeType || 'application/octet-stream');
+        xhr.setRequestHeader('Authorization', `Bearer ${idToken}`);
 
-  return new Promise((resolve, reject) => {
-    if (xhr.upload && typeof onProgress === 'function') {
-      xhr.upload.onprogress = (evt) => {
-        if (evt.lengthComputable) {
-          onProgress(Math.round((evt.loaded / evt.total) * 100));
+        // App Check (best-effort, never blocks the upload)
+        if (appCheck) {
+          getToken(appCheck, false)
+            .then(({ token }) => {
+              if (token) {
+                xhr.setRequestHeader('X-Firebase-AppCheck', token);
+              }
+            })
+            .catch(() => {
+              // Silently ignore – we already have auth
+            });
         }
-      };
-    }
 
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        if (typeof onProgress === 'function') onProgress(100);
-        resolve(`${R2_PUBLIC_BASE}/${keyPath}`);
-      } else if (xhr.status === 401 || xhr.status === 403) {
-        reject(new Error('Upload denied (auth or App Check). Refresh and try again.'));
-      } else {
-        reject(new Error(`Upload failed (HTTP ${xhr.status}). Please retry.`));
+        // Progress
+        if (xhr.upload && typeof onProgress === 'function') {
+          xhr.upload.onprogress = (evt) => {
+            if (evt.lengthComputable) {
+              const percent = Math.round((evt.loaded / evt.total) * 100);
+              onProgress(percent);
+            }
+          };
+        }
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(`${R2_PUBLIC_BASE}/${keyPath}`);
+          } else if (xhr.status === 401 || xhr.status === 403) {
+            reject(new Error('Upload denied (auth or security check). Please refresh the page and try again.'));
+          } else {
+            reject(new Error(`Upload failed (server returned ${xhr.status}). Please retry.`));
+          }
+        };
+
+        xhr.onerror = () => {
+          reject(new Error('Network error during upload. Connection dropped.'));
+        };
+
+        xhr.ontimeout = () => {
+          reject(new Error('Upload timed out. The network is too slow right now.'));
+        };
+
+        xhr.onabort = () => {
+          reject(new Error('Upload was cancelled.'));
+        };
+
+        xhr.send(blob);
+      });
+
+      // Success – return immediately
+      return publicUrl;
+
+    } catch (err) {
+      lastError = err;
+      console.warn(`[Upload] Attempt ${attempt}/${maxRetries} failed:`, err.message);
+
+      if (attempt < maxRetries) {
+        // Exponential backoff: 1.8s → 3.6s → 7.2s
+        const delay = Math.round(1800 * Math.pow(2, attempt - 1));
+        
+        showToast(
+          `Upload interrupted. Retrying in ${Math.round(delay / 1000)}s… (${attempt}/${maxRetries})`,
+          'info'
+        );
+
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
-    };
-    xhr.onerror = () => reject(new Error('Network error during upload. Check connection and retry.'));
-    xhr.ontimeout = () => reject(new Error('Upload timed out. Please retry.'));
+    }
+  }
 
-    xhr.send(blob);
-  });
+  // All attempts failed
+  throw lastError || new Error('Network error during upload. Please check your connection and try again.');
 }
 
 /**
- * Core transport helper used by media-pipeline.js
- * Accepts an already-processed File/Blob and uploads it.
- * Does NOT scrub, normalize, or hash.
+ * Core public upload function used by media-pipeline.js
+ * Accepts already-processed File/Blob
  */
 export async function uploadMedia(file, folderPath = 'evidence', onProgress = null) {
   if (!file) throw new Error('No file provided for upload.');
@@ -118,7 +155,7 @@ export async function uploadMedia(file, folderPath = 'evidence', onProgress = nu
   const uid = auth.currentUser?.uid || 'anonymous';
   const fileId = crypto.randomUUID();
 
-  // Determine safe extension
+  // Safe extension detection
   const mime = (file.type || 'application/octet-stream').toLowerCase();
   let ext = 'bin';
 
@@ -144,7 +181,8 @@ export async function uploadMedia(file, folderPath = 'evidence', onProgress = nu
     : `${folderPath}/${uid}/${fileId}.${ext}`;
 
   try {
-    setUploadProgress(0, 'Uploading…');
+    setUploadProgress(0, 'Preparing upload…');
+
     const publicUrl = await executeUpload(
       file,
       keyPath,
@@ -155,16 +193,20 @@ export async function uploadMedia(file, folderPath = 'evidence', onProgress = nu
       }
     );
 
-    await logAuditEvent?.('MEDIA_UPLOADED', {
-      type: mime.split('/')[0] || 'file',
-      path: keyPath,
-      size: file.size
-    });
+    // Optional audit
+    try {
+      await logAuditEvent?.('MEDIA_UPLOADED', {
+        type: mime.split('/')[0] || 'file',
+        path: keyPath,
+        size: file.size
+      });
+    } catch (_) {}
 
     return publicUrl;
+
   } catch (err) {
-    console.error('[Upload] Transport failed:', err);
-    showToast(err.message || 'Upload failed', 'error');
+    console.error('[Upload] Final failure:', err);
+    showToast(err.message || 'Upload failed. Please try again.', 'error');
     throw err;
   } finally {
     setUploadProgress(null);
@@ -173,7 +215,6 @@ export async function uploadMedia(file, folderPath = 'evidence', onProgress = nu
 
 /**
  * Upload non-media documents (PDF, TXT, ZIP, DOC, DOCX)
- * Used by Group Evidence Locker. No processing.
  */
 export async function uploadRawFile(file, folderPath = 'evidence', onProgress = null) {
   if (!file) throw new Error('No file provided for upload.');
@@ -199,10 +240,7 @@ export async function uploadRawFile(file, folderPath = 'evidence', onProgress = 
   return uploadMedia(file, folderPath, onProgress);
 }
 
-// Legacy thin wrappers (kept for compatibility with older callers)
-// They simply forward to the canonical pipeline via uploadMedia.
-// Prefer calling processAndUploadMedia() from media-pipeline.js instead.
-
+// Legacy compatibility wrappers
 export async function uploadSecurePhoto(file, folderPath = 'evidence', onProgress = null) {
   return uploadMedia(file, folderPath, onProgress);
 }
