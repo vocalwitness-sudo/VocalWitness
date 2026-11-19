@@ -1,7 +1,8 @@
 // js/media-pipeline.js
-// VocalWitness – Canonical Media Pipeline (Batch 1 – Production)
-// Single source of truth. Hash is always of the final uploaded bytes.
+// VocalWitness – Canonical Media Pipeline (Batch 2 – Resilience)
+// Single source of truth. Hash is ALWAYS of the final uploaded bytes.
 // Fail-closed: never seal uncleaned / unprocessed media.
+// Hardened for old phones + flaky mobile networks.
 
 import { scrubImageMetadata } from './imageScrubber.js';
 import { normalizeAudioBlob } from './audio-normalize.js';
@@ -64,7 +65,7 @@ export function normalizeMediaFile(file) {
 }
 
 /**
- * Convert HEIC/HEIF → JPEG using heic2any
+ * Convert HEIC/HEIF → JPEG
  */
 async function convertHeicToJpeg(file) {
   try {
@@ -74,7 +75,7 @@ async function convertHeicToJpeg(file) {
     const result = await heic2any({
       blob: file,
       toType: 'image/jpeg',
-      quality: 0.88
+      quality: 0.82          // slightly lower for old phones
     });
 
     const jpegBlob = Array.isArray(result) ? result[0] : result;
@@ -95,7 +96,7 @@ async function convertHeicToJpeg(file) {
 /**
  * Canonical media preparation.
  * Returns the exact File that will be uploaded + its SHA-256.
- * Fail-closed: any processing error aborts the seal.
+ * Fail-closed.
  */
 export async function prepareMediaForUpload(file, options = {}) {
   if (!file) throw new Error('No media file provided');
@@ -117,6 +118,7 @@ export async function prepareMediaForUpload(file, options = {}) {
   }
 
   let processedBlob = file;
+  const dataSaverOn = localStorage.getItem('vw_data_saver') === 'true';
 
   // ========== IMAGE PATH ==========
   if (type.startsWith('image/') || type === 'image/heic' || type === 'image/heif') {
@@ -126,20 +128,19 @@ export async function prepareMediaForUpload(file, options = {}) {
       type = 'image/jpeg';
     }
 
-    const dataSaverOn = localStorage.getItem('vw_data_saver') === 'true';
-
-    const maxWidth  = dataSaverOn ? 1280 : (options.maxWidth || 1920);
-    const maxHeight = dataSaverOn ? 1280 : (options.maxHeight || 1080);
-    const quality   = dataSaverOn ? 0.72 : (options.quality || 0.85);
+    // Stronger defaults for Data Saver + old phones
+    const maxWidth  = dataSaverOn ? 1024 : (options.maxWidth || 1600);
+    const maxHeight = dataSaverOn ? 1024 : (options.maxHeight || 1200);
+    const quality   = dataSaverOn ? 0.68 : (options.quality || 0.82);
 
     showToast(
       dataSaverOn
-        ? '🛡️ Data Saver: compressing image…'
+        ? '🛡️ Data Saver: strong compression for better success…'
         : '🛡️ Scrubbing image metadata…',
       'info'
     );
 
-    // Fail-closed: do not catch and fall back to original
+    // Fail-closed
     processedBlob = await scrubImageMetadata(file, {
       maxWidth,
       maxHeight,
@@ -148,13 +149,13 @@ export async function prepareMediaForUpload(file, options = {}) {
       ...options
     });
 
-    // Extra compression pass if still large
-    const sizeLimit = dataSaverOn ? 220 * 1024 : 450 * 1024;
+    // Extra aggressive pass if still large
+    const sizeLimit = dataSaverOn ? 180 * 1024 : 380 * 1024;
     if (processedBlob.size > sizeLimit) {
       processedBlob = await compressImage(processedBlob, {
-        maxWidth: dataSaverOn ? 1024 : 1600,
-        maxHeight: dataSaverOn ? 1024 : 1600,
-        quality: dataSaverOn ? 0.68 : 0.82
+        maxWidth: dataSaverOn ? 900 : 1400,
+        maxHeight: dataSaverOn ? 900 : 1400,
+        quality: dataSaverOn ? 0.62 : 0.78
       });
     }
 
@@ -162,20 +163,21 @@ export async function prepareMediaForUpload(file, options = {}) {
   }
 
   // ========== AUDIO PATH ==========
- else if (type.startsWith('audio/')) {
-    const dataSaverOn = localStorage.getItem('vw_data_saver') === 'true';
+  else if (type.startsWith('audio/')) {
     showToast(
-      dataSaverOn ? '🛡️ Data Saver: normalizing audio…' : '🛡️ Normalizing audio…',
+      dataSaverOn
+        ? '🛡️ Data Saver: normalizing audio for better upload…'
+        : '🛡️ Normalizing audio…',
       'info'
     );
 
-    // Fail-closed. Hash is of normalized output (published bytes).
     const result = await normalizeAudioBlob(file, {
       forceNormalize: options.forceNormalize,
-      // only if normalizeAudioBlob supports these — otherwise omit
-      ...(dataSaverOn ? { maxDurationSec: 180, targetSampleRate: 16000 } : {})
+      ...(dataSaverOn ? { 
+        maxDurationSec: 150, 
+        targetSampleRate: 16000 
+      } : {})
     });
-
 
     if (!result || !result.blob) {
       throw new Error('Audio normalization produced no output.');
@@ -186,15 +188,15 @@ export async function prepareMediaForUpload(file, options = {}) {
   }
 
   // ========== VIDEO PATH ==========
- else if (type.startsWith('video/')) {
-    const dataSaverOn = localStorage.getItem('vw_data_saver') === 'true';
-    const maxBytes = dataSaverOn ? 12 * 1024 * 1024 : 25 * 1024 * 1024;
+  else if (type.startsWith('video/')) {
+    // Much stricter limits for Data Saver / old phones
+    const maxBytes = dataSaverOn ? 8 * 1024 * 1024 : 18 * 1024 * 1024;
 
     if (file.size > maxBytes) {
       throw new Error(
         dataSaverOn
-          ? 'Data Saver is on: video must be under ~12 MB. Turn Data Saver off or use a shorter clip.'
-          : 'Video exceeds the maximum upload size (25 MB).'
+          ? 'Data Saver is on: video must be under ~8 MB. Turn Data Saver off or use a shorter clip.'
+          : 'Video exceeds the maximum upload size (18 MB). Please use a shorter clip.'
       );
     }
 
@@ -243,7 +245,6 @@ export async function prepareMediaForUpload(file, options = {}) {
 
 /**
  * Complete Pipeline → prepare + upload
- * @returns {Promise<{ publicUrl: string, hash: string, mimeType?: string, size?: number }>}
  */
 export async function processAndUploadMedia(
   file,
@@ -254,7 +255,6 @@ export async function processAndUploadMedia(
   if (!file) throw new Error('No media file provided for upload pipeline.');
 
   const prepared = await prepareMediaForUpload(file, options);
-  // prepared = { file, hash, mimeType, size }  — hash is of PROCESSED bytes
 
   const publicUrl = await uploadMedia(prepared.file, folderPath, onProgress);
 
