@@ -1146,23 +1146,38 @@ async function fetchCuratedNews() {
     '✅ Verify integrity without revealing identity'
   ];
 
-  function restartTickerAnimation() {
+function restartTickerAnimation() {
+    // More reliable restart across old Android / mobile Chrome
+    tickerEl.classList.remove('ticker-running');
     tickerEl.style.animation = 'none';
+    tickerEl.style.transform = 'translate3d(0,0,0)';
+    
+    // Force reflow
     void tickerEl.offsetWidth;
-    tickerEl.style.animation = 'ticker-scroll 45s linear infinite';
-    tickerEl.classList.remove('ticker-paused');
+    
+    // Re-apply
+    tickerEl.style.animation = '';
+    tickerEl.classList.add('ticker-running');
   }
 
   function applyTicker(items) {
     let list = Array.isArray(items) ? items.filter(Boolean).map(String) : [];
     if (list.length < 4) list = fallbackItems.slice();
-    
+
+    // Clear separator so it never looks like one long stuck string
     const doubled = [...list, ...list];
-    tickerEl.innerHTML = doubled.map(text => `<span class="ticker-item">${text}</span>`).join('');
-    restartTickerAnimation();
+    tickerEl.innerHTML = doubled
+      .map(text => `<span class="ticker-item">${text}</span>`)
+      .join('<span class="ticker-separator" aria-hidden="true"> • </span>');
+
+    // Small delay so the browser paints the new content first
+    requestAnimationFrame(() => {
+      restartTickerAnimation();
+    });
+
     tickerEl.dataset.loading = '0';
   }
-
+  
   // Never leave "Loading latest headlines…" stuck
   if (
     !tickerEl.innerHTML ||
