@@ -66,34 +66,60 @@ function dbToLinear(db) {
 /**
  * Apply gain + soft clip + micro fades in-place
  */
-function applyGain(audioBuffer, gainLinear) {
-    const fadeSamples = Math.min(
-        Math.floor((FADE_MS / 1000) * audioBuffer.sampleRate),
-        Math.floor(audioBuffer.length / 4)
-    );
+async function applyGainWithWorker(audioBuffer, gainLinear) {
+  const fadeSamples = Math.min(
+    Math.floor((FADE_MS / 1000) * audioBuffer.sampleRate),
+    Math.floor(audioBuffer.length / 4)
+  );
 
-    for (let ch = 0; ch < audioBuffer.numberOfChannels; ch++) {
-        const data = audioBuffer.getChannelData(ch);
+  // Prepare data for transfer
+  const channelData = [];
+  for (let c = 0; c < audioBuffer.numberOfChannels; c++) {
+    channelData.push(audioBuffer.getChannelData(c).slice(0).buffer);
+  }
 
-        for (let i = 0; i < data.length; i++) {
-            let s = data[i] * gainLinear;
+  return new Promise((resolve) => {
+    try {
+      const worker = new Worker(new URL('./audio-normalize-worker.js', import.meta.url), { type: 'module' });
 
-            // Soft-knee clip near ±1
-            if (s > 0.95) s = 0.95 + (s - 0.95) * 0.2;
-            if (s < -0.95) s = -0.95 + (s + 0.95) * 0.2;
+      const timeout = setTimeout(() => {
+        worker.terminate();
+        resolve(false); // fallback
+      }, 8000);
 
-            s = Math.max(-1, Math.min(1, s));
+      worker.onmessage = (e) => {
+        clearTimeout(timeout);
+        worker.terminate();
 
-            // Micro fade-in / fade-out
-            if (i < fadeSamples) {
-                s *= i / fadeSamples;
-            } else if (i > data.length - fadeSamples) {
-                s *= (data.length - i) / fadeSamples;
-            }
-
-            data[i] = s;
+        if (!e.data.ok) {
+          resolve(false);
+          return;
         }
+
+        // Write processed data back
+        for (let c = 0; c < audioBuffer.numberOfChannels; c++) {
+          const processed = new Float32Array(e.data.channels[c]);
+          audioBuffer.copyToChannel(processed, c);
+        }
+        resolve(true);
+      };
+
+      worker.onerror = () => {
+        clearTimeout(timeout);
+        worker.terminate();
+        resolve(false);
+      };
+
+      worker.postMessage({
+        channelData,
+        sampleRate: audioBuffer.sampleRate,
+        gainLinear,
+        fadeSamples
+      }, channelData);
+    } catch (_) {
+      resolve(false);
     }
+  });
 }
 
 /**
@@ -225,7 +251,11 @@ export async function normalizeAudioBlob(blob, opts = {}) {
         gainDb = Math.max(MIN_GAIN_DB, Math.min(MAX_GAIN_DB, gainDb));
 
         const gainLinear = dbToLinear(gainDb);
-        applyGain(audioBuffer, gainLinear);
+        const usedWorker = await applyGainWithWorker(audioBuffer, gainLinear);
+if (!usedWorker) {
+  // Safe fallback – exact original behaviour
+  applyGain(audioBuffer, gainLinear);
+}
 
         const outBlob = audioBufferToWav(audioBuffer);
 
