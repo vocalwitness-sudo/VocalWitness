@@ -46,6 +46,8 @@ const toCopy = [
   "true-witness.html",
   "verify.html",
   "witness-voice.html",
+  "faq.html",
+  "how-to-use.html",
 
   // Core assets
   "style.css",
