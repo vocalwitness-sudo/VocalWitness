@@ -692,12 +692,12 @@ window.togglePrivacyShield = async function () {
             renderProfileUI(currentUserData); // refresh UI immediately
         }
 
-        showToast(
-            nextPrivate
-                ? "🛡️ Profile is private (name & location hidden from others)"
-                : "👁 Profile is public (display info can appear on the Square)",
-            "success"
-        );
+       showToast(
+    nextPrivate
+        ? "🛡️ Privacy Shield ON — real name & photo hidden from others"
+        : "👁 Profile is public — display name & photo visible",
+    "success"
+);
     } catch (err) {
         console.error("Privacy toggle failed:", err);
         showToast("Could not update privacy setting", "error");
