@@ -580,7 +580,10 @@ footer .grid {
 
 /* Only run when the class is present – more reliable control */
 #ticker-content.ticker-running {
-  animation: ticker-scroll 50s linear infinite;
+  animation-name: ticker-scroll;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-duration: 50s; /* default, JS can override */
 }
 
 .ticker-item {
@@ -594,8 +597,8 @@ footer .grid {
 .ticker-separator {
   display: inline-block;
   color: #10b981;
-  opacity: 0.7;
-  padding: 0 0.25rem;
+  opacity: 0.75;
+  padding: 0 0.35rem;
   font-weight: 600;
 }
 
@@ -614,9 +617,10 @@ footer .grid {
 
 @media (prefers-reduced-motion: reduce) {
   #ticker-content.ticker-running {
-    animation: ticker-scroll 90s linear infinite;
+    animation-duration: 90s !important;
   }
 }
+
 /* Safe hide for file inputs – works on iOS Safari + Android */
 .sr-only-file {
   position: absolute !important;
