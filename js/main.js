@@ -1146,16 +1146,17 @@ async function fetchCuratedNews() {
     '✅ Verify integrity without revealing identity'
   ];
 
-function restartTickerAnimation() {
+ function restartTickerAnimation(duration = 50) {
     // More reliable restart across old Android / mobile Chrome
     tickerEl.classList.remove('ticker-running');
     tickerEl.style.animation = 'none';
     tickerEl.style.transform = 'translate3d(0,0,0)';
-    
+
     // Force reflow
     void tickerEl.offsetWidth;
-    
-    // Re-apply
+
+    // Apply adaptive duration
+    tickerEl.style.animationDuration = `${duration}s`;
     tickerEl.style.animation = '';
     tickerEl.classList.add('ticker-running');
   }
@@ -1170,9 +1171,15 @@ function restartTickerAnimation() {
       .map(text => `<span class="ticker-item">${text}</span>`)
       .join('<span class="ticker-separator" aria-hidden="true"> • </span>');
 
+    // Adaptive speed: longer content → slightly longer duration (never too slow)
+    // Base 42s, add ~1.8s per extra headline, capped between 38–70 seconds
+    const baseDuration = 42;
+    const extra = Math.max(0, list.length - 5) * 1.8;
+    const duration = Math.min(70, Math.max(38, baseDuration + extra));
+
     // Small delay so the browser paints the new content first
     requestAnimationFrame(() => {
-      restartTickerAnimation();
+      restartTickerAnimation(duration);
     });
 
     tickerEl.dataset.loading = '0';
