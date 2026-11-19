@@ -56,24 +56,33 @@ async function syncPublicProfile(uid, userData) {
     try {
         const publicRef = doc(db, "publicProfiles", uid);
         const isPrivate = userData.hidePublicInfo !== false;
+
+        // When Privacy Shield is ON → never expose real name or photo
+        const safeDisplayName = isPrivate
+            ? (userData.username ? `@${userData.username}` : "Anonymous Witness")
+            : (userData.displayName || "Anonymous Witness");
+
         const publicData = {
             uid,
-            displayName: userData.displayName || "Anonymous Witness",
-            photoURL: userData.photoURL || null,
+            displayName: safeDisplayName,
+            photoURL: isPrivate ? null : (userData.photoURL || null),
             username: userData.username || null,
             bio: isPrivate ? null : (userData.bio || null),
             region: isPrivate ? null : (userData.region || null),
-            tierBadge: (userData.tier === "citizen_circle" || userData.isPhoneVerified || userData.hasVerifiedPhone)
+            tierBadge: (userData.tier === "citizen_circle" ||
+                        userData.isPhoneVerified ||
+                        userData.hasVerifiedPhone)
                 ? "citizen_circle"
                 : "citizen",
+            isPrivate: isPrivate,
             updatedAt: serverTimestamp()
         };
+
         await setDoc(publicRef, publicData, { merge: true });
     } catch (err) {
         console.warn("[profile] syncPublicProfile failed:", err);
     }
 }
-
 // ====================== OPEN / CLOSE MAIN PROFILE MODAL ======================
 export function openProfile() {
     const modal = document.getElementById('profileModal');
