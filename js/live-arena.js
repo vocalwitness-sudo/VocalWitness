@@ -1022,10 +1022,13 @@ function wireDropEvidenceModal(roomId) {
       let mediaHash = null;
 
       if (selectedDropFile) {
-        const { uploadEvidenceMedia } = await import('./storage.js');
+      const { uploadMedia } = await import('./upload.js');
         mediaHash = await computeSHA256(selectedDropFile);
         mediaType = selectedDropFile.type.startsWith('audio/') ? 'audio' : 'image';
-        mediaUrl = await uploadEvidenceMedia(selectedDropFile, mediaType);
+        mediaUrl = await uploadMedia(
+  selectedDropFile,
+  mediaType === 'audio' ? 'corroborations/audio' : 'corroborations/images'
+);
       }
 
       await addDoc(collection(db, 'liveRooms', roomId, 'evidenceDrops'), {
