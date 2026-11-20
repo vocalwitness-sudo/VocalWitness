@@ -550,7 +550,7 @@ async function showActiveRoom(roomId, room = {}) {
 
             <div class="flex flex-wrap justify-center gap-2 mt-1">
               <button id="raiseHandBtn" type="button"
-                      class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition">✋ Raise Hand</button>
+                     class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm text-zinc-200 transition">✋ Raise Hand</button>
               <button type="button" data-reaction="clap" class="room-react-btn px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition" title="Clap">👏</button>
               <button type="button" data-reaction="fire" class="room-react-btn px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition" title="Fire">🔥</button>
               <button type="button" data-reaction="like" class="room-react-btn px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition" title="Agree">👍</button>
@@ -605,7 +605,7 @@ async function showActiveRoom(roomId, room = {}) {
         </div>
         <p id="dropEvidenceFileName" class="text-xs text-zinc-500 mb-3 min-h-[1rem]"></p>
         <button id="confirmDropEvidenceBtn" type="button"
-          class="w-full rounded-xl bg-sky-500 py-3 text-sm font-bold text-black hover:bg-sky-400 active:scale-[0.98] transition">
+          class="w-full rounded-xl bg-sky-500 py-3 text-sm font-bold text-white hover:bg-sky-400 active:scale-[0.98] transition">
           🛡️ Seal & Drop Evidence
         </button>
       </div>
