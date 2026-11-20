@@ -157,18 +157,18 @@ export async function submitTestimony({
     }
   }
 
-  const bodyHash = content.trim()
-    ? await computeSHA256(content.trim())
-    : null;
-
-  if (content.trim() && !bodyHash) {
-    throw new Error("Body hash failed. Seal aborted.");
-  }
-
-  const forensicHash = imageHash || videoHash || audioHash || bodyHash || null;
-
   const { hashtags, mentions, cleanedContent } = parsePostMetadata(content);
 
+const bodyHash = cleanedContent.trim()
+  ? await computeSHA256(cleanedContent.trim())
+  : null;
+
+if (cleanedContent.trim() && !bodyHash) {
+  throw new Error("Body hash failed. Seal aborted.");
+}
+
+const forensicHash = imageHash || videoHash || audioHash || bodyHash || null;
+  
   // ===== EVIDENCE PACK (required for integrity) =====
   let firestorePack = null;
   let packCoreHash = null;
@@ -258,19 +258,24 @@ export async function submitTestimony({
       evidencePack: firestorePack,
       packCoreHash,
     });
-  } catch (err) {
-    console.error('[createPost] submitTestimonySecure failed', err);
-    const hasUploadedMedia = !!(imageUrl || videoUrl || audioUrl);
-    if (hasUploadedMedia) {
-      showToast(
-        'Media was uploaded, but publishing failed. Tap Publish again. If it keeps failing, try Wi‑Fi or publish text first.',
-        'error'
-      );
-    } else {
-      showToast(err.message || 'Publish failed. Please try again.', 'error');
-    }
-    throw err;
+    
+} catch (err) {
+  console.error('[createPost] submitTestimonySecure failed', err);
+  const hasUploadedMedia = !!(imageUrl || videoUrl || audioUrl);
+
+  if (hasUploadedMedia) {
+    // Keep the media URLs in memory so a second attempt can potentially reuse them later
+    // (future enhancement). For now just give clearer guidance.
+    showToast(
+      'Media uploaded successfully, but the final seal failed. Please tap Publish again. Your media is already on the server — do not re-select the files if possible.',
+      'error'
+    );
+  } else {
+    showToast(err.message || 'Publish failed. Please try again.', 'error');
   }
+  throw err;
+}
+
 
   const resData = response.data || {};
   const id = typeof resData === 'string' ? resData : (resData.id || resData.testimonyId);
