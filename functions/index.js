@@ -1961,19 +1961,16 @@ const newsParser = new Parser({
 
 // Curated feeds
 const NEWS_FEEDS = [
-  { name: "BBC", url: "https://feeds.bbci.co.uk/news/rss.xml", weight: 5 },
-  { name: "BBC World", url: "https://feeds.bbci.co.uk/news/world/rss.xml", weight: 5 },
+  // Africa focused
   { name: "BBC Africa", url: "https://feeds.bbci.co.uk/news/world/africa/rss.xml", weight: 6 },
-  { name: "Guardian World", url: "https://www.theguardian.com/world/rss", weight: 4 },
   { name: "Guardian Africa", url: "https://www.theguardian.com/world/africa/rss", weight: 5 },
-  { name: "DW", url: "https://rss.dw.com/rdf/rss-en-all", weight: 3 },
   { name: "DW Africa", url: "https://rss.dw.com/rdf/rss-en-africa", weight: 4 },
-  { name: "NPR World", url: "https://feeds.npr.org/1004/rss.xml", weight: 3 },
-  { name: "NPR News", url: "https://feeds.npr.org/1001/rss.xml", weight: 3 },
   { name: "Al Jazeera", url: "https://www.aljazeera.com/xml/rss/all.xml", weight: 4 },
+
+  // Global
+  { name: "BBC World", url: "https://feeds.bbci.co.uk/news/world/rss.xml", weight: 5 },
+  { name: "Guardian World", url: "https://www.theguardian.com/world/rss", weight: 4 },
   { name: "France24", url: "https://www.france24.com/en/rss", weight: 3 },
-  { name: "NYT World", url: "https://rss.nytimes.com/services/xml/rss/nyt/World.xml", weight: 3 },
-  { name: "NYT Africa", url: "https://rss.nytimes.com/services/xml/rss/nyt/Africa.xml", weight: 4 }
 ];
 
 const NEWS_CACHE_DOC = "cache/curatedNews";
@@ -2026,7 +2023,7 @@ export const getCuratedNews = onRequest(
   {
     cors: allowedOrigins,
     invoker: "public",
-    memory: "512MiB",
+    memory: "256MiB",
     timeoutSeconds: 60,
     maxInstances: 3,
     concurrency: 10,
