@@ -858,12 +858,22 @@ match /disputes/{disputeId} {
 
 match /publicProfiles/{uid} {
   allow read: if true;
-  allow create, update: if isOwner(uid)
+
+  allow create: if isOwner(uid)
     && request.resource.data.keys().hasOnly([
          'uid', 'displayName', 'photoURL', 'username',
          'bio', 'region', 'tierBadge', 'updatedAt'
        ])
     && request.resource.data.uid == uid;
+
+  allow update: if isOwner(uid)
+    && request.resource.data.diff(resource.data).affectedKeys()
+         .hasOnly([
+           'displayName', 'photoURL', 'username',
+           'bio', 'region', 'tierBadge', 'updatedAt'
+         ])
+    && request.resource.data.uid == uid;
+
   allow delete: if false;
 }
 
