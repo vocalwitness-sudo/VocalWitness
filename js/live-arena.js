@@ -3,7 +3,6 @@
 
 import { listenToVerifiedCount, showToast, computeSHA256 } from './utils.js';
 import { requireAuth } from './auth.js';
-import { auth, db } from './firebase-config.js';
 import { getCurrentUserTier, TIERS } from './tier.js';
 import {
   collection, query, where, orderBy, limit, onSnapshot,
@@ -20,6 +19,7 @@ import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/
 import { renderWitnessAuthorBadge } from './badges.js';
 import { assertRateLimit, RL } from './rate-limit.js';
 import { getPublicProfiles, profileChipHtml } from './profile-cache.js';
+import { auth, db, app } from './firebase-config.js';
 
 const GOAL = 500;
 
@@ -1111,7 +1111,7 @@ async function connectToLiveKit(roomId) {
       livekitRoom = null;
     }
 
-    const functions = getFunctions();
+   const functions = getFunctions(app, 'us-central1');
     const getToken = httpsCallable(functions, 'getLiveKitToken');
 
     const result = await getToken({
