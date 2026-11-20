@@ -902,8 +902,8 @@ match /liveRooms/{roomId} {
     ||
     // Self: add/remove only own uid on safe arrays (join / leave / raise hand)
     (
-      request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['participants', 'pendingRequests', 'speakers', 'lastActivityAt'])
+     request.resource.data.diff(resource.data).affectedKeys()
+  .hasOnly(['participants', 'pendingRequests', 'speakers', 'lastActivityAt'])
       && request.resource.data.bannedUsers == resource.data.bannedUsers
       && request.resource.data.isLive == resource.data.isLive
       && request.resource.data.participantCount == resource.data.participantCount
