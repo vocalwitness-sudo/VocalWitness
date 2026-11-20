@@ -144,11 +144,14 @@ export async function uploadToR2(fileBlob, fileName = 'media.webp', folder = 'po
   const uniqueKey = `${folder}/${auth.currentUser.uid}_${timestamp}.${fileExt}`;
   const headers = await buildAuthHeaders(fileBlob.type || 'application/octet-stream');
 
-  const response = await fetch(`${R2_UPLOAD_ENDPOINT}/${uniqueKey}`, {
+ const response = await fetch(
+  `${R2_UPLOAD_ENDPOINT}?key=${encodeURIComponent(uniqueKey)}`,
+  {
     method: 'PUT',
     headers,
     body: fileBlob,
-  });
+  }
+);
 
   if (!response.ok) {
     const errText = await response.text().catch(() => 'Upload failed');
