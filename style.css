@@ -719,3 +719,21 @@ label[for],
     transform: scale(0.97);
   }
 }
+#activeRoomView button {
+  color: #e4e4e7; /* zinc-200 */
+}
+#activeRoomView #pushToTalkBtn {
+  color: #fff;
+}
+#activeRoomView #confirmDropEvidenceBtn,
+#submitCreateRoomBtn {
+  color: #fff !important;
+}
+@media (max-width: 640px) {
+  #live-arena .flex.flex-col.sm\:flex-row {
+    gap: 0.75rem;
+  }
+  #createRoomBtn {
+    width: 100%;
+  }
+}
