@@ -223,6 +223,18 @@ export async function submitTestimony({
   const functions = getFunctions(app, 'us-central1');
   const submitSecure = httpsCallable(functions, "submitTestimonySecure");
 
+  if (moderationResult.status === 'pending_review') {
+    showToast("⚠️ Testimony submitted (server sealed – pending review).", "warning");
+  } else {
+    showToast("🛡️ Testimony cryptographically sealed and published!", "success");
+    if (typeof window.showSealSuccess === 'function') {
+      window.showSealSuccess({
+        title: 'Sealed ✓',
+        subtitle: 'Your evidence is now part of the public record',
+      });
+    }
+  }
+
   // Determine phone verification status to pass to server
   const token = await user.getIdTokenResult().catch(() => ({ claims: {} }));
   const authorPhoneVerified = phoneOk;
