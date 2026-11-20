@@ -35,6 +35,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { submitTestimony } from './createPost.js';
 import './phoneVerification.js';
+import './seal-success.js';
 import { initErrorTracking } from './observability.js';
 // After Firebase is ready
 initErrorTracking();
