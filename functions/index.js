@@ -54,11 +54,10 @@ const __dirname = path.dirname(__filename);
 
 setGlobalOptions({
   region: "us-central1",
-  cpu: 0.5,
+  maxInstances: 3,        // was 5
+  cpu: 0.25,              // was 0.5  ← this is the key change
   memory: "256MiB",
-  maxInstances: 5,   // was 20 — main quota saver
 });
-
 // ======================================================
 // SECRETS
 // ======================================================
@@ -2024,10 +2023,10 @@ export const getCuratedNews = onRequest(
     cors: allowedOrigins,
     invoker: "public",
     memory: "256MiB",
-    timeoutSeconds: 60,
-    maxInstances: 3,
-    concurrency: 10,
-    cpu: 1,
+    timeoutSeconds: 45,
+    maxInstances: 2,
+    concurrency: 5,
+    cpu: 0.25,            
   },
   async (req, res) => {
     if (req.method === "OPTIONS") {
@@ -2099,10 +2098,12 @@ export const getCuratedNews = onRequest(
 );
 export const tickerHeadlines = onRequest(
   {
-    cors: allowedOrigins,   
+    cors: allowedOrigins,
     invoker: "public",
     memory: "256MiB",
     timeoutSeconds: 30,
+    maxInstances: 2,
+    cpu: 0.25,            
   },
   async (req, res) => {
     if (req.method === "OPTIONS") return res.status(204).send("");
@@ -2156,8 +2157,10 @@ export const warmCuratedNews = onSchedule(
   {
     schedule: "every 15 minutes",
     region: "us-central1",
-    memory: "512MiB",
-    timeoutSeconds: 60
+    memory: "256MiB",
+    timeoutSeconds: 45,
+    maxInstances: 1,
+    cpu: 0.25,            
   },
   async () => {
     const headlines = await buildHeadlines();
