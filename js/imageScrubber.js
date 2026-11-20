@@ -1,3 +1,5 @@
+import { getActiveIdentityConfig } from './app-state.js';
+import { logAuditEvent } from './audit.js';
 export async function scrubImageMetadata(imageFile, options = {}) {
     const {
         maxWidth = 2048,
@@ -23,7 +25,7 @@ export async function scrubImageMetadata(imageFile, options = {}) {
         throw new Error('Invalid input: A valid image File or Blob must be provided.');
     }
 
-   const identity = typeof getActiveIdentityConfig === 'function'
+  const identity = typeof getActiveIdentityConfig === 'function'
     ? getActiveIdentityConfig()
     : { mode: 'ANONYMOUS', scrubMetadata: true };
 
@@ -128,7 +130,7 @@ export async function scrubImageMetadata(imageFile, options = {}) {
 
         await logAuditEvent?.("MEDIA_METADATA_SCRUBBED", {
             filename: imageFile.name || 'unnamed',
-            mode: identity.mode || state?.profileMode || 'scrub',
+           mode: identity.mode || 'scrub',
             originalSize: imageFile.size,
             cleanSize: cleanFile.size,
             outputType: cleanBlob.type,
