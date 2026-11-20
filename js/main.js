@@ -1425,6 +1425,7 @@ if (typeof initNavigationChrome === 'function') initNavigationChrome();
 if (typeof initMobileBottomNav === 'function') initMobileBottomNav();
 
 console.log("✅ Application listeners active");
+}
 /* ====================== MOBILE + GLOBAL SEARCH ====================== */
 function initHeaderSearch() {
   const mobileSearch = document.getElementById('searchInputMobile') ||
