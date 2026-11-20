@@ -2619,5 +2619,33 @@ document.addEventListener('click', (e) => {
       showToast(`Crypto checkout initiated for $${amount}`, 'info');
     });
 </script>
+<!-- ========== MOBILE BOTTOM NAV ========== -->
+<nav id="vw-bottom-nav" aria-label="Primary mobile navigation">
+  <button type="button" data-tab="square" aria-label="Citizen Talk">
+    <span class="nav-icon" aria-hidden="true">🗣️</span>
+    <span class="nav-label">Square</span>
+  </button>
+
+  <button type="button" data-tab="witness" aria-label="Witness Voice">
+    <span class="nav-icon" aria-hidden="true">🔬</span>
+    <span class="nav-label">Witness</span>
+  </button>
+
+  <!-- Center Speak / Compose -->
+  <button type="button" data-action="speak" aria-label="Speak as a Citizen">
+    <span class="nav-icon-wrap" aria-hidden="true">🎙️</span>
+    <span class="nav-label">Speak</span>
+  </button>
+
+  <button type="button" data-tab="mycircle" aria-label="My Circle">
+    <span class="nav-icon" aria-hidden="true">👥</span>
+    <span class="nav-label">Circle</span>
+  </button>
+
+  <button type="button" data-action="profile" aria-label="Profile">
+    <span class="nav-icon" aria-hidden="true">👤</span>
+    <span class="nav-label">Profile</span>
+  </button>
+</nav>
 </body>
 </html>
