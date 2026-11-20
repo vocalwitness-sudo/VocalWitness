@@ -2025,7 +2025,7 @@ export const getCuratedNews = onRequest(
     memory: "256MiB",
     timeoutSeconds: 45,
     maxInstances: 2,
-    concurrency: 5,
+    concurrency: 1,
     cpu: 0.25,            
   },
   async (req, res) => {
@@ -2103,7 +2103,8 @@ export const tickerHeadlines = onRequest(
     memory: "256MiB",
     timeoutSeconds: 30,
     maxInstances: 2,
-    cpu: 0.25,            
+    concurrency: 1,          // ← important
+    cpu: 0.25,
   },
   async (req, res) => {
     if (req.method === "OPTIONS") return res.status(204).send("");
@@ -2160,7 +2161,7 @@ export const warmCuratedNews = onSchedule(
     memory: "256MiB",
     timeoutSeconds: 45,
     maxInstances: 1,
-    cpu: 0.25,            
+    cpu: 0.25,
   },
   async () => {
     const headlines = await buildHeadlines();
