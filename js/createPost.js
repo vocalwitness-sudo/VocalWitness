@@ -35,8 +35,8 @@ function normalizeChannel(channel) {
 }
 
 /**
-- Canonical publish entry — ALWAYS goes through submitTestimonySecure.
-- Hash is always of the processed bytes that were actually uploaded.
+ * Canonical publish entry — ALWAYS goes through submitTestimonySecure.
+ * Hash is always of the processed bytes that were actually uploaded.
  */
 export async function submitTestimony({
   content = '',
@@ -206,7 +206,7 @@ export async function submitTestimony({
 
   showToast("Sealing on server...", "info");
 
-// Force a fresh App Check token
+  // Force a fresh App Check token
   try {
     const { getToken } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-app-check.js");
     const { appCheck } = await import('./firebase-config.js');
@@ -222,18 +222,6 @@ export async function submitTestimony({
 
   const functions = getFunctions(app, 'us-central1');
   const submitSecure = httpsCallable(functions, "submitTestimonySecure");
-
-  if (moderationResult.status === 'pending_review') {
-    showToast("⚠️ Testimony submitted (server sealed – pending review).", "warning");
-  } else {
-    showToast("🛡️ Testimony cryptographically sealed and published!", "success");
-    if (typeof window.showSealSuccess === 'function') {
-      window.showSealSuccess({
-        title: 'Sealed ✓',
-        subtitle: 'Your evidence is now part of the public record',
-      });
-    }
-  }
 
   // Determine phone verification status to pass to server
   const token = await user.getIdTokenResult().catch(() => ({ claims: {} }));
@@ -299,10 +287,17 @@ export async function submitTestimony({
       `https://vocalwitness.com/verify.html?id=${id}&h=${packCoreHash || forensicHash || ''}`;
   }
 
+  // ===== SUCCESS MESSAGES (only after real ID is confirmed) =====
   if (moderationResult.status === 'pending_review') {
     showToast("⚠️ Testimony submitted (server sealed – pending review).", "warning");
   } else {
     showToast("🛡️ Testimony cryptographically sealed and published!", "success");
+    if (typeof window.showSealSuccess === 'function') {
+      window.showSealSuccess({
+        title: 'Sealed ✓',
+        subtitle: 'Your evidence is now part of the public record',
+      });
+    }
   }
 
   return {
