@@ -33,6 +33,7 @@ import {
 } from './corroboration.js';
 import { translateTestimony } from './ai-services.js';
 import { escapeHTML } from './utils.js';
+import { renderEmptySquare } from './empty-square.js';
 
 let activeFeedListener = null;
 let allPostsCache = [];
