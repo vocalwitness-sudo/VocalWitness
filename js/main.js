@@ -286,11 +286,11 @@ if (previousTab === 'witness' && tab !== 'witness' && typeof destroyWitnessTab =
     isSwitchingTab = false;
   }
 };
-
 /* ====================== NAVIGATION CHROME ====================== */
 function initNavigationChrome() {
   wireTabButtons();
   initHashRouting();
+  initMobileBottomNav();
 }
 
 function wireTabButtons() {
@@ -307,6 +307,70 @@ function wireTabButtons() {
       window.switchTab(tab);
     }
   });
+}
+function initMobileBottomNav() {
+  const nav = document.getElementById('vw-bottom-nav');
+  if (!nav || nav.dataset.wired === 'true') return;
+  nav.dataset.wired = 'true';
+
+  const setActive = (tab) => {
+    nav.querySelectorAll('button[data-tab]').forEach((btn) => {
+      const isActive = btn.dataset.tab === tab;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-current', isActive ? 'page' : 'false');
+    });
+  };
+
+  // Keep in sync with existing switchTab
+  const originalSwitchTab = window.switchTab;
+  if (typeof originalSwitchTab === 'function') {
+    window.switchTab = async function (tab) {
+      await originalSwitchTab(tab);
+      setActive(tab === 'square' ? 'square' : tab);
+    };
+  }
+
+  nav.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn || !nav.contains(btn)) return;
+    e.preventDefault();
+
+    const tab = btn.dataset.tab;
+    const action = btn.dataset.action;
+
+    if (tab && typeof window.switchTab === 'function') {
+      window.switchTab(tab);
+      return;
+    }
+
+    if (action === 'speak') {
+      const composer =
+        document.getElementById('composer') ||
+        document.getElementById('speak-composer') ||
+        document.querySelector('[data-composer]') ||
+        document.getElementById('public-square');
+      if (composer) {
+        composer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const ta = document.querySelector('#composer textarea, #post-content, textarea[name="content"]');
+        if (ta) setTimeout(() => ta.focus(), 350);
+      }
+      if (typeof window.switchTab === 'function') window.switchTab('square');
+      return;
+    }
+
+    if (action === 'profile') {
+      if (typeof window.openProfile === 'function') {
+        window.openProfile();
+      } else if (typeof openProfile === 'function') {
+        openProfile();
+      } else {
+        document.getElementById('userProfileBtnMobile')?.click();
+      }
+    }
+  });
+
+  const current = window.__currentTab || 'square';
+  setActive(current);
 }
 
 /* ====================== DROPDOWN WIDGET ====================== */
@@ -1354,12 +1418,12 @@ function setupEventListeners() {
     initComposer();
   }
 
-  // Dropdowns & Chrome
-  if (typeof initAllDropdowns === 'function') initAllDropdowns();
-  if (typeof initNavigationChrome === 'function') initNavigationChrome();
+// Dropdowns & Chrome
+if (typeof initAllDropdowns === 'function') initAllDropdowns();
+if (typeof initNavigationChrome === 'function') initNavigationChrome();
+if (typeof initMobileBottomNav === 'function') initMobileBottomNav();
 
-  console.log("✅ Application listeners active");
-}
+console.log("✅ Application listeners active");
 /* ====================== MOBILE + GLOBAL SEARCH ====================== */
 function initHeaderSearch() {
   const mobileSearch = document.getElementById('searchInputMobile') ||
