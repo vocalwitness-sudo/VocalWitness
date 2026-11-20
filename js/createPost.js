@@ -264,8 +264,11 @@ const forensicHash = imageHash || videoHash || audioHash || bodyHash || null;
   const hasUploadedMedia = !!(imageUrl || videoUrl || audioUrl);
 
   if (hasUploadedMedia) {
-    // Keep the media URLs in memory so a second attempt can potentially reuse them later
-    // (future enhancement). For now just give clearer guidance.
+    console.warn('[createPost] Orphaned media URLs (for cleanup later):', {
+      imageUrl,
+      videoUrl,
+      audioUrl,
+    });
     showToast(
       'Media uploaded successfully, but the final seal failed. Please tap Publish again. Your media is already on the server — do not re-select the files if possible.',
       'error'
@@ -275,7 +278,6 @@ const forensicHash = imageHash || videoHash || audioHash || bodyHash || null;
   }
   throw err;
 }
-
 
   const resData = response.data || {};
   const id = typeof resData === 'string' ? resData : (resData.id || resData.testimonyId);
