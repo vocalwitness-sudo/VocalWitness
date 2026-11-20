@@ -23,9 +23,9 @@ export async function scrubImageMetadata(imageFile, options = {}) {
         throw new Error('Invalid input: A valid image File or Blob must be provided.');
     }
 
-    const identity = typeof getActiveIdentityConfig === 'function'
-        ? getActiveIdentityConfig()
-        : { mode: state?.profileMode || 'ANONYMOUS', scrubMetadata: true };
+   const identity = typeof getActiveIdentityConfig === 'function'
+    ? getActiveIdentityConfig()
+    : { mode: 'ANONYMOUS', scrubMetadata: true };
 
     const shouldScrub = forceScrub !== false && (forceScrub === true || identity.scrubMetadata !== false);
 
@@ -50,7 +50,7 @@ export async function scrubImageMetadata(imageFile, options = {}) {
         if (usedWorker) {
             await logAuditEvent?.("MEDIA_METADATA_SCRUBBED", {
                 filename: imageFile.name || 'unnamed',
-                mode: identity.mode || state?.profileMode || 'scrub',
+               mode: identity.mode || 'scrub',
                 originalSize: imageFile.size,
                 cleanSize: usedWorker.size,
                 outputType: usedWorker.type,
