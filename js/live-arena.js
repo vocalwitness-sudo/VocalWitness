@@ -655,6 +655,7 @@ async function showActiveRoom(roomId, room = {}) {
   wireActiveRoomControls(roomId);
   wireDropEvidenceModal(roomId);
 
+
   if (participantsUnsubscribe) participantsUnsubscribe();
   participantsUnsubscribe = onSnapshot(
     collection(db, 'liveRooms', roomId, 'participants'),
@@ -1129,6 +1130,7 @@ function wireDropEvidenceModal(roomId) {
     }
   });
 }
+
 // ========== LIVEKIT ==========
 async function connectToLiveKit(roomId) {
   try {
