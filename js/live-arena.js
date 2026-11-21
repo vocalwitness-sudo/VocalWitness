@@ -1103,14 +1103,8 @@ function wireDropEvidenceModal(roomId) {
           });
         } catch (groupErr) {
           console.warn('[Drop Evidence] group locker write skipped:', groupErr?.message || groupErr);
-          // Do not fail the whole drop if only the group write is denied
         }
       }
-
-      // 3. DO NOT create a full sealed testimony from here.
-      //    That path is protected and was causing "Missing or insufficient permissions".
-      //    Sealed testimonies must go through the normal secure submit flow later if needed.
-
       showToast('🛡️ Evidence sealed and dropped', 'success');
       dropModal?.classList.add('hidden');
       selectedDropFile = null;
