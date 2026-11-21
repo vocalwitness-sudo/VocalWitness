@@ -1103,20 +1103,6 @@ function wireDropEvidenceModal(roomId) {
     }
   });
 }
-What changed (simple)
-Before	After
-Wrote to evidenceDrops	Still writes (keep)
-Wrote to group_evidence	Still writes, but wrapped in try/catch so a group permission error does not break the drop
-Wrote to testimonies	Removed — this was the main permission error
-Generic error toast	Clearer message when it is a permission problem
-Also do the small room-touch fix (same file)
-Search for:
-
-js
-participants: arrayUnion(uid)
-inside joinLiveRoom. Change that updateDoc so it only does:
-
-js
 try {
   await updateDoc(doc(db, 'liveRooms', roomId), {
     lastActivityAt: serverTimestamp()
