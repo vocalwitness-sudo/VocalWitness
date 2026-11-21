@@ -39,11 +39,6 @@ let currentRoomData = null;
 let activeRoomUnsubscribe = null;
 let roomAdminChromeWired = false;
 
-// Per-room, per-user reaction counts (client-side guard)
-const roomUserReactions = new Map(); // roomId -> Map(uid -> totalCount)
-const MAX_REACTIONS_PER_USER = 5;    // ordinary users
-const MAX_REACTIONS_HOST = 30;       // host can react more freely (or set same as users)
-
 function escapeHTML(str) {
   if (!str) return '';
   return String(str)
@@ -53,7 +48,30 @@ function escapeHTML(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+function setReactBtnActive(btn, on) {
+  if (!btn) return;
+  btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  if (on) {
+    btn.classList.add('ring-2', 'ring-sky-400/60', 'bg-sky-500/20');
+  } else {
+    btn.classList.remove('ring-2', 'ring-sky-400/60', 'bg-sky-500/20');
+  }
+}
 
+async function syncMyReactionButtons(roomId) {
+  const uid = auth.currentUser?.uid;
+  if (!uid || !roomId) return;
+  try {
+    const snap = await getDoc(doc(db, 'liveRooms', roomId, 'participants', uid));
+    const mine = snap.exists() ? (snap.data()?.myReactions || {}) : {};
+    document.querySelectorAll('.room-react-btn').forEach((btn) => {
+      const type = btn.dataset.reaction;
+      setReactBtnActive(btn, !!mine[type]);
+    });
+  } catch (e) {
+    console.warn('[LiveArena] sync myReactions', e);
+  }
+}
 function safeRateLimit(action, opts) {
   try {
     assertRateLimit(action, opts);
@@ -386,7 +404,7 @@ async function createRoomWithOptions(title, category, groupId, privacy) {
 
   const roomRef = await addDoc(collection(db, 'liveRooms'), roomPayload);
 
-  await setDoc(doc(db, 'liveRooms', roomRef.id, 'participants', uid), {
+ await setDoc(doc(db, 'liveRooms', roomRef.id, 'participants', uid), {
     uid,
     displayName: auth.currentUser.displayName || 'Citizen',
     photoURL: auth.currentUser.photoURL || null,
@@ -395,7 +413,8 @@ async function createRoomWithOptions(title, category, groupId, privacy) {
     isSpeaking: false,
     isMuted: false,
     isHost: true,
-    handRaised: false
+    handRaised: false,
+    myReactions: { clap: false, fire: false, like: false, dislike: false }
   });
 
   showToast('Room created – you are the host', 'success');
@@ -448,7 +467,7 @@ window.joinLiveRoom = async function (roomId, alreadyInUrl = false) {
   console.warn('[LiveArena] room activity touch skipped:', e?.message || e);
 }
 
-    await setDoc(
+  await setDoc(
       partRef,
       {
         uid,
@@ -461,7 +480,15 @@ window.joinLiveRoom = async function (roomId, alreadyInUrl = false) {
         isSpeaking: false,
         isMuted: false,
         isHost,
-        handRaised: false
+        handRaised: false,
+        myReactions: existingPart.exists()
+          ? (existingPart.data()?.myReactions || {
+              clap: false,
+              fire: false,
+              like: false,
+              dislike: false
+            })
+          : { clap: false, fire: false, like: false, dislike: false }
       },
       { merge: true }
     );
@@ -664,14 +691,13 @@ async function showActiveRoom(roomId, room = {}) {
       window._reactUnsub();
     } catch (_) {}
   }
-  window._reactUnsub = onSnapshot(doc(db, 'liveRooms', roomId), (snap) => {
-    const r = snap.data()?.reactions || {};
-    ['clap', 'fire', 'like', 'dislike'].forEach((k) => {
-      const el = document.getElementById(`count-${k}`);
-      if (el) el.textContent = r[k] || 0;
-    });
+ window._reactUnsub = onSnapshot(doc(db, 'liveRooms', roomId), (snap) => {
+  const r = snap.data()?.reactions || {};
+  ['clap', 'fire', 'like', 'dislike'].forEach((k) => {
+    const el = document.getElementById(`count-${k}`);
+    if (el) el.textContent = Math.max(0, Number(r[k]) || 0);
   });
-}
+});
 
 function renderParticipants(participants) {
   const list = document.getElementById('participantsList');
@@ -1307,41 +1333,44 @@ function wireActiveRoomControls(roomId) {
   });
 
   document.querySelectorAll('.room-react-btn').forEach((btn) => {
-  btn.addEventListener('click', async () => {
-    if (!requireAuth('Sign in to react')) return;
-    const type = btn.dataset.reaction;
-    if (!type || !['clap', 'fire', 'like', 'dislike'].includes(type)) return;
-    if (!safeRateLimit('live_reaction', RL.live_reaction)) return;
+    btn.addEventListener('click', async () => {
+      if (!requireAuth('Sign in to react')) return;
+      const type = btn.dataset.reaction;
+      if (!type || !['clap', 'fire', 'like', 'dislike'].includes(type)) return;
+      if (!safeRateLimit('live_reaction', RL.live_reaction)) return;
 
-    const uid = auth.currentUser?.uid;
-    if (!uid || !roomId) return;
+      const uid = auth.currentUser?.uid;
+      if (!uid || !roomId) return;
 
-    // Per-user per-room limit
-    if (!roomUserReactions.has(roomId)) {
-      roomUserReactions.set(roomId, new Map());
-    }
-    const userMap = roomUserReactions.get(roomId);
-    const current = userMap.get(uid) || 0;
-    const limit = isHost ? MAX_REACTIONS_HOST : MAX_REACTIONS_PER_USER;
+      const partRef = doc(db, 'liveRooms', roomId, 'participants', uid);
+      const roomRef = doc(db, 'liveRooms', roomId);
 
-    if (current >= limit) {
-      showToast(`You’ve reached the reaction limit (${limit}) for this room`, 'warning');
-      return;
-    }
+      try {
+        const partSnap = await getDoc(partRef);
+        const mine = { ...(partSnap.exists() ? partSnap.data()?.myReactions || {} : {}) };
+        const wasOn = !!mine[type];
+        const nowOn = !wasOn;
+        mine[type] = nowOn;
 
-    try {
-      await updateDoc(doc(db, 'liveRooms', roomId), {
-        [`reactions.${type}`]: increment(1),
-        lastActivityAt: serverTimestamp()
-      });
-      userMap.set(uid, current + 1);
-      spawnFloatingReaction(btn.textContent.trim());
-    } catch (err) {
-      console.error(err);
-      showToast('Could not send reaction', 'error');
-    }
+        // 1) Persist your toggle state (allowed on own participant doc)
+        await updateDoc(partRef, { myReactions: mine });
+
+        // 2) Adjust room total +1 or -1 (rules allow reactions + lastActivityAt)
+        await updateDoc(roomRef, {
+          [`reactions.${type}`]: increment(nowOn ? 1 : -1),
+          lastActivityAt: serverTimestamp()
+        });
+
+        setReactBtnActive(btn, nowOn);
+        if (nowOn) spawnFloatingReaction(btn.textContent.trim());
+      } catch (err) {
+        console.error('[LiveArena] reaction toggle', err);
+        showToast('Could not update reaction', 'error');
+      }
+    });
   });
-});
+
+  syncMyReactionButtons(roomId);
   const shareHandler = async () => {
     const shareUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(roomId)}`;
     const title =
@@ -1380,6 +1409,7 @@ function wireActiveRoomControls(roomId) {
       showToast('Could not record corroboration', 'error');
     }
   });
+
 
   document.getElementById('sealBtn')?.addEventListener('click', async () => {
     if (!requireAuth()) return;
