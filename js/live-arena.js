@@ -587,11 +587,11 @@ async function showActiveRoom(roomId, room = {}) {
     <div id="dropEvidenceModal" class="hidden fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 p-4">
       <div class="w-full max-w-md rounded-2xl bg-zinc-900 border border-zinc-700 p-5 shadow-2xl">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-bold text-white">📎 Drop Evidence</h3>
+          <h3 class="text-lg font-bold text-white">📎 Drop Evidence into this Room</h3>
           <button id="closeDropEvidenceBtn" type="button" class="text-zinc-400 hover:text-white text-xl" aria-label="Close">✕</button>
         </div>
         <textarea id="dropEvidenceNote" rows="3" maxlength="500"
-          placeholder="What are you witnessing right now? (optional note)"
+          placeholder="Describe what you are seeing or hearing right now (optional)"
           class="w-full rounded-xl border border-zinc-700 bg-zinc-800 p-3 text-sm text-white placeholder-zinc-500 focus:border-sky-500 focus:outline-none mb-3"></textarea>
         <div class="flex gap-2 mb-4">
           <label class="flex-1 cursor-pointer rounded-xl border border-zinc-700 bg-zinc-800 py-3 text-center text-sm text-zinc-300 hover:border-sky-500 hover:text-sky-300 transition">
@@ -606,7 +606,7 @@ async function showActiveRoom(roomId, room = {}) {
         <p id="dropEvidenceFileName" class="text-xs text-zinc-500 mb-3 min-h-[1rem]"></p>
         <button id="confirmDropEvidenceBtn" type="button"
           class="w-full rounded-xl bg-sky-500 py-3 text-sm font-bold text-white hover:bg-sky-400 active:scale-[0.98] transition">
-          🛡️ Seal & Drop Evidence
+          🛡️ Seal Evidence for this Room
         </button>
       </div>
     </div>
