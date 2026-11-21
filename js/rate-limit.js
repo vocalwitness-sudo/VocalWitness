@@ -52,6 +52,6 @@ export const RL = {
   group_attestation: { max: 10, windowMs: 10 * 60_000 },
   group_timeline: { max: 15, windowMs: 10 * 60_000 },
   live_join: { max: 20, windowMs: 5 * 60_000 },
-  live_reaction: { max: 30, windowMs: 60_000 },
+  live_reaction: { max: 12, windowMs: 60_000 },
   upload: { max: 12, windowMs: 10 * 60_000 },
 };
