@@ -17,7 +17,7 @@ import {
 import { getFunctions, httpsCallable } from
   "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 import { renderDownloadPackButton } from './evidence-ui.js';
-import { toFullEvidencePack, downloadEvidencePack, buildFullPackFromTestimony } from './evidence-pack.js';
+import { buildFullPackFromTestimony, downloadEvidencePack } from './evidence-pack.js';
 import { db, auth } from './firebase-config.js?v=2';
 import { showToast } from './utils.js';
 import { renderTierCircle, renderFieldNoteBadge } from './ui-components.js';
