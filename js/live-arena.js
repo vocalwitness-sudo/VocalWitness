@@ -1313,25 +1313,41 @@ function wireActiveRoomControls(roomId) {
   });
 
   document.querySelectorAll('.room-react-btn').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      if (!requireAuth('Sign in to react')) return;
-      const type = btn.dataset.reaction;
-      if (!type) return;
-      if (!safeRateLimit('live_reaction', RL.live_reaction)) return;
+  btn.addEventListener('click', async () => {
+    if (!requireAuth('Sign in to react')) return;
+    const type = btn.dataset.reaction;
+    if (!type || !['clap', 'fire', 'like', 'dislike'].includes(type)) return;
+    if (!safeRateLimit('live_reaction', RL.live_reaction)) return;
 
-      try {
-        await updateDoc(doc(db, 'liveRooms', roomId), {
-          [`reactions.${type}`]: increment(1),
-          lastActivityAt: serverTimestamp()
-        });
-        spawnFloatingReaction(btn.textContent.trim());
-      } catch (err) {
-        console.error(err);
-        showToast('Could not send reaction', 'error');
-      }
-    });
+    const uid = auth.currentUser?.uid;
+    if (!uid || !roomId) return;
+
+    // Per-user per-room limit
+    if (!roomUserReactions.has(roomId)) {
+      roomUserReactions.set(roomId, new Map());
+    }
+    const userMap = roomUserReactions.get(roomId);
+    const current = userMap.get(uid) || 0;
+    const limit = isHost ? MAX_REACTIONS_HOST : MAX_REACTIONS_PER_USER;
+
+    if (current >= limit) {
+      showToast(`You’ve reached the reaction limit (${limit}) for this room`, 'warning');
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, 'liveRooms', roomId), {
+        [`reactions.${type}`]: increment(1),
+        lastActivityAt: serverTimestamp()
+      });
+      userMap.set(uid, current + 1);
+      spawnFloatingReaction(btn.textContent.trim());
+    } catch (err) {
+      console.error(err);
+      showToast('Could not send reaction', 'error');
+    }
   });
-
+});
   const shareHandler = async () => {
     const shareUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(roomId)}`;
     const title =
@@ -1387,22 +1403,42 @@ function wireActiveRoomControls(roomId) {
     }
   });
 
-  document.getElementById('muteAllBtn')?.addEventListener('click', async () => {
-    if (!isHost || !currentRoomId) return;
-    try {
-      const snap = await getDocs(collection(db, 'liveRooms', currentRoomId, 'participants'));
-      await Promise.all(
-        snap.docs.map((d) =>
-          updateDoc(d.ref, { isSpeaking: false, handRaised: false }).catch(() => {})
-        )
-      );
-      showToast('All muted', 'info');
-    } catch (err) {
-      console.error(err);
-      showToast('Mute all failed', 'error');
-    }
-  });
+ document.getElementById('muteAllBtn')?.addEventListener('click', async () => {
+  if (!isHost || !currentRoomId) return;
+  try {
+    const snap = await getDocs(collection(db, 'liveRooms', currentRoomId, 'participants'));
+    await Promise.all(
+      snap.docs.map((d) => {
+        // Optionally skip muting yourself
+        if (d.id === auth.currentUser?.uid) return Promise.resolve();
+        return updateDoc(d.ref, {
+          isSpeaking: false,
+          handRaised: false,
+          isMuted: true
+        }).catch(() => {});
+      })
+    );
+    showToast('All participants muted', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Mute all failed', 'error');
+  }
+});
 
+  document.getElementById('unmuteAllBtn')?.addEventListener('click', async () => {
+  if (!isHost || !currentRoomId) return;
+  try {
+    const snap = await getDocs(collection(db, 'liveRooms', currentRoomId, 'participants'));
+    await Promise.all(
+      snap.docs.map((d) => updateDoc(d.ref, { isMuted: false }).catch(() => {}))
+    );
+    showToast('All participants unmuted', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Unmute all failed', 'error');
+  }
+});
+  
   document.getElementById('lowerHandsBtn')?.addEventListener('click', async () => {
     if (!isHost || !currentRoomId) return;
     try {
