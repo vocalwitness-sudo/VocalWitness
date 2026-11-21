@@ -1110,15 +1110,6 @@ try {
 } catch (e) {
   console.warn('[LiveArena] room activity touch skipped:', e?.message || e);
 }
-(Remove the participants: arrayUnion(uid) line from that update.)
-
-After you paste the replacement:
-
-Save js/live-arena.js
-Hard refresh the site
-Join a room and try Drop Evidence (note only, then with a photo)
-Confirm the permission error is gone
-Reply with the new console lines if anything still fails.
 
 // ========== LIVEKIT ==========
 async function connectToLiveKit(roomId) {
