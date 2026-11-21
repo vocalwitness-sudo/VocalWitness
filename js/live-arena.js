@@ -440,13 +440,13 @@ window.joinLiveRoom = async function (roomId, alreadyInUrl = false) {
     const existingPart = await getDoc(partRef);
 
     try {
-      await updateDoc(doc(db, 'liveRooms', roomId), {
-        lastActivityAt: serverTimestamp(),
-        participants: arrayUnion(uid)
-      });
-    } catch (e) {
-      console.warn('[LiveArena] room touch skipped:', e?.message || e);
-    }
+  await updateDoc(doc(db, 'liveRooms', roomId), {
+    lastActivityAt: serverTimestamp()
+  });
+} catch (e) {
+  // non-critical
+  console.warn('[LiveArena] room activity touch skipped:', e?.message || e);
+}
 
     await setDoc(
       partRef,
@@ -1037,6 +1037,7 @@ function wireDropEvidenceModal(roomId) {
 );
       }
 
+ // 1. Always record the drop under the live room (this is the correct path)
       await addDoc(collection(db, 'liveRooms', roomId, 'evidenceDrops'), {
         droppedBy: auth.currentUser.uid,
         displayName: auth.currentUser.displayName || 'Citizen',
@@ -1048,50 +1049,40 @@ function wireDropEvidenceModal(roomId) {
         createdAt: serverTimestamp()
       });
 
+      // 2. Optional: also put a copy in the linked group locker (fail softly)
       if (currentRoomData?.groupId) {
-        await addDoc(collection(db, 'group_evidence'), {
-          groupId: currentRoomData.groupId,
-          name: selectedDropFile
-            ? selectedDropFile.name
-            : `Arena Drop: ${(note || 'note').substring(0, 40)}`,
-          size: selectedDropFile ? `${selectedDropFile.size} B` : '0 B',
-          sizeBytes: selectedDropFile ? selectedDropFile.size : 0,
-          mimeType: selectedDropFile ? selectedDropFile.type : 'text/plain',
-          hash: mediaHash || null,
-          hashAlg: mediaHash ? 'SHA-256' : null,
-          url: mediaUrl || null,
-          storagePath: mediaUrl
-            ? mediaUrl.replace('https://media.vocalwitness.com/', '')
-            : null,
-          status: mediaUrl
-            ? 'Sealed (Live Arena → group locker)'
-            : 'Live Arena note (no media)',
-          depositedBy: auth.currentUser.uid,
-          source: 'live-arena',
-          liveRoomId: roomId,
-          createdAt: serverTimestamp()
-        });
+        try {
+          await addDoc(collection(db, 'group_evidence'), {
+            groupId: currentRoomData.groupId,
+            name: selectedDropFile
+              ? selectedDropFile.name
+              : `Arena Drop: ${(note || 'note').substring(0, 40)}`,
+            size: selectedDropFile ? `${selectedDropFile.size} B` : '0 B',
+            sizeBytes: selectedDropFile ? selectedDropFile.size : 0,
+            mimeType: selectedDropFile ? selectedDropFile.type : 'text/plain',
+            hash: mediaHash || null,
+            hashAlg: mediaHash ? 'SHA-256' : null,
+            url: mediaUrl || null,
+            storagePath: mediaUrl
+              ? mediaUrl.replace('https://media.vocalwitness.com/', '')
+              : null,
+            status: mediaUrl
+              ? 'Sealed (Live Arena → group locker)'
+              : 'Live Arena note (no media)',
+            depositedBy: auth.currentUser.uid,
+            source: 'live-arena',
+            liveRoomId: roomId,
+            createdAt: serverTimestamp()
+          });
+        } catch (groupErr) {
+          console.warn('[Drop Evidence] group locker write skipped:', groupErr?.message || groupErr);
+          // Do not fail the whole drop if only the group write is denied
+        }
       }
 
-      await addDoc(collection(db, 'testimonies'), {
-        content: note || `Live evidence dropped from room: ${roomId}`,
-        title: 'Live Evidence – Arena',
-        channel: 'witness-voice',
-        targetFeed: 'witness_voice',
-        visibility: 'public',
-        authorId: auth.currentUser.uid,
-        author: auth.currentUser.displayName || 'Citizen',
-        isAnonymous: false,
-        imageUrl: mediaType === 'image' ? mediaUrl : null,
-        audioUrl: mediaType === 'audio' ? mediaUrl : null,
-        imageHash: mediaType === 'image' ? mediaHash : null,
-        audioHash: mediaType === 'audio' ? mediaHash : null,
-        forensicHash: mediaHash,
-        liveRoomId: roomId,
-        source: 'live-arena',
-        createdAt: serverTimestamp(),
-        status: 'published'
-      });
+      // 3. DO NOT create a full sealed testimony from here.
+      //    That path is protected and was causing "Missing or insufficient permissions".
+      //    Sealed testimonies must go through the normal secure submit flow later if needed.
 
       showToast('🛡️ Evidence sealed and dropped', 'success');
       dropModal?.classList.add('hidden');
@@ -1102,13 +1093,46 @@ function wireDropEvidenceModal(roomId) {
       if (audioInput) audioInput.value = '';
     } catch (err) {
       console.error('[Drop Evidence]', err);
-      showToast('Failed to drop evidence', 'error');
+      const msg = err?.code === 'permission-denied'
+        ? 'Permission denied — check you are signed in and the room is live'
+        : (err?.message || 'Failed to drop evidence');
+      showToast(msg, 'error');
     } finally {
       confirmDropBtn.disabled = false;
       confirmDropBtn.textContent = '🛡️ Seal & Drop Evidence';
     }
   });
 }
+What changed (simple)
+Before	After
+Wrote to evidenceDrops	Still writes (keep)
+Wrote to group_evidence	Still writes, but wrapped in try/catch so a group permission error does not break the drop
+Wrote to testimonies	Removed — this was the main permission error
+Generic error toast	Clearer message when it is a permission problem
+Also do the small room-touch fix (same file)
+Search for:
+
+js
+participants: arrayUnion(uid)
+inside joinLiveRoom. Change that updateDoc so it only does:
+
+js
+try {
+  await updateDoc(doc(db, 'liveRooms', roomId), {
+    lastActivityAt: serverTimestamp()
+  });
+} catch (e) {
+  console.warn('[LiveArena] room activity touch skipped:', e?.message || e);
+}
+(Remove the participants: arrayUnion(uid) line from that update.)
+
+After you paste the replacement:
+
+Save js/live-arena.js
+Hard refresh the site
+Join a room and try Drop Evidence (note only, then with a photo)
+Confirm the permission error is gone
+Reply with the new console lines if anything still fails.
 
 // ========== LIVEKIT ==========
 async function connectToLiveKit(roomId) {
