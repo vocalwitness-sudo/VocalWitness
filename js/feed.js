@@ -216,7 +216,7 @@ async function syncStewardPermission() {
 
 /**
  * Initializes the feed listener
- * @param {Firestore} dbInstance 
+ * @param {Firestore} dbInstance
  * @param {string} channelType - 'citizen-talk' or 'witness-voice'
  */
 export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
@@ -280,7 +280,8 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                 }
                 return;
             }
-               const lockButton = action !== 'react' && action !== 'toggle-more' && action !== 'toggle-translate';
+
+            const lockButton = action !== 'react' && action !== 'toggle-more' && action !== 'toggle-translate';
             if (lockButton) {
                 btn.disabled = true;
                 btn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -301,9 +302,19 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                     if (typeof openCommentModal === 'function') await openCommentModal(id);
                     else console.warn('openCommentModal is not defined');
                 } else if (action === 'download-pack') {
-                    showToast('📥 Downloading Evidence Pack: Safe verification text file with cryptographic hashes. No code installed.', 'success');
-                    if (typeof handleDownloadEvidencePack === 'function') await handleDownloadEvidencePack(id);
-                    else console.warn('handleDownloadEvidencePack is not defined');
+                    const post =
+                        (typeof allPostsCache !== 'undefined' ? allPostsCache.find(p => p.id === id) : null) ||
+                        window.__testimoniesCache?.[id] ||
+                        { id };
+                    try {
+                        showToast('Generating cryptographic Evidence Pack…', 'info');
+                        const fullPack = await buildFullPackFromTestimony(post);
+                        downloadEvidencePack(fullPack, id);
+                        showToast('✅ Evidence Pack downloaded', 'success');
+                    } catch (err) {
+                        console.error('[feed] Evidence Pack failed', err);
+                        showToast('Could not generate Evidence Pack', 'error');
+                    }
                 } else if (action === 'report') {
                     if (typeof window.openReportModal === 'function') {
                         window.openReportModal(id);
@@ -379,8 +390,9 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                     btn.classList.remove('opacity-50', 'cursor-not-allowed');
                 }
             }
-              });
-}
+        });
+    }
+
     const q = query(
         collection(db, 'testimonies'),
         where('channel', '==', currentChannel),
@@ -393,7 +405,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
 
     activeFeedListener = onSnapshot(q, (snapshot) => {
         allPostsCache = [];
-        
+
         if (snapshot.empty) {
             renderFilteredPosts([], feedContainer);
             previousIds = new Set();
