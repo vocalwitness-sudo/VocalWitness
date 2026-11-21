@@ -573,8 +573,9 @@ async function showActiveRoom(roomId, room = {}) {
 
             <div id="hostControls" class="hidden mt-2 flex flex-wrap justify-center gap-2">
               <button id="muteAllBtn" type="button" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-sm hover:bg-zinc-700">🔇 Mute All</button>
-              <button id="lowerHandsBtn" type="button" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-sm hover:bg-zinc-700">✋ Lower All Hands</button>
-              <button id="closeStageBtn" type="button" class="px-3 py-1.5 rounded-lg bg-red-600/30 text-red-400 text-sm hover:bg-red-600/50">🔒 End Stage & Seal</button>
+  <button id="unmuteAllBtn" type="button" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-sm hover:bg-zinc-700">🔊 Unmute All</button>
+  <button id="lowerHandsBtn" type="button" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-sm hover:bg-zinc-700">✋ Lower All Hands</button>
+  <button id="closeStageBtn" type="button" class="px-3 py-1.5 rounded-lg bg-red-600/30 text-red-400 text-sm hover:bg-red-600/50">🔒 End Stage & Seal</button>
             </div>
           </div>
         </div>
