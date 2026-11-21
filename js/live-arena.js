@@ -1103,14 +1103,6 @@ function wireDropEvidenceModal(roomId) {
     }
   });
 }
-try {
-  await updateDoc(doc(db, 'liveRooms', roomId), {
-    lastActivityAt: serverTimestamp()
-  });
-} catch (e) {
-  console.warn('[LiveArena] room activity touch skipped:', e?.message || e);
-}
-
 // ========== LIVEKIT ==========
 async function connectToLiveKit(roomId) {
   try {
