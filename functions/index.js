@@ -1193,7 +1193,8 @@ export const generateZKProof = onCall(
   {
     cors: allowedOrigins,
     timeoutSeconds: 120,
-    memory: "1GiB",               // safer for snarkjs
+    memory: "1GiB",
+    cpu: 1,            
     consumeAppCheckToken: true
   },
   async (request) => {
