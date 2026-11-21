@@ -39,6 +39,11 @@ let currentRoomData = null;
 let activeRoomUnsubscribe = null;
 let roomAdminChromeWired = false;
 
+// Per-room, per-user reaction counts (client-side guard)
+const roomUserReactions = new Map(); // roomId -> Map(uid -> totalCount)
+const MAX_REACTIONS_PER_USER = 5;    // ordinary users
+const MAX_REACTIONS_HOST = 30;       // host can react more freely (or set same as users)
+
 function escapeHTML(str) {
   if (!str) return '';
   return String(str)
