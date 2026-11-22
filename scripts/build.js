@@ -49,19 +49,19 @@ const toCopy = [
   "faq.html",
   "how-to-use.html",
 
- // Core assets
+  // Core assets
   "style.css",
   "manifest.json",
   "sw.js",
   "favicon.ico",
   "logo.jpg",
+  "logo.png",          // keep both just in case
 
   // Folders
   "js",
   "translations",
   "c2pa",
   "image",
-];
 ];
 
 // Copy everything
@@ -90,7 +90,14 @@ if (fs.existsSync(logoSrc)) {
   fs.copyFileSync(logoSrc, iconDest);
   console.log("✅ Created: icon-192.png (from logo.png)");
 } else {
-  console.warn("⚠️  logo.png not found – icon-192.png was not created");
+  // fallback if only logo.jpg exists
+  const jpgSrc = path.resolve(DIST, "logo.jpg");
+  if (fs.existsSync(jpgSrc)) {
+    fs.copyFileSync(jpgSrc, iconDest);
+    console.log("✅ Created: icon-192.png (from logo.jpg)");
+  } else {
+    console.warn("⚠️  logo.png / logo.jpg not found – icon-192.png was not created");
+  }
 }
 
 console.log("\n✨ Production build complete → /dist");
