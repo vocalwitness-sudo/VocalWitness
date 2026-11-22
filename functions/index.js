@@ -2021,7 +2021,7 @@ async function buildHeadlines() {
  */
 export const getCuratedNews = onRequest(
   {
-    cors: allowedOrigins,
+    cors: true, 
     invoker: "public",
     memory: "256MiB",
     timeoutSeconds: 45,
