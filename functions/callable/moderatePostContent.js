@@ -15,6 +15,7 @@ export function createModeratePostContent({ allowedOrigins, geminiApiKey }) {
       secrets: [geminiApiKey],
       timeoutSeconds: 30,
       memory: "256MiB",
+      enforceAppCheck: true,
     },
     async (request) => {
       if (!request.auth) {
