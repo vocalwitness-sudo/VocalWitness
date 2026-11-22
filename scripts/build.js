@@ -49,17 +49,19 @@ const toCopy = [
   "faq.html",
   "how-to-use.html",
 
-  // Core assets
+ // Core assets
   "style.css",
   "manifest.json",
   "sw.js",
   "favicon.ico",
-  "logo.png",
+  "logo.jpg",
 
   // Folders
   "js",
   "translations",
   "c2pa",
+  "image",
+];
 ];
 
 // Copy everything
