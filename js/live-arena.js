@@ -1521,6 +1521,7 @@ document.getElementById('closeStageBtn')?.addEventListener('click', async () => 
     showToast('Failed to close stage', 'error');
   }
 });
+   }
 // ========== HOST ACTIONS ==========
 window.hostAction = async function (uid, action) {
   if (!isHost || !currentRoomId || !uid) return;
