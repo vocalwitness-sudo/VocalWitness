@@ -2240,6 +2240,29 @@ export const getCuratedNews = onRequest(
     }
   }
 );
+export const cleanupExpiredPendingMedia = onSchedule(
+  {
+    schedule: "every 2 hours",
+    timeZone: "Africa/Lagos",
+    memory: "256MiB",
+  },
+  async () => {
+    const cutoff = admin.firestore.Timestamp.fromMillis(Date.now() - 2 * 60 * 60 * 1000);
+    const snap = await db
+      .collection("pendingMedia")
+      .where("status", "==", "pending")
+      .where("expiresAt", "<", cutoff)
+      .limit(100)
+      .get();
+
+    if (snap.empty) return;
+
+    const batch = db.batch();
+    snap.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+    console.log(`Cleaned ${snap.size} expired pending media records`);
+  }
+);
 export const tickerHeadlines = onRequest(
   {
     cors: allowedOrigins,
