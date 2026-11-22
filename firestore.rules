@@ -616,23 +616,30 @@ match /witnessCycles/{cycleId} {
   allow delete: if false;
 }
 
-match /group_evidence/{evidenceId} {
-  allow read: if true;
-
-  allow create: if isAuthenticated()
-    && isNotBanned()
-    && request.resource.data.groupId is string
-    && isGroupMember(request.resource.data.groupId)
+ && isGroupMember(request.resource.data.groupId)
     && !isGroupBanned(request.resource.data.groupId)
     && request.resource.data.depositedBy == request.auth.uid
-    && isValidSha256(request.resource.data.hash)
-    && request.resource.data.hashAlg == 'SHA-256'
     && request.resource.data.name is string
     && request.resource.data.name.size() > 0
     && request.resource.data.name.size() <= 240
     && request.resource.data.keys().hasAll([
-         'groupId', 'name', 'hash', 'hashAlg', 'depositedBy', 'createdAt'
+         'groupId', 'name', 'depositedBy', 'createdAt'
        ])
+    // Hash is required only when media is present
+    && (
+         // Case 1: Has media → must have valid hash
+         (
+           request.resource.data.hash is string
+           && isValidSha256(request.resource.data.hash)
+           && request.resource.data.hashAlg == 'SHA-256'
+         )
+         ||
+         // Case 2: Note-only (no media)
+         (
+           (!('hash' in request.resource.data) || request.resource.data.hash == null)
+           && (!('url' in request.resource.data) || request.resource.data.url == null)
+         )
+       )
     && (!('url' in request.resource.data)
         || request.resource.data.url == null
         || isValidMediaUrl(request.resource.data.url))
