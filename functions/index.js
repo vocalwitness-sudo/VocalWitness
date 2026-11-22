@@ -2021,7 +2021,7 @@ async function buildHeadlines() {
  */
 export const getCuratedNews = onRequest(
   {
-    cors: allowedOrigins,
+    cors: true,                 // ← Change this
     invoker: "public",
     memory: "256MiB",
     timeoutSeconds: 45,
@@ -2030,9 +2030,20 @@ export const getCuratedNews = onRequest(
     cpu: 0.25,
   },
   async (req, res) => {
+    // Always handle OPTIONS explicitly
+    if (req.method === "OPTIONS") {
+      res.set("Access-Control-Allow-Origin", "*");
+      res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+      res.set("Access-Control-Allow-Headers", "Content-Type");
+      return res.status(204).send("");
+    }
+
     if (req.method !== "GET") {
       return res.status(405).json({ error: "Method Not Allowed" });
     }
+
+    // Set CORS header on every response
+    res.set("Access-Control-Allow-Origin", "*");
 
     try {
       const cacheRef = db.doc(NEWS_CACHE_DOC);
@@ -2072,7 +2083,8 @@ export const getCuratedNews = onRequest(
         });
       }
 
-      if (snap.exists && Array.isArray(snap.data().headlines)) {
+      // Return stale cache if available
+      if (snap.exists && Array.isArray(snap.data()?.headlines)) {
         return res.status(200).json({
           ok: true,
           headlines: snap.data().headlines,
@@ -2082,14 +2094,18 @@ export const getCuratedNews = onRequest(
         });
       }
 
-      return res.status(503).json({
+      return res.status(200).json({
         ok: false,
         error: "No headlines available",
         headlines: [],
       });
     } catch (error) {
       logger.error("getCuratedNews failed", error);
-      return res.status(500).json({ ok: false, error: "Internal error", headlines: [] });
+      return res.status(200).json({
+        ok: false,
+        error: "Internal error",
+        headlines: [],
+      });
     }
   }
 );
