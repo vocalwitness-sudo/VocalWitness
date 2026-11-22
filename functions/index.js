@@ -1588,49 +1588,49 @@ export const submitTestimonySecure = onCall(
     async function assertMediaExists(url) {
       if (!url) return;
       try {
-        const res = await fetch(url, { method: 'HEAD', redirect: 'follow' });
+        const res = await fetch(url, { method: "HEAD", redirect: "follow" });
         if (!res.ok && res.status !== 403) { // 403 can happen with some private configs
           throw new HttpsError(
-            'failed-precondition',
+            "failed-precondition",
             `Media not reachable (${res.status}). Upload may have failed.`
           );
         }
       } catch (err) {
         if (err instanceof HttpsError) throw err;
-        console.warn('Media HEAD check failed:', url, err?.message);
+        console.warn("Media HEAD check failed:", url, err?.message);
         throw new HttpsError(
-          'failed-precondition',
-          'Media URL is not reachable. Please re-upload and try again.'
+          "failed-precondition",
+          "Media URL is not reachable. Please re-upload and try again."
         );
       }
     }
 
-  // --- Media existence + server-side re-hash ---
-const isHighTrustChannel =
-  witnessChannels.includes(channel) ||
-  channel === "witness-voice" ||
-  channel === "witness_circle";
+    // --- Media existence + server-side re-hash ---
+    const isHighTrustChannel =
+      witnessChannels.includes(channel) ||
+      channel === "witness-voice" ||
+      channel === "witness_circle";
 
-const strictRehash = isHighTrustChannel; // start strict only on Witness path
+    const strictRehash = isHighTrustChannel; // start strict only on Witness path
 
-if (imageUrl) {
-  await assertMediaExists(imageUrl);
-  if (imageHash) {
-    await verifyMediaHashServerSide(imageUrl, imageHash, { strict: strictRehash });
-  }
-}
-if (videoUrl) {
-  await assertMediaExists(videoUrl);
-  if (videoHash) {
-    await verifyMediaHashServerSide(videoUrl, videoHash, { strict: strictRehash });
-  }
-}
-if (audioUrl) {
-  await assertMediaExists(audioUrl);
-  if (audioHash) {
-    await verifyMediaHashServerSide(audioUrl, audioHash, { strict: strictRehash });
-  }
-}
+    if (imageUrl) {
+      await assertMediaExists(imageUrl);
+      if (imageHash) {
+        await verifyMediaHashServerSide(imageUrl, imageHash, { strict: strictRehash });
+      }
+    }
+    if (videoUrl) {
+      await assertMediaExists(videoUrl);
+      if (videoHash) {
+        await verifyMediaHashServerSide(videoUrl, videoHash, { strict: strictRehash });
+      }
+    }
+    if (audioUrl) {
+      await assertMediaExists(audioUrl);
+      if (audioHash) {
+        await verifyMediaHashServerSide(audioUrl, audioHash, { strict: strictRehash });
+      }
+    }
 
     // --- Load user: ban + tier + throttle ---
     const userRef = db.collection("users").doc(uid);
@@ -1724,6 +1724,20 @@ if (audioUrl) {
     };
 
     const docRef = await db.collection("testimonies").add(payload);
+
+    // Mark uploaded media as sealed
+    try {
+      const { markMediaSealed } = await import("./lib/pending-media.js");
+      const mediaPrefix = "https://media.vocalwitness.com/";
+      const keys = [imageUrl, videoUrl, audioUrl]
+        .filter((u) => typeof u === "string" && u.startsWith(mediaPrefix))
+        .map((u) => u.slice(mediaPrefix.length).split("?")[0]);
+      if (keys.length > 0) {
+        await markMediaSealed(keys);
+      }
+    } catch (e) {
+      console.warn("markMediaSealed failed (non-fatal):", e?.message);
+    }
 
     await userRef.set(
       { lastTestimonyAt: admin.firestore.FieldValue.serverTimestamp() },
