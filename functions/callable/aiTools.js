@@ -26,6 +26,7 @@ export function createTranslateTestimony({ allowedOrigins, geminiApiKey }) {
     {
       cors: allowedOrigins,
       secrets: [geminiApiKey],
+       enforceAppCheck: true, 
     },
     async (request) => {
       const { text, targetLanguage, enableAI = false } = request.data || {};
@@ -72,6 +73,7 @@ export function createTranscribeAudioWitness({ allowedOrigins, geminiApiKey }) {
       secrets: [geminiApiKey],
       timeoutSeconds: 60,
       memory: "512MiB",
+      enforceAppCheck: true,
     },
     async (request) => {
       const { audioBase64, mimeType, enableAI = false, channel = "citizen" } = request.data || {};
@@ -129,6 +131,7 @@ export function createSummarizeReport({ allowedOrigins, geminiApiKey }) {
     {
       cors: allowedOrigins,
       secrets: [geminiApiKey],
+      enforceAppCheck: true,
     },
     async (request) => {
       const { text, enableAI = false } = request.data || {};
