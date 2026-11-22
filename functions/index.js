@@ -2320,6 +2320,38 @@ export const tickerHeadlines = onRequest(
   }
 );
 export { dailyAnchor, triggerAnchorNow };
+export { dailyIntegrityHealth, runIntegrityHealthNow } from "./integrity-health.js";
+export const getSystemHealth = onRequest(
+  { cors: true, invoker: "public", memory: "256MiB" },
+  async (req, res) => {
+    try {
+      const [integritySnap, pendingSnap, rootSnap] = await Promise.all([
+        db.collection("health").doc("integrity").get(),
+        db.collection("pendingMedia").where("status", "==", "pending").limit(50).get(),
+        db.collection("ledger_roots").orderBy("timestamp", "desc").limit(1).get(),
+      ]);
+
+      const integrity = integritySnap.exists ? integritySnap.data() : null;
+      const pendingCount = pendingSnap.size;
+      const latestRoot = rootSnap.empty ? null : rootSnap.docs[0].data();
+
+      const health = {
+        ok: integrity?.ok !== false && pendingCount < 30,
+        integrity,
+        pendingMediaCount: pendingCount,
+        latestLedgerRoot: latestRoot
+          ? { date: latestRoot.date, merkleRoot: latestRoot.merkleRoot, leafCount: latestRoot.leafCount }
+          : null,
+        checkedAt: new Date().toISOString(),
+      };
+
+      res.set("Cache-Control", "public, max-age=60");
+      res.status(200).json(health);
+    } catch (err) {
+      res.status(500).json({ ok: false, error: err.message });
+    }
+  }
+);
 
 export const warmCuratedNews = onSchedule(
   {
