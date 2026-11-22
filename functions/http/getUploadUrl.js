@@ -102,6 +102,19 @@ export function createGetUploadUrl({
           });
           const publicUrl = `https://media.vocalwitness.com/${objectKey}`;
 
+          // Record as pending so we can clean orphans later
+          try {
+            const { recordPendingMedia } = await import("../lib/pending-media.js");
+            await recordPendingMedia({
+              uid,
+              key: objectKey,
+              publicUrl,
+              contentType: fileType,
+            });
+          } catch (e) {
+            console.warn("pendingMedia record failed (non-fatal):", e?.message);
+          }
+
           await writeAuditLog({
             action: "upload_url_issued",
             performedBy: uid,
