@@ -786,6 +786,7 @@ function renderParticipants(participants) {
       .join('');
   }
 }
+  }
 
 // ---------------------------------------------------------------------------
 // In-room moderation (profiles for pending / banned)
