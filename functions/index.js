@@ -2021,18 +2021,15 @@ async function buildHeadlines() {
  */
 export const getCuratedNews = onRequest(
   {
-    cors: true, 
+    cors: allowedOrigins,
     invoker: "public",
     memory: "256MiB",
     timeoutSeconds: 45,
     maxInstances: 2,
     concurrency: 1,
-    cpu: 0.25,            
+    cpu: 0.25,
   },
   async (req, res) => {
-    if (req.method === "OPTIONS") {
-      return res.status(204).send("");
-    }
     if (req.method !== "GET") {
       return res.status(405).json({ error: "Method Not Allowed" });
     }
@@ -2051,7 +2048,7 @@ export const getCuratedNews = onRequest(
             ok: true,
             headlines: data.headlines,
             cached: true,
-            updatedAt: data.updatedAtIso || null
+            updatedAt: data.updatedAtIso || null,
           });
         }
       }
@@ -2062,7 +2059,7 @@ export const getCuratedNews = onRequest(
         const payload = {
           headlines,
           updatedAtMs: now,
-          updatedAtIso: new Date(now).toISOString()
+          updatedAtIso: new Date(now).toISOString(),
         };
         await cacheRef.set(payload, { merge: true });
 
@@ -2071,25 +2068,24 @@ export const getCuratedNews = onRequest(
           ok: true,
           headlines,
           cached: false,
-          updatedAt: payload.updatedAtIso
+          updatedAt: payload.updatedAtIso,
         });
       }
 
-      // Soft failure: return stale cache if any
       if (snap.exists && Array.isArray(snap.data().headlines)) {
         return res.status(200).json({
           ok: true,
           headlines: snap.data().headlines,
           cached: true,
           stale: true,
-          updatedAt: snap.data().updatedAtIso || null
+          updatedAt: snap.data().updatedAtIso || null,
         });
       }
 
       return res.status(503).json({
         ok: false,
         error: "No headlines available",
-        headlines: []
+        headlines: [],
       });
     } catch (error) {
       logger.error("getCuratedNews failed", error);
