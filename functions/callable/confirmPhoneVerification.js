@@ -11,9 +11,7 @@ export function createConfirmPhoneVerification({ allowedOrigins, db }) {
   return onCall(
     {
       cors: allowedOrigins,
-      // Enforce App Check in production (recommended)
-      // Uncomment the line below once App Check is fully rolled out:
-      // enforceAppCheck: true,
+      enforceAppCheck: true,
     },
     async (request) => {
       // 1. Authentication required
