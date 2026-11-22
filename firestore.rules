@@ -228,21 +228,21 @@ function isNotSensitiveWriteThrottled(seconds) {
           && request.time < resource.data.createdAt + duration.value(30, 'm');
 
       let immutableCore = [
-        'forensicHash', 'packCoreHash', 'evidencePack',
-        'imageUrl', 'videoUrl', 'audioUrl', 'mediaUrl', 'mediaUrls',
-        'authorId', 'author', 'isAnonymous',
-        'channel', 'postingStyle', 'fieldNoteRole', 'fieldNoteOrg',
-        'createdAt',
-        'authorTier', 'reputation', 'zkVerified',
-        'moderationStatus', 'toxicityScore', 'autoFlaggedReasons',
-        'isSynthetic', 'syntheticScore', 'moderationFlags', 'aiCategory',
-        'reviewedBy', 'reviewedAt', 'reviewNotes',
-        'c2paStatus', 'c2paManifest',
-        'reactions', 'corroborationCount', 'corroborationScore',
-        'commentsCount', 'isPinned', 'pinnedAt', 'pinnedBy',
-        'feedVisibility'
-      ];
-
+  'forensicHash', 'packCoreHash', 'evidencePack',
+  'imageUrl', 'videoUrl', 'audioUrl', 'mediaUrl', 'mediaUrls',
+  'imageHash', 'videoHash', 'audioHash', 'bodyHash',
+  'authorId', 'author', 'isAnonymous',
+  'channel', 'postingStyle', 'fieldNoteRole', 'fieldNoteOrg',
+  'createdAt',
+  'authorTier', 'reputation', 'zkVerified',
+  'moderationStatus', 'toxicityScore', 'autoFlaggedReasons',
+  'isSynthetic', 'syntheticScore', 'moderationFlags', 'aiCategory',
+  'reviewedBy', 'reviewedAt', 'reviewNotes',
+  'c2paStatus', 'c2paManifest',
+  'reactions', 'corroborationCount', 'corroborationScore',
+  'commentsCount', 'isPinned', 'pinnedAt', 'pinnedBy',
+  'feedVisibility', 'integrity'
+];
       let hideFields = [
         'visibility', 'isDeleted', 'hiddenAt', 'hiddenBy', 'hiddenReason', 'updatedAt'
       ];
@@ -329,6 +329,9 @@ function isNotSensitiveWriteThrottled(seconds) {
     match /cache/{docId} {
       allow read, write: if false;
     }
+match /pendingMedia/{id} {
+  allow read, write: if false;   // only Admin SDK / Functions
+}
 
     // ZK MEMBERSHIP
     match /zk_commitments/{uid} {
