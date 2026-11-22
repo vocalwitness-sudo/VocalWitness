@@ -1384,6 +1384,100 @@ export const generateZKProof = onCall(
   }
 );
 
+/**
+ * Server-side re-hash of media object (fail-closed for high-trust paths).
+ * Uses streaming to keep memory low.
+ */
+async function verifyMediaHashServerSide(
+  url,
+  expectedHash,
+  { strict = true, auditContext = {} } = {}
+) {
+  if (!url || !expectedHash) return;
+
+  const cleanExpected = String(expectedHash).toLowerCase().trim();
+  if (!/^[a-f0-9]{64}$/.test(cleanExpected)) {
+    throw new HttpsError("invalid-argument", "Invalid expected hash format.");
+  }
+
+  try {
+    // Prefer R2 direct if we can extract the key, otherwise fall back to public URL fetch
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Accept-Encoding": "identity" }, // avoid compressed body mismatch
+      redirect: "follow",
+    });
+
+    if (!res.ok) {
+      throw new HttpsError(
+        "failed-precondition",
+        `Media not reachable for re-hash (${res.status}).`
+      );
+    }
+
+    const hashSum = crypto.createHash("sha256");
+    const reader = res.body.getReader();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      hashSum.update(value);
+    }
+
+    const serverHash = hashSum.digest("hex");
+
+    if (serverHash !== cleanExpected) {
+      console.error("[rehash] MISMATCH", { url, expected: cleanExpected, got: serverHash });
+      if (strict) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Media integrity check failed (hash mismatch). Seal aborted."
+        );
+      }
+
+      // Soft mode: log warning and continue
+      await writeAuditLog({
+        action: "media_hash_mismatch_soft",
+        performedBy: auditContext.performedBy || "system",
+        targetId: auditContext.targetId || url,
+        targetType: auditContext.targetType || "media",
+        details: {
+          url,
+          expected: cleanExpected,
+          got: serverHash,
+          ...auditContext.details,
+        },
+        severity: "warning",
+      });
+    } else if (strict) {
+      // Strict mode verified successfully
+      try {
+        await writeAuditLog({
+          action: "media_rehash_verified",
+          performedBy: auditContext.performedBy || "system",
+          targetId: auditContext.targetId || "pending",
+          targetType: auditContext.targetType || "media",
+          details: {
+            url,
+            ...auditContext.details,
+          },
+          severity: "info",
+        });
+      } catch (_) {
+        // Do not fail verification if audit logging encounters a transient error
+      }
+    }
+  } catch (err) {
+    if (err instanceof HttpsError) throw err;
+    console.error("[rehash] error", url, err?.message || err);
+    if (strict) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Could not verify media integrity on server. Please re-upload."
+      );
+    }
+  }
+}
 // ======================================================
 // BATCH 2.1 — SECURE TESTIMONY SUBMIT
 // Clients must NOT write authorTier / moderation / counters.
@@ -1511,9 +1605,32 @@ export const submitTestimonySecure = onCall(
       }
     }
 
-    if (imageUrl) await assertMediaExists(imageUrl);
-    if (videoUrl) await assertMediaExists(videoUrl);
-    if (audioUrl) await assertMediaExists(audioUrl);
+  // --- Media existence + server-side re-hash ---
+const isHighTrustChannel =
+  witnessChannels.includes(channel) ||
+  channel === "witness-voice" ||
+  channel === "witness_circle";
+
+const strictRehash = isHighTrustChannel; // start strict only on Witness path
+
+if (imageUrl) {
+  await assertMediaExists(imageUrl);
+  if (imageHash) {
+    await verifyMediaHashServerSide(imageUrl, imageHash, { strict: strictRehash });
+  }
+}
+if (videoUrl) {
+  await assertMediaExists(videoUrl);
+  if (videoHash) {
+    await verifyMediaHashServerSide(videoUrl, videoHash, { strict: strictRehash });
+  }
+}
+if (audioUrl) {
+  await assertMediaExists(audioUrl);
+  if (audioHash) {
+    await verifyMediaHashServerSide(audioUrl, audioHash, { strict: strictRehash });
+  }
+}
 
     // --- Load user: ban + tier + throttle ---
     const userRef = db.collection("users").doc(uid);
