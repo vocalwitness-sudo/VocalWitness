@@ -1475,60 +1475,52 @@ function wireActiveRoomControls(roomId) {
     }
   });
 
-  document.getElementById('closeStageBtn')?.addEventListener('click', async () => {
-    if (!isHost) return;
-    if (!confirm('End stage session and seal a record into the linked group evidence locker (if any)?')) {
-      return;
-    }
-    try {
-      if (currentRoomData?.groupId) {
-        const sessionSummary = `Stage Concluded: ${currentRoomData.title || roomId}\nHost: ${currentRoomData.hostUid || ''}\nRoom: ${roomId}`;
-        const encoder = new TextEncoder();
-        const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(sessionSummary));
-        const hashHex = Array.from(new Uint8Array(hashBuffer))
-          .map((b) => b.toString(16).padStart(2, '0'))
-          .join('');
+document.getElementById('closeStageBtn')?.addEventListener('click', async () => {
+  if (!isHost) return;
+  if (!confirm('End stage session and seal a record into the linked group evidence locker (if any)?')) {
+    return;
+  }
 
-       await addDoc(collection(db, 'group_evidence'), {
-  groupId: currentRoomData.groupId,
-  name: selectedDropFile
-    ? selectedDropFile.name
-    : `Arena Drop: ${(note || 'note').substring(0, 40)}`,
-  size: selectedDropFile ? `${selectedDropFile.size} B` : '0 B',
-  sizeBytes: selectedDropFile ? selectedDropFile.size : 0,
-  mimeType: selectedDropFile ? selectedDropFile.type : 'text/plain',
-  // Only include hash fields when we actually have a hash
-  ...(mediaHash ? {
-    hash: mediaHash,
-    hashAlg: 'SHA-256'
-  } : {}),
-  url: mediaUrl || null,
-  storagePath: mediaUrl
-    ? mediaUrl.replace('https://media.vocalwitness.com/', '')
-    : null,
-  status: mediaUrl
-    ? 'Sealed (Live Arena → group locker)'
-    : 'Live Arena note (no media)',
-  depositedBy: auth.currentUser.uid,
-  source: 'live-arena',
-  liveRoomId: roomId,
-  createdAt: serverTimestamp()
-});
+  try {
+    if (currentRoomData?.groupId) {
+      const sessionSummary = `Stage Concluded: ${currentRoomData.title || roomId}\nHost: ${currentRoomData.hostUid || ''}\nRoom: ${roomId}`;
+      const encoder = new TextEncoder();
+      const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(sessionSummary));
+      const hashHex = Array.from(new Uint8Array(hashBuffer))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
 
-      await updateDoc(doc(db, 'liveRooms', roomId), {
-        isLive: false,
-        status: 'ended',
-        lastActivityAt: serverTimestamp()
+      await addDoc(collection(db, 'group_evidence'), {
+        groupId: currentRoomData.groupId,
+        name: `Transcript: ${currentRoomData.title || roomId}`,
+        size: `${sessionSummary.length} B`,
+        sizeBytes: sessionSummary.length,
+        mimeType: 'text/plain',
+        hash: hashHex,
+        hashAlg: 'SHA-256',
+        url: null,
+        storagePath: null,
+        status: 'Live Arena Stage Record',
+        depositedBy: auth.currentUser.uid,
+        source: 'live-arena-stage-end',
+        liveRoomId: roomId,
+        createdAt: serverTimestamp()
       });
-      showToast('Stage ended & evidence sealed', 'success');
-      window.leaveCurrentRoom();
-    } catch (err) {
-      console.error(err);
-      showToast('Failed to close stage', 'error');
     }
-  });
-}
 
+    await updateDoc(doc(db, 'liveRooms', roomId), {
+      isLive: false,
+      status: 'ended',
+      lastActivityAt: serverTimestamp()
+    });
+
+    showToast('Stage ended & evidence sealed', 'success');
+    window.leaveCurrentRoom();
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to close stage', 'error');
+  }
+});
 // ========== HOST ACTIONS ==========
 window.hostAction = async function (uid, action) {
   if (!isHost || !currentRoomId || !uid) return;
