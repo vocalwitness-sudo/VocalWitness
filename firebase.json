@@ -35,7 +35,8 @@
       { "source": "/p/**", "function": "ogPost" },
       { "source": "/how-to-use", "destination": "/how-to-use.html" },
      { "source": "/faq", "destination": "/faq.html" },
-
+      { "source": "/report/**", "destination": "/report.html" },
+    { "source": "/report", "destination": "/report.html" },
       { "source": "/share/**", "function": "ogPost" }
     ],
     "ignore": [
