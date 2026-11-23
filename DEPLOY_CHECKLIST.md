@@ -43,5 +43,16 @@
 - [ ] Daily anchor ran successfully in last 24 h (check ledger_roots)
 - [ ] No client code can write tier / phoneVerified / zkVerified
 
-```bash
-firebase deploy --only firestore:rules,storage --project vocalwitness-3affa
+## Batch 2 – Operational Notes
+
+### Recommended Function settings (African mobile reality)
+- submitTestimonySecure: memory 512MiB, timeout 60s, maxInstances 20–40
+- getUploadUrl / media upload path: timeout 60–120s
+- dailyIntegrityHealth + dailyAnchor: 512MiB, timeout 300s
+
+### Chaos / resilience checks (manual or future automated)
+- [ ] Upload with 2G/3G throttling (Chrome DevTools)
+- [ ] Concurrent submissions (5–10 tabs)
+- [ ] Phone verification spike simulation
+- [ ] Confirm Evidence Pack still downloads after force-refresh
+- [ ] Confirm pendingMedia does not grow unbounded
