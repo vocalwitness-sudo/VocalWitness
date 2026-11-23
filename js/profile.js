@@ -60,9 +60,7 @@ async function syncPublicProfile(uid, userData) {
 const safeDisplayName = isPrivate
   ? (userData.username ? `@${userData.username}` : "Anonymous Witness")
   : (userData.displayName || "Anonymous Witness");
-            ? (userData.username ? `@${userData.username}` : "Anonymous Witness")
-            : (userData.displayName || "Anonymous Witness");
-
+            
         const publicData = {
             uid,
             displayName: safeDisplayName,
