@@ -156,6 +156,7 @@ function openShareMenu(shareUrl, title, text) {
             }
 
             const encodedUrl = encodeURIComponent(shareUrl);
+            const shareUrl = `https://vocalwitness.com/report/${id}`;
             const encodedTitle = encodeURIComponent(title);
 
             const urls = {
