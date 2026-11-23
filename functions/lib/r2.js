@@ -13,6 +13,9 @@ const DEFAULT_BUCKET = "vocalwitness-media";
 
 let r2ClientInstance = null;
 
+/**
+ * Get a singleton R2/S3 client.
+ */
 export function getR2Client(accessKeyId, secretAccessKey) {
   if (!r2ClientInstance) {
     r2ClientInstance = new S3Client({
@@ -27,6 +30,9 @@ export function getR2Client(accessKeyId, secretAccessKey) {
   return r2ClientInstance;
 }
 
+/**
+ * Create a pre-signed PUT URL for a new object.
+ */
 export async function createUploadSignedUrl({
   accessKeyId,
   secretAccessKey,
@@ -47,8 +53,9 @@ export async function createUploadSignedUrl({
 }
 
 /**
- * Delete an object from R2. Used ONLY for expired pending (never-sealed) media.
- * Never call this for media that belongs to a sealed testimony.
+ * Delete an object from R2.
+ * ONLY for expired pending (never-sealed) media.
+ * Never call for media that belongs to a sealed testimony.
  */
 export async function deleteR2Object({
   accessKeyId,
