@@ -643,15 +643,15 @@
       </div>
     </div>
 
-    <!-- ========== MOBILE HEADER ========== -->
+      <!-- ========== MOBILE HEADER ========== -->
     <div class="mobile-header flex flex-col gap-2 py-2 md:hidden">
-      
-      <!-- Top Row -->
+
+      <!-- Row 1: Brand + Join/Profile -->
       <div class="flex items-center justify-between gap-3">
         <a href="/" class="flex shrink-0 items-center gap-2.5" aria-label="VocalWitness Home">
-          <img src="./logo.png" 
-               alt="VocalWitness" 
-               width="36" 
+          <img src="./logo.png"
+               alt="VocalWitness"
+               width="36"
                height="36"
                class="h-9 w-9 rounded-xl border border-emerald-500/40 object-cover">
           <div class="leading-tight">
@@ -665,17 +665,15 @@
         </a>
 
         <div class="flex items-center gap-2">
-          <!-- Join (logged out) -->
           <button id="openAuthModalBtnMobile" type="button"
-                  class="flex h-8 items-center gap-1.5 rounded-xl bg-white px-3 text-xs font-semibold text-zinc-900 transition-all
+                  class="flex h-9 items-center gap-1.5 rounded-xl bg-white px-3 text-xs font-semibold text-zinc-900 transition-all
                          hover:bg-emerald-400 active:scale-95"
                   data-action="open-auth-modal">
             <span data-i18n="joinBtn">Join</span>
           </button>
 
-          <!-- Profile (logged in) -->
           <button id="userProfileBtnMobile" type="button"
-                  class="hidden h-8 w-8 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm text-emerald-400 transition-all
+                  class="hidden h-9 w-9 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm text-emerald-400 transition-all
                          hover:border-emerald-500 hover:bg-emerald-500/10 active:scale-95"
                   aria-label="Open profile">
             <span aria-hidden="true">👤</span>
@@ -683,44 +681,55 @@
         </div>
       </div>
 
-    <!-- Bottom Row -->
-<div class="flex items-center justify-between gap-2 border-t border-zinc-800/60 pt-2">
+      <!-- Row 2: Help links — always full width, easy to tap -->
+      <nav class="flex items-center gap-2 border-t border-zinc-800/60 pt-2"
+           aria-label="Help">
+        <a href="/how-to-use"
+           class="flex h-10 flex-1 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900/80
+                  px-2 text-[12px] font-semibold text-zinc-200 transition
+                  hover:border-emerald-500/50 hover:text-emerald-400 active:scale-[0.98]">
+          How to Use
+        </a>
+        <a href="/faq"
+           class="flex h-10 flex-1 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900/80
+                  px-2 text-[12px] font-semibold text-zinc-200 transition
+                  hover:border-emerald-500/50 hover:text-emerald-400 active:scale-[0.98]">
+          FAQ
+        </a>
+        <button id="openSupportModalBtnMobile" type="button"
+                class="flex h-10 shrink-0 items-center justify-center rounded-xl border border-emerald-500/50 bg-emerald-500/10
+                       px-3 text-[12px] font-semibold text-emerald-400 transition
+                       hover:bg-emerald-500 hover:text-zinc-950 active:scale-[0.98]"
+                data-i18n="supportBtn">
+          Support
+        </button>
+      </nav>
 
-  <!-- Left: Language + Support -->
-  <div class="flex items-center gap-1.5 min-w-0">
-    <select id="languageSelectMobile"
-            aria-label="Select language"
-            class="h-8 max-w-[110px] shrink rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-[11px] font-medium text-zinc-300">
-      <option value="en" selected>🇬🇧 English</option>
-      <option value="pcm">🇳🇬 Pidgin</option>
-      <option value="ha">🇳🇬 Hausa</option>
-      <option value="yo">🇳🇬 Yorùbá</option>
-      <option value="ig">🇳🇬 Igbo</option>
-      <option value="sw">🇹🇿 Kiswahili</option>
-      <option value="ar">🇸🇦 العربية</option>
-      <option value="es">🇪🇸 Español</option>
-      <option value="fr">🇫🇷 Français</option>
-      <option value="pt">🇵🇹 Português</option>
-      <option value="de">🇩🇪 Deutsch</option>
-      <option value="zh-CN">🇨🇳 中文</option>
-      <option value="ma">🇪🇹 አማርኛ</option>
-      <option value="hi">🇮🇳 हिन्दी</option>
-      <option value="id">🇮🇩 Bahasa</option>
-    </select>
+      <!-- Row 3: Language + utilities -->
+      <div class="flex items-center justify-between gap-2">
+        <select id="languageSelectMobile"
+                aria-label="Select language"
+                class="h-9 min-w-0 flex-1 max-w-[140px] rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-[12px] font-medium text-zinc-300">
+          <option value="en" selected>🇬🇧 English</option>
+          <option value="pcm">🇳🇬 Pidgin</option>
+          <option value="ha">🇳🇬 Hausa</option>
+          <option value="yo">🇳🇬 Yorùbá</option>
+          <option value="ig">🇳🇬 Igbo</option>
+          <option value="sw">🇹🇿 Kiswahili</option>
+          <option value="ar">🇸🇦 العربية</option>
+          <option value="es">🇪🇸 Español</option>
+          <option value="fr">🇫🇷 Français</option>
+          <option value="pt">🇵🇹 Português</option>
+          <option value="de">🇩🇪 Deutsch</option>
+          <option value="zh-CN">🇨🇳 中文</option>
+          <option value="ma">🇪🇹 አማርኛ</option>
+          <option value="hi">🇮🇳 हिन्दी</option>
+          <option value="id">🇮🇩 Bahasa</option>
+        </select>
 
-    <button id="openSupportModalBtnMobile" type="button"
-            class="h-8 shrink-0 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-2.5 text-[11px] font-semibold text-emerald-400 transition-all
-                   hover:bg-emerald-500 hover:text-zinc-950 active:scale-95"
-            data-i18n="supportBtn">
-      Support
-    </button>
-    <a href="/how-to-use" class="shrink-0 px-1.5 text-[11px] font-medium text-zinc-300 transition hover:text-emerald-400">How to Use</a>
-    <a href="/faq" class="shrink-0 px-1 text-[11px] font-medium text-zinc-300 transition hover:text-emerald-400">FAQ</a>
-  </div>
-        <!-- Right Group -->
         <div class="flex items-center gap-1.5">
           <button id="data-saver-btn-mobile" type="button"
-                  class="flex h-8 items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-[10px] font-medium text-zinc-400 transition-all
+                  class="flex h-9 items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 text-[11px] font-medium text-zinc-400 transition-all
                          hover:border-zinc-500 hover:text-white active:scale-95
                          data-[active=true]:border-emerald-500/60 data-[active=true]:bg-emerald-500/10 data-[active=true]:text-emerald-400"
                   aria-pressed="false"
@@ -729,27 +738,27 @@
             <span id="data-saver-status-mobile">Off</span>
           </button>
 
-          <button id="bookmarks-nav-btn-mobile" type="button" 
+          <button id="bookmarks-nav-btn-mobile" type="button"
                   data-action="open-bookmarks"
-                  class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-400 transition-all
+                  class="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-400 transition-all
                          hover:text-emerald-400 hover:border-emerald-500/60"
                   aria-label="Saved Items">
-            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
             </svg>
           </button>
 
           <div class="relative" id="notification-container-mobile">
-            <button id="notification-btn-mobile" type="button" 
+            <button id="notification-btn-mobile" type="button"
                     aria-label="Notifications"
                     aria-expanded="false"
                     aria-controls="notification-dropdown-mobile"
-                    class="relative flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-400 transition-all
+                    class="relative flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-400 transition-all
                            hover:text-emerald-400 hover:border-emerald-500/60">
-              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
               </svg>
-              <span id="notification-badge-mobile" 
+              <span id="notification-badge-mobile"
                     class="absolute -right-0.5 -top-0.5 hidden min-w-[14px] rounded-full bg-emerald-500 px-1 text-[8px] font-bold text-black leading-none">
                 0
               </span>
@@ -775,7 +784,6 @@
         </div>
       </div>
     </div>
-  </div>
 </header>
 <!-- ====================== MAIN CONTAINER ====================== -->
 <main id="main-content" class="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6 sm:pt-8">
