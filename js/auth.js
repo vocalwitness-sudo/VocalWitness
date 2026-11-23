@@ -144,33 +144,41 @@ async function createOrUpdateUser(user) {
     }
 
     // Upsert publicProfiles so Groups / Live Arena can show names
-    try {
-      const pubSnap = await getDoc(userRef);
-      const u = pubSnap.exists() ? pubSnap.data() : {};
-      await setDoc(
-        doc(db, 'publicProfiles', user.uid),
-        {
-          uid: user.uid,
-          displayName:
-            u.displayName ||
-            safeDisplayName ||
-            (user.isAnonymous ? 'Anonymous Citizen' : 'Citizen'),
-          photoURL: u.photoURL || safePhotoURL || null,
-          username: u.username || null,
-          tierBadge:
-            u.tier === 'citizen_circle' ||
-            u.isPhoneVerified ||
-            u.hasVerifiedPhone
-              ? 'citizen_circle'
-              : 'citizen',
-          updatedAt: serverTimestamp()
-        },
-        { merge: true }
-      );
-      console.log("[auth] publicProfiles upserted successfully for:", user.uid);
-    } catch (pubErr) {
-      console.warn('[auth] publicProfiles upsert skipped:', pubErr?.message || pubErr);
-    }
+try {
+  const pubSnap = await getDoc(userRef);
+  const u = pubSnap.exists() ? pubSnap.data() : {};
+
+  // Default private if field missing (matches profile.js)
+  const isPrivate = u.hidePublicInfo !== false;
+
+  const publicDisplayName = isPrivate
+    ? (u.username ? `@${u.username}` : (user.isAnonymous ? 'Anonymous Citizen' : 'Anonymous Witness'))
+    : (u.displayName || safeDisplayName || (user.isAnonymous ? 'Anonymous Citizen' : 'Citizen'));
+
+  await setDoc(
+    doc(db, 'publicProfiles', user.uid),
+    {
+      uid: user.uid,
+      displayName: publicDisplayName,
+      photoURL: isPrivate ? null : (u.photoURL || safePhotoURL || null),
+      username: u.username || null,
+      bio: isPrivate ? null : (u.bio || null),
+      region: isPrivate ? null : (u.region || null),
+      tierBadge:
+        u.tier === 'citizen_circle' ||
+        u.isPhoneVerified ||
+        u.hasVerifiedPhone
+          ? 'citizen_circle'
+          : 'citizen',
+      isPrivate: isPrivate,
+      updatedAt: serverTimestamp()
+    },
+    { merge: true }
+  );
+  console.log("[auth] publicProfiles upserted successfully for:", user.uid);
+} catch (pubErr) {
+  console.warn('[auth] publicProfiles upsert skipped:', pubErr?.message || pubErr);
+}
 
   } catch (e) {
     console.error("[auth] User document error:", e);
