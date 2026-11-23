@@ -2002,83 +2002,162 @@ export const heavyProcessingTask = onRequest(
 );
 
 export const ogPost = onRequest(
-  { cors: true },
+  { cors: true, invoker: "public", memory: "256MiB" },
   async (req, res) => {
-    const id = req.query.id || req.path.split('/').pop();
-    if (!id) {
-      return res.status(400).send('Missing post id');
+    // Support /p/{id}, /share/{id}, ?id=
+    const pathParts = (req.path || "").split("/").filter(Boolean);
+    const id =
+      req.query.id ||
+      pathParts[pathParts.length - 1] ||
+      null;
+
+    if (!id || id === "p" || id === "share") {
+      return res.status(400).send("Missing post id");
     }
 
     try {
-      const snap = await db.collection('testimonies').doc(id).get();
+      const snap = await db.collection("testimonies").doc(String(id)).get();
       if (!snap.exists) {
-        return res.status(404).send('Post not found');
+        return res.status(404).send("Post not found");
       }
 
-      const post = snap.data();
-      const title = (post.headline || post.title || post.content || 'VocalWitness Testimony')
-        .slice(0, 70);
-      const description = (post.content || 'Sealed testimony on VocalWitness')
+      const post = snap.data() || {};
+      const rawTitle =
+        post.headline ||
+        post.title ||
+        (post.content ? String(post.content).slice(0, 80) : "Sealed testimony");
+      const title = String(rawTitle).replace(/\s+/g, " ").trim().slice(0, 70);
+      const description = String(post.content || "Sealed citizen report on VocalWitness — integrity protected.")
+        .replace(/\s+/g, " ")
+        .trim()
         .slice(0, 200);
 
-      let image = post.imageUrl 
-        || post.thumbnailUrl 
-        || 'https://vocalwitness.com/logo.png';
+      let image =
+        post.imageUrl ||
+        post.thumbnailUrl ||
+        "https://vocalwitness.com/logo.png";
 
       if (post.videoUrl && !post.imageUrl) {
-        image = 'https://vocalwitness.com/og-video-fallback.png';
+        image = "https://vocalwitness.com/og-video-fallback.png"; // ensure this asset exists
       }
 
-      const pageUrl = `https://vocalwitness.com/verify.html?id=${id}`;
+      // Canonical share URL for crawlers
+      const canonicalUrl = `https://vocalwitness.com/p/${id}`;
+      // Where real users land
+      const humanUrl = `https://vocalwitness.com/verify.html?id=${encodeURIComponent(id)}`;
+
+      const sealedBadge = post.forensicHash || post.packCoreHash ? "Sealed" : "Report";
+      const fullTitle = `${title} • ${sealedBadge} • VocalWitness`;
 
       const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>${escape(title)} • VocalWitness</title>
-  <meta name="description" content="${escape(description)}">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${escapeHtml(fullTitle)}</title>
+  <meta name="description" content="${escapeHtml(description)}">
+  <link rel="canonical" href="${canonicalUrl}">
 
   <!-- Open Graph -->
   <meta property="og:type" content="article">
-  <meta property="og:title" content="${escape(title)}">
-  <meta property="og:description" content="${escape(description)}">
-  <meta property="og:url" content="${pageUrl}">
   <meta property="og:site_name" content="VocalWitness">
-  <meta property="og:image" content="${image}">
+  <meta property="og:title" content="${escapeHtml(title)}">
+  <meta property="og:description" content="${escapeHtml(description)}">
+  <meta property="og:url" content="${canonicalUrl}">
+  <meta property="og:image" content="${escapeHtml(image)}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="en_US">
 
   <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="${escape(title)}">
-  <meta name="twitter:description" content="${escape(description)}">
-  <meta name="twitter:image" content="${image}">
+  <meta name="twitter:title" content="${escapeHtml(title)}">
+  <meta name="twitter:description" content="${escapeHtml(description)}">
+  <meta name="twitter:image" content="${escapeHtml(image)}">
 
-  <!-- Redirect humans to the real page -->
-  <meta http-equiv="refresh" content="0;url=${pageUrl}">
-  <script>location.replace("${pageUrl}");</script>
+  <!-- Humans: go to the real page -->
+  <meta http-equiv="refresh" content="0;url=${humanUrl}">
+  <script>location.replace(${JSON.stringify(humanUrl)});</script>
 </head>
-<body>
-  <p>Redirecting to <a href="${pageUrl}">VocalWitness testimony</a>…</p>
+<body style="font-family:system-ui,sans-serif;background:#0a0a0a;color:#e4e4e7;padding:2rem;max-width:40rem;margin:auto">
+  <h1 style="font-size:1.25rem;margin-bottom:0.5rem">${escapeHtml(title)}</h1>
+  <p style="color:#a1a1aa;line-height:1.5">${escapeHtml(description)}</p>
+  <p style="margin-top:1.5rem">
+    <a href="${humanUrl}" style="color:#34d399">Open sealed report on VocalWitness →</a>
+  </p>
+  <p style="margin-top:2rem;font-size:0.8rem;color:#71717a">
+    Integrity ≠ truth. Hashes prove the bits were not changed after sealing.
+  </p>
 </body>
 </html>`;
 
-      res.set('Cache-Control', 'public, max-age=300');
-      res.status(200).send(html);
+      res.set("Cache-Control", "public, max-age=300, s-maxage=600");
+      res.set("Content-Type", "text/html; charset=utf-8");
+      return res.status(200).send(html);
     } catch (err) {
-      console.error(err);
-      res.status(500).send('Error generating preview');
+      console.error("ogPost error:", err);
+      return res.status(500).send("Error generating preview");
     }
   }
 );
 
-function escape(s) {
-  return String(s || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+function escapeHtml(s) {
+  return String(s || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
+
+export const sitemap = onRequest(
+  { cors: true, invoker: "public", memory: "256MiB" },
+  async (req, res) => {
+    try {
+      // Recent public sealed reports (adjust field names to your schema)
+      const snap = await db
+        .collection("testimonies")
+        .where("visibility", "in", ["public", "author_hidden"]) // or whatever you use
+        .orderBy("createdAt", "desc")
+        .limit(200)
+        .get();
+
+      const urls = [
+        "https://vocalwitness.com/",
+        "https://vocalwitness.com/about",
+        "https://vocalwitness.com/how-to-use",
+        "https://vocalwitness.com/faq",
+        "https://vocalwitness.com/verify",
+        "https://vocalwitness.com/transparency",
+        "https://vocalwitness.com/journalist-verify",
+      ];
+
+      snap.docs.forEach((doc) => {
+        urls.push(`https://vocalwitness.com/p/${doc.id}`);
+      });
+
+      const body = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls
+  .map(
+    (u) => `  <url>
+    <loc>${u}</loc>
+    <changefreq>daily</changefreq>
+    <priority>${u.includes("/p/") ? "0.8" : "0.6"}</priority>
+  </url>`
+  )
+  .join("\n")}
+</urlset>`;
+
+      res.set("Content-Type", "application/xml; charset=utf-8");
+      res.set("Cache-Control", "public, max-age=600");
+      return res.status(200).send(body);
+    } catch (err) {
+      console.error("sitemap error:", err);
+      return res.status(500).send("Sitemap generation failed");
+    }
+  }
+);
 
 // ======================================================
 // BREAKING TICKER HEADLINES (server-side RSS — no rss2json)
