@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en-NG">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#10b981">
+  <meta name="robots" content="index, follow">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
+  <!-- Defaults – overwritten by JS when report loads -->
+  <title id="page-title">Sealed Report • VocalWitness</title>
+  <meta name="description" id="page-desc" content="Sealed citizen report on VocalWitness. Integrity-protected evidence. Integrity ≠ truth.">
+  <link rel="canonical" id="page-canonical" href="https://vocalwitness.com/">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="VocalWitness">
+  <meta property="og:title" id="og-title" content="Sealed Report • VocalWitness">
+  <meta property="og:description" id="og-desc" content="Sealed citizen report. Cryptographic integrity protected.">
+  <meta property="og:url" id="og-url" content="https://vocalwitness.com/">
+  <meta property="og:image" id="og-image" content="https://vocalwitness.com/logo.png">
+  <meta property="og:locale" content="en_NG">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" id="tw-title" content="Sealed Report • VocalWitness">
+  <meta name="twitter:description" id="tw-desc" content="Sealed citizen report on VocalWitness.">
+  <meta name="twitter:image" id="tw-image" content="https://vocalwitness.com/logo.png">
+
+  <link rel="icon" href="/logo.png" type="image/png">
+  <link rel="stylesheet" href="/style.css?v=3.2">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: #111827;
+      --border: rgba(16, 185, 129, 0.25);
+      --emerald: #10b981;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, sans-serif;
+      min-height: 100dvh;
+      padding-bottom: 4rem;
+    }
+    .wrap { max-width: 42rem; margin: 0 auto; padding: 1rem; }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.5rem 0.9rem; border-radius: 0.75rem;
+      border: 1px solid #3f3f46; background: #18181b; color: #fff;
+      font-size: 0.8rem; font-weight: 600; text-decoration: none; cursor: pointer;
+    }
+    .btn:hover { background: #27272a; border-color: #52525b; }
+    .btn-primary {
+      background: #059669; border-color: #10b981; color: #fff;
+    }
+    .btn-primary:hover { background: #047857; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 1.25rem;
+      padding: 1.25rem 1.35rem;
+      margin-bottom: 1rem;
+    }
+    .badge {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.55rem;
+      border-radius: 999px; background: rgba(16,185,129,0.15);
+      color: #34d399; border: 1px solid rgba(16,185,129,0.35);
+    }
+    .meta { font-size: 0.8rem; color: var(--muted); margin-top: 0.35rem; }
+    .content { font-size: 1.05rem; line-height: 1.6; white-space: pre-wrap; margin-top: 1rem; }
+    .media img, .media video {
+      max-width: 100%; border-radius: 0.85rem; margin-top: 1rem;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .media audio { width: 100%; margin-top: 1rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.25rem; }
+    .disclaimer {
+      font-size: 0.75rem; color: var(--muted); line-height: 1.45;
+      border-top: 1px solid rgba(16,185,129,0.15); padding-top: 0.85rem; margin-top: 1.25rem;
+    }
+    .loading, .error { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+    .error { color: #f87171; }
+    .hash {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.7rem; word-break: break-all; color: #6ee7b7;
+      background: rgba(0,0,0,0.35); padding: 0.5rem 0.65rem; border-radius: 0.5rem;
+      margin-top: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <a class="btn" href="/">← Public Square</a>
+      <div style="font-size:0.75rem;color:#64748b;">VocalWitness • Sealed Report</div>
+    </div>
+
+    <div id="state-loading" class="loading">
+      <div style="width:28px;height:28px;border:2px solid #10b981;border-top-color:transparent;border-radius:50%;margin:0 auto 1rem;animation:spin .8s linear infinite"></div>
+      Loading sealed report…
+    </div>
+
+    <div id="state-error" class="error hidden">
+      Report not found or not public.
+      <div style="margin-top:1rem"><a class="btn" href="/">Back to Square</a></div>
+    </div>
+
+    <article id="report-root" class="hidden">
+      <div class="card">
+        <div style="display:flex;flex-wrap:wrap;gap:0.4rem;align-items:center">
+          <span class="badge" id="badge-sealed">🛡️ Sealed</span>
+          <span class="badge" id="badge-channel" style="background:rgba(255,255,255,0.06);color:#94a3b8;border-color:rgba(255,255,255,0.1)"></span>
+          <span class="badge" id="badge-media" class="hidden" style="background:rgba(255,255,255,0.06);color:#94a3b8;border-color:rgba(255,255,255,0.1)"></span>
+        </div>
+
+        <div class="meta" id="report-meta"></div>
+        <h1 class="content" id="report-title" style="font-size:1.25rem;font-weight:700;margin:0.85rem 0 0"></h1>
+        <div class="content" id="report-body"></div>
+
+        <div class="media" id="report-media"></div>
+
+        <div class="hash" id="report-hash" title="Ledger / pack hash"></div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="btn-download-pack">📥 Evidence Pack</button>
+          <button type="button" class="btn" id="btn-share">Share</button>
+          <a class="btn" id="btn-verify" href="/verify">Verify integrity</a>
+        </div>
+
+        <p class="disclaimer">
+          <strong>Integrity ≠ truth.</strong>
+          This page shows a sealed report. Hashes prove the bits have not changed after sealing.
+          They do not prove that a real-world event occurred. Not legal advice.
+        </p>
+      </div>
+    </article>
+  </div>
+
+  <style>@keyframes spin { to { transform: rotate(360deg) } } .hidden { display: none !important }</style>
+
+  <script type="module" src="/js/report-page.js?v=1"></script>
+</body>
+</html>
