@@ -331,14 +331,19 @@ export function buildShareUrl(testimony = {}, origin = DEFAULT_ORIGIN) {
   const id = testimony.id || testimony.testimonyId || '';
   const h = resolveLedgerHash(testimony);
 
+  // Prefer clean, crawlable report page
+  if (id) {
+    const reportUrl = new URL(`/report/${encodeURIComponent(id)}`, origin);
+    return reportUrl.toString();
+  }
+
+  // Fallback: classic verify link
   const url = new URL('/verify.html', origin);
   if (id) url.searchParams.set('id', id);
   if (h) url.searchParams.set('h', h);
-
   if (testimony.targetFeed || testimony.channel) {
     url.searchParams.set('ch', testimony.targetFeed || testimony.channel);
   }
-
   return url.toString();
 }
 
