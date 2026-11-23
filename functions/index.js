@@ -2325,7 +2325,7 @@ export const cleanupExpiredPendingMedia = onSchedule(
     timeZone: "Africa/Lagos",
     memory: "256MiB",
     timeoutSeconds: 300,
-    secrets: [r2AccessKeyId, r2SecretAccessKey], // same secrets you already define
+    secrets: [r2AccessKeyId, r2SecretAccessKey],
   },
   async () => {
     const cutoff = admin.firestore.Timestamp.fromMillis(
@@ -2356,7 +2356,7 @@ export const cleanupExpiredPendingMedia = onSchedule(
       const data = doc.data() || {};
       const key = data.key;
 
-      // Only delete R2 object if we have a key and it was never sealed
+      // Safety: only pending (never sealed)
       if (key && data.status === "pending") {
         try {
           await deleteR2Object({
@@ -2366,7 +2366,7 @@ export const cleanupExpiredPendingMedia = onSchedule(
           });
           deletedObjects++;
         } catch (err) {
-          // Object may already be gone — still remove the Firestore record
+          // Object may already be gone — still remove Firestore record
           console.warn(
             `R2 delete failed for key=${key}:`,
             err?.message || err
@@ -2384,7 +2384,6 @@ export const cleanupExpiredPendingMedia = onSchedule(
       `cleanupExpiredPendingMedia: removed ${deletedDocs} pendingMedia docs, ${deletedObjects} R2 objects`
     );
 
-    // Optional audit
     try {
       await writeAuditLog({
         action: "pending_media_cleanup",
