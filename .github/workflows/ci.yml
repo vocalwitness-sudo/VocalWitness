@@ -26,18 +26,23 @@ jobs:
             cd ..
           fi
 
-      - name: Syntax check
+      - name: Syntax check (must pass)
+        run: node scripts/syntax-check.mjs
+
+      - name: Integrity core (must pass)
+        run: node tests/integrity-core.js
+
+      - name: Media integrity (must pass if present)
         run: |
-          if [ -f scripts/syntax-check.mjs ]; then
-            node scripts/syntax-check.mjs
+          if [ -f tests/media-integrity.test.js ]; then
+            node tests/media-integrity.test.js
           else
-            find js -name '*.js' -print0 | xargs -0 -n1 node --check
+            echo "No media-integrity.test.js – skipping"
           fi
 
-      - name: ESLint
+      - name: ESLint (warn only for now)
         run: npx eslint js functions --no-error-on-unmatched-pattern
         continue-on-error: true
 
-      - name: Integrity
-        run: npm run test:integrity
-        continue-on-error: true
+      - name: Build (must pass)
+        run: npm run build
