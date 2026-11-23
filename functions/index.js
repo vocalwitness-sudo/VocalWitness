@@ -2044,8 +2044,8 @@ export const ogPost = onRequest(
       // Canonical share URL for crawlers
       const canonicalUrl = `https://vocalwitness.com/p/${id}`;
       // Where real users land
-      const humanUrl = `https://vocalwitness.com/verify.html?id=${encodeURIComponent(id)}`;
-
+    const humanUrl = `https://vocalwitness.com/report/${encodeURIComponent(id)}`;
+      
       const sealedBadge = post.forensicHash || post.packCoreHash ? "Sealed" : "Report";
       const fullTitle = `${title} • ${sealedBadge} • VocalWitness`;
 
