@@ -2321,6 +2321,8 @@ export const tickerHeadlines = onRequest(
 );
 export { dailyAnchor, triggerAnchorNow };
 export { dailyIntegrityHealth, runIntegrityHealthNow } from "./integrity-health.js";
+export { operationalCleanup } from "./cleanup.js";
+
 export const getSystemHealth = onRequest(
   { cors: true, invoker: "public", memory: "256MiB" },
   async (req, res) => {
