@@ -37,6 +37,7 @@
      { "source": "/faq", "destination": "/faq.html" },
       { "source": "/report/**", "destination": "/report.html" },
     { "source": "/report", "destination": "/report.html" },
+      { "source": "/sitemap.xml", "function": "sitemap" },
       { "source": "/share/**", "function": "ogPost" }
     ],
     "ignore": [
