@@ -872,17 +872,19 @@ match /publicProfiles/{uid} {
   allow create: if isOwner(uid)
     && request.resource.data.keys().hasOnly([
          'uid', 'displayName', 'photoURL', 'username',
-         'bio', 'region', 'tierBadge', 'updatedAt'
+         'bio', 'region', 'tierBadge', 'isPrivate', 'updatedAt'
        ])
-    && request.resource.data.uid == uid;
+    && request.resource.data.uid == uid
+    && (!('isPrivate' in request.resource.data) || request.resource.data.isPrivate is bool);
 
   allow update: if isOwner(uid)
     && request.resource.data.diff(resource.data).affectedKeys()
          .hasOnly([
            'displayName', 'photoURL', 'username',
-           'bio', 'region', 'tierBadge', 'updatedAt'
+           'bio', 'region', 'tierBadge', 'isPrivate', 'updatedAt'
          ])
-    && request.resource.data.uid == uid;
+    && request.resource.data.uid == uid
+    && (!('isPrivate' in request.resource.data) || request.resource.data.isPrivate is bool);
 
   allow delete: if false;
 }
