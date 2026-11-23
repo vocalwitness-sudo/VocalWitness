@@ -113,8 +113,8 @@
     --text-muted: #94a3b8;
     --text-dim: #64748b;
 
-    /* Corrected header heights */
-    --header-height-mobile: 104px;
+   /* Must match style.css — 3-row mobile header after C1 */
+    --header-height-mobile: calc(156px + env(safe-area-inset-top, 0px));
     --header-height-desktop: 64px;
   }
 
