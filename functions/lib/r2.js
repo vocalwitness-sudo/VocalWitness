@@ -2,7 +2,7 @@
  * functions/lib/r2.js
  * Cloudflare R2 (S3-compatible) client helpers
  */
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const DEFAULT_ENDPOINT =
@@ -13,11 +13,6 @@ const DEFAULT_BUCKET = "vocalwitness-media";
 
 let r2ClientInstance = null;
 
-/**
- * Get a singleton R2/S3 client.
- * @param {string} accessKeyId
- * @param {string} secretAccessKey
- */
 export function getR2Client(accessKeyId, secretAccessKey) {
   if (!r2ClientInstance) {
     r2ClientInstance = new S3Client({
@@ -32,9 +27,6 @@ export function getR2Client(accessKeyId, secretAccessKey) {
   return r2ClientInstance;
 }
 
-/**
- * Create a pre-signed PUT URL for a new object.
- */
 export async function createUploadSignedUrl({
   accessKeyId,
   secretAccessKey,
@@ -52,4 +44,25 @@ export async function createUploadSignedUrl({
   const uploadUrl = await getSignedUrl(client, command, { expiresIn });
   const publicUrl = `https://media.vocalwitness.com/${key}`;
   return { uploadUrl, publicUrl, key };
+}
+
+/**
+ * Delete an object from R2. Used ONLY for expired pending (never-sealed) media.
+ * Never call this for media that belongs to a sealed testimony.
+ */
+export async function deleteR2Object({
+  accessKeyId,
+  secretAccessKey,
+  key,
+  bucket = DEFAULT_BUCKET,
+}) {
+  if (!key || typeof key !== "string") return false;
+  const client = getR2Client(accessKeyId, secretAccessKey);
+  await client.send(
+    new DeleteObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    })
+  );
+  return true;
 }
