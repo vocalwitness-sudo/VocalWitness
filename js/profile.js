@@ -55,10 +55,11 @@ async function syncPublicProfile(uid, userData) {
     if (!uid || !userData) return;
     try {
         const publicRef = doc(db, "publicProfiles", uid);
-        const isPrivate = userData.hidePublicInfo !== false;
+       const isPrivate = userData.hidePublicInfo !== false;
 
-        // When Privacy Shield is ON → never expose real name or photo
-        const safeDisplayName = isPrivate
+const safeDisplayName = isPrivate
+  ? (userData.username ? `@${userData.username}` : "Anonymous Witness")
+  : (userData.displayName || "Anonymous Witness");
             ? (userData.username ? `@${userData.username}` : "Anonymous Witness")
             : (userData.displayName || "Anonymous Witness");
 
