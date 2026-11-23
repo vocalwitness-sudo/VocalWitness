@@ -12,8 +12,9 @@
   --text-primary: #f8fafc;
   --text-muted: #94a3b8;
   --border-subtle: rgba(255, 255, 255, 0.07);
-   --header-height-desktop: 64px;
-  --header-height-mobile: calc(108px + env(safe-area-inset-top, 0px));
+  --header-height-desktop: 64px;
+  /* 3-row mobile header (C1): brand + help + utilities + safe area */
+  --header-height-mobile: calc(156px + env(safe-area-inset-top, 0px));
   --touch-min: 44px;
   --radius: 14px;
   --radius-sm: 10px;
