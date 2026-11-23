@@ -2324,9 +2324,14 @@ export const cleanupExpiredPendingMedia = onSchedule(
     schedule: "every 2 hours",
     timeZone: "Africa/Lagos",
     memory: "256MiB",
+    timeoutSeconds: 300,
+    secrets: [r2AccessKeyId, r2SecretAccessKey], // same secrets you already define
   },
   async () => {
-    const cutoff = admin.firestore.Timestamp.fromMillis(Date.now() - 2 * 60 * 60 * 1000);
+    const cutoff = admin.firestore.Timestamp.fromMillis(
+      Date.now() - 2 * 60 * 60 * 1000
+    );
+
     const snap = await db
       .collection("pendingMedia")
       .where("status", "==", "pending")
@@ -2334,12 +2339,62 @@ export const cleanupExpiredPendingMedia = onSchedule(
       .limit(100)
       .get();
 
-    if (snap.empty) return;
+    if (snap.empty) {
+      console.log("cleanupExpiredPendingMedia: nothing to clean");
+      return;
+    }
 
+    const { deleteR2Object } = await import("./lib/r2.js");
+    const accessKeyId = r2AccessKeyId.value();
+    const secretAccessKey = r2SecretAccessKey.value();
+
+    let deletedObjects = 0;
+    let deletedDocs = 0;
     const batch = db.batch();
-    snap.docs.forEach((doc) => batch.delete(doc.ref));
+
+    for (const doc of snap.docs) {
+      const data = doc.data() || {};
+      const key = data.key;
+
+      // Only delete R2 object if we have a key and it was never sealed
+      if (key && data.status === "pending") {
+        try {
+          await deleteR2Object({
+            accessKeyId,
+            secretAccessKey,
+            key,
+          });
+          deletedObjects++;
+        } catch (err) {
+          // Object may already be gone — still remove the Firestore record
+          console.warn(
+            `R2 delete failed for key=${key}:`,
+            err?.message || err
+          );
+        }
+      }
+
+      batch.delete(doc.ref);
+      deletedDocs++;
+    }
+
     await batch.commit();
-    console.log(`Cleaned ${snap.size} expired pending media records`);
+
+    console.log(
+      `cleanupExpiredPendingMedia: removed ${deletedDocs} pendingMedia docs, ${deletedObjects} R2 objects`
+    );
+
+    // Optional audit
+    try {
+      await writeAuditLog({
+        action: "pending_media_cleanup",
+        performedBy: "system",
+        targetId: "pendingMedia",
+        targetType: "system",
+        details: { deletedDocs, deletedObjects },
+        severity: "info",
+      });
+    } catch (_) {}
   }
 );
 export const tickerHeadlines = onRequest(
