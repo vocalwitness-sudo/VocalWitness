@@ -32,13 +32,8 @@ jobs:
       - name: Integrity core (must pass)
         run: node tests/integrity-core.js
 
-      - name: Media integrity (must pass if present)
-        run: |
-          if [ -f tests/media-integrity.test.js ]; then
-            node tests/media-integrity.test.js
-          else
-            echo "No media-integrity.test.js – skipping"
-          fi
+      - name: Media integrity (must pass)
+        run: node tests/media-integrity.test.js
 
       - name: ESLint (warn only for now)
         run: npx eslint js functions --no-error-on-unmatched-pattern
