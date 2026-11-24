@@ -42,12 +42,13 @@ export function showToast(message, type = "success", duration = null) {
     }
 
     // Toast Card Element
-    const toast = document.createElement('div');
-    toast.className = `
-        pointer-events-auto relative overflow-hidden p-4 rounded-2xl shadow-2xl border
-        text-white font-medium text-sm flex items-center gap-3
-        ${style.bg} transition-all duration-300 transform translate-y-4 opacity-0 scale-95
-    `;
+  const toast = document.createElement('div');
+toasttoast.setAttribute('data-testid', type === 'success' ? 'toast-success' : 'toast');
+toast.className = `
+    pointer-events-auto relative overflow-hidden p-4 rounded-2xl shadow-2xl border
+    text-white font-medium text-sm flex items-center gap-3
+    ${style.bg} transition-all duration-300 transform translate-y-4 opacity-0 scale-95
+`;
 
     toast.innerHTML = `
         <span class="text-base shrink-0">${style.icon}</span>
