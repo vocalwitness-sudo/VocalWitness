@@ -183,7 +183,7 @@
                    <input type="text" id="ledgerIdInput" data-testid="verify-input" placeholder="Testimony id or credential id from PDF QR" autocomplete="off" />
                     <label for="ledgerHashInput" style="margin-top: 0.75rem;">Ledger / forensic hash (h) — optional for credentials</label>
                     <input type="text" id="ledgerHashInput" placeholder="SHA-256 hex from share link (testimonies)" autocomplete="off" />
-                    <button type="button" id="btnVerifyLedger" class="btn-primary">Verify against ledger</button>
+                   <button type="button" id="btnVerifyLedger" data-testid="verify-ledger-btn" class="btn-primary">Verify against ledger</button>
                     <p style="font-size: 0.7rem; color: #6b7280; margin-top: 0.75rem;">
                         Credential PDFs use <code style="color:#6ee7b7">/verify.html?id=…</code>.
                         Testimony shares use <code style="color:#6ee7b7">/verify.html?id=…&amp;h=…</code>.
