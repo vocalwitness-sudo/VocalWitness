@@ -1071,7 +1071,7 @@
                     placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition">
 
           <!-- Main text -->
-      <textarea id="mainInput" rows="3" maxlength="3000"
+      <textarea id="mainInput" data-testid="composer" rows="3" maxlength="3000"
           placeholder="What did you see or experience? Speak clearly and stick to the facts..."
           class="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-900 p-4 text-sm text-white 
                  placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition"></textarea>
@@ -1199,7 +1199,7 @@
                 class="rounded-xl px-4 py-2.5 text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-white transition">
           Cancel
         </button>
-        <button id="postButton" type="button"
+       <button id="postButton" type="button" data-testid="submit-testimony"
                 class="rounded-xl bg-emerald-500 px-7 py-2.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 
                        hover:bg-emerald-400 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition">
           <span data-i18n="postButton">Publish Report</span>
@@ -1209,7 +1209,7 @@
   </div>
 
 <!-- Success state after publish -->
-<div id="publish-success" class="mb-6 hidden rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-5 text-center">
+<div id="publish-success" data-testid="publish-success" class="mb-6 hidden rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-5 text-center">
   <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-2xl">
     🛡️
   </div>
@@ -1219,7 +1219,7 @@
     Media and seal cannot be changed. Text editable for 30 minutes.
   </p>
   <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center sm:flex-wrap">
-    <button type="button" id="download-pack-after-publish"
+   <button type="button" id="download-pack-after-publish" data-testid="download-evidence-pack"
             class="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
       📥 Download Evidence Pack
     </button>
@@ -2344,11 +2344,13 @@ Hard delete is not available so the sealed record stays verifiable.
     if (existing) existing.remove();
 
     const toast = document.createElement('div');
-    toast.className = `vw-toast fixed bottom-6 left-1/2 z-[11000] -translate-x-1/2 rounded-2xl px-6 py-3.5 text-sm font-medium text-white shadow-2xl transition-all duration-300 opacity-0 ${
-      type === 'success' ? 'bg-emerald-600' :
-      type === 'error'   ? 'bg-red-600' :
-      type === 'warning' ? 'bg-amber-600' : 'bg-zinc-800'
-    }`;
+   const toast = document.createElement('div');
+toast.setAttribute('data-testid', type === 'success' ? 'toast-success' : 'toast');
+toast.className = `vw-toast fixed bottom-6 left-1/2 z-[11000] -translate-x-1/2 rounded-2xl px-6 py-3.5 text-sm font-medium text-white shadow-2xl transition-all duration-300 opacity-0 ${
+  type === 'success' ? 'bg-emerald-600' :
+  type === 'error'   ? 'bg-red-600' :
+  type === 'warning' ? 'bg-amber-600' : 'bg-zinc-800'
+}`;
     toast.textContent = message;
     document.body.appendChild(toast);
     
