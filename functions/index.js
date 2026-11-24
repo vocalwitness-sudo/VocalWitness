@@ -54,9 +54,9 @@ const __dirname = path.dirname(__filename);
 
 setGlobalOptions({
   region: "us-central1",
-  maxInstances: 3,        // was 5
-  cpu: 0.25,              // was 0.5  ← this is the key change
-  memory: "256MiB",
+  maxInstances: 20,
+  cpu: 0.5,
+  memory: "512MiB",
 });
 // ======================================================
 // SECRETS
@@ -1485,8 +1485,10 @@ async function verifyMediaHashServerSide(
 export const submitTestimonySecure = onCall(
   {
     cors: allowedOrigins,
-    enforceAppCheck: true,          // official modern way
-    // consumeAppCheckToken: true,  // optional – can keep or remove
+    enforceAppCheck: true,
+    memory: "512MiB",
+    timeoutSeconds: 60,
+    maxInstances: 30,
   },
   async (request) => {
     // With enforceAppCheck: true, Firebase already rejects missing/invalid tokens
