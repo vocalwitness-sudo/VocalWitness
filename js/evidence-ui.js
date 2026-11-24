@@ -35,9 +35,10 @@ export function renderDownloadPackButton(testimonyId) {
   if (!testimonyId) return '';
   return `
     <button type="button"
-            data-action="download-pack"
-            data-id="${testimonyId}"
-            class="download-evidence-pack-btn inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-400 transition hover:bg-emerald-500/20">
+        data-action="download-pack"
+        data-id="${testimonyId}"
+        data-testid="download-evidence-pack"
+        class="download-evidence-pack-btn inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-400 transition hover:bg-emerald-500/20">
       📥 Evidence Pack
     </button>
   `;
