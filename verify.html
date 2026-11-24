@@ -204,7 +204,7 @@
 
                 <div id="jsonSection" class="hidden">
                     <label for="proofInput" data-i18n="proofInputLabel">Paste Proof / Evidence Pack (JSON)</label>
-                    <textarea id="proofInput" rows="6" placeholder='{"packCoreHash":"...","integrity":{"forensicHash":"..."}}'></textarea>
+                   <textarea id="proofInput" data-testid="verify-proof-input" rows="6" placeholder='{"packCoreHash":"...","integrity":{"forensicHash":"..."}}'></textarea>
                     <span id="verify-result" class="block mt-2 text-xs"></span>
                     <button type="button" id="btnVerifyJSON" class="btn-primary" data-i18n="btnVerifySig">Verify payload</button>
                 </div>
