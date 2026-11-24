@@ -180,7 +180,7 @@
 
                 <div id="ledgerSection">
                     <label for="ledgerIdInput">Testimony or Credential ID</label>
-                    <input type="text" id="ledgerIdInput" placeholder="Firestore id or credential id from PDF QR" autocomplete="off" />
+                   <input type="text" id="ledgerIdInput" data-testid="verify-input" placeholder="Testimony id or credential id from PDF QR" autocomplete="off" />
                     <label for="ledgerHashInput" style="margin-top: 0.75rem;">Ledger / forensic hash (h) — optional for credentials</label>
                     <input type="text" id="ledgerHashInput" placeholder="SHA-256 hex from share link (testimonies)" autocomplete="off" />
                     <button type="button" id="btnVerifyLedger" class="btn-primary">Verify against ledger</button>
