@@ -824,8 +824,9 @@ function renderSinglePostDOM(id, data, container) {
     const isOwner = currentUser && currentUser.uid === data.authorId;
 
     const postEl = document.createElement('div');
-    postEl.className = 'post-card group relative mb-5 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 transition-all duration-200 hover:border-emerald-500/30 hover:bg-zinc-900/80 sm:p-6';
-    postEl.setAttribute('data-post-id', id);
+postEl.className = 'post-card group relative mb-5 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 transition-all duration-200 hover:border-emerald-500/30 hover:bg-zinc-900/80 sm:p-6';
+postEl.setAttribute('data-post-id', id);
+postEl.setAttribute('data-testid', 'feed-card');
 
     const preferredTitle = (data.headline && data.headline.trim() !== '')
         ? data.headline
