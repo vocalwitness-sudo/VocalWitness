@@ -616,10 +616,15 @@ match /witnessCycles/{cycleId} {
     && resource.data.witnessId == request.auth.uid
     && request.resource.data.diff(resource.data).affectedKeys()
          .hasOnly(['status', 'endedAt', 'updatedAt']);
-  allow delete: if false;
-}
 
- && isGroupMember(request.resource.data.groupId)
+
+match /group_evidence/{docId} {
+  allow read: if isAuthenticated();
+
+  allow create: if isNotBanned()
+    && isAuthenticated()
+    && request.resource.data.groupId is string
+    && isGroupMember(request.resource.data.groupId)
     && !isGroupBanned(request.resource.data.groupId)
     && request.resource.data.depositedBy == request.auth.uid
     && request.resource.data.name is string
