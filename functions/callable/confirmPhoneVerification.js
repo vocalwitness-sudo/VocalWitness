@@ -12,6 +12,9 @@ export function createConfirmPhoneVerification({ allowedOrigins, db }) {
     {
       cors: allowedOrigins,
       enforceAppCheck: true,
+      memory: "512MiB",
+      timeoutSeconds: 60,
+      maxInstances: 20,
     },
     async (request) => {
       // 1. Authentication required
