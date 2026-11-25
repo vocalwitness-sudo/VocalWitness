@@ -1,3 +1,4 @@
+
 name: Integrity & Security Checks
 
 on:
@@ -26,17 +27,11 @@ jobs:
             npm install
           fi
 
-      # integrity-core.js is a standalone Node script, NOT a Mocha suite
       - name: Run integrity-core
         run: node tests/integrity-core.js
 
-      - name: Run media-integrity (if present)
-        run: |
-          if [ -f tests/media-integrity.test.js ]; then
-            node tests/media-integrity.test.js
-          else
-            echo "skip media-integrity"
-          fi
+      - name: Run media-integrity
+        run: node tests/media-integrity.test.js
 
-          - name: Firestore rules integrity gate
-         run: node tests/firestore-rules.test.js
+      - name: Firestore rules integrity gate
+        run: node tests/firestore-rules.test.js
