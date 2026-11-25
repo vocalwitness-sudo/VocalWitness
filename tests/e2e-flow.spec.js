@@ -15,11 +15,23 @@ test.describe('VocalWitness – Critical Integrity Paths', () => {
   test('Homepage loads and composer is present', async ({ page }) => {
     await expect(page.locator('body')).toBeVisible();
     await expect(page.getByTestId('composer')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId('submit-testimony')).toBeVisible({ timeout: 10000 });
   });
 
-  test('Verify page is reachable', async ({ page }) => {
+  test('Verify page is reachable and has inputs', async ({ page }) => {
     await page.goto(BASE + '/verify');
     await expect(page.getByTestId('verify-input')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('verify-ledger-btn')).toBeVisible();
+  });
+
+  test('Verify JSON tab exposes proof input', async ({ page }) => {
+    await page.goto(BASE + '/verify');
+    // open JSON tab if needed
+    const jsonTab = page.locator('#tabJSON');
+    if (await jsonTab.count()) {
+      await jsonTab.click();
+    }
+    await expect(page.getByTestId('verify-proof-input')).toBeVisible({ timeout: 10000 });
   });
 
   test('Offline: composer still accepts text', async ({ page, context }) => {
@@ -31,20 +43,21 @@ test.describe('VocalWitness – Critical Integrity Paths', () => {
   });
 });
 
-// Keep the sealed path skipped until you have a test login helper
-test.describe('Sealed testimony path', () => {
-  test.skip('Seal text testimony → success UI → Evidence Pack button', async ({ page }) => {
+// Full sealed path still needs a test login helper — keep skipped for now
+test.describe('Sealed testimony path (auth required)', () => {
+  test.skip('Seal text testimony → success UI → Evidence Pack', async ({ page }) => {
     await page.goto(BASE + '/');
-    // TODO: await loginAsTestUser(page);
+    // TODO: loginAsTestUser(page)
 
     await page.getByTestId('composer').fill('E2E sealed testimony ' + Date.now());
     await page.getByTestId('submit-testimony').click();
 
-    // Success can appear as toast or the publish-success block
     await expect(
       page.getByTestId('toast-success').or(page.getByTestId('publish-success'))
     ).toBeVisible({ timeout: 25000 });
 
-    await expect(page.getByTestId('download-evidence-pack').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('download-evidence-pack').first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 });
