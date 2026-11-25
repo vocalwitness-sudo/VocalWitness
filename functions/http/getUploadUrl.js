@@ -16,10 +16,13 @@ export function createGetUploadUrl({
   r2AccessKeyId,
   r2SecretAccessKey,
 }) {
-  return onRequest(
+   return onRequest(
     {
       cors: allowedOrigins,
       secrets: [r2AccessKeyId, r2SecretAccessKey],
+      memory: "512MiB",
+      timeoutSeconds: 60,
+      maxInstances: 30,
     },
     (req, res) => {
       corsHandler(req, res, async () => {
