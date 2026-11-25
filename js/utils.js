@@ -42,8 +42,8 @@ export function showToast(message, type = "success", duration = null) {
     }
 
     // Toast Card Element
-  const toast = document.createElement('div');
-toasttoast.setAttribute('data-testid', type === 'success' ? 'toast-success' : 'toast');
+ const toast = document.createElement('div');
+toast.setAttribute('data-testid', type === 'success' ? 'toast-success' : 'toast');
 toast.className = `
     pointer-events-auto relative overflow-hidden p-4 rounded-2xl shadow-2xl border
     text-white font-medium text-sm flex items-center gap-3
