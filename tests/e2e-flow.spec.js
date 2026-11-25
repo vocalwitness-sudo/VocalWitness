@@ -26,7 +26,6 @@ test.describe('VocalWitness – Critical Integrity Paths', () => {
 
   test('Verify JSON tab exposes proof input', async ({ page }) => {
     await page.goto(BASE + '/verify');
-    // open JSON tab if needed
     const jsonTab = page.locator('#tabJSON');
     if (await jsonTab.count()) {
       await jsonTab.click();
@@ -43,7 +42,6 @@ test.describe('VocalWitness – Critical Integrity Paths', () => {
   });
 });
 
-// Full sealed path still needs a test login helper — keep skipped for now
 test.describe('Sealed testimony path (auth required)', () => {
   test.skip('Seal text testimony → success UI → Evidence Pack', async ({ page }) => {
     await page.goto(BASE + '/');
