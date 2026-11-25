@@ -35,6 +35,9 @@ jobs:
       - name: Media integrity (must pass)
         run: node tests/media-integrity.test.js
 
+      - name: Firestore rules integrity gate (must pass)
+        run: node tests/firestore-rules.test.js
+
       - name: ESLint (warn only for now)
         run: npx eslint js functions --no-error-on-unmatched-pattern
         continue-on-error: true
