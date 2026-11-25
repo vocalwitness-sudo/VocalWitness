@@ -37,3 +37,6 @@ jobs:
           else
             echo "skip media-integrity"
           fi
+
+          - name: Firestore rules integrity gate
+         run: node tests/firestore-rules.test.js
