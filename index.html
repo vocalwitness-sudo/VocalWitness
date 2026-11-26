@@ -731,15 +731,15 @@
         </select>
 
         <div class="flex items-center gap-1.5">
-          <button id="data-saver-btn-mobile" type="button"
-                  class="flex h-9 items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 text-[11px] font-medium text-zinc-400 transition-all
-                         hover:border-zinc-500 hover:text-white active:scale-95
-                         data-[active=true]:border-emerald-500/60 data-[active=true]:bg-emerald-500/10 data-[active=true]:text-emerald-400"
-                  aria-pressed="false"
-                  data-active="false">
-            <span id="data-saver-icon-mobile" aria-hidden="true">⚡</span>
-            <span id="data-saver-status-mobile" data-i18n="offLabel">Off</span>
-          </button>
+         <button id="data-saver-btn-mobile" type="button"
+        class="flex h-9 items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 text-[11px] font-medium text-zinc-400 transition-all
+               hover:border-zinc-500 hover:text-white active:scale-95
+               data-[active=true]:border-emerald-500/60 data-[active=true]:bg-emerald-500/10 data-[active=true]:text-emerald-400"
+        aria-pressed="false"
+        data-active="false">
+  <span id="data-saver-icon-mobile" aria-hidden="true">⚡</span>
+  <span id="data-saver-status-mobile">Off</span>
+</button>
 
           <button id="bookmarks-nav-btn-mobile" type="button"
                   data-action="open-bookmarks"
@@ -1719,9 +1719,9 @@ Hard delete is not available so the sealed record stays verifiable.
             </li>
             <li>
               <button id="footer-data-saver-btn" type="button"
-                      class="flex items-center gap-1.5 transition hover:text-emerald-400">
-                Data Saver: <span id="footer-data-saver-status" class="text-zinc-300">Off</span>
-              </button>
+        class="flex items-center gap-1.5 transition hover:text-emerald-400">
+  <span data-i18n="dataSaverLabel">Data Saver</span>: <span id="footer-data-saver-status" class="text-zinc-300">Off</span>
+</button>
             </li>
           </ul>
         </div>
