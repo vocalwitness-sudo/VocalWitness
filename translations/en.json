@@ -2,6 +2,14 @@
   "appTitle": "VocalWitness",
   "appSubtitle": "Citizen Reporting • Sealed Evidence",
   "pageTitle": "VocalWitness • Citizen Reporting • Sealed Evidence",
+  "brandTaglineDesktop": "Truth • Evidence • Sealed",
+  "brandTaglineMobile": "Truth • Evidence",
+  "liveBadge": "LIVE",
+  "howToUseLink": "How to Use",
+  "faqLink": "FAQ",
+  "dataSaverLabel": "Data Saver",
+  "notificationsTitle": "Notifications",
+  "noNotifications": "No notifications yet",
   "legalLabel": "Important Notice:",
   "privacyWarning": "VocalWitness is a protected public square. We do not collect ID cards, passports, or personal data.",
   "placeholder": "What did you see or experience? Share the facts...",
@@ -385,5 +393,6 @@
   "ledger_subtitle": "Protected • Timestamped • Application-Level Sealed",
   "btn_refresh": "Refresh",
   "ledger_info_title": "Your reports stay safe",
-  "ledger_info_desc": "Every report is cryptographically sealed and linked to the ledger. Media and hashes cannot be changed by ordinary users after publish. Text may be corrected for 30 minutes; after that only soft-hide is allowed."
+  "ledger_info_desc": "Every report is cryptographically sealed and linked to the ledger. Media and hashes cannot be changed by ordinary users after publish. Text may be corrected for 30 minutes; after that only soft-hide is allowed.",
+  "moreOptionsBtn": "More"
 }
