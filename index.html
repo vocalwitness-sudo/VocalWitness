@@ -504,7 +504,8 @@
           <h1 class="brand-wordmark text-[20px] font-extrabold tracking-tight">
             <span class="text-emerald-400 transition group-hover:text-emerald-300">Vocal</span><span class="text-white">Witness</span>
           </h1>
-          <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-400/70">
+          <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-400/70"
+             data-i18n="brandTaglineDesktop">
             Truth • Evidence • Sealed
           </p>
         </div>
@@ -512,41 +513,42 @@
         <span id="live-indicator" 
               class="ml-2 hidden items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-bold text-red-400"
               aria-live="polite">
-          <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" aria-hidden="true"></span> LIVE
+          <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" aria-hidden="true"></span>
+          <span data-i18n="liveBadge">LIVE</span>
         </span>
       </a>
 
-     <!-- FAQ/How To Use (Desktop Navigation Links) -->
+      <!-- FAQ/How To Use (Desktop Navigation Links) -->
       <nav class="flex items-center gap-5 text-xs font-medium text-zinc-300" aria-label="Main navigation">
-        <a href="/how-to-use" class="transition hover:text-emerald-400">How to Use</a>
-        <a href="/faq" class="transition hover:text-emerald-400">FAQ</a>
+        <a href="/how-to-use" class="transition hover:text-emerald-400" data-i18n="howToUseNav">How to Use</a>
+        <a href="/faq" class="transition hover:text-emerald-400" data-i18n="faqNav">FAQ</a>
       </nav>
 
       <!-- Right side controls -->
       <div class="flex shrink-0 items-center gap-2.5 ml-auto lg:gap-3">
         
-       <!-- Desktop Language Selector -->
-<select id="languageSelect" 
-        aria-label="Select language"
-        class="h-9 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-medium text-zinc-300 transition
-               hover:border-zinc-500 hover:text-white
-               focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/40">
-  <option value="en" selected>🇬🇧 English</option>
-  <option value="pcm">🇳🇬 Pidgin</option>
-  <option value="ha">🇳🇬 Hausa</option>
-  <option value="yo">🇳🇬 Yorùbá</option>
-  <option value="ig">🇳🇬 Igbo</option>
-  <option value="sw">🇹🇿 Kiswahili</option>
-  <option value="ar">🇸🇦 العربية</option>
-  <option value="es">🇪🇸 Español</option>
-  <option value="fr">🇫🇷 Français</option>
-  <option value="pt">🇵🇹 Português</option>
-  <option value="de">🇩🇪 Deutsch</option>
-  <option value="zh-CN">🇨🇳 中文</option>
-  <option value="ma">🇪🇹 አማርኛ</option>
-  <option value="hi">🇮🇳 हिन्दी</option>
-  <option value="id">🇮🇩 Bahasa</option>
-</select>
+        <!-- Desktop Language Selector -->
+        <select id="languageSelect" 
+                aria-label="Select language"
+                class="h-9 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-medium text-zinc-300 transition
+                       hover:border-zinc-500 hover:text-white
+                       focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/40">
+          <option value="en" selected>🇬🇧 English</option>
+          <option value="pcm">🇳🇬 Pidgin</option>
+          <option value="ha">🇳🇬 Hausa</option>
+          <option value="yo">🇳🇬 Yorùbá</option>
+          <option value="ig">🇳🇬 Igbo</option>
+          <option value="sw">🇹🇿 Kiswahili</option>
+          <option value="ar">🇸🇦 العربية</option>
+          <option value="es">🇪🇸 Español</option>
+          <option value="fr">🇫🇷 Français</option>
+          <option value="pt">🇵🇹 Português</option>
+          <option value="de">🇩🇪 Deutsch</option>
+          <option value="zh-CN">🇨🇳 中文</option>
+          <option value="ma">🇪🇹 አማርኛ</option>
+          <option value="hi">🇮🇳 हिन्दी</option>
+          <option value="id">🇮🇩 Bahasa</option>
+        </select>
 
         <!-- Support -->
         <button id="openSupportModalBtn" type="button"
@@ -591,7 +593,7 @@
                 aria-pressed="false"
                 data-active="false">
           <span id="data-saver-icon" aria-hidden="true">⚡</span>
-         <span>Data Saver: <strong id="data-saver-status">Off</strong></span>
+          <span><span data-i18n="dataSaverLabel">Data Saver</span>: <strong id="data-saver-status" data-i18n="offLabel">Off</strong></span>
         </button>
 
         <!-- Bookmarks -->
@@ -628,13 +630,13 @@
                aria-label="Notifications"
                aria-hidden="true">
             <div class="sticky top-0 flex items-center justify-between border-b border-zinc-800 bg-zinc-900/95 px-4 py-3">
-              <h3 class="text-sm font-semibold text-white">Notifications</h3>
+              <h3 class="text-sm font-semibold text-white" data-i18n="notificationsTitle">Notifications</h3>
               <span id="notification-count-tag" class="text-[11px] font-medium text-emerald-400">0 new</span>
             </div>
             <div id="notification-list">
               <div class="p-8 text-center text-zinc-500">
                 <p class="mb-1 text-2xl" aria-hidden="true">🔔</p>
-                <p class="text-sm">No notifications yet</p>
+                <p class="text-sm" data-i18n="noNotifications">No notifications yet</p>
               </div>
             </div>
           </div>
@@ -642,7 +644,7 @@
       </div>
     </div>
 
-      <!-- ========== MOBILE HEADER ========== -->
+    <!-- ========== MOBILE HEADER ========== -->
     <div class="mobile-header flex flex-col gap-2 py-2 md:hidden">
 
       <!-- Row 1: Brand + Join/Profile -->
@@ -657,7 +659,8 @@
             <h1 class="text-[16px] font-extrabold tracking-tight">
               <span class="text-emerald-400">Vocal</span><span class="text-white">Witness</span>
             </h1>
-            <p class="text-[9px] font-semibold uppercase tracking-wider text-emerald-400/70">
+            <p class="text-[9px] font-semibold uppercase tracking-wider text-emerald-400/70"
+               data-i18n="brandTaglineMobile">
               Truth • Evidence
             </p>
           </div>
@@ -684,12 +687,14 @@
       <nav class="flex items-center gap-2 border-t border-zinc-800/60 pt-2"
            aria-label="Help">
         <a href="/how-to-use"
+           data-i18n="howToUseNav"
            class="flex h-10 flex-1 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900/80
                   px-2 text-[12px] font-semibold text-zinc-200 transition
                   hover:border-emerald-500/50 hover:text-emerald-400 active:scale-[0.98]">
           How to Use
         </a>
         <a href="/faq"
+           data-i18n="faqNav"
            class="flex h-10 flex-1 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900/80
                   px-2 text-[12px] font-semibold text-zinc-200 transition
                   hover:border-emerald-500/50 hover:text-emerald-400 active:scale-[0.98]">
@@ -734,7 +739,7 @@
                   aria-pressed="false"
                   data-active="false">
             <span id="data-saver-icon-mobile" aria-hidden="true">⚡</span>
-            <span id="data-saver-status-mobile">Off</span>
+            <span id="data-saver-status-mobile" data-i18n="offLabel">Off</span>
           </button>
 
           <button id="bookmarks-nav-btn-mobile" type="button"
@@ -769,13 +774,13 @@
                  aria-label="Notifications"
                  aria-hidden="true">
               <div class="sticky top-0 flex items-center justify-between border-b border-zinc-800 bg-zinc-900/95 px-4 py-3">
-                <h3 class="text-sm font-semibold text-white">Notifications</h3>
+                <h3 class="text-sm font-semibold text-white" data-i18n="notificationsTitle">Notifications</h3>
                 <span id="notification-count-tag-mobile" class="text-[11px] font-medium text-emerald-400">0 new</span>
               </div>
               <div id="notification-list-mobile">
                 <div class="p-8 text-center text-zinc-500">
                   <p class="mb-1 text-2xl" aria-hidden="true">🔔</p>
-                  <p class="text-sm">No notifications yet</p>
+                  <p class="text-sm" data-i18n="noNotifications">No notifications yet</p>
                 </div>
               </div>
             </div>
@@ -783,6 +788,7 @@
         </div>
       </div>
     </div>
+  </div>
 </header>
 <!-- ====================== MAIN CONTAINER ====================== -->
 <main id="main-content" class="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6 sm:pt-8">
