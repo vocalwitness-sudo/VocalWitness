@@ -84,6 +84,31 @@ export async function submitTestimony({
 
   channel = normalizeChannel(channel);
 
+  // ---- Orphan-media draft (retry support) ----
+  // Survives a failed final seal so the next Publish can reuse already-uploaded bytes.
+  window.activeSubmissionDraft = window.activeSubmissionDraft || {};
+  const draft = window.activeSubmissionDraft;
+
+  const reuseIfValid = (kind) => {
+    const url = draft[`${kind}Url`];
+    const hash = draft[`${kind}Hash`];
+    if (
+      typeof url === 'string' &&
+      url.startsWith('https://media.vocalwitness.com/') &&
+      typeof hash === 'string' &&
+      /^[a-f0-9]{64}$/i.test(hash)
+    ) {
+      return { publicUrl: url, hash };
+    }
+    return null;
+  };
+
+  const saveDraftMedia = (kind, up) => {
+    if (!up?.publicUrl || !up?.hash) return;
+    draft[`${kind}Url`] = up.publicUrl;
+    draft[`${kind}Hash`] = up.hash;
+  };
+
   // AI pre-check (non-fatal if service down)
   let moderationResult = {
     flagged: false,
@@ -126,49 +151,73 @@ export async function submitTestimony({
     if (typeof onProgress === 'function') onProgress(p);
   };
 
-  // ===== UNIFIED MEDIA SEAL =====
+  // ===== UNIFIED MEDIA SEAL (with orphan-media reuse) =====
   if (imageFile) {
-    showToast("🛡️ Sealing image...", "info");
-    const up = await processAndUploadMedia(imageFile, folder, reportProgress);
-    if (!up?.publicUrl || !up?.hash) {
-      throw new Error("Image upload or hash failed. Seal aborted.");
+    const reused = reuseIfValid('image');
+    if (reused) {
+      console.log('[createPost] Reusing already-uploaded image');
+      imageUrl = reused.publicUrl;
+      imageHash = reused.hash;
+    } else {
+      showToast('🛡️ Sealing image...', 'info');
+      const up = await processAndUploadMedia(imageFile, folder, reportProgress);
+      if (!up?.publicUrl || !up?.hash) {
+        throw new Error('Image upload or hash failed. Seal aborted.');
+      }
+      imageUrl = up.publicUrl;
+      imageHash = up.hash;
+      saveDraftMedia('image', up);
     }
-    imageUrl = up.publicUrl;
-    imageHash = up.hash;
   }
 
   if (videoFile) {
-    showToast("🛡️ Sealing video...", "info");
-    const up = await processAndUploadMedia(videoFile, folder, reportProgress);
-    videoUrl = up?.publicUrl;
-    videoHash = up?.hash;
-    if (!videoUrl || !videoHash) {
-      throw new Error("Video upload or hash failed. Seal aborted.");
+    const reused = reuseIfValid('video');
+    if (reused) {
+      console.log('[createPost] Reusing already-uploaded video');
+      videoUrl = reused.publicUrl;
+      videoHash = reused.hash;
+    } else {
+      showToast('🛡️ Sealing video...', 'info');
+      const up = await processAndUploadMedia(videoFile, folder, reportProgress);
+      videoUrl = up?.publicUrl;
+      videoHash = up?.hash;
+      if (!videoUrl || !videoHash) {
+        throw new Error('Video upload or hash failed. Seal aborted.');
+      }
+      saveDraftMedia('video', up);
     }
   }
 
   if (audioFile) {
-    showToast("🛡️ Sealing audio...", "info");
-    const up = await processAndUploadMedia(audioFile, folder, reportProgress);
-    audioUrl = up?.publicUrl;
-    audioHash = up?.hash;
-    if (!audioUrl || !audioHash) {
-      throw new Error("Audio upload or hash failed. Seal aborted.");
+    const reused = reuseIfValid('audio');
+    if (reused) {
+      console.log('[createPost] Reusing already-uploaded audio');
+      audioUrl = reused.publicUrl;
+      audioHash = reused.hash;
+    } else {
+      showToast('🛡️ Sealing audio...', 'info');
+      const up = await processAndUploadMedia(audioFile, folder, reportProgress);
+      audioUrl = up?.publicUrl;
+      audioHash = up?.hash;
+      if (!audioUrl || !audioHash) {
+        throw new Error('Audio upload or hash failed. Seal aborted.');
+      }
+      saveDraftMedia('audio', up);
     }
   }
 
   const { hashtags, mentions, cleanedContent } = parsePostMetadata(content);
 
-const bodyHash = cleanedContent.trim()
-  ? await computeSHA256(cleanedContent.trim())
-  : null;
+  const bodyHash = cleanedContent.trim()
+    ? await computeSHA256(cleanedContent.trim())
+    : null;
 
-if (cleanedContent.trim() && !bodyHash) {
-  throw new Error("Body hash failed. Seal aborted.");
-}
+  if (cleanedContent.trim() && !bodyHash) {
+    throw new Error("Body hash failed. Seal aborted.");
+  }
 
-const forensicHash = imageHash || videoHash || audioHash || bodyHash || null;
-  
+  const forensicHash = imageHash || videoHash || audioHash || bodyHash || null;
+
   // ===== EVIDENCE PACK (required for integrity) =====
   let firestorePack = null;
   let packCoreHash = null;
@@ -258,32 +307,41 @@ const forensicHash = imageHash || videoHash || audioHash || bodyHash || null;
       evidencePack: firestorePack,
       packCoreHash,
     });
-    
-} catch (err) {
-  console.error('[createPost] submitTestimonySecure failed', err);
-  const hasUploadedMedia = !!(imageUrl || videoUrl || audioUrl);
+  } catch (err) {
+    console.error('[createPost] submitTestimonySecure failed', err);
+    const hasUploadedMedia = !!(imageUrl || videoUrl || audioUrl);
 
-  if (hasUploadedMedia) {
-    console.warn('[createPost] Orphaned media URLs (for cleanup later):', {
-      imageUrl,
-      videoUrl,
-      audioUrl,
-    });
-    showToast(
-      'Media uploaded successfully, but the final seal failed. Please tap Publish again. Your media is already on the server — do not re-select the files if possible.',
-      'error'
-    );
-  } else {
-    showToast(err.message || 'Publish failed. Please try again.', 'error');
+    if (hasUploadedMedia) {
+      console.warn('[createPost] Orphaned media URLs (for cleanup later):', {
+        imageUrl,
+        videoUrl,
+        audioUrl,
+      });
+      showToast(
+        'Media already uploaded. Tap Publish again to finish sealing — no need to re-select files.',
+        'error'
+      );
+    } else {
+      showToast(err.message || 'Publish failed. Please try again.', 'error');
+    }
+    throw err;
   }
-  throw err;
-}
 
   const resData = response.data || {};
   const id = typeof resData === 'string' ? resData : (resData.id || resData.testimonyId);
 
   if (!id) {
     throw new Error('Secure submit returned no document ID.');
+  }
+
+  // Seal succeeded — clear orphan-media draft so the next post starts clean
+  if (window.activeSubmissionDraft) {
+    delete window.activeSubmissionDraft.imageUrl;
+    delete window.activeSubmissionDraft.imageHash;
+    delete window.activeSubmissionDraft.videoUrl;
+    delete window.activeSubmissionDraft.videoHash;
+    delete window.activeSubmissionDraft.audioUrl;
+    delete window.activeSubmissionDraft.audioHash;
   }
 
   // Attach real ID to the full pack for download
