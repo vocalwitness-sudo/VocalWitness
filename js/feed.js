@@ -1198,3 +1198,132 @@ postEl.setAttribute('data-testid', 'feed-card');
     
     container.appendChild(postEl);
 }
+/* ====================== AUTHOR ACTIONS (rules-safe) ====================== */
+// Text edit: 30-minute window only. Soft-hide only. Never touch hashes / media / seal fields.
+
+function createdAtMs(post) {
+  if (!post?.createdAt) return 0;
+  if (typeof post.createdAt.toMillis === 'function') return post.createdAt.toMillis();
+  if (post.createdAt.seconds) return post.createdAt.seconds * 1000;
+  const t = new Date(post.createdAt).getTime();
+  return Number.isFinite(t) ? t : 0;
+}
+
+/** Soft-hide own post (author_hidden). permanent=true still only soft-hides — no hard delete. */
+export async function handleHidePost(id, permanent = false) {
+  const user = auth.currentUser;
+  if (!user) {
+    showToast('Sign in to manage your report.', 'error');
+    return;
+  }
+  if (!id) return;
+
+  try {
+    const ref = doc(db, 'testimonies', id);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      showToast('Report not found.', 'error');
+      return;
+    }
+    const data = snap.data();
+    if (data.authorId !== user.uid) {
+      showToast('You can only hide your own reports.', 'error');
+      return;
+    }
+
+    await updateDoc(ref, {
+      visibility: 'author_hidden',
+      isDeleted: false,
+      hiddenAt: serverTimestamp(),
+      hiddenBy: user.uid,
+      hiddenReason: permanent ? 'author_permanent_hide' : 'author_hide',
+      updatedAt: serverTimestamp(),
+    });
+
+    showToast(
+      permanent
+        ? 'Report hidden from feeds. Sealed record is preserved.'
+        : 'Report hidden from feeds. You can ask a steward if you need it restored.',
+      'success'
+    );
+  } catch (err) {
+    console.error('[feed] handleHidePost failed', err);
+    showToast(err?.message || 'Could not hide report.', 'error');
+  }
+}
+
+/** Text-only edit inside 30-minute correction window. Never changes media/hashes. */
+export async function handleEditPost(id) {
+  const user = auth.currentUser;
+  if (!user) {
+    showToast('Sign in to edit.', 'error');
+    return;
+  }
+  if (!id) return;
+
+  try {
+    const ref = doc(db, 'testimonies', id);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      showToast('Report not found.', 'error');
+      return;
+    }
+    const data = snap.data();
+    if (data.authorId !== user.uid) {
+      showToast('You can only edit your own reports.', 'error');
+      return;
+    }
+
+    const age = Date.now() - createdAtMs(data);
+    const WINDOW_MS = 30 * 60 * 1000;
+    if (age > WINDOW_MS) {
+      showToast('Text can only be edited within 30 minutes of publish.', 'warning');
+      return;
+    }
+
+    const current = data.content || '';
+    const next = window.prompt('Edit report text (media and seal cannot change):', current);
+    if (next == null) return;
+
+    const trimmed = String(next).trim();
+    if (!trimmed) {
+      showToast('Text cannot be empty.', 'error');
+      return;
+    }
+    if (trimmed.length > 3000) {
+      showToast('Text is too long (max 3000).', 'error');
+      return;
+    }
+    if (trimmed === current) {
+      showToast('No changes.', 'info');
+      return;
+    }
+
+    await updateDoc(ref, {
+      content: trimmed,
+      updatedAt: serverTimestamp(),
+    });
+
+    showToast('Text updated. Media and seal unchanged.', 'success');
+  } catch (err) {
+    console.error('[feed] handleEditPost failed', err);
+    showToast(err?.message || 'Could not edit report.', 'error');
+  }
+}
+
+/** Pin is steward/admin only for now — safe no-op with clear message. */
+export async function handlePinPost(id) {
+  showToast('Pinning is limited to stewards for now.', 'info');
+}
+
+/** Optional menu stub — avoids console noise. */
+export function showPostMenu(id) {
+  console.log('[feed] showPostMenu', id);
+}
+
+if (typeof window !== 'undefined') {
+  window.handleEditPost = handleEditPost;
+  window.handleHidePost = handleHidePost;
+  window.handlePinPost = handlePinPost;
+  window.showPostMenu = showPostMenu;
+}
