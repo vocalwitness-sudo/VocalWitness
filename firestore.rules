@@ -427,7 +427,7 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    match /testimonies/{testimonyId} {
+  match /testimonies/{testimonyId} {
       allow read: if true;
       allow create: if false;
 
@@ -445,6 +445,7 @@ service cloud.firestore {
            );
 
       allow delete: if false;
+  }
 
       match /comments/{commentId} {
         allow read: if true;
@@ -677,7 +678,7 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']);
 
       allow delete: if false;
-
+}
       match /replies/{replyId} {
         allow read: if true;
 
@@ -769,7 +770,7 @@ service cloud.firestore {
         && isSafeAuthorPostUpdate()
       );
       allow delete: if false;
-
+}
       match /comments/{commentId} {
         allow read: if true;
         allow create: if isNotBanned()
