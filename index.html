@@ -520,8 +520,8 @@
 
       <!-- FAQ/How To Use (Desktop Navigation Links) -->
       <nav class="flex items-center gap-5 text-xs font-medium text-zinc-300" aria-label="Main navigation">
-        <a href="/how-to-use" class="transition hover:text-emerald-400" data-i18n="howToUseNav">How to Use</a>
-        <a href="/faq" class="transition hover:text-emerald-400" data-i18n="faqNav">FAQ</a>
+       <a href="/how-to-use" class="transition hover:text-emerald-400" data-i18n="howToUseLink">How to Use</a>
+       <a href="/faq" class="transition hover:text-emerald-400" data-i18n="faqLink">FAQ</a>
       </nav>
 
       <!-- Right side controls -->
@@ -831,8 +831,9 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
         </svg>
       </div>
-      <input type="search" id="global-search" 
-             placeholder="Search reports, news, hashtags, or people..."
+     <input type="search" id="global-search" 
+       placeholder="Search reports, news, hashtags, or people..."
+       data-i18n-placeholder="searchPlaceholder"
              class="w-full rounded-2xl border border-zinc-700 bg-zinc-900/80 py-3.5 pl-11 pr-4 text-sm text-white placeholder-zinc-500 transition 
                     focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
              autocomplete="off" 
@@ -856,8 +857,8 @@
         aria-selected="true" 
         aria-controls="public-square"
         class="nav-tab active flex-shrink-0 min-w-[4.5rem] h-11 items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 text-xs font-semibold text-white shadow-md shadow-blue-600/25 transition sm:h-12 sm:px-4 sm:text-sm hover:bg-blue-500">
-  <span class="text-base leading-none" aria-hidden="true">🗣️</span>
-  <span class="truncate">The Square</span>
+ <span class="text-base leading-none" aria-hidden="true">🗣️</span>
+<span class="truncate" data-i18n="publicSquareTab">Public Square</span>
 </button>
       
      <!-- 2. Sealed Record Tab -->
@@ -958,12 +959,12 @@
 
   <!-- Title -->
   <div class="mb-5">
-    <h2 id="public-square-title" class="text-2xl sm:text-3xl font-bold text-white">
-      Public Square
-    </h2>
-    <p class="mt-1 text-sm text-zinc-400">
-      Where Citizens speak and evidence is preserved
-    </p>
+  <h2 id="public-square-title" class="text-2xl sm:text-3xl font-bold text-white" data-i18n="publicSquareTab">
+  Public Square
+</h2>
+<p class="mt-1 text-sm text-zinc-400" data-i18n="publicSquareDesc">
+  Where Citizens speak and evidence is preserved
+</p
   </div>
 
   <!-- ==================================================
@@ -994,8 +995,9 @@
       <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xl text-emerald-400 group-hover:bg-emerald-500/25 transition">
         🗣️
       </div>
-      <div class="flex-1 rounded-full border border-zinc-700 bg-zinc-900/70 px-5 py-3.5 text-sm text-zinc-400 transition
-                  group-hover:border-emerald-500/50 group-hover:bg-zinc-900 group-hover:text-zinc-300">
+       <div class="flex-1 rounded-full border border-zinc-700 bg-zinc-900/70 px-5 py-3.5 text-sm text-zinc-400 transition
+                  group-hover:border-emerald-500/50 group-hover:bg-zinc-900 group-hover:text-zinc-300"
+           data-i18n="mainInputPlaceholder">
         What did you see or experience? Speak as a Citizen…
       </div>
       <div class="hidden sm:flex items-center gap-1.5 text-xs text-zinc-500">
@@ -1208,7 +1210,9 @@
        <button id="postButton" type="button" data-testid="submit-testimony"
                 class="rounded-xl bg-emerald-500 px-7 py-2.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 
                        hover:bg-emerald-400 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition">
-          <span data-i18n="postButton">Publish Report</span>
+         <button ...>
+  <span data-i18n="cancel">Cancel</span>
+</button>
         </button>
       </div>
     </div>
@@ -2640,7 +2644,7 @@ document.addEventListener('click', (e) => {
 <nav id="vw-bottom-nav" aria-label="Primary mobile navigation">
   <button type="button" data-tab="square" aria-label="Citizen Talk">
     <span class="nav-icon" aria-hidden="true">🗣️</span>
-    <span class="nav-label">Square</span>
+   <span class="nav-label" data-i18n="publicSquareTab">Square</span>
   </button>
 
   <button type="button" data-tab="witness" aria-label="Witness Voice">
