@@ -152,18 +152,32 @@ export function applyTranslations(rootElement = document) {
     const text = t(key, params);
     if (!text) return;
 
-    // Preserve child icons/elements by only targetting text nodes
-    let textNodeFound = false;
-    for (let node of el.childNodes) {
-      if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
-        node.textContent = text;
-        textNodeFound = true;
-        break;
-      }
+    // Skip <title> — handled via document.title in loadTranslations
+    if (el.tagName === 'TITLE') return;
+
+    // Prefer dedicated child so icons/SVG siblings stay intact
+    const target =
+      el.querySelector(':scope > [data-i18n-text]') ||
+      el.querySelector(':scope > .nav-label') ||
+      null;
+
+    if (target) {
+      target.textContent = text;
+      return;
     }
 
-    if (!textNodeFound && el.children.length === 0) {
+    // Pure text element (no element children)
+    if (el.children.length === 0) {
       el.textContent = text;
+      return;
+    }
+
+    // Mixed content: update first non-empty text node only
+    for (const node of el.childNodes) {
+      if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
+        node.textContent = text;
+        return;
+      }
     }
   });
 
@@ -191,7 +205,6 @@ export function applyTranslations(rootElement = document) {
     if (key) el.setAttribute('alt', t(key));
   });
 }
-
 /**
  * Syncs language selection dropdowns across desktop and mobile UI
  */
@@ -264,10 +277,10 @@ export async function loadTranslations(langCode = 'en') {
   localStorage.setItem('preferredLang', currentLang);
 
   document.documentElement.lang = currentLang;
-  applyTextDirection(currentLang);
+   applyTextDirection(currentLang);
   applyTranslations();
+  document.title = t('pageTitle') || document.title;
   syncSelectors(currentLang);
-
   window.dispatchEvent(new CustomEvent('languageChanged', {
     detail: { lang: currentLang }
   }));
