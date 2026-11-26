@@ -520,7 +520,7 @@
 
       <!-- FAQ/How To Use (Desktop Navigation Links) -->
       <nav class="flex items-center gap-5 text-xs font-medium text-zinc-300" aria-label="Main navigation">
-       <a href="/how-to-use" class="transition hover:text-emerald-400" data-i18n="howToUseLink">How to Use</a>
+<a href="/how-to-use" class="transition hover:text-emerald-400" data-i18n="howToUseLink">How to Use</a>
        <a href="/faq" class="transition hover:text-emerald-400" data-i18n="faqLink">FAQ</a>
       </nav>
 
@@ -585,17 +585,16 @@
         <!-- Divider -->
         <div class="mx-1 h-5 w-px bg-zinc-700" aria-hidden="true"></div>
 
-        <!-- Data Saver -->
-        <button id="data-saver-btn" type="button"
-                class="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-medium text-zinc-400 transition-all
-                       hover:border-zinc-500 hover:text-white active:scale-95
-                       data-[active=true]:border-emerald-500/60 data-[active=true]:bg-emerald-500/10 data-[active=true]:text-emerald-400"
-                aria-pressed="false"
-                data-active="false">
-          <span id="data-saver-icon" aria-hidden="true">⚡</span>
-          <span><span data-i18n="dataSaverLabel">Data Saver</span>: <strong id="data-saver-status" data-i18n="offLabel">Off</strong></span>
-        </button>
-
+       <!-- Data Saver -->
+<button id="data-saver-btn" type="button"
+        class="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-medium text-zinc-400 transition-all
+               hover:border-zinc-500 hover:text-white active:scale-95
+               data-[active=true]:border-emerald-500/60 data-[active=true]:bg-emerald-500/10 data-[active=true]:text-emerald-400"
+        aria-pressed="false"
+        data-active="false">
+  <span id="data-saver-icon" aria-hidden="true">⚡</span>
+  <span><span data-i18n="dataSaverLabel">Data Saver</span>: <strong id="data-saver-status">Off</strong></span>
+</button>
         <!-- Bookmarks -->
         <button id="bookmarks-nav-btn" type="button" 
                 aria-label="Saved Items" 
@@ -873,7 +872,7 @@
         <span class="truncate" data-i18n="nav_immutable_record">Sealed Record</span>
       </button>
       
-      <!-- 3. Arena -->
+     <!-- 3. Arena -->
       <button type="button" 
               id="tab-arena"
               data-tab="arena" 
@@ -882,7 +881,7 @@
               aria-controls="live-arena"
               class="nav-tab flex-shrink-0 min-w-[4.5rem] h-11 items-center justify-center gap-1.5 rounded-xl border border-sky-700/60 bg-sky-950/50 px-3 text-xs font-medium text-sky-300 transition hover:border-sky-500 sm:h-12 sm:px-4 sm:text-sm">
         <span class="text-base leading-none" aria-hidden="true">🏟️</span>
-        <span class="truncate">Arena</span>
+        <span class="truncate" data-i18n="liveArenaTab">Arena</span>
       </button>
       
       <!-- 4. Circle -->
@@ -894,20 +893,20 @@
               aria-controls="mycircle"
               class="nav-tab flex-shrink-0 min-w-[4.5rem] h-11 items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-medium text-zinc-300 transition hover:border-zinc-500 sm:h-12 sm:px-4 sm:text-sm">
         <span class="text-base leading-none" aria-hidden="true">👥</span>
-        <span class="truncate">Circle</span>
+        <span class="truncate" data-i18n="myCircleTab">Circle</span>
       </button>
       
-   <!-- 5. Witness -->
-<button type="button"
-        id="tab-witness"
-        data-tab="witness"
-        role="tab"
-        aria-selected="false"
-        aria-controls="witness"
-        class="nav-tab flex-shrink-0 min-w-[4.5rem] h-11 items-center justify-center gap-1.5 rounded-xl border border-amber-700/50 bg-amber-950/40 px-3 text-xs font-medium text-amber-300 transition hover:border-amber-500 sm:h-12 sm:px-4 sm:text-sm">
-  <span class="text-base leading-none" aria-hidden="true">🛡️</span>
-  <span class="truncate">Witness</span>
-</button>
+      <!-- 5. Witness -->
+      <button type="button"
+              id="tab-witness"
+              data-tab="witness"
+              role="tab"
+              aria-selected="false"
+              aria-controls="witness"
+              class="nav-tab flex-shrink-0 min-w-[4.5rem] h-11 items-center justify-center gap-1.5 rounded-xl border border-amber-700/50 bg-amber-950/40 px-3 text-xs font-medium text-amber-300 transition hover:border-amber-500 sm:h-12 sm:px-4 sm:text-sm">
+        <span class="text-base leading-none" aria-hidden="true">🛡️</span>
+        <span class="truncate" data-i18n="trueWitness">Witness</span>
+      </button>
       
     </nav>
 <!-- More Menu -->
@@ -918,6 +917,7 @@
               aria-haspopup="true" 
               aria-expanded="false"
               aria-controls="more-menu">
+        <span data-i18n="moreOptionsBtn">More</span>
         More
         <svg class="h-3.5 w-3.5 text-zinc-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
@@ -964,7 +964,7 @@
 </h2>
 <p class="mt-1 text-sm text-zinc-400" data-i18n="publicSquareDesc">
   Where Citizens speak and evidence is preserved
-</p
+</p>
   </div>
 
   <!-- ==================================================
