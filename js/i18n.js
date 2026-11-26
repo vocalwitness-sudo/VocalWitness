@@ -121,6 +121,7 @@ function applyTextDirection(langCode) {
 
   document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
   document.documentElement.setAttribute('lang', langCode);
+  document.title = t('pageTitle') || document.title;
 
   // Keep navigation header strictly LTR to avoid broken layouts
   const header = document.getElementById('main-header');
