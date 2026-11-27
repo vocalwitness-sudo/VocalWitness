@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
   <!-- Brand & Theme -->
   <meta name="theme-color" content="#10b981">
   <meta name="color-scheme" content="dark">
-<meta name="description" content="VocalWitness – Privacy-first public square for sealed citizen reports and evidence. Client-side hashing and application-level protection. Built in Enugu, Nigeria.">
+  <meta name="description" content="VocalWitness – Privacy-first public square for sealed citizen reports and evidence. Client-side hashing and application-level protection. Built in Enugu, Nigeria.">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="robots" content="index, follow">
   <meta name="author" content="Lawmann Ngwu">
@@ -40,10 +41,6 @@
   <meta name="application-name" content="VocalWitness">
   <meta name="apple-mobile-web-app-title" content="VocalWitness">
   <meta name="format-detection" content="telephone=no">
-
-  <!-- Better mobile + offline handling -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   
   <!-- Preconnect to critical third parties (helps mobile) -->
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
@@ -51,7 +48,7 @@
   <link rel="dns-prefetch" href="https://accounts.google.com">
   <link rel="dns-prefetch" href="https://js.paystack.co">
 
-   <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
+  <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
   <!-- Icons & Manifest -->
   <link rel="manifest" href="./manifest.json">
@@ -463,23 +460,22 @@
         Vocal<span class="text-emerald-400">Witness</span>
       </h1>
 
-      <p class="splash-subtitle text-sm font-medium tracking-wide text-emerald-400/80 mb-8">
+      <p class="splash-subtitle text-sm font-medium tracking-wide text-emerald-400/80 mb-8" data-i18n="brandTaglineDesktop">
         Truth • Evidence • Public Square
       </p>
 
       <!-- Single clean spinner -->
       <div class="splash-spinner" aria-hidden="true"></div>
-      <span class="sr-only">Loading…</span>
+      <span class="sr-only" data-i18n="loading">Loading…</span>
     </div>
   </div>
 
   <!-- Skip Link -->
   <a href="#main-content"
+     data-i18n="skipToMainContent"
      class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-emerald-500 focus:px-4 focus:py-2 focus:text-zinc-950 focus:outline-none">
     Skip to main content
   </a>
-
-  <!-- Continue with the rest of your page (header, main, etc.) -->
 
 <!-- ====================== HEADER ====================== -->
 <header id="main-header" 
@@ -520,8 +516,8 @@
 
       <!-- FAQ/How To Use (Desktop Navigation Links) -->
       <nav class="flex items-center gap-5 text-xs font-medium text-zinc-300" aria-label="Main navigation">
-<a href="/how-to-use" class="transition hover:text-emerald-400" data-i18n="howToUseLink">How to Use</a>
-       <a href="/faq" class="transition hover:text-emerald-400" data-i18n="faqLink">FAQ</a>
+        <a href="/how-to-use" class="transition hover:text-emerald-400" data-i18n="howToUseLink">How to Use</a>
+        <a href="/faq" class="transition hover:text-emerald-400" data-i18n="faqLink">FAQ</a>
       </nav>
 
       <!-- Right side controls -->
@@ -585,16 +581,17 @@
         <!-- Divider -->
         <div class="mx-1 h-5 w-px bg-zinc-700" aria-hidden="true"></div>
 
-       <!-- Data Saver -->
-<button id="data-saver-btn" type="button"
-        class="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-medium text-zinc-400 transition-all
-               hover:border-zinc-500 hover:text-white active:scale-95
-               data-[active=true]:border-emerald-500/60 data-[active=true]:bg-emerald-500/10 data-[active=true]:text-emerald-400"
-        aria-pressed="false"
-        data-active="false">
-  <span id="data-saver-icon" aria-hidden="true">⚡</span>
-  <span><span data-i18n="dataSaverLabel">Data Saver</span>: <strong id="data-saver-status">Off</strong></span>
-</button>
+        <!-- Data Saver -->
+        <button id="data-saver-btn" type="button"
+                class="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-medium text-zinc-400 transition-all
+                       hover:border-zinc-500 hover:text-white active:scale-95
+                       data-[active=true]:border-emerald-500/60 data-[active=true]:bg-emerald-500/10 data-[active=true]:text-emerald-400"
+                aria-pressed="false"
+                data-active="false">
+          <span id="data-saver-icon" aria-hidden="true">⚡</span>
+          <span><span data-i18n="dataSaverLabel">Data Saver</span>: <strong id="data-saver-status">Off</strong></span>
+        </button>
+
         <!-- Bookmarks -->
         <button id="bookmarks-nav-btn" type="button" 
                 aria-label="Saved Items" 
@@ -686,14 +683,14 @@
       <nav class="flex items-center gap-2 border-t border-zinc-800/60 pt-2"
            aria-label="Help">
         <a href="/how-to-use"
-           data-i18n="howToUseNav"
+           data-i18n="howToUseLink"
            class="flex h-10 flex-1 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900/80
                   px-2 text-[12px] font-semibold text-zinc-200 transition
                   hover:border-emerald-500/50 hover:text-emerald-400 active:scale-[0.98]">
           How to Use
         </a>
         <a href="/faq"
-           data-i18n="faqNav"
+           data-i18n="faqLink"
            class="flex h-10 flex-1 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900/80
                   px-2 text-[12px] font-semibold text-zinc-200 transition
                   hover:border-emerald-500/50 hover:text-emerald-400 active:scale-[0.98]">
@@ -731,15 +728,15 @@
         </select>
 
         <div class="flex items-center gap-1.5">
-         <button id="data-saver-btn-mobile" type="button"
-        class="flex h-9 items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 text-[11px] font-medium text-zinc-400 transition-all
-               hover:border-zinc-500 hover:text-white active:scale-95
-               data-[active=true]:border-emerald-500/60 data-[active=true]:bg-emerald-500/10 data-[active=true]:text-emerald-400"
-        aria-pressed="false"
-        data-active="false">
-  <span id="data-saver-icon-mobile" aria-hidden="true">⚡</span>
-  <span id="data-saver-status-mobile">Off</span>
-</button>
+          <button id="data-saver-btn-mobile" type="button"
+                  class="flex h-9 items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 text-[11px] font-medium text-zinc-400 transition-all
+                         hover:border-zinc-500 hover:text-white active:scale-95
+                         data-[active=true]:border-emerald-500/60 data-[active=true]:bg-emerald-500/10 data-[active=true]:text-emerald-400"
+                  aria-pressed="false"
+                  data-active="false">
+            <span id="data-saver-icon-mobile" aria-hidden="true">⚡</span>
+            <span id="data-saver-status-mobile">Off</span>
+          </button>
 
           <button id="bookmarks-nav-btn-mobile" type="button"
                   data-action="open-bookmarks"
@@ -798,11 +795,11 @@
     <!-- Breaking Ticker -->
     <div class="ticker-wrap relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-zinc-900/80">
       <div class="absolute bottom-0 left-0 top-0 z-20 flex items-center border-r border-emerald-500/20 bg-zinc-900 px-4">
-        <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">⚡ Breaking</span>
+        <span class="text-xs font-bold uppercase tracking-wider text-emerald-400" data-i18n="breakingLabel">⚡ Breaking</span>
       </div>
       <div class="overflow-hidden whitespace-nowrap py-3 pl-28">
         <div id="ticker-content" class="ticker-track inline-flex will-change-transform" aria-live="polite">
-          <span class="ticker-item px-8">Loading latest headlines...</span>
+          <span class="ticker-item px-8" data-i18n="loadingHeadlines">Loading latest headlines...</span>
         </div>
       </div>
     </div>
@@ -812,8 +809,8 @@
       <span class="shrink-0 text-lg" aria-hidden="true">🎯</span>
       <div class="min-w-0 flex-1 overflow-hidden">
         <p id="focus-banner-text" class="leading-snug text-zinc-300 transition-opacity duration-300">
-          <span class="font-medium text-emerald-300">Social citizen journalism.</span>
-          <span class="text-zinc-400"> Anyone can report — only sealed records stay public.</span>
+          <span class="font-medium text-emerald-300" data-i18n="focusBannerLead">Social citizen journalism.</span>
+          <span class="text-zinc-400" data-i18n="focusBannerSub"> Anyone can report — only sealed records stay public.</span>
         </p>
       </div>
       <button type="button" id="dismiss-focus-banner" 
@@ -918,7 +915,6 @@
               aria-expanded="false"
               aria-controls="more-menu">
         <span data-i18n="moreOptionsBtn">More</span>
-        More
         <svg class="h-3.5 w-3.5 text-zinc-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
         </svg>
@@ -928,24 +924,24 @@
            role="menu"
            aria-hidden="true">
         
-        <a href="/my-testimonies" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">📋 My Reports</a>
-        <a href="/groups" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">👥 Groups</a>
-        <a href="/dao" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">🏛️ Governance</a>
+        <a href="/my-testimonies" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem" data-i18n="myTestimoniesMenu">📋 My Reports</a>
+        <a href="/groups" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem" data-i18n="groupsMenu">👥 Groups</a>
+        <a href="/dao" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem" data-i18n="governanceMenu">🏛️ Governance</a>
         
         <div class="my-1 border-t border-zinc-800" role="separator"></div>
         
-      <a href="/forensic-ledger" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">📜 Forensic Ledger</a>
-<a href="/verify" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">🔍 Evidence Verifier</a>
-<a href="/transparency" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">⚖️ Transparency</a>
-<a href="/journalist-verify" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">📰 Journalist guide</a>
+        <a href="/forensic-ledger" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem" data-i18n="forensicLedgerMenu">📜 Forensic Ledger</a>
+        <a href="/verify" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem" data-i18n="verifyMenu">🔍 Evidence Verifier</a>
+        <a href="/transparency" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem" data-i18n="transparencyMenu">⚖️ Transparency</a>
+        <a href="/journalist-verify" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem" data-i18n="journalistGuideMenu">📰 Journalist guide</a>
         
         <div class="my-1 border-t border-zinc-800" role="separator"></div>
         
-        <a href="/about" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">ℹ️ About</a>
-        <a href="/safety" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">🛡️ Safety</a>
-        <a href="/privacy" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">🔒 Privacy</a>
-        <a href="/terms" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">📄 Terms</a>
-        <a href="/legal" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">⚖️ Legal</a>
+        <a href="/about" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem" data-i18n="aboutMenu">ℹ️ About</a>
+        <a href="/safety" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem" data-i18n="safetyGuidelinesMenu">🛡️ Safety</a>
+        <a href="/privacy" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem" data-i18n="privacyPolicyMenu">🔒 Privacy</a>
+        <a href="/terms" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem" data-i18n="termsOfServiceMenu">📄 Terms</a>
+        <a href="/legal" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem" data-i18n="legalMenu">⚖️ Legal</a>
       </div>
     </div>
   </div>
@@ -959,12 +955,12 @@
 
   <!-- Title -->
   <div class="mb-5">
-  <h2 id="public-square-title" class="text-2xl sm:text-3xl font-bold text-white" data-i18n="publicSquareTab">
-  Public Square
-</h2>
-<p class="mt-1 text-sm text-zinc-400" data-i18n="publicSquareDesc">
-  Where Citizens speak and evidence is preserved
-</p>
+    <h2 id="public-square-title" class="text-2xl sm:text-3xl font-bold text-white" data-i18n="publicSquareTab">
+      Public Square
+    </h2>
+    <p class="mt-1 text-sm text-zinc-400" data-i18n="publicSquareDesc">
+      Where Citizens speak and evidence is preserved
+    </p>
   </div>
 
   <!-- ==================================================
@@ -1013,8 +1009,8 @@
       <!-- Header + Posting Style -->
 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
   <div>
-    <h3 id="composer-title" class="text-lg font-bold text-white">Speak as a Citizen</h3>
-    <p id="composer-subtitle" class="text-xs text-zinc-400">
+    <h3 id="composer-title" class="text-lg font-bold text-white" data-i18n="shareTestimonyTitle">Speak as a Citizen</h3>
+    <p id="composer-subtitle" class="text-xs text-zinc-400" data-i18n="composerSubtitle">
       Your report will be sealed and added to the public record
     </p>
   </div>
@@ -1022,11 +1018,11 @@
   <div class="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
     <!-- Posting Style Selector -->
     <div class="flex rounded-xl border border-zinc-700 overflow-hidden text-xs font-medium">
-      <button type="button" data-style="citizen"
+      <button type="button" data-style="citizen" data-i18n="styleCitizen"
               class="posting-style-btn active px-3.5 py-2 bg-emerald-500/20 text-emerald-400">
         Citizen
       </button>
-      <button type="button" data-style="field-note"
+      <button type="button" data-style="field-note" data-i18n="styleFieldNote"
               class="posting-style-btn px-3.5 py-2 bg-zinc-900 text-zinc-300 hover:bg-zinc-800">
         Field Note
       </button>
@@ -1036,54 +1032,60 @@
     <select id="targetFeedSelect"
             class="rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 py-2 text-sm font-medium text-emerald-400 
                    focus:border-emerald-500 focus:outline-none">
-      <option value="citizen-talk">Citizen Talk (Open)</option>
-      <option value="witness-voice">Witness Voice (Higher Trust)</option>
+      <option value="citizen-talk" data-i18n="feedCitizenTalk">Citizen Talk (Open)</option>
+      <option value="witness-voice" data-i18n="feedWitnessVoice">Witness Voice (Higher Trust)</option>
     </select>
   </div>
 </div>
 
             <!-- Posting Style: Citizen vs Field Note -->
       <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <label class="text-xs font-medium text-zinc-400 shrink-0">Posting as</label>
+        <label class="text-xs font-medium text-zinc-400 shrink-0" data-i18n="postingAsLabel">Posting as</label>
         <select id="postingStyleSelect"
                 class="rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 py-2 text-sm font-medium text-zinc-200
                        focus:border-emerald-500 focus:outline-none">
-          <option value="citizen" selected>Citizen Report</option>
-          <option value="field-note">Field Note (Professional)</option>
+          <option value="citizen" selected data-i18n="postingAsCitizen">Citizen Report</option>
+          <option value="field-note" data-i18n="postingAsFieldNote">Field Note (Professional)</option>
         </select>
       </div>
 
      <!-- ===== Field Note extra fields (hidden by default) ===== -->
 <div id="field-note-panel" class="hidden space-y-3 p-4 rounded-2xl border border-sky-500/30 bg-sky-500/5">
   <div class="flex flex-wrap gap-2">
-    <span class="text-xs text-sky-300 font-medium self-center">Role (optional):</span>
-    <button type="button" class="role-chip px-3 py-1 rounded-full text-xs border border-zinc-600 bg-zinc-900 text-zinc-300 hover:border-sky-500 hover:text-sky-300" data-role="Marketer">Marketer</button>
-    <button type="button" class="role-chip px-3 py-1 rounded-full text-xs border border-zinc-600 bg-zinc-900 text-zinc-300 hover:border-sky-500 hover:text-sky-300" data-role="Researcher">Researcher</button>
-    <button type="button" class="role-chip px-3 py-1 rounded-full text-xs border border-zinc-600 bg-zinc-900 text-zinc-300 hover:border-sky-500 hover:text-sky-300" data-role="NGO">NGO</button>
-    <button type="button" class="role-chip px-3 py-1 rounded-full text-xs border border-zinc-600 bg-zinc-900 text-zinc-300 hover:border-sky-500 hover:text-sky-300" data-role="Educator">Educator</button>
-    <button type="button" class="role-chip px-3 py-1 rounded-full text-xs border border-zinc-600 bg-zinc-900 text-zinc-300 hover:border-sky-500 hover:text-sky-300" data-role="Local Business">Local Business</button>
-    <button type="button" class="role-chip px-3 py-1 rounded-full text-xs border border-zinc-600 bg-zinc-900 text-zinc-300 hover:border-sky-500 hover:text-sky-300" data-role="Other">Other</button>
+    <span class="text-xs text-sky-300 font-medium self-center" data-i18n="roleOptionalLabel">Role (optional):</span>
+    <button type="button" class="role-chip px-3 py-1 rounded-full text-xs border border-zinc-600 bg-zinc-900 text-zinc-300 hover:border-sky-500 hover:text-sky-300" data-role="Marketer" data-i18n="roleMarketer">Marketer</button>
+    <button type="button" class="role-chip px-3 py-1 rounded-full text-xs border border-zinc-600 bg-zinc-900 text-zinc-300 hover:border-sky-500 hover:text-sky-300" data-role="Researcher" data-i18n="roleResearcher">Researcher</button>
+    <button type="button" class="role-chip px-3 py-1 rounded-full text-xs border border-zinc-600 bg-zinc-900 text-zinc-300 hover:border-sky-500 hover:text-sky-300" data-role="NGO" data-i18n="roleNgo">NGO</button>
+    <button type="button" class="role-chip px-3 py-1 rounded-full text-xs border border-zinc-600 bg-zinc-900 text-zinc-300 hover:border-sky-500 hover:text-sky-300" data-role="Educator" data-i18n="roleEducator">Educator</button>
+    <button type="button" class="role-chip px-3 py-1 rounded-full text-xs border border-zinc-600 bg-zinc-900 text-zinc-300 hover:border-sky-500 hover:text-sky-300" data-role="Local Business" data-i18n="roleLocalBusiness">Local Business</button>
+    <button type="button" class="role-chip px-3 py-1 rounded-full text-xs border border-zinc-600 bg-zinc-900 text-zinc-300 hover:border-sky-500 hover:text-sky-300" data-role="Other" data-i18n="roleOther">Other</button>
   </div>
 
-  <input id="field-note-role" type="text" maxlength="50" placeholder="Or type your role…"
+  <input id="field-note-role" type="text" maxlength="50"
+         placeholder="Or type your role…"
+         data-i18n-placeholder="roleInputPlaceholder"
          class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-sky-500 focus:outline-none">
 
-  <input id="field-note-org" type="text" maxlength="80" placeholder="Organisation / Project (optional)"
+  <input id="field-note-org" type="text" maxlength="80"
+         placeholder="Organisation / Project (optional)"
+         data-i18n-placeholder="orgInputPlaceholder"
          class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-sky-500 focus:outline-none">
 </div>
       
       <!-- Optional title -->
       <input type="text" id="testimonyTitle" maxlength="120" 
              placeholder="Add a short title (optional)"
+             data-i18n-placeholder="testimonyTitlePlaceholder"
              class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-white 
                     placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition">
 
           <!-- Main text -->
       <textarea id="mainInput" data-testid="composer" rows="3" maxlength="3000"
           placeholder="What did you see or experience? Speak clearly and stick to the facts..."
+          data-i18n-placeholder="mainInputPlaceholder"
           class="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-900 p-4 text-sm text-white 
                  placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition"></textarea>
-      <p class="text-[11px] text-zinc-500 mt-1">
+      <p class="text-[11px] text-zinc-500 mt-1" data-i18n="postEditRuleNote">
         After publish: text editable for 30 minutes. Media and seal cannot be changed. You can hide a report later; it is not hard-deleted.
       </p>
       <div class="flex justify-end -mt-1">
@@ -1095,12 +1097,12 @@
                 class="inline-flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 
                        px-3.5 py-2.5 text-sm font-semibold text-emerald-400 
                        hover:bg-emerald-500 hover:text-zinc-950 active:scale-95 transition">
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                   d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
           </svg>
-          Live Voice
-          <span class="rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-medium">Rec</span>
+          <span data-i18n="liveVoiceBtn">Live Voice</span>
+          <span class="rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-medium" data-i18n="recBadge">Rec</span>
         </button>
 
        <!-- Photo -->
@@ -1109,7 +1111,8 @@
        class="inline-flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/80 
               px-3.5 py-2.5 text-sm font-medium text-emerald-400 
               hover:border-emerald-500 hover:bg-zinc-800 active:scale-95 transition cursor-pointer">
-  📷 Photo
+  <span aria-hidden="true">📷</span>
+  <span data-i18n="photoActionLabel">Photo</span>
 </label>
 
 <!-- Video -->
@@ -1118,12 +1121,14 @@
        class="inline-flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/80 
               px-3.5 py-2.5 text-sm font-medium text-sky-400 
               hover:border-sky-500 hover:bg-zinc-800 active:scale-95 transition cursor-pointer">
-  🎬 Video
+  <span aria-hidden="true">🎬</span>
+  <span data-i18n="videoActionLabel">Video</span>
 </label>
 
 <!-- Audio -->
 <label for="audioInput"
        id="btn-upload-audio"
+       data-i18n="uploadAudioLabel"
        class="text-xs text-zinc-400 hover:text-emerald-400 underline-offset-2 hover:underline transition ml-1 cursor-pointer">
   Upload audio
 </label>
@@ -1132,7 +1137,7 @@
 
       <!-- Voice recorder section (full power kept) -->
       <div id="voice-section" class="rounded-xl border border-emerald-500/30 bg-emerald-500/5 overflow-hidden">
-        <div id="voice-instruction" class="px-4 py-2 text-center text-xs text-zinc-400 border-b border-emerald-500/20">
+        <div id="voice-instruction" class="px-4 py-2 text-center text-xs text-zinc-400 border-b border-emerald-500/20" data-i18n="voiceInstruction">
           Live voice carries stronger weight as evidence. Speak clearly.
         </div>
 
@@ -1144,25 +1149,30 @@
             </div>
             <button id="verify-voice-btn" type="button"
                     class="rounded-lg bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">
-              🛡️ Verify
+              <span aria-hidden="true">🛡️</span>
+              <span data-i18n="verifyVoiceBtn">Verify</span>
             </button>
             <canvas id="rec-waveform" width="160" height="32" class="max-w-[180px] flex-1 rounded bg-zinc-950"></canvas>
             <div class="ml-auto flex items-center gap-2">
               <button id="rec-pause-btn" type="button"
                       class="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
-                ⏸ Pause
+                <span aria-hidden="true">⏸</span>
+                <span data-i18n="recPauseBtn">Pause</span>
               </button>
               <button id="rec-stop-btn" type="button"
                       class="rounded-lg bg-red-600/80 px-3 py-1.5 text-xs text-white hover:bg-red-600">
-                ⏹ Stop
+                <span aria-hidden="true">⏹</span>
+                <span data-i18n="recStopBtn">Stop</span>
               </button>
               <button id="rec-replay-btn" type="button"
                       class="hidden rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
-                ↻ Replay
+                <span aria-hidden="true">↻</span>
+                <span data-i18n="recReplayBtn">Replay</span>
               </button>
               <button id="rec-rerecord-btn" type="button"
                       class="hidden rounded-lg border border-amber-600/60 bg-amber-900/40 px-3 py-1.5 text-xs text-amber-300 hover:bg-amber-800/50">
-                ↺ Re-record
+                <span aria-hidden="true">↺</span>
+                <span data-i18n="recRerecordBtn">Re-record</span>
               </button>
             </div>
           </div>
@@ -1177,15 +1187,15 @@
       <!-- Preview Area -->
       <div id="preview-area" class="min-h-[90px] flex flex-wrap items-center justify-center gap-3 rounded-xl border border-dashed border-zinc-700 bg-zinc-900/50 p-4 text-sm text-zinc-500">
         <div id="preview-empty" class="text-center">
-          <p class="text-sm">Preview will appear here...</p>
-          <p class="mt-1 text-xs text-zinc-600">Live voice, photos, videos or audio</p>
+          <p class="text-sm" data-i18n="previewAreaText">Preview will appear here...</p>
+          <p class="mt-1 text-xs text-zinc-600" data-i18n="previewSupportedTypes">Live voice, photos, videos or audio</p>
         </div>
       </div>
 
       <!-- Upload Progress -->
       <div id="upload-progress-container" class="hidden">
         <div class="mb-1 flex justify-between text-xs text-zinc-400">
-          <span id="upload-status-text">Uploading media...</span>
+          <span id="upload-status-text" data-i18n="uploadStatusText">Uploading media...</span>
           <span id="upload-progress-pct">0%</span>
         </div>
         <div class="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
@@ -1197,22 +1207,21 @@
 <div class="flex flex-col sm:flex-row gap-3 sm:items-center pt-1">
   <label class="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer select-none">
     <input type="checkbox" id="postToTrustedCircleOnly" class="h-4 w-4 rounded accent-emerald-500">
-    <span>Only my Trusted Circle can see this</span>
+    <span data-i18n="trustedCircleOnlyLabel">Only my Trusted Circle can see this</span>
   </label>
 </div>
 
       <!-- Actions -->
       <div class="flex items-center justify-between gap-3 pt-1">
         <button type="button" onclick="collapseComposer()"
+                data-i18n="cancel"
                 class="rounded-xl px-4 py-2.5 text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-white transition">
           Cancel
         </button>
-       <button id="postButton" type="button" data-testid="submit-testimony"
+        <button id="postButton" type="button" data-testid="submit-testimony"
                 class="rounded-xl bg-emerald-500 px-7 py-2.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 
                        hover:bg-emerald-400 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition">
-         <button ...>
-  <span data-i18n="cancel">Cancel</span>
-</button>
+          <span data-i18n="postButton">Publish Report</span>
         </button>
       </div>
     </div>
@@ -1220,29 +1229,32 @@
 
 <!-- Success state after publish -->
 <div id="publish-success" data-testid="publish-success" class="mb-6 hidden rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-5 text-center">
-  <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-2xl">
+  <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-2xl" aria-hidden="true">
     🛡️
   </div>
-  <h4 class="text-lg font-bold text-white">Report sealed and published</h4>
-  <p class="mt-1.5 text-sm text-zinc-400">
+  <h4 class="text-lg font-bold text-white" data-i18n="publishSuccessTitle">Report sealed and published</h4>
+  <p class="mt-1.5 text-sm text-zinc-400" data-i18n="publishSuccessDesc">
     Your evidence is now part of the public record.
     Media and seal cannot be changed. Text editable for 30 minutes.
   </p>
   <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center sm:flex-wrap">
    <button type="button" id="download-pack-after-publish" data-testid="download-evidence-pack"
             class="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
-      📥 Download Evidence Pack
+      <span aria-hidden="true">📥</span>
+      <span data-i18n="downloadEvidencePackBtn">Download Evidence Pack</span>
     </button>
     <button type="button" id="share-after-publish"
             class="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-500/50 bg-emerald-500/10 px-5 py-3 text-sm font-bold text-emerald-300 transition hover:bg-emerald-500/20 active:scale-[0.98]">
-      🔗 Share
+      <span aria-hidden="true">🔗</span>
+      <span data-i18n="shareBtn">Share</span>
     </button>
     <button type="button" id="view-in-square-btn"
+            data-i18n="viewInSquareBtn"
             class="inline-flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-3 text-sm font-medium text-zinc-200 transition hover:bg-zinc-800">
       View in Public Square ↓
     </button>
   </div>
-  <p class="mt-3 text-xs text-zinc-500">
+  <p class="mt-3 text-xs text-zinc-500" data-i18n="evidencePackNote">
     Safe verification file with cryptographic hashes. No app installed.
   </p>
 </div>
@@ -1254,29 +1266,28 @@
 
   <!-- FAQ/How To Use (Empty Square State for first-time users) -->
   <div id="empty-square-state" class="hidden rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8 text-center">
-    <h3 class="text-base font-semibold text-white">The Square is quiet</h3>
-    <p class="mt-1 text-sm text-zinc-400">No testimonies have been published in this channel yet. Be the first to share your report.</p>
+    <h3 class="text-base font-semibold text-white" data-i18n="emptySquareTitle">The Square is quiet</h3>
+    <p class="mt-1 text-sm text-zinc-400" data-i18n="emptySquareDesc">No testimonies have been published in this channel yet. Be the first to share your report.</p>
     <p class="mt-4 text-sm text-zinc-400">
-      New here? 
-      <a href="/how-to-use" class="text-emerald-400 hover:underline">See How to Use →</a> 
-      or read the 
-      <a href="/faq" class="text-emerald-400 hover:underline">FAQ</a>.
+      <span data-i18n="newHerePrompt">New here?</span> 
+      <a href="/how-to-use" class="text-emerald-400 hover:underline" data-i18n="seeHowToUseLink">See How to Use →</a> 
+      <span data-i18n="orReadPrefix">or read the</span> 
+      <a href="/faq" class="text-emerald-400 hover:underline" data-i18n="faqLink">FAQ</a>.
     </p>
   </div>
-
-  <!-- ==================================================
+<!-- ==================================================
        FEED (now right under the composer)
        ================================================== -->
   <div id="feed-container" class="space-y-5">
     <div class="flex items-center justify-between">
-      <h3 id="feed-title" class="text-lg font-bold text-white">Recent Reports in the Square</h3>
+      <h3 id="feed-title" class="text-lg font-bold text-white" data-i18n="recentReportsTitle">Recent Reports in the Square</h3>
       <div class="flex items-center gap-2 text-xs text-zinc-400">
-        <span>Sort:</span>
+        <span data-i18n="sortLabel">Sort:</span>
         <select id="feedSortSelect" 
                 class="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-zinc-300 focus:border-emerald-500 focus:outline-none">
-          <option value="latest">Latest</option>
-          <option value="verified">Verified First</option>
-          <option value="trending">Trending</option>
+          <option value="latest" data-i18n="sortLatest">Latest</option>
+          <option value="verified" data-i18n="sortVerified">Verified First</option>
+          <option value="trending" data-i18n="sortTrending">Trending</option>
         </select>
       </div>
     </div>
@@ -1284,20 +1295,21 @@
     <div id="testimonies-feed" class="space-y-4">
       <!-- Strong Empty State (only shows when truly empty) -->
       <div id="empty-feed-state" class="rounded-3xl border border-dashed border-emerald-500/30 bg-zinc-900/40 px-6 py-14 text-center">
-        <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl">
+        <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl" aria-hidden="true">
           🗣️
         </div>
-        <h4 class="text-xl font-bold text-white">The Square is waiting for sealed reports</h4>
-        <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400">
+        <h4 class="text-xl font-bold text-white" data-i18n="emptyFeedTitle">The Square is waiting for sealed reports</h4>
+        <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400" data-i18n="emptyFeedDesc">
           Be among the first citizens to publish a cryptographically sealed report. 
-Your voice becomes part of the sealed public record.
+          Your voice becomes part of the sealed public record.
         </p>
         <button type="button" 
-               onclick="typeof window.expandComposer==='function'&&window.expandComposer();document.getElementById('mainInput')?.focus();"
+                onclick="typeof window.expandComposer==='function'&&window.expandComposer();document.getElementById('mainInput')?.focus();"
                 class="mt-7 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
-          🎤 Speak as a Citizen Now
+          <span aria-hidden="true">🎤</span>
+          <span data-i18n="speakAsCitizenNowBtn">Speak as a Citizen Now</span>
         </button>
-        <p class="mt-4 text-xs text-zinc-500">Live voice carries stronger evidence weight</p>
+        <p class="mt-4 text-xs text-zinc-500" data-i18n="liveVoiceWeightNote">Live voice carries stronger evidence weight</p>
       </div>
     </div>
   </div>
@@ -1312,12 +1324,12 @@ Your voice becomes part of the sealed public record.
         <p class="mt-1 text-sm text-zinc-400" data-i18n="ledger_subtitle">Protected • Timestamped • Application-Level Sealed</p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
-       <span id="ledger-chain-status" class="rounded-full border border-zinc-700 bg-zinc-900 px-3.5 py-1.5 text-xs font-medium text-zinc-400">
-  Chain: Ready
-</span>
+        <span id="ledger-chain-status" class="rounded-full border border-zinc-700 bg-zinc-900 px-3.5 py-1.5 text-xs font-medium text-zinc-400" data-i18n="ledgerChainReady">
+          Chain: Ready
+        </span>
         <button id="refreshLedgerBtn" type="button"
                 class="flex h-10 items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-zinc-300 transition hover:border-emerald-500/50 hover:bg-zinc-800">
-          🔄 <span data-i18n="btn_refresh">Refresh</span>
+          <span aria-hidden="true">🔄</span> <span data-i18n="btn_refresh">Refresh</span>
         </button>
       </div>
     </div>
@@ -1327,11 +1339,11 @@ Your voice becomes part of the sealed public record.
       <div>
         <p class="font-medium text-emerald-400" data-i18n="ledger_info_title">Your reports stay safe</p>
         <p class="mt-1 text-sm text-zinc-400 leading-relaxed" data-i18n="ledger_info_desc">
-  Every report is cryptographically sealed and linked to the ledger.
-Media and hashes cannot be changed by ordinary users after publish.
-Text may be corrected for 30 minutes; after that only soft-hide is allowed.
-Hard delete is not available so the sealed record stays verifiable.
-</p>
+          Every report is cryptographically sealed and linked to the ledger.
+          Media and hashes cannot be changed by ordinary users after publish.
+          Text may be corrected for 30 minutes; after that only soft-hide is allowed.
+          Hard delete is not available so the sealed record stays verifiable.
+        </p>
       </div>
     </div>
 
@@ -1346,18 +1358,20 @@ Hard delete is not available so the sealed record stays verifiable.
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 class="text-3xl font-bold text-sky-400 flex items-center gap-3">
-            <span class="text-4xl" aria-hidden="true">🏟️</span> Live Arena
+            <span class="text-4xl" aria-hidden="true">🏟️</span>
+            <span data-i18n="liveArenaTitle">Live Arena</span>
           </h2>
-          <p class="mt-1 text-sm text-zinc-400">Real-time community reporting • Globe-wide</p>
+          <p class="mt-1 text-sm text-zinc-400" data-i18n="liveArenaSubtitle">Real-time community reporting • Globe-wide</p>
         </div>
         <div class="flex items-center gap-3">
           <div class="text-right text-xs">
-            <div class="text-zinc-400">Verified Citizens</div>
+            <div class="text-zinc-400" data-i18n="verifiedCitizensLabel">Verified Citizens</div>
             <div class="font-mono text-sky-400 text-lg">
               <span id="verifiedCount">0</span> / 500
             </div>
           </div>
           <button id="createRoomBtn" type="button"
+                  data-i18n="startRoomBtn"
                   class="rounded-2xl bg-gradient-to-r from-sky-500 to-cyan-500 px-6 py-3 font-bold text-white shadow-lg hover:from-sky-400 hover:to-cyan-400 active:scale-95 transition">
             + Start a Room
           </button>
@@ -1366,9 +1380,8 @@ Hard delete is not available so the sealed record stays verifiable.
 
       <div class="glass rounded-2xl border border-sky-500/20 p-4">
         <div class="flex justify-between text-sm mb-2">
-          <span class="text-zinc-300">Community Goal – Unlock full global stages</span>
-        <span id="progressText" class="text-sky-400">Checking community…</span>
-
+          <span class="text-zinc-300" data-i18n="communityGoalLabel">Community Goal – Unlock full global stages</span>
+          <span id="progressText" class="text-sky-400" data-i18n="checkingCommunityStatus">Checking community…</span>
         </div>
         <div class="h-2 overflow-hidden rounded-full bg-zinc-800">
           <div id="verifiedProgress" class="h-full bg-gradient-to-r from-sky-500 to-cyan-400 transition-all duration-700" style="width: 0%"></div>
@@ -1377,20 +1390,20 @@ Hard delete is not available so the sealed record stays verifiable.
 
       <div>
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-white">Live Now</h3>
+          <h3 class="text-lg font-semibold text-white" data-i18n="liveNowTitle">Live Now</h3>
           <div class="flex gap-2 text-xs">
-           <button type="button" data-filter="all"
-  class="px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/40">All</button>
-<button type="button" data-filter="near"
-  class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300">Near Me</button>
-<button type="button" data-filter="circle"
-  class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300">My Circle</button>
+            <button type="button" data-filter="all" data-i18n="filterAll"
+                    class="px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/40">All</button>
+            <button type="button" data-filter="near" data-i18n="filterNearMe"
+                    class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300">Near Me</button>
+            <button type="button" data-filter="circle" data-i18n="filterMyCircle"
+                    class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300">My Circle</button>
           </div>
         </div>
         <div id="liveRoomsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div class="col-span-full py-16 text-center text-zinc-500">
             <div class="text-5xl mb-4" aria-hidden="true">🌍</div>
-            <p>No live rooms yet. Be the first to start one.</p>
+            <p data-i18n="noLiveRoomsText">No live rooms yet. Be the first to start one.</p>
           </div>
         </div>
       </div>
@@ -1405,40 +1418,45 @@ Hard delete is not available so the sealed record stays verifiable.
   <section id="mycircle" class="hidden space-y-6" role="tabpanel" aria-label="My Circle" aria-hidden="true">
     <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div>
-        <h2 class="text-2xl font-bold text-white">My Circle</h2>
-        <p class="mt-1 text-sm text-zinc-400">People you follow and trust</p>
+        <h2 class="text-2xl font-bold text-white" data-i18n="myCircleTitle">My Circle</h2>
+        <p class="mt-1 text-sm text-zinc-400" data-i18n="myCircleSubtitle">People you follow and trust</p>
       </div>
-     <span id="circle-tier-badge" class="inline-flex items-center rounded-full border border-zinc-700 bg-zinc-800 px-3.5 py-1.5 text-xs font-semibold text-zinc-300">
-  Citizen
-</span>
+      <span id="circle-tier-badge" class="inline-flex items-center rounded-full border border-zinc-700 bg-zinc-800 px-3.5 py-1.5 text-xs font-semibold text-zinc-300" data-i18n="tierCitizenLabel">
+        Citizen
+      </span>
     </div>
 
     <div id="circle-upgrade-prompt" class="glass space-y-4 rounded-2xl border border-zinc-700/70 p-6">
-      <p class="text-sm text-zinc-300">Verify your account to unlock stronger circle features.</p>
+      <p class="text-sm text-zinc-300" data-i18n="circleUpgradePrompt">Verify your account to unlock stronger circle features.</p>
       <div class="flex flex-wrap gap-3">
         <button type="button" id="startPhoneVerificationBtn"
                 class="rounded-xl border border-emerald-500/50 bg-emerald-600/15 px-4 py-2.5 text-sm font-medium text-emerald-400 transition hover:bg-emerald-600/25">
-          📱 Phone → Citizen Circle
+          <span aria-hidden="true">📱</span>
+          <span data-i18n="phoneToCitizenCircleBtn">Phone → Citizen Circle</span>
         </button>
         <button type="button" id="startZKVerificationBtn"
                 class="rounded-xl border border-amber-500/50 bg-amber-600/15 px-4 py-2.5 text-sm font-medium text-amber-400 transition hover:bg-amber-600/25">
-          🛡️ Higher Trust → Witness Circle
+          <span aria-hidden="true">🛡️</span>
+          <span data-i18n="higherTrustToWitnessCircleBtn">Higher Trust → Witness Circle</span>
         </button>
       </div>
     </div>
 
     <div class="flex gap-1 border-b border-zinc-800" role="tablist" aria-label="Circle tabs">
       <button type="button" data-circle-tab="following"
+              data-i18n="circleFollowingTab"
               class="border-b-2 border-emerald-500 px-5 py-2.5 text-sm font-medium text-emerald-400"
               aria-selected="true">
         Following
       </button>
       <button type="button" data-circle-tab="followers"
+              data-i18n="circleFollowersTab"
               class="px-5 py-2.5 text-sm font-medium text-zinc-400 transition hover:text-white"
               aria-selected="false">
         Followers
       </button>
       <button type="button" data-circle-tab="trusted"
+              data-i18n="circleTrustedTab"
               class="px-5 py-2.5 text-sm font-medium text-zinc-400 transition hover:text-white"
               aria-selected="false">
         Trusted
@@ -1446,7 +1464,7 @@ Hard delete is not available so the sealed record stays verifiable.
     </div>
 
     <div id="circle-list" class="space-y-3">
-      <div class="py-16 text-center text-sm text-zinc-500">
+      <div class="py-16 text-center text-sm text-zinc-500" data-i18n="emptyCircleText">
         Your circle is empty. Follow voices you trust.
       </div>
     </div>
@@ -1458,32 +1476,32 @@ Hard delete is not available so the sealed record stays verifiable.
   <!-- Header + Primary CTAs -->
   <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
     <div>
-      <h2 class="text-2xl font-bold text-amber-400">Witness Voice</h2>
-      <p class="mt-1 text-sm text-zinc-400 max-w-xl">
+      <h2 class="text-2xl font-bold text-amber-400" data-i18n="witnessVoiceTitle">Witness Voice</h2>
+      <p class="mt-1 text-sm text-zinc-400 max-w-xl" data-i18n="witnessVoiceSubtitle">
         High-integrity first-hand reports. Sealed on-device. Verifiable by anyone.
       </p>
     </div>
 
     <div class="flex flex-wrap gap-3">
-    
-     <!-- Upload / Record CTA -->
- <!-- Record & Publish CTA — sky blue label -->
+      <!-- Record & Publish CTA — sky blue label -->
       <a href="/witness-voice"
          class="inline-flex items-center justify-center gap-2 rounded-2xl border border-sky-400/50 bg-sky-500/10 px-5 py-2.5 text-sm font-bold text-sky-400 shadow-lg shadow-sky-500/10 transition hover:bg-sky-500/20 hover:text-sky-300 hover:border-sky-400 active:scale-[0.98]">
-        🎙️ Record &amp; Publish Testimony
+        <span aria-hidden="true">🎙️</span>
+        <span data-i18n="recordPublishTestimonyCta">Record &amp; Publish Testimony</span>
       </a>
 
       <!-- Verify CTA -->
       <a href="/verify.html"
          class="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-5 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-500/20">
-        🛡️ Verify Evidence
+        <span aria-hidden="true">🛡️</span>
+        <span data-i18n="verifyEvidenceCta">Verify Evidence</span>
       </a>
     </div>
   </div>
 
   <!-- Positioning banner -->
   <div class="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-5 py-4">
-    <p class="text-sm text-zinc-300 leading-relaxed">
+    <p class="text-sm text-zinc-300 leading-relaxed" data-i18n="witnessBannerDesc">
       This is the high-integrity channel. Only first-hand observations. 
       Media and text are hashed on your device before upload. 
       Every sealed report can be independently verified with an Evidence Pack.
@@ -1493,33 +1511,33 @@ Hard delete is not available so the sealed record stays verifiable.
   <!-- ========== SEALED WITNESS VOICE REPORTS ========== -->
   <div class="space-y-4">
     <div class="flex items-center justify-between">
-      <h3 class="text-sm font-semibold text-zinc-200">Sealed Witness Voice Reports</h3>
-      <span class="text-[11px] text-zinc-500">Higher-trust • Cryptographically sealed</span>
+      <h3 class="text-sm font-semibold text-zinc-200" data-i18n="sealedWitnessReportsHeading">Sealed Witness Voice Reports</h3>
+      <span class="text-[11px] text-zinc-500" data-i18n="higherTrustSealedTag">Higher-trust • Cryptographically sealed</span>
     </div>
 
     <div id="witness-reports-feed" class="space-y-4">
       <!-- filled by JS -->
       <div class="py-14 text-center text-zinc-500">
-        <p class="text-4xl mb-3">🛡️</p>
-        <p class="font-medium">No Witness Voice reports in the field yet.</p>
-        <p class="text-xs text-zinc-600 mt-1">Be among the first to publish a sealed observation.</p>
+        <p class="text-4xl mb-3" aria-hidden="true">🛡️</p>
+        <p class="font-medium" data-i18n="noWitnessReportsTitle">No Witness Voice reports in the field yet.</p>
+        <p class="text-xs text-zinc-600 mt-1" data-i18n="noWitnessReportsDesc">Be among the first to publish a sealed observation.</p>
       </div>
     </div>
   </div>
 
-    <!-- ========== VERIFIED WITNESS PEOPLE ========== -->
+  <!-- ========== VERIFIED WITNESS PEOPLE ========== -->
   <div class="space-y-4 pt-4 border-t border-zinc-800">
     <div class="flex items-center justify-between gap-3 flex-wrap">
       <div>
-        <h3 class="text-sm font-semibold text-zinc-200">Verified Witness Records</h3>
-        <p class="text-xs text-zinc-500 mt-0.5">People with phone or Higher Trust verification</p>
+        <h3 class="text-sm font-semibold text-zinc-200" data-i18n="verifiedWitnessRecordsHeading">Verified Witness Records</h3>
+        <p class="text-xs text-zinc-500 mt-0.5" data-i18n="verifiedWitnessRecordsSub">People with phone or Higher Trust verification</p>
       </div>
       <div class="flex gap-2 text-[11px]">
-        <button type="button" data-witness-filter="all"
+        <button type="button" data-witness-filter="all" data-i18n="filterAll"
                 class="rounded-lg border border-zinc-700 px-2.5 py-1 text-zinc-300 hover:border-amber-500/50">All</button>
-        <button type="button" data-witness-filter="zk"
+        <button type="button" data-witness-filter="zk" data-i18n="filterHigherTrust"
                 class="rounded-lg border border-zinc-700 px-2.5 py-1 text-zinc-300 hover:border-amber-500/50">Higher Trust</button>
-        <button type="button" data-witness-filter="phone"
+        <button type="button" data-witness-filter="phone" data-i18n="filterPhone"
                 class="rounded-lg border border-zinc-700 px-2.5 py-1 text-zinc-300 hover:border-amber-500/50">Phone</button>
       </div>
     </div>
@@ -1528,20 +1546,21 @@ Hard delete is not available so the sealed record stays verifiable.
          class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <!-- filled by js/circle.js → loadVerifiedWitnesses() -->
       <div class="col-span-full py-16 text-center text-zinc-500">
-        <p class="text-4xl mb-3">🛡️</p>
-        <p>No verified voices found yet.</p>
-        <p class="text-sm mt-1">Be the first to complete Higher Trust verification.</p>
+        <p class="text-4xl mb-3" aria-hidden="true">🛡️</p>
+        <p data-i18n="noVerifiedVoicesTitle">No verified voices found yet.</p>
+        <p class="text-sm mt-1" data-i18n="noVerifiedVoicesDesc">Be the first to complete Higher Trust verification.</p>
       </div>
     </div>
   </div>
+
   <!-- ========== CITIZEN REPORTS (open channel) ========== -->
   <div class="space-y-4 pt-4 border-t border-zinc-800">
     <div class="flex items-center justify-between">
       <div>
-        <h3 class="text-sm font-semibold text-zinc-200">Citizen Reports</h3>
-        <p class="text-xs text-zinc-500 mt-0.5">Open public square • All sealed citizen posts</p>
+        <h3 class="text-sm font-semibold text-zinc-200" data-i18n="citizenReportsHeading">Citizen Reports</h3>
+        <p class="text-xs text-zinc-500 mt-0.5" data-i18n="citizenReportsSub">Open public square • All sealed citizen posts</p>
       </div>
-      <a href="/#square" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium">
+      <a href="/#square" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium" data-i18n="viewFullSquareLink">
         View full Square →
       </a>
     </div>
@@ -1549,8 +1568,8 @@ Hard delete is not available so the sealed record stays verifiable.
     <div id="citizen-reports-feed" class="space-y-4">
       <!-- filled by JS -->
       <div class="py-10 text-center text-zinc-500">
-        <p class="text-3xl mb-2">🗣️</p>
-        <p class="text-sm">Loading citizen reports…</p>
+        <p class="text-3xl mb-2" aria-hidden="true">🗣️</p>
+        <p class="text-sm" data-i18n="loadingCitizenReports">Loading citizen reports…</p>
       </div>
     </div>
   </div>
@@ -1573,8 +1592,8 @@ Hard delete is not available so the sealed record stays verifiable.
     <!-- Header -->
     <div class="mb-6 text-center">
       <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-2xl font-bold text-emerald-400" aria-hidden="true">♥</div>
-      <h3 id="supportModalTitle" class="text-xl font-bold text-white">Sustain the Public Square</h3>
-      <p class="mt-1.5 text-xs leading-relaxed text-emerald-300/90">
+      <h3 id="supportModalTitle" class="text-xl font-bold text-white" data-i18n="supportModalTitle">Sustain the Public Square</h3>
+      <p class="mt-1.5 text-xs leading-relaxed text-emerald-300/90" data-i18n="supportModalDesc">
         Your support keeps VocalWitness free, independent, and protected from manipulation — so every sealed report stays public.
       </p>
     </div>
@@ -1582,7 +1601,7 @@ Hard delete is not available so the sealed record stays verifiable.
     <div class="space-y-5">
       <!-- Amount Selection -->
       <div>
-        <label class="mb-2.5 block text-xs font-medium text-zinc-400">Select Contribution Amount (USD)</label>
+        <label class="mb-2.5 block text-xs font-medium text-zinc-400" data-i18n="selectContributionLabel">Select Contribution Amount (USD)</label>
         <div id="supportTierContainer" class="grid grid-cols-3 gap-2" role="group" aria-label="Contribution amount">
           <button type="button" 
                   class="support-tier-btn rounded-xl border border-zinc-700 bg-zinc-800/80 py-2.5 text-sm font-medium text-zinc-300 transition-all duration-200 hover:border-emerald-500/50 hover:bg-emerald-600/20 hover:text-white active:scale-95"
@@ -1600,20 +1619,22 @@ Hard delete is not available so the sealed record stays verifiable.
 
       <!-- Custom Amount -->
       <div>
-        <label for="customSupportAmount" class="mb-1.5 block text-xs font-medium text-zinc-400">Custom Amount ($ USD)</label>
-        <input type="number" id="customSupportAmount" placeholder="Enter amount" min="1" value="15"
+        <label for="customSupportAmount" class="mb-1.5 block text-xs font-medium text-zinc-400" data-i18n="customAmountLabel">Custom Amount ($ USD)</label>
+        <input type="number" id="customSupportAmount" placeholder="Enter amount" data-i18n-placeholder="enterAmountPlaceholder" min="1" value="15"
                class="w-full rounded-xl border border-zinc-700 bg-zinc-900/80 px-4 py-3 text-sm text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
                autocomplete="off">
       </div>
 
       <!-- Primary Action -->
       <button id="paystackPayBtn" type="button"
+              data-i18n="paystackPayBtn"
               class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:bg-blue-500 active:scale-[0.98]">
         Pay with Card / Bank (Paystack)
       </button>
 
       <!-- Secondary Action -->
       <button id="proceedCryptoBtn" type="button"
+              data-i18n="proceedCryptoBtn"
               class="w-full rounded-xl border border-emerald-500/40 bg-emerald-600/15 py-3.5 text-sm font-semibold text-emerald-300 transition-all duration-200 hover:bg-emerald-600/25 hover:border-emerald-500/60 active:scale-[0.98]">
         Proceed with Crypto (NOWPayments)
       </button>
@@ -1621,7 +1642,7 @@ Hard delete is not available so the sealed record stays verifiable.
 
     <!-- Direct USDT -->
     <div class="mt-6 border-t border-zinc-800 pt-5">
-      <p class="mb-3 text-center text-xs font-medium text-zinc-400">Or send USDT directly</p>
+      <p class="mb-3 text-center text-xs font-medium text-zinc-400" data-i18n="sendUsdtDirectlyLabel">Or send USDT directly</p>
       
       <div class="mx-auto mb-4 flex h-36 w-36 items-center justify-center overflow-hidden rounded-2xl border border-zinc-700 bg-white p-3 shadow-md">
         <img src="./image/95756.jpg" 
@@ -1629,7 +1650,7 @@ Hard delete is not available so the sealed record stays verifiable.
              class="h-full w-full object-contain" 
              id="usdt-qr-img"
              onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
-        <span class="hidden text-xs text-zinc-500">QR unavailable</span>
+        <span class="hidden text-xs text-zinc-500" data-i18n="qrUnavailable">QR unavailable</span>
       </div>
 
       <div class="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900/80 p-2.5">
@@ -1637,6 +1658,7 @@ Hard delete is not available so the sealed record stays verifiable.
           TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK
         </span>
         <button id="copyUsdtBtn" type="button"
+                data-i18n="copyBtn"
                 class="shrink-0 rounded-lg bg-zinc-800 px-3.5 py-2 text-xs font-medium text-white transition-all duration-200 hover:bg-zinc-700 active:scale-95"
                 aria-label="Copy USDT address">
           Copy
@@ -1644,23 +1666,22 @@ Hard delete is not available so the sealed record stays verifiable.
       </div>
       
       <p class="mt-2 text-center text-[10px] text-zinc-500">
-        Network: <strong class="text-zinc-400">Tron (TRC-20)</strong> • Send USDT only
+        <span data-i18n="networkPrefix">Network:</span> <strong class="text-zinc-400">Tron (TRC-20)</strong> • <span data-i18n="sendUsdtOnlyNote">Send USDT only</span>
       </p>
     </div>
 
-    <p class="mt-5 text-center text-[10px] text-zinc-500">
+    <p class="mt-5 text-center text-[10px] text-zinc-500" data-i18n="nonCustodialRailsNote">
       Powered by non-custodial rails. No tracking, no intrusive data collection.
     </p>
   </div>
 </div>
-
 <!-- ====================== FOOTER ====================== -->
 <footer class="mt-20 border-t border-zinc-800/80 bg-zinc-950/90">
   <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
   
-    <button id="vw-feedback-btn" class="text-sm text-zinc-400 hover:text-emerald-400">
-  Feedback / Report a problem
-</button>
+    <button id="vw-feedback-btn" type="button" data-i18n="feedbackReportProblemBtn" class="text-sm text-zinc-400 hover:text-emerald-400">
+      Feedback / Report a problem
+    </button>
 
     <!-- Top Section: Brand + Mission -->
     <div class="flex flex-col gap-10 md:flex-row md:items-start md:justify-between">
@@ -1673,55 +1694,54 @@ Hard delete is not available so the sealed record stays verifiable.
             <h3 class="text-lg font-extrabold tracking-tight">
               <span class="text-emerald-400">Vocal</span><span class="text-white">Witness</span>
             </h3>
-            <p class="text-[11px] font-semibold uppercase tracking-wider text-emerald-400/70">
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-emerald-400/70" data-i18n="brandTaglineDesktop">
               Truth • Evidence • Sealed
             </p>
           </div>
         </div>
-        <p class="mt-4 text-sm leading-relaxed text-zinc-400">
+        <p class="mt-4 text-sm leading-relaxed text-zinc-400" data-i18n="footerMissionDesc">
           A privacy-first public square where citizens can publish sealed reports. 
-         Evidence is cryptographically protected so the original cannot be secretly edited or hard-deleted by ordinary users.
+          Evidence is cryptographically protected so the original cannot be secretly edited or hard-deleted by ordinary users.
         </p>
       </div>
 
       <!-- Quick Links -->
-<div class="grid grid-cols-2 gap-8 sm:grid-cols-3">
-  <div>
-    <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400/90">Platform</h4>
-    <ul class="mt-3 space-y-2 text-sm text-zinc-400">
-      <li><a href="/#square" class="transition hover:text-emerald-400">Public Square</a></li>
-      <li><a href="/#arena" class="transition hover:text-emerald-400">Live Arena</a></li>
-      <li><a href="/verify" class="transition hover:text-emerald-400">Verify Evidence</a></li>
-      <li><a href="/transparency" class="transition hover:text-emerald-400">Transparency</a></li>
-      <li><a href="/journalist-verify" class="transition hover:text-emerald-400">Journalist Guide</a></li>
-    </ul>
-  </div>
-</div>
-
+      <div class="grid grid-cols-2 gap-8 sm:grid-cols-3">
         <div>
-          <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400/90">Legal & Safety</h4>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400/90" data-i18n="footerPlatformHeading">Platform</h4>
           <ul class="mt-3 space-y-2 text-sm text-zinc-400">
-            <li><a href="/about" class="transition hover:text-emerald-400">About</a></li>
-            <li><a href="/safety" class="transition hover:text-emerald-400">Safety & Rights</a></li>
-            <li><a href="/privacy" class="transition hover:text-emerald-400">Privacy</a></li>
-            <li><a href="/terms" class="transition hover:text-emerald-400">Terms</a></li>
+            <li><a href="/#square" class="transition hover:text-emerald-400" data-i18n="publicSquareTab">Public Square</a></li>
+            <li><a href="/#arena" class="transition hover:text-emerald-400" data-i18n="liveArenaTab">Live Arena</a></li>
+            <li><a href="/verify" class="transition hover:text-emerald-400" data-i18n="verifyEvidenceCta">Verify Evidence</a></li>
+            <li><a href="/transparency" class="transition hover:text-emerald-400" data-i18n="transparencyMenu">Transparency</a></li>
+            <li><a href="/journalist-verify" class="transition hover:text-emerald-400" data-i18n="journalistGuideMenu">Journalist Guide</a></li>
           </ul>
         </div>
 
         <div>
-          <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400/90">Support</h4>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400/90" data-i18n="footerLegalSafetyHeading">Legal &amp; Safety</h4>
+          <ul class="mt-3 space-y-2 text-sm text-zinc-400">
+            <li><a href="/about" class="transition hover:text-emerald-400" data-i18n="aboutMenu">About</a></li>
+            <li><a href="/safety" class="transition hover:text-emerald-400" data-i18n="safetyRightsLink">Safety &amp; Rights</a></li>
+            <li><a href="/privacy" class="transition hover:text-emerald-400" data-i18n="privacyMenu">Privacy</a></li>
+            <li><a href="/terms" class="transition hover:text-emerald-400" data-i18n="termsMenu">Terms</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400/90" data-i18n="supportBtn">Support</h4>
           <ul class="mt-3 space-y-2 text-sm text-zinc-400">
             <li>
-              <button id="footerSupportBtn" type="button" 
+              <button id="footerSupportBtn" type="button" data-i18n="supportTheSquareBtn"
                       class="transition hover:text-emerald-400">
                 Support the Square
               </button>
             </li>
             <li>
               <button id="footer-data-saver-btn" type="button"
-        class="flex items-center gap-1.5 transition hover:text-emerald-400">
-  <span data-i18n="dataSaverLabel">Data Saver</span>: <span id="footer-data-saver-status" class="text-zinc-300">Off</span>
-</button>
+                      class="flex items-center gap-1.5 transition hover:text-emerald-400">
+                <span data-i18n="dataSaverLabel">Data Saver</span>: <span id="footer-data-saver-status" class="text-zinc-300">Off</span>
+              </button>
             </li>
           </ul>
         </div>
@@ -1730,21 +1750,23 @@ Hard delete is not available so the sealed record stays verifiable.
 
     <!-- Partners Section -->
     <div class="mt-12 border-t border-zinc-800/80 pt-8">
-      <h4 class="text-center text-xs font-bold uppercase tracking-wider text-zinc-500">
-        Partners & Collaborators
+      <h4 class="text-center text-xs font-bold uppercase tracking-wider text-zinc-500" data-i18n="partnersCollaboratorsHeading">
+        Partners &amp; Collaborators
       </h4>
       <div class="mt-5 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-8">
         <div class="text-center">
-          <p class="text-sm font-semibold text-zinc-300">OK CREATION PHOTO & VIDEO STUDIO</p>
+          <p class="text-sm font-semibold text-zinc-300">OK CREATION PHOTO &amp; VIDEO STUDIO</p>
           <div class="mt-1.5 flex items-center justify-center gap-4 text-xs">
             <a href="https://www.youtube.com/@okcreationphotovideostudio2425" 
                target="_blank" rel="noopener noreferrer"
+               data-i18n="youtubeLabel"
                class="text-emerald-400/90 transition hover:text-emerald-300 hover:underline">
               YouTube
             </a>
-            <span class="text-zinc-600">•</span>
+            <span class="text-zinc-600" aria-hidden="true">•</span>
             <a href="https://www.facebook.com/Okcreationfotostudio/" 
                target="_blank" rel="noopener noreferrer"
+               data-i18n="facebookLabel"
                class="text-emerald-400/90 transition hover:text-emerald-300 hover:underline">
               Facebook
             </a>
@@ -1755,10 +1777,10 @@ Hard delete is not available so the sealed record stays verifiable.
 
     <!-- Bottom Bar -->
     <div class="mt-10 flex flex-col items-center justify-between gap-4 border-t border-zinc-800/80 pt-6 text-center text-xs text-zinc-500 sm:flex-row sm:text-left">
-      <p>
+      <p data-i18n="footerCopyright">
         © 2026 VocalWitness • Citizen Reporting • Real Evidence
       </p>
-      <p class="max-w-md leading-relaxed">
+      <p class="max-w-md leading-relaxed" data-i18n="footerIntegrityNote">
         Application-level integrity. Client-side hashing. Zero-knowledge options. 
         The public record is designed to remain sealed.
       </p>
@@ -1780,8 +1802,8 @@ Hard delete is not available so the sealed record stays verifiable.
 
     <div class="mb-6 text-center">
       <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-2xl" aria-hidden="true">🛡️</div>
-      <h3 id="authModalTitle" class="text-xl font-bold text-white">Join the Public Square</h3>
-      <p class="mt-1.5 text-sm text-zinc-400">
+      <h3 id="authModalTitle" class="text-xl font-bold text-white" data-i18n="authModalTitle">Join the Public Square</h3>
+      <p class="mt-1.5 text-sm text-zinc-400" data-i18n="authModalDesc">
         Sign in to publish sealed reports, corroborate evidence, and build your circle of trusted voices.
       </p>
     </div>
@@ -1792,16 +1814,18 @@ Hard delete is not available so the sealed record stays verifiable.
               class="google-auth-btn flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-600 bg-white px-4 py-3.5 text-sm font-bold text-zinc-900 shadow-sm transition-all duration-200 hover:bg-zinc-100 active:scale-[0.98]">
         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
              alt="" class="h-5 w-5" width="20" height="20">
-        Continue with Google
+        <span data-i18n="continueWithGoogleBtn">Continue with Google</span>
       </button>
 
       <!-- Secondary Auth -->
       <button type="button" id="githubAuthBtn" data-action="github-login"
+              data-i18n="continueWithGithubBtn"
               class="flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:border-zinc-500 hover:bg-zinc-700 active:scale-[0.98]">
         Continue with GitHub
       </button>
 
       <button type="button" id="twitterAuthBtn" data-action="twitter-login"
+              data-i18n="continueWithXBtn"
               class="flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:border-zinc-500 hover:bg-zinc-700 active:scale-[0.98]">
         Continue with X
       </button>
@@ -1809,14 +1833,14 @@ Hard delete is not available so the sealed record stays verifiable.
 
     <label class="mt-5 flex cursor-pointer items-center gap-2.5 text-xs text-zinc-400">
       <input type="checkbox" id="rememberMe" checked class="h-4 w-4 rounded accent-emerald-500">
-      Stay signed in on this device
+      <span data-i18n="staySignedInLabel">Stay signed in on this device</span>
     </label>
 
     <p class="mt-5 text-center text-[11px] text-zinc-500">
-      By continuing you agree to our
-      <a href="/terms" class="text-emerald-400 hover:underline">Terms</a>
-      and
-      <a href="/privacy" class="text-emerald-400 hover:underline">Privacy</a>.
+      <span data-i18n="byContinuingAgreePrefix">By continuing you agree to our</span>
+      <a href="/terms" class="text-emerald-400 hover:underline" data-i18n="termsMenu">Terms</a>
+      <span data-i18n="andWord">and</span>
+      <a href="/privacy" class="text-emerald-400 hover:underline" data-i18n="privacyMenu">Privacy</a>.
     </p>
   </div>
 </div>
@@ -1865,7 +1889,7 @@ Hard delete is not available so the sealed record stays verifiable.
   <div class="glass custom-scroll relative max-h-[90vh] w-full max-w-md space-y-5 overflow-y-auto rounded-3xl border border-emerald-500/25 p-5 sm:p-6 text-white shadow-2xl">
     
     <div class="flex items-center justify-between border-b border-zinc-700/80 pb-3">
-      <h3 id="editProfileTitle" class="text-xl font-bold">Edit Profile</h3>
+      <h3 id="editProfileTitle" class="text-xl font-bold" data-i18n="editProfileTitle">Edit Profile</h3>
       <button id="closeEditProfileBtn" type="button"
               class="flex h-10 w-10 items-center justify-center rounded-full text-zinc-400 transition-all duration-200 hover:bg-zinc-800 hover:text-white active:scale-90"
               aria-label="Close edit profile">✕</button>
@@ -1877,57 +1901,60 @@ Hard delete is not available so the sealed record stays verifiable.
         <div class="relative">
           <div class="h-24 w-24 overflow-hidden rounded-3xl border-4 border-zinc-700 bg-zinc-800 shadow-xl">
             <img id="avatarPreview" src="" alt="Avatar Preview" class="hidden h-full w-full object-cover">
-            <div id="avatarFallback" class="flex h-full w-full items-center justify-center text-5xl">👤</div>
+            <div id="avatarFallback" class="flex h-full w-full items-center justify-center text-5xl" aria-hidden="true">👤</div>
           </div>
         </div>
         <label class="cursor-pointer text-sm font-medium text-emerald-400 transition hover:text-emerald-300">
-          Change Photo
+          <span data-i18n="changePhotoLabel">Change Photo</span>
           <input type="file" id="avatarInput" accept="image/*" class="hidden">
         </label>
-        <p class="text-[11px] text-zinc-500">Max 2MB • Auto-compressed to 256×256</p>
+        <p class="text-[11px] text-zinc-500" data-i18n="avatarLimitNote">Max 2MB • Auto-compressed to 256×256</p>
       </div>
 
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label for="editFirstName" class="mb-1.5 block text-xs font-medium text-zinc-400">First Name</label>
+          <label for="editFirstName" class="mb-1.5 block text-xs font-medium text-zinc-400" data-i18n="firstNameLabel">First Name</label>
           <input type="text" id="editFirstName" autocomplete="given-name"
                  class="w-full rounded-xl border border-zinc-700 bg-zinc-900/80 p-3 text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30">
         </div>
         <div>
-          <label for="editLastName" class="mb-1.5 block text-xs font-medium text-zinc-400">Last Name</label>
+          <label for="editLastName" class="mb-1.5 block text-xs font-medium text-zinc-400" data-i18n="lastNameLabel">Last Name</label>
           <input type="text" id="editLastName" autocomplete="family-name"
                  class="w-full rounded-xl border border-zinc-700 bg-zinc-900/80 p-3 text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30">
         </div>
       </div>
 
       <div>
-        <label for="editDisplayName" class="mb-1.5 block text-xs font-medium text-zinc-400">Display Name *</label>
+        <label for="editDisplayName" class="mb-1.5 block text-xs font-medium text-zinc-400" data-i18n="displayNameRequiredLabel">Display Name *</label>
         <input type="text" id="editDisplayName" required autocomplete="nickname"
                class="w-full rounded-xl border border-zinc-700 bg-zinc-900/80 p-3 text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30">
       </div>
 
       <div>
-        <label for="editUsername" class="mb-1.5 block text-xs font-medium text-zinc-400">Username</label>
+        <label for="editUsername" class="mb-1.5 block text-xs font-medium text-zinc-400" data-i18n="usernameLabel">Username</label>
         <input type="text" id="editUsername" autocomplete="username"
                class="w-full rounded-xl border border-zinc-700 bg-zinc-900/80 p-3 text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30">
       </div>
 
       <div>
-        <label for="editRegion" class="mb-1.5 block text-xs font-medium text-zinc-400">Region / Location</label>
-        <input type="text" id="editRegion" placeholder="e.g. West Africa" autocomplete="off"
+        <label for="editRegion" class="mb-1.5 block text-xs font-medium text-zinc-400" data-i18n="regionLocationLabel">Region / Location</label>
+        <input type="text" id="editRegion" placeholder="e.g. West Africa" data-i18n-placeholder="regionPlaceholder" autocomplete="off"
                class="w-full rounded-xl border border-zinc-700 bg-zinc-900/80 p-3 text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30">
       </div>
 
       <div>
-        <label for="editBio" class="mb-1.5 block text-xs font-medium text-zinc-400">Bio</label>
+        <label for="editBio" class="mb-1.5 block text-xs font-medium text-zinc-400" data-i18n="bioLabel">Bio</label>
         <textarea id="editBio" rows="3" maxlength="280" autocomplete="off"
                   class="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-900/80 p-3 text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30"></textarea>
       </div>
 
       <div class="flex items-center justify-between gap-3 rounded-2xl border border-zinc-700 bg-zinc-900/60 p-4">
         <div class="min-w-0">
-          <div class="flex items-center gap-2 text-sm font-medium text-white">🛡️ Privacy Shield</div>
-          <div class="mt-0.5 text-xs text-zinc-400">Hides real name & location from others</div>
+          <div class="flex items-center gap-2 text-sm font-medium text-white">
+            <span aria-hidden="true">🛡️</span>
+            <span data-i18n="privacyShieldTitle">Privacy Shield</span>
+          </div>
+          <div class="mt-0.5 text-xs text-zinc-400" data-i18n="privacyShieldDesc">Hides real name &amp; location from others</div>
         </div>
         <input type="checkbox" id="toggleHidePublicInfo" checked 
                class="h-5 w-5 shrink-0 cursor-pointer rounded accent-emerald-500">
@@ -1935,12 +1962,12 @@ Hard delete is not available so the sealed record stays verifiable.
 
       <!-- Actions -->
       <div class="flex gap-3 pt-2">
-        <button type="submit"
+        <button type="submit" data-i18n="saveChangesBtn"
                 class="flex-1 rounded-xl bg-emerald-500 py-3.5 text-sm font-bold text-black shadow-md shadow-emerald-500/20 transition-all duration-200 hover:bg-emerald-400 active:scale-[0.98]">
           Save Changes
         </button>
         
-        <button type="button" id="cancelEditProfileBtn"
+        <button type="button" id="cancelEditProfileBtn" data-i18n="cancel"
                 class="rounded-xl border border-zinc-700 bg-zinc-800/80 px-5 py-3.5 text-sm font-semibold text-zinc-300 transition-all duration-200 hover:border-zinc-500 hover:bg-zinc-700 hover:text-white active:scale-[0.98]">
           Cancel
         </button>
@@ -1956,10 +1983,10 @@ Hard delete is not available so the sealed record stays verifiable.
   
   <div class="w-full max-w-sm rounded-3xl border border-zinc-700 bg-[#111827] p-6 text-white shadow-2xl">
     
-    <h3 id="credentialChoiceTitle" class="text-lg font-bold mb-1">
+    <h3 id="credentialChoiceTitle" class="text-lg font-bold mb-1" data-i18n="downloadPressCredentialTitle">
       Download Press Credential
     </h3>
-    <p class="text-sm text-zinc-400 mb-6">
+    <p class="text-sm text-zinc-400 mb-6" data-i18n="chooseVersionSubtitle">
       Choose the version you want
     </p>
 
@@ -1968,23 +1995,23 @@ Hard delete is not available so the sealed record stays verifiable.
       <button type="button" id="btnChoosePremium"
               class="w-full flex items-center justify-between gap-3 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-5 py-4 text-left transition hover:bg-emerald-500/20">
         <div>
-          <div class="font-semibold text-emerald-400">Official (Premium)</div>
-          <div class="text-xs text-zinc-400 mt-0.5">Higher visual authority • Recommended for professionals</div>
+          <div class="font-semibold text-emerald-400" data-i18n="officialPremiumTitle">Official (Premium)</div>
+          <div class="text-xs text-zinc-400 mt-0.5" data-i18n="officialPremiumDesc">Higher visual authority • Recommended for professionals</div>
         </div>
-        <span class="text-emerald-400 text-lg">★</span>
+        <span class="text-emerald-400 text-lg" aria-hidden="true">★</span>
       </button>
 
       <!-- Standard -->
       <button type="button" id="btnChooseStandard"
               class="w-full flex items-center justify-between gap-3 rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-4 text-left transition hover:bg-zinc-800">
         <div>
-          <div class="font-semibold text-white">Standard</div>
-          <div class="text-xs text-zinc-400 mt-0.5">Free basic credential</div>
+          <div class="font-semibold text-white" data-i18n="standardCredentialTitle">Standard</div>
+          <div class="text-xs text-zinc-400 mt-0.5" data-i18n="standardCredentialDesc">Free basic credential</div>
         </div>
       </button>
 
       <!-- Cancel -->
-      <button type="button" id="btnCancelCredential"
+      <button type="button" id="btnCancelCredential" data-i18n="cancel"
               class="w-full mt-2 py-3 text-sm text-zinc-400 hover:text-white transition">
         Cancel
       </button>
@@ -1997,50 +2024,54 @@ Hard delete is not available so the sealed record stays verifiable.
      class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-md p-4">
   <div class="max-w-md w-full rounded-3xl border border-sky-500/30 bg-zinc-950 p-6 space-y-5 shadow-2xl">
     <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
-      <h3 class="text-xl font-bold text-sky-400">🎙️ Start a Live Arena Room</h3>
-      <button type="button" id="closeCreateRoomModalBtn" class="text-zinc-400 hover:text-white text-lg">✕</button>
+      <h3 class="text-xl font-bold text-sky-400">
+        <span aria-hidden="true">🎙️</span>
+        <span data-i18n="createRoomTitle">Start a Live Arena Room</span>
+      </h3>
+      <button type="button" id="closeCreateRoomModalBtn" class="text-zinc-400 hover:text-white text-lg" aria-label="Close create room modal">✕</button>
     </div>
 
     <div class="space-y-4">
       <div>
-        <label class="block text-xs font-medium text-zinc-400 mb-1">Room Title *</label>
+        <label class="block text-xs font-medium text-zinc-400 mb-1" data-i18n="roomTitleLabel">Room Title *</label>
         <input id="roomTitleInput" type="text" maxlength="120"
                placeholder="e.g. Live report: city traffic"
+               data-i18n-placeholder="roomTitlePlaceholder"
                class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-white focus:border-sky-500 focus:outline-none">
       </div>
       <div>
-        <label class="block text-xs font-medium text-zinc-400 mb-1">Category</label>
+        <label class="block text-xs font-medium text-zinc-400 mb-1" data-i18n="categoryLabel">Category</label>
         <select id="roomCategoryInput"
                 class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-white">
-          <option value="General">General</option>
-          <option value="Traffic">Traffic</option>
-          <option value="Safety">Safety</option>
-          <option value="Protest">Protest</option>
-          <option value="Election">Election</option>
-          <option value="Weather">Weather</option>
+          <option value="General" data-i18n="catGeneral">General</option>
+          <option value="Traffic" data-i18n="catTraffic">Traffic</option>
+          <option value="Safety" data-i18n="catSafety">Safety</option>
+          <option value="Protest" data-i18n="catProtest">Protest</option>
+          <option value="Election" data-i18n="catElection">Election</option>
+          <option value="Weather" data-i18n="catWeather">Weather</option>
         </select>
       </div>
       <div>
-        <label class="block text-xs font-medium text-sky-400 mb-1">Link group (optional)</label>
+        <label class="block text-xs font-medium text-sky-400 mb-1" data-i18n="linkGroupLabel">Link group (optional)</label>
         <select id="arenaGroupSelect"
                 class="w-full rounded-2xl border border-sky-500/40 bg-zinc-900 px-4 py-3 text-sm text-white">
-          <option value="">🌐 None (Global Public Arena)</option>
+          <option value="" data-i18n="noGroupGlobalArena">🌐 None (Global Public Arena)</option>
         </select>
       </div>
       <div>
-        <label class="block text-xs font-medium text-zinc-400 mb-1">Privacy</label>
+        <label class="block text-xs font-medium text-zinc-400 mb-1" data-i18n="privacyMenu">Privacy</label>
         <select id="roomPrivacyInput"
                 class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-white">
-          <option value="open">Open</option>
-          <option value="approval">Require host approval</option>
+          <option value="open" data-i18n="privacyOpen">Open</option>
+          <option value="approval" data-i18n="privacyApproval">Require host approval</option>
         </select>
       </div>
     </div>
 
     <div class="flex gap-3 pt-2">
-      <button type="button" id="cancelCreateRoomBtn"
+      <button type="button" id="cancelCreateRoomBtn" data-i18n="cancel"
               class="flex-1 rounded-2xl bg-zinc-800 py-3 text-sm font-semibold text-zinc-300">Cancel</button>
-      <button type="button" id="submitCreateRoomBtn"
+      <button type="button" id="submitCreateRoomBtn" data-i18n="launchStageBtn"
               class="flex-1 rounded-2xl bg-gradient-to-r from-sky-500 to-cyan-500 py-3 text-sm font-bold text-white">
         Launch Stage
       </button>
@@ -2059,12 +2090,12 @@ Hard delete is not available so the sealed record stays verifiable.
     <!-- Header -->
     <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
       <h3 id="settingsTitle" class="flex items-center gap-2.5 text-xl font-bold tracking-tight">
-        <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
+        <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400" aria-hidden="true">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
           </svg>
         </span>
-        Security & Account
+        <span data-i18n="securityAccountTitle">Security &amp; Account</span>
       </h3>
       <button id="closeSettingsBtn" type="button"
               class="rounded-full p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
@@ -2077,15 +2108,15 @@ Hard delete is not available so the sealed record stays verifiable.
 
     <!-- ===== Security Controls ===== -->
     <div class="space-y-3">
-      <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400/90">Security Controls</h4>
+      <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400/90" data-i18n="securityControlsHeading">Security Controls</h4>
 
       <!-- Password Reset - temporarily hidden (most users use social login) -->
 <div class="hidden flex items-center justify-between gap-4 rounded-2xl border border-zinc-700/80 bg-zinc-900/80 p-4 transition hover:border-zinc-600">
   <div>
-    <div class="text-sm font-medium">Password</div>
-    <div class="text-xs text-zinc-400">Send a secure reset link to your email</div>
+    <div class="text-sm font-medium" data-i18n="passwordLabel">Password</div>
+    <div class="text-xs text-zinc-400" data-i18n="passwordResetDesc">Send a secure reset link to your email</div>
   </div>
-  <button id="triggerPasswordResetBtn" type="button"
+  <button id="triggerPasswordResetBtn" type="button" data-i18n="resetPasswordBtn"
           class="shrink-0 rounded-xl border border-zinc-600 bg-zinc-800 px-4 py-2 text-xs font-semibold transition hover:bg-zinc-700 active:scale-[0.97]">
     Reset Password
   </button>
@@ -2107,15 +2138,15 @@ Hard delete is not available so the sealed record stays verifiable.
      -->
     <!-- ===== Preferences ===== -->
     <div class="space-y-3">
-      <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400/90">Preferences</h4>
+      <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400/90" data-i18n="preferencesHeader">Preferences</h4>
       <div class="rounded-2xl border border-zinc-700/80 bg-zinc-900/80 p-4">
-        <label for="defaultDoorSelect" class="mb-2 block text-xs text-zinc-400">Default page after login</label>
+        <label for="defaultDoorSelect" class="mb-2 block text-xs text-zinc-400" data-i18n="defaultDoorLabel">Default page after login</label>
         <div class="relative">
           <select id="defaultDoorSelect"
                   class="w-full appearance-none rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 pr-10 text-sm text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
-            <option value="public_square">Public Square</option>
-            <option value="citizen_talk">Citizen Talk</option>
-            <option value="witness_voice">Witness Voice</option>
+            <option value="public_square" data-i18n="doorPublicSquare">Public Square</option>
+            <option value="citizen_talk" data-i18n="doorCitizenTalk">Citizen Talk</option>
+            <option value="witness_voice" data-i18n="doorWitnessVoice">Witness Voice</option>
           </select>
           <!-- Chevron -->
           <div class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-zinc-400">
@@ -2129,9 +2160,9 @@ Hard delete is not available so the sealed record stays verifiable.
 
     <!-- ===== Danger Zone ===== -->
     <div class="space-y-3 pt-1">
-      <h4 class="text-xs font-bold uppercase tracking-wider text-red-400/90">Data & Identity</h4>
+      <h4 class="text-xs font-bold uppercase tracking-wider text-red-400/90" data-i18n="dangerZoneHeader">Data &amp; Identity</h4>
 
-      <button id="settingsSignOutBtn" type="button"
+      <button id="settingsSignOutBtn" type="button" data-i18n="signOutAllSessionsBtn"
               class="w-full rounded-2xl border border-red-500/40 bg-red-950/40 py-3.5 text-sm font-semibold text-red-400 transition hover:bg-red-900/50 active:scale-[0.98]">
         Sign Out of All Sessions
       </button>
@@ -2139,12 +2170,12 @@ Hard delete is not available so the sealed record stays verifiable.
       <!-- Emergency Clear -->
       <button id="panicClearBtn" type="button"
               class="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-600/80 bg-red-950/70 py-3.5 text-sm font-semibold text-red-300 transition hover:bg-red-900/80 active:scale-[0.98]">
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
         </svg>
-        Emergency Clear This Device
+        <span data-i18n="emergencyClearBtn">Emergency Clear This Device</span>
       </button>
-      <p id="panicClearDesc" class="text-center text-[11px] leading-relaxed text-zinc-500">
+      <p id="panicClearDesc" class="text-center text-[11px] leading-relaxed text-zinc-500" data-i18n="emergencyClearDesc">
         Instantly removes all local data from this device only.<br>
         The public record stays completely safe.
       </p>
@@ -2152,7 +2183,6 @@ Hard delete is not available so the sealed record stays verifiable.
   </div>
 </div>
 <div id="recaptcha-container"></div>
-
 <!-- ====================== PHONE VERIFICATION MODAL ====================== -->
 <div id="phoneVerificationModal"
      class="fixed inset-0 z-[10050] hidden items-center justify-center bg-black/75 p-4 backdrop-blur-md"
@@ -2162,8 +2192,8 @@ Hard delete is not available so the sealed record stays verifiable.
     
     <div class="flex items-start justify-between gap-3">
       <div>
-        <h3 id="phoneVerificationTitle" class="text-xl font-bold tracking-tight text-white">Verify Phone Number</h3>
-        <p class="mt-1 text-sm text-zinc-400">Unlock Citizen Circle and higher trust features</p>
+        <h3 id="phoneVerificationTitle" class="text-xl font-bold tracking-tight text-white" data-i18n="phoneVerifyTitle">Verify Phone Number</h3>
+        <p class="mt-1 text-sm text-zinc-400" data-i18n="phoneVerifySubtitle">Unlock Citizen Circle and higher trust features</p>
       </div>
       <button type="button" id="closePhoneVerificationBtn"
               class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
@@ -2173,7 +2203,48 @@ Hard delete is not available so the sealed record stays verifiable.
         </svg>
       </button>
     </div>
-    <!-- ====================== MFA CHALLENGE MODAL ====================== -->
+
+    <!-- Step 1 -->
+    <div id="phone-step-1" class="space-y-4">
+      <div>
+        <label for="phone-input" class="mb-1.5 block text-sm font-medium text-zinc-300">
+          <span data-i18n="phoneNumberLabel">Phone Number</span> <span class="text-zinc-500" data-i18n="intlFormatHint">(international format)</span>
+        </label>
+        <input type="tel" id="phone-input" placeholder="+234 801 234 5678" data-i18n-placeholder="phoneInputPlaceholder" autocomplete="tel"
+               class="w-full rounded-xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+      </div>
+      <button type="button" id="send-otp-btn" data-i18n="sendOtpBtn"
+              class="w-full rounded-xl bg-emerald-600 py-3.5 font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-500 active:scale-[0.98]">
+        Send Verification Code
+      </button>
+    </div>
+
+    <!-- Step 2 -->
+    <div id="phone-step-2" class="hidden space-y-4">
+      <div>
+        <label for="otp-input" class="mb-1.5 block text-sm font-medium text-zinc-300" data-i18n="enterSixDigitCodeLabel">Enter 6-digit code</label>
+        <input type="text" id="otp-input" maxlength="6" inputmode="numeric" pattern="[0-9]*"
+               placeholder="• • • • • •" data-i18n-placeholder="otpCodePlaceholder" autocomplete="one-time-code"
+               class="w-full rounded-xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 text-center text-2xl tracking-[0.4em] text-white placeholder-zinc-600 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+      </div>
+      <button type="button" id="verify-otp-btn" data-i18n="verifyUnlockCircleBtn"
+              class="w-full rounded-xl bg-emerald-600 py-3.5 font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-500 active:scale-[0.98]">
+        Verify &amp; Unlock Citizen Circle
+      </button>
+      <button type="button" id="change-phone-btn" data-i18n="changePhoneNumberBtn"
+              class="w-full py-2 text-sm text-zinc-400 transition hover:text-white">
+        ← Change phone number
+      </button>
+    </div>
+
+    <p class="text-center text-xs leading-relaxed text-zinc-500" data-i18n="phonePrivacyNote">
+      We only use your number for anti-spam verification.<br>
+      It is never shown publicly or stored on the ledger.
+    </p>
+  </div>
+</div>
+
+<!-- ====================== MFA CHALLENGE MODAL ====================== -->
 <div id="mfaChallengeModal"
      class="fixed inset-0 z-[10060] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md"
      role="dialog"
@@ -2186,10 +2257,10 @@ Hard delete is not available so the sealed record stays verifiable.
     <!-- Header -->
     <div class="flex items-start justify-between gap-3">
       <div>
-        <h3 id="mfaChallengeTitle" class="text-xl font-bold tracking-tight text-white">
+        <h3 id="mfaChallengeTitle" class="text-xl font-bold tracking-tight text-white" data-i18n="mfaTitle">
           Two-Factor Authentication
         </h3>
-        <p class="mt-1 text-sm text-zinc-400">
+        <p class="mt-1 text-sm text-zinc-400" data-i18n="mfaSubtitle">
           Enter the 6-digit code from your authenticator app
         </p>
       </div>
@@ -2210,7 +2281,7 @@ Hard delete is not available so the sealed record stays verifiable.
 
     <!-- OTP Input -->
     <div>
-      <label for="mfa-otp-input" class="mb-2 block text-sm font-medium text-zinc-300">
+      <label for="mfa-otp-input" class="mb-2 block text-sm font-medium text-zinc-300" data-i18n="mfaCodeLabel">
         Authentication code
       </label>
       <input type="text"
@@ -2220,10 +2291,11 @@ Hard delete is not available so the sealed record stays verifiable.
              maxlength="6"
              pattern="[0-9]*"
              placeholder="000000"
+             data-i18n-placeholder="otpCodePlaceholder"
              class="w-full rounded-xl border border-zinc-600 bg-zinc-800 px-4 py-3.5 text-center text-2xl font-semibold tracking-[0.4em] text-white placeholder-zinc-600
                     focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
              aria-describedby="mfa-otp-help">
-      <p id="mfa-otp-help" class="mt-2 text-xs text-zinc-500">
+      <p id="mfa-otp-help" class="mt-2 text-xs text-zinc-500" data-i18n="mfaHelpText">
         Open Google Authenticator, Authy, or any TOTP app
       </p>
     </div>
@@ -2235,57 +2307,19 @@ Hard delete is not available so the sealed record stays verifiable.
     <div class="flex flex-col gap-3 pt-1">
       <button type="button"
               id="mfa-verify-btn"
+              data-i18n="verifyAndSignInBtn"
               class="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-3.5 text-sm font-bold text-zinc-950 transition
                      hover:bg-emerald-400 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50">
-        Verify & Sign In
+        Verify &amp; Sign In
       </button>
       <button type="button"
               id="mfa-cancel-btn"
+              data-i18n="cancel"
               class="w-full rounded-xl border border-zinc-600 bg-transparent px-4 py-3 text-sm font-medium text-zinc-300 transition
                      hover:bg-zinc-800 hover:text-white">
         Cancel
       </button>
     </div>
-  </div>
-</div>
-
-    <!-- Step 1 -->
-    <div id="phone-step-1" class="space-y-4">
-      <div>
-        <label for="phone-input" class="mb-1.5 block text-sm font-medium text-zinc-300">
-          Phone Number <span class="text-zinc-500">(international format)</span>
-        </label>
-        <input type="tel" id="phone-input" placeholder="+234 801 234 5678" autocomplete="tel"
-               class="w-full rounded-xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
-      </div>
-      <button type="button" id="send-otp-btn"
-              class="w-full rounded-xl bg-emerald-600 py-3.5 font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-500 active:scale-[0.98]">
-        Send Verification Code
-      </button>
-    </div>
-
-    <!-- Step 2 -->
-    <div id="phone-step-2" class="hidden space-y-4">
-      <div>
-        <label for="otp-input" class="mb-1.5 block text-sm font-medium text-zinc-300">Enter 6-digit code</label>
-        <input type="text" id="otp-input" maxlength="6" inputmode="numeric" pattern="[0-9]*"
-               placeholder="• • • • • •" autocomplete="one-time-code"
-               class="w-full rounded-xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 text-center text-2xl tracking-[0.4em] text-white placeholder-zinc-600 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
-      </div>
-      <button type="button" id="verify-otp-btn"
-              class="w-full rounded-xl bg-emerald-600 py-3.5 font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-500 active:scale-[0.98]">
-        Verify & Unlock Citizen Circle
-      </button>
-      <button type="button" id="change-phone-btn"
-              class="w-full py-2 text-sm text-zinc-400 transition hover:text-white">
-        ← Change phone number
-      </button>
-    </div>
-
-    <p class="text-center text-xs leading-relaxed text-zinc-500">
-      We only use your number for anti-spam verification.<br>
-      It is never shown publicly or stored on the ledger.
-    </p>
   </div>
 </div>
 
@@ -2299,31 +2333,31 @@ Hard delete is not available so the sealed record stays verifiable.
     
     <!-- Header -->
     <div class="mb-5 flex items-center gap-3.5">
-      <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400">
+      <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400" aria-hidden="true">
         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
         </svg>
       </div>
-      <h3 id="videoPolicyTitle" class="text-xl font-bold tracking-tight">Authenticity Requirement</h3>
+      <h3 id="videoPolicyTitle" class="text-xl font-bold tracking-tight" data-i18n="videoPolicyTitle">Authenticity Requirement</h3>
     </div>
 
-    <p id="video-policy-msg" class="mb-5 text-sm leading-relaxed text-slate-300">
+    <p id="video-policy-msg" class="mb-5 text-sm leading-relaxed text-slate-300" data-i18n="videoPolicyMsg">
       To protect the integrity of the Public Record, AI-generated or heavily edited videos are not allowed.
     </p>
 
     <!-- Policy badges -->
     <div class="mb-6 space-y-2.5 rounded-2xl border border-slate-700/70 bg-slate-800/80 p-4 text-xs">
       <div class="flex items-center justify-between">
-        <span class="text-slate-400">Daily Upload Quota</span>
-        <span class="font-mono font-semibold text-amber-400">Max 2 Videos / Day</span>
+        <span class="text-slate-400" data-i18n="dailyUploadQuotaLabel">Daily Upload Quota</span>
+        <span class="font-mono font-semibold text-amber-400" data-i18n="dailyUploadQuotaValue">Max 2 Videos / Day</span>
       </div>
       <div class="flex items-center justify-between">
-        <span class="text-slate-400">Max File Size</span>
-        <span class="font-mono font-semibold text-amber-400">25 MB (Raw Clip)</span>
+        <span class="text-slate-400" data-i18n="maxFileSizeLabel">Max File Size</span>
+        <span class="font-mono font-semibold text-amber-400" data-i18n="maxFileSizeValue">25 MB (Raw Clip)</span>
       </div>
       <div class="flex items-center justify-between">
-        <span class="text-slate-400">AI / Deepfake Policy</span>
-        <span class="font-medium text-red-400">Strictly Banned (C2PA)</span>
+        <span class="text-slate-400" data-i18n="aiDeepfakePolicyLabel">AI / Deepfake Policy</span>
+        <span class="font-medium text-red-400" data-i18n="aiDeepfakePolicyValue">Strictly Banned (C2PA)</span>
       </div>
     </div>
 
@@ -2331,13 +2365,13 @@ Hard delete is not available so the sealed record stays verifiable.
     <div class="space-y-3">
       <a href="/live-arena"
          class="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-3.5 font-bold text-slate-950 shadow-lg shadow-amber-900/30 transition hover:from-amber-400 hover:to-amber-500 active:scale-[0.98]">
-        <span>Go to Live Arena for True Reality</span>
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <span data-i18n="goToLiveArenaCta">Go to Live Arena for True Reality</span>
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
         </svg>
       </a>
 
-      <button type="button" id="closeVideoPolicyBtn"
+      <button type="button" id="closeVideoPolicyBtn" data-i18n="cancelUploadBtn"
               class="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-700 active:scale-[0.98]">
         I understand, cancel upload
       </button>
@@ -2644,28 +2678,28 @@ document.addEventListener('click', (e) => {
 <nav id="vw-bottom-nav" aria-label="Primary mobile navigation">
   <button type="button" data-tab="square" aria-label="Citizen Talk">
     <span class="nav-icon" aria-hidden="true">🗣️</span>
-   <span class="nav-label" data-i18n="publicSquareTab">Square</span>
+    <span class="nav-label" data-i18n="publicSquareTab">Square</span>
   </button>
 
   <button type="button" data-tab="witness" aria-label="Witness Voice">
     <span class="nav-icon" aria-hidden="true">🔬</span>
-    <span class="nav-label">Witness</span>
+    <span class="nav-label" data-i18n="trueWitness">Witness</span>
   </button>
 
   <!-- Center Speak / Compose -->
   <button type="button" data-action="speak" aria-label="Speak as a Citizen">
     <span class="nav-icon-wrap" aria-hidden="true">🎙️</span>
-    <span class="nav-label">Speak</span>
+    <span class="nav-label" data-i18n="speakNavLabel">Speak</span>
   </button>
 
   <button type="button" data-tab="mycircle" aria-label="My Circle">
     <span class="nav-icon" aria-hidden="true">👥</span>
-    <span class="nav-label">Circle</span>
+    <span class="nav-label" data-i18n="myCircleTab">Circle</span>
   </button>
 
   <button type="button" data-action="profile" aria-label="Profile">
     <span class="nav-icon" aria-hidden="true">👤</span>
-    <span class="nav-label">Profile</span>
+    <span class="nav-label" data-i18n="profileBtn">Profile</span>
   </button>
 </nav>
 </body>
