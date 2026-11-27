@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safety & Your Rights • VocalWitness</title>
+    <title data-i18n="safetyPageTitle">Safety &amp; Your Rights • VocalWitness</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="./style.css">
 </head>
@@ -14,29 +14,38 @@
         <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
             <a href="index.html" 
                class="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-medium text-emerald-400 hover:border-emerald-500/50 hover:bg-zinc-800 transition">
-                ← <span>Back to Square</span>
+                <span aria-hidden="true">←</span>
+                <span data-i18n="backToSquareText">Back to Square</span>
             </a>
 
-            <h1 class="text-base font-bold text-white tracking-tight hidden sm:block">VocalWitness</h1>
+            <h1 class="text-base font-bold text-white tracking-tight hidden sm:block" data-i18n="appTitle">VocalWitness</h1>
 
             <div class="flex items-center gap-2">
                 <button id="panicButton" type="button"
+                        data-i18n="panicExit"
+                        data-i18n-title="panicExitTooltip"
                         class="flex items-center gap-1.5 rounded-xl bg-red-600/90 px-3 py-2 text-xs font-bold text-white hover:bg-red-500 transition shadow-lg"
-                        title="Clear local data and exit immediately">
+                        title="Clear local data and exit">
                     🚨 Quick Exit
                 </button>
 
-                <select id="languageSelector" 
+                <select id="languageSelector" aria-label="Select language"
                         class="h-9 rounded-xl border border-zinc-700 bg-zinc-900 px-2 text-xs text-white focus:border-emerald-500 focus:outline-none">
-                    <option value="en">English</option>
-                    <option value="pcm">Pidgin</option>
-                    <option value="ha">Hausa</option>
-                    <option value="yo">Yorùbá</option>
-                    <option value="ig">Igbo</option>
-                    <option value="sw">Swahili</option>
-                    <option value="fr">Français</option>
-                    <option value="es">Español</option>
-                    <option value="ar">العربية</option>
+                    <option value="en">🇬🇧 English</option>
+                    <option value="pcm">🇳🇬 Naija Pidgin</option>
+                    <option value="ha">🇳🇬 Hausa</option>
+                    <option value="yo">🇳🇬 Yorùbá</option>
+                    <option value="ig">🇳🇬 Igbo</option>
+                    <option value="sw">🇹🇿 Kiswahili</option>
+                    <option value="ar">🇸🇦 العربية</option>
+                    <option value="es">🇪🇸 Español</option>
+                    <option value="fr">🇫🇷 Français</option>
+                    <option value="pt">🇵🇹 Português</option>
+                    <option value="de">🇩🇪 Deutsch</option>
+                    <option value="zh-CN">🇨🇳 中文</option>
+                    <option value="ma">🇪🇹 አማርኛ</option>
+                    <option value="hi">🇮🇳 हिन्दी</option>
+                    <option value="id">🇮🇩 Bahasa</option>
                 </select>
             </div>
         </div>
@@ -46,24 +55,24 @@
 
         <!-- Page Title -->
         <div class="flex items-center gap-4 mb-8">
-            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/20 text-3xl">🛡️</div>
+            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/20 text-3xl" aria-hidden="true">🛡️</div>
             <div>
-                <h1 class="text-3xl font-bold text-white tracking-tight">Safety & Your Rights</h1>
-                <p class="text-sm text-zinc-400 mt-1">Your protection is built into the system</p>
+                <h1 class="text-3xl font-bold text-white tracking-tight" data-i18n="safetyTitle">Safety &amp; Your Rights</h1>
+                <p class="text-sm text-zinc-400 mt-1" data-i18n="safetySubtitle">Practical protocols to protect your identity, location, and digital footprint when capturing and sharing evidence.</p>
             </div>
         </div>
 
         <!-- Banner -->
         <div class="rounded-3xl border border-emerald-500/30 bg-emerald-950/20 p-6 mb-10 space-y-4">
-            <h2 class="text-xl font-bold text-emerald-400">The Right to Verifiable Truth</h2>
-            <p class="text-zinc-300 leading-relaxed text-sm md:text-base">
+            <h2 class="text-xl font-bold text-emerald-400" data-i18n="safetyBannerHeading">The Right to Verifiable Truth</h2>
+            <p class="text-zinc-300 leading-relaxed text-sm md:text-base" data-i18n="safetyBannerDesc">
                 Every individual has the right to record and publish verified accounts of public events. 
                 This framework is anchored to Article 19 of the Universal Declaration of Human Rights.
             </p>
             <div class="flex flex-wrap gap-2 text-xs">
-                <span class="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 font-medium text-emerald-400">Data Minimization</span>
-                <span class="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 font-medium text-amber-400">Cloudflare Edge Shield</span>
-                <span class="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 font-medium text-cyan-400">Client-Side EXIF Scrubbing</span>
+                <span class="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 font-medium text-emerald-400" data-i18n="privacyBadgeMinimization">Data Minimization</span>
+                <span class="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 font-medium text-amber-400" data-i18n="termsBadgeEdge">Cloudflare Edge Shield</span>
+                <span class="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 font-medium text-cyan-400" data-i18n="privacyBadgeExif">Client-Side EXIF Scrubbing</span>
             </div>
         </div>
 
@@ -71,36 +80,51 @@
 
             <!-- 1 -->
             <section>
-                <h2 class="text-xl font-semibold text-white mb-4">1. Privacy & Data Protection Design</h2>
+                <h2 class="text-xl font-semibold text-white mb-4" data-i18n="safetySec1Heading">1. Privacy &amp; Data Protection Design</h2>
                 <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 space-y-3">
-                    <p class="text-sm text-zinc-300">
+                    <p class="text-sm text-zinc-300" data-i18n="safetySec1Intro">
                         We apply data minimization principles to reduce unnecessary tracking and protect contributor privacy:
                     </p>
                     <ul class="space-y-2 text-sm text-zinc-400 list-disc pl-5">
-                        <li><strong class="text-zinc-200">Focused Collection:</strong> Only necessary post and account data required for platform operation are processed.</li>
-                        <li><strong class="text-zinc-200">Automated Sanitization:</strong> Metadata and device signatures can be stripped in-browser before publishing.</li>
-                        <li><strong class="text-zinc-200">Secure Storage:</strong> Information is stored securely via Firebase and Cloudflare with operational controls.</li>
+                        <li>
+                            <strong class="text-zinc-200" data-i18n="safetyPoint1Title">Focused Collection:</strong>
+                            <span data-i18n="safetyPoint1Desc">Only necessary post and account data required for platform operation are processed.</span>
+                        </li>
+                        <li>
+                            <strong class="text-zinc-200" data-i18n="safetyPoint2Title">Automated Sanitization:</strong>
+                            <span data-i18n="safetyPoint2Desc">Metadata and device signatures can be stripped in-browser before publishing.</span>
+                        </li>
+                        <li>
+                            <strong class="text-zinc-200" data-i18n="safetyPoint3Title">Secure Storage:</strong>
+                            <span data-i18n="safetyPoint3Desc">Information is stored securely via Firebase and Cloudflare with operational controls.</span>
+                        </li>
                     </ul>
-                    <p class="text-xs text-zinc-500 pt-2">See the full <a href="/privacy" class="text-emerald-400 hover:underline">Privacy Policy</a> for details on what is collected and how it is used.</p>
+                    <p class="text-xs text-zinc-500 pt-2">
+                        <span data-i18n="safetyPrivacyLinkPart1">See the full</span>
+                        <a href="/privacy" class="text-emerald-400 hover:underline" data-i18n="privacyTitle">Privacy Policy</a>
+                        <span data-i18n="safetyPrivacyLinkPart2">for details on what is collected and how it is used.</span>
+                    </p>
                 </div>
             </section>
 
             <!-- 2 -->
             <section>
-                <h2 class="text-xl font-semibold text-white mb-4">2. High-Risk Operational Protocols</h2>
+                <h2 class="text-xl font-semibold text-white mb-4" data-i18n="safetySec2Heading">2. High-Risk Operational Protocols</h2>
                 <div class="grid sm:grid-cols-2 gap-4">
                     <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5">
-                        <div class="text-2xl mb-2">📡</div>
-                        <h3 class="font-semibold text-white mb-2">Network Obfuscation</h3>
-                        <p class="text-sm text-zinc-400">
+                        <div class="text-2xl mb-2" aria-hidden="true">📡</div>
+                        <h3 class="font-semibold text-white mb-2" data-i18n="safetyCard1Title">Network Obfuscation</h3>
+                        <p class="text-sm text-zinc-400" data-i18n="safetyCard1Desc">
                             In restricted or sensitive environments, consider using secure connection tools or trusted VPNs to protect your browsing context.
                         </p>
                     </div>
                     <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5">
-                        <div class="text-2xl mb-2">📱</div>
-                        <h3 class="font-semibold text-white mb-2">Device Security & Quick Exit</h3>
+                        <div class="text-2xl mb-2" aria-hidden="true">📱</div>
+                        <h3 class="font-semibold text-white mb-2" data-i18n="safetyCard2Title">Device Security &amp; Quick Exit</h3>
                         <p class="text-sm text-zinc-400">
-                            Maintain strong device lock safeguards. Press <strong>Quick Exit</strong> to instantly clear local browser storage and redirect away from the site.
+                            <span data-i18n="safetyCard2Part1">Maintain strong device lock safeguards. Press</span>
+                            <strong class="text-zinc-200" data-i18n="panicExit">Quick Exit</strong>
+                            <span data-i18n="safetyCard2Part2">to instantly clear local browser storage and redirect away from the site.</span>
                         </p>
                     </div>
                 </div>
@@ -108,30 +132,73 @@
 
             <!-- 3 -->
             <section>
-                <h2 class="text-xl font-semibold text-white mb-4">3. Prohibited Conduct</h2>
+                <h2 class="text-xl font-semibold text-white mb-4" data-i18n="safetySec3Heading">3. Prohibited Conduct</h2>
                 <ul class="space-y-3 text-sm text-zinc-300">
-                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span><strong>Doxxing</strong> — Publishing non-public personal details without consent.</span></li>
-                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span><strong>Harassment & Coercion</strong> — Targeted intimidation or threats.</span></li>
-                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span><strong>Synthetic Disinformation</strong> — Fabricated or heavily manipulated media meant to deceive.</span></li>
-                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span><strong>Spam & Sybil Attacks</strong> — Automated or fake accounts designed to abuse the system.</span></li>
+                    <li class="flex gap-3">
+                        <span class="text-red-400 font-bold" aria-hidden="true">✕</span>
+                        <span>
+                            <strong data-i18n="safetyRule1Title">Doxxing</strong>
+                            <span>—</span>
+                            <span data-i18n="safetyRule1Desc">Publishing non-public personal details without consent.</span>
+                        </span>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="text-red-400 font-bold" aria-hidden="true">✕</span>
+                        <span>
+                            <strong data-i18n="safetyRule2Title">Harassment &amp; Coercion</strong>
+                            <span>—</span>
+                            <span data-i18n="safetyRule2Desc">Targeted intimidation or threats.</span>
+                        </span>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="text-red-400 font-bold" aria-hidden="true">✕</span>
+                        <span>
+                            <strong data-i18n="safetyRule3Title">Synthetic Disinformation</strong>
+                            <span>—</span>
+                            <span data-i18n="safetyRule3Desc">Fabricated or heavily manipulated media meant to deceive.</span>
+                        </span>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="text-red-400 font-bold" aria-hidden="true">✕</span>
+                        <span>
+                            <strong data-i18n="safetyRule4Title">Spam &amp; Sybil Attacks</strong>
+                            <span>—</span>
+                            <span data-i18n="safetyRule4Desc">Automated or fake accounts designed to abuse the system.</span>
+                        </span>
+                    </li>
                 </ul>
             </section>
 
             <!-- 4 -->
             <section>
-                <h2 class="text-xl font-semibold text-white mb-4">4. Community Governance & Trust Tiers</h2>
+                <h2 class="text-xl font-semibold text-white mb-4" data-i18n="safetySec4Heading">4. Community Governance &amp; Trust Tiers</h2>
                 <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 space-y-3 text-sm text-zinc-400">
-                    <p>• <strong class="text-zinc-200">Citizen Talk</strong> — Open public discussions moderated via community flags and platform oversight.</p>
-                    <p>• <strong class="text-zinc-200">Citizen Circle</strong> — Phone verification to reduce spam and bots.</p>
-                    <p>• <strong class="text-zinc-200">Witness Voice / Higher Trust</strong> — Reports backed by client-side media hashing and stronger integrity tooling.</p>
-                    <p class="text-xs text-zinc-500 pt-1">Trust tiers and reputation are never for sale.</p>
+                    <p>
+                        <span>•</span>
+                        <strong class="text-zinc-200" data-i18n="citizenTalk">Open Talk</strong>
+                        <span>—</span>
+                        <span data-i18n="safetyTier1Desc">Open public discussions moderated via community flags and platform oversight.</span>
+                    </p>
+                    <p>
+                        <span>•</span>
+                        <strong class="text-zinc-200" data-i18n="termsSec3Tier2Label">Citizen Circle</strong>
+                        <span>—</span>
+                        <span data-i18n="safetyTier2Desc">Phone verification to reduce spam and bots.</span>
+                    </p>
+                    <p>
+                        <span>•</span>
+                        <strong class="text-zinc-200" data-i18n="termsSec3Tier3Label">Witness Voice / Higher Trust</strong>
+                        <span>—</span>
+                        <span data-i18n="safetyTier3Desc">Reports backed by client-side media hashing and stronger integrity tooling.</span>
+                    </p>
+                    <p class="text-xs text-zinc-500 pt-1" data-i18n="termsSec3Note">Trust tiers and reputation are never for sale.</p>
                 </div>
             </section>
 
             <!-- Mission -->
             <section class="pt-6 border-t border-zinc-800">
-                <p class="text-emerald-400 font-medium mb-1">Protocol Mission</p>
-                <p class="text-sm text-zinc-400">
+                <p class="text-emerald-400 font-medium mb-1" data-i18n="safetyMissionLabel">Protocol Mission</p>
+                <p class="text-sm text-zinc-400" data-i18n="safetyMissionDesc">
                     Building a reliable public square where factual reporting is supported by strong structural safeguards and clear operational standards.
                 </p>
             </section>
@@ -147,19 +214,19 @@
                             <span class="text-emerald-400">Vocal</span><span class="text-white">Witness</span>
                         </span>
                     </div>
-                    <p class="mt-2 text-sm text-zinc-400">Truth • Evidence • Zero-Knowledge</p>
+                    <p class="mt-2 text-sm text-zinc-400" data-i18n="brandTaglineDesktop">Truth • Evidence • Sealed</p>
                 </div>
                 <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-zinc-400 mb-6">
-                    <a href="/about" class="hover:text-emerald-400 transition">About</a>
-                    <a href="/safety" class="hover:text-emerald-400 transition">Safety</a>
-                    <a href="/privacy" class="hover:text-emerald-400 transition">Privacy</a>
-                    <a href="/terms" class="hover:text-emerald-400 transition">Terms</a>
-                    <a href="/transparency" class="hover:text-emerald-400 transition">Transparency</a>
-                    <a href="/verify" class="hover:text-emerald-400 transition">Verify</a>
+                    <a href="/about" class="hover:text-emerald-400 transition" data-i18n="aboutMenu">About</a>
+                    <a href="/safety" class="hover:text-emerald-400 transition" data-i18n="safetyRightsLink">Safety &amp; Rights</a>
+                    <a href="/privacy" class="hover:text-emerald-400 transition" data-i18n="privacyMenu">Privacy</a>
+                    <a href="/terms" class="hover:text-emerald-400 transition" data-i18n="termsMenu">Terms</a>
+                    <a href="/transparency" class="hover:text-emerald-400 transition" data-i18n="transparencyMenu">Transparency</a>
+                    <a href="/verify" class="hover:text-emerald-400 transition" data-i18n="verifyEvidenceCta">Verify Evidence</a>
                 </div>
-                <p class="text-xs text-zinc-500">© 2026 VocalWitness • Citizen Reporting • Real Evidence</p>
-                <p class="mt-1 text-[11px] text-zinc-600 max-w-md mx-auto leading-relaxed">
-                    Application-level integrity • Client-side hashing • The public record is designed to remain sealed
+                <p class="text-xs text-zinc-500" data-i18n="footerCopyright">© 2026 VocalWitness • Citizen Reporting • Sealed Evidence</p>
+                <p class="mt-1 text-[11px] text-zinc-600 max-w-md mx-auto leading-relaxed" data-i18n="footerIntegrityNote">
+                    Application-level integrity. Client-side hashing. Zero-knowledge options. The public record is designed to remain sealed.
                 </p>
             </div>
         </footer>
@@ -167,19 +234,22 @@
         <div class="mt-10 text-center">
             <a href="index.html" 
                class="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-8 py-3.5 font-semibold text-white shadow-lg hover:bg-emerald-500 transition">
-                ← Back to VocalWitness
+                <span aria-hidden="true">←</span>
+                <span data-i18n="backToVocalWitness">Back to VocalWitness</span>
             </a>
         </div>
     </main>
-    <section class="glass rounded-3xl p-6 mb-10 text-center">
-  <p class="text-zinc-400 mb-4">Need help getting started?</p>
-  <div class="flex flex-wrap justify-center gap-4 text-sm">
-    <a href="/how-to-use" class="text-emerald-400 hover:underline font-medium">How to Use</a>
-    <a href="/faq" class="text-emerald-400 hover:underline font-medium">FAQ</a>
-    <a href="/verify" class="text-emerald-400 hover:underline font-medium">Verify Evidence</a>
-    <a href="/journalist-verify" class="text-emerald-400 hover:underline font-medium">Journalist Guide</a>
-  </div>
-</section>
+    <section class="max-w-3xl mx-auto px-4 mb-10 text-center">
+        <div class="rounded-3xl border border-emerald-500/25 bg-[#111827]/95 p-6">
+            <p class="text-zinc-400 mb-4" data-i18n="aboutGettingStartedPrompt">Need help getting started?</p>
+            <div class="flex flex-wrap justify-center gap-4 text-sm">
+                <a href="/how-to-use" class="text-emerald-400 hover:underline font-medium" data-i18n="howToUseLink">How to Use</a>
+                <a href="/faq" class="text-emerald-400 hover:underline font-medium" data-i18n="faqLink">FAQ</a>
+                <a href="/verify" class="text-emerald-400 hover:underline font-medium" data-i18n="verifyEvidenceCta">Verify Evidence</a>
+                <a href="/journalist-verify" class="text-emerald-400 hover:underline font-medium" data-i18n="journalistGuideMenu">Journalist Guide</a>
+            </div>
+        </div>
+    </section>
 
     <script>
         document.getElementById('panicButton')?.addEventListener('click', () => {
