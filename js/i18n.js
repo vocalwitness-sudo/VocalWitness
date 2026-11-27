@@ -10,20 +10,23 @@ let currentLang = 'en';
 let currentFetchController = null;
 
 const DEFAULT_FALLBACK_DICTIONARY = {
-  shareTestimonyTitle: "Share Your Testimony",
+  appTitle: "VocalWitness",
+  appSubtitle: "Citizen Reporting • Sealed Evidence",
+  pageTitle: "VocalWitness • Truth • Evidence • Public Square",
+  shareTestimonyTitle: "Speak as a Citizen",
   publicSquareSubtitle: "Public Square",
-  headlinePlaceholder: "Headline or Title (Optional)",
-  mainInputPlaceholder: "Share your raw testimony... What did you witness?",
-  addPhotoEvidence: "Add Photo Evidence",
-  recordVoiceMessage: "Record Voice Message",
+  headlinePlaceholder: "Add a short title (optional)",
+  mainInputPlaceholder: "What did you see or experience? Speak as a Citizen…",
+  addPhotoEvidence: "Add Photo",
+  recordVoiceMessage: "Record Voice",
   previewAreaText: "Preview will appear here...",
-  termsSection9Title: "9. User Indemnification & Dispute Protocol",
-  termsSection9Text: "You agree to defend, indemnify, and hold harmless VocalWitness and its operators from any legal claims, liabilities, damages, or legal expenses arising from your violation of these Terms or your publication of illegal, defamatory, or infringing material. Any legal disputes or claims against content must be directed through our administrative takedown channel rather than against protocol infrastructure operators.",
-  safetyPageTitle: "Safety & Operational Security Guide • VocalWitness",
-  safetyTitle: "Citizen OpSec & Safety Guide",
+  termsSection9Title: "9. Your Responsibility for What You Post",
+  termsSection9Text: "You are responsible for what you publish. If someone has a problem with content, they should use our reporting process.",
+  safetyPageTitle: "Safety & Your Rights • VocalWitness",
+  safetyTitle: "Safety & Your Rights",
   safetySubtitle: "Practical protocols to protect your identity, location, and digital footprint when capturing and sharing evidence.",
   threatModelTitle: "Understand Your Threat Model",
-  threatModelDesc: "While VocalWitness automatically scrubs EXIF metadata and utilizes client-side zero-knowledge proofs, technology alone cannot prevent accidental personal exposure. If you are submitting high-risk testimonies or evidence under hostile surveillance, follow these operational security best practices.",
+  threatModelDesc: "VocalWitness strips EXIF metadata in the browser and offers optional higher-trust verification. Technology alone cannot prevent all exposure. For high-risk reporting, use extra operational security.",
   networkSafetyTitle: "Network Connection & IP Masking",
   networkTip1: "Use Tor or a Trustworthy VPN: Hide your physical location and IP address from network eavesdroppers before navigating to VocalWitness.",
   networkTip2: "Avoid Public Personal Wi-Fi: Do not upload sensitive whistleblower materials over home broadband or personal mobile accounts registered directly to your government ID.",
@@ -32,12 +35,12 @@ const DEFAULT_FALLBACK_DICTIONARY = {
   mediaTip2: "Voice & Face Anonymization: When recording video or audio in hostile environments, blur faces of non-consenting bystanders and alter distinct voice patterns before publishing.",
   identitySafetyTitle: "Identity & Account Discretion",
   identityTip1: "Pseudonymous Handle: Choose a username completely unlinked to your real name, social handles, or personal email address.",
-  identityTip2: "Zero-Knowledge Verification: Take advantage of True Witness ZK-verification options to establish trust without linking personal contact details to your submissions.",
+  identityTip2: "Higher-Trust Verification: Prefer stronger verification options when available. Some paths use real zero-knowledge proofs; others use simpler cryptographic checks — check the badge on each report.",
   physicalSafetyTitle: "Physical Security & Device Handling",
   physicalTip1: "Secure Device Storage: Keep your mobile phone encrypted and passcoded (avoid biometrics like fingerprint/face unlock in regions where authorities can compel biometric unlock).",
   physicalTip2: "Clear Browser Data: If using a shared or at-risk device, clear local storage and browser cache immediately after submitting your record.",
   goldenRuleTitle: "The Golden Rule of Citizen Witnessing",
-  goldenRuleText: "Never put yourself in immediate physical danger to capture evidence. Secure your physical safety first. Once you are in a protected location, use cryptographic tools to notarize and share your record with the world."
+  goldenRuleText: "Never put yourself in immediate physical danger to capture evidence. Secure your safety first. Then use the tools available to timestamp and share a verifiable record."
 };
 
 export const supportedLanguages = [
@@ -90,7 +93,7 @@ export function t(key, paramsOrFallback = {}, defaultFallback = "") {
 
   if (typeof paramsOrFallback === 'string') {
     fallback = paramsOrFallback;
-  } else if (typeof paramsOrFallback === 'object') {
+  } else if (typeof paramsOrFallback === 'object' && paramsOrFallback !== null) {
     params = paramsOrFallback;
   }
 
@@ -113,6 +116,18 @@ export function t(key, paramsOrFallback = {}, defaultFallback = "") {
 }
 
 /**
+ * Resolves and sets the active page <title> using its data-i18n key if present
+ */
+function applyDocumentTitle() {
+  const titleEl = document.querySelector('title');
+  const titleKey = titleEl?.getAttribute('data-i18n') || 'pageTitle';
+  const translatedTitle = t(titleKey);
+  if (translatedTitle && translatedTitle !== titleKey) {
+    document.title = translatedTitle;
+  }
+}
+
+/**
  * Updates html direction and lang attributes
  */
 function applyTextDirection(langCode) {
@@ -121,7 +136,7 @@ function applyTextDirection(langCode) {
 
   document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
   document.documentElement.setAttribute('lang', langCode);
-  document.title = t('pageTitle') || document.title;
+  applyDocumentTitle();
 
   // Keep navigation header strictly LTR to avoid broken layouts
   const header = document.getElementById('main-header');
@@ -138,10 +153,13 @@ function applyTextDirection(langCode) {
  * Scans the DOM and applies translations to marked elements
  */
 export function applyTranslations(rootElement = document) {
-  // 1. Inner Text & HTML Content
+  // 1. Inner Text Content
   rootElement.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if (!key) return;
+
+    // <title> is handled cleanly via applyDocumentTitle()
+    if (el.tagName === 'TITLE') return;
 
     let params = {};
     const paramsAttr = el.getAttribute('data-i18n-params');
@@ -151,9 +169,6 @@ export function applyTranslations(rootElement = document) {
 
     const text = t(key, params);
     if (!text) return;
-
-    // Skip <title> — handled via document.title in loadTranslations
-    if (el.tagName === 'TITLE') return;
 
     // Prefer dedicated child so icons/SVG siblings stay intact
     const target =
@@ -205,6 +220,7 @@ export function applyTranslations(rootElement = document) {
     if (key) el.setAttribute('alt', t(key));
   });
 }
+
 /**
  * Syncs language selection dropdowns across desktop and mobile UI
  */
@@ -276,11 +292,11 @@ export async function loadTranslations(langCode = 'en') {
 
   localStorage.setItem('preferredLang', currentLang);
 
-  document.documentElement.lang = currentLang;
-   applyTextDirection(currentLang);
+  applyTextDirection(currentLang);
   applyTranslations();
-  document.title = t('pageTitle') || document.title;
+  applyDocumentTitle();
   syncSelectors(currentLang);
+
   window.dispatchEvent(new CustomEvent('languageChanged', {
     detail: { lang: currentLang }
   }));
@@ -318,7 +334,9 @@ const observer = new MutationObserver((mutations) => {
           node.hasAttribute?.('data-i18n') ||
           node.hasAttribute?.('data-i18n-placeholder') ||
           node.hasAttribute?.('data-i18n-aria') ||
-          node.querySelector?.('[data-i18n], [data-i18n-placeholder], [data-i18n-aria]')
+          node.hasAttribute?.('data-i18n-title') ||
+          node.hasAttribute?.('data-i18n-alt') ||
+          node.querySelector?.('[data-i18n], [data-i18n-placeholder], [data-i18n-aria], [data-i18n-title], [data-i18n-alt]')
         ) {
           shouldTranslate = true;
           break;
