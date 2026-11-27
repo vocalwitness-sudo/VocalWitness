@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en-NG">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>How to Use • VocalWitness</title>
+    <title data-i18n="howToUsePageTitle">How to Use • VocalWitness</title>
     <link rel="stylesheet" href="./style.css">
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: #e4e4e7; }
@@ -18,9 +18,11 @@
         <div class="flex items-center justify-between mb-10 glass rounded-3xl p-4">
             <div class="flex items-center gap-3">
                 <a href="/" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back">⬅️</a>
-                <h1 class="text-2xl font-bold tracking-tight text-white">VocalWitness</h1>
+                <h1 class="text-2xl font-bold tracking-tight text-white">
+                    <span class="text-emerald-400">Vocal</span><span>Witness</span>
+                </h1>
             </div>
-            <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
+            <select id="languageSelector" aria-label="Select language" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
                 <option value="en">🇬🇧 English</option>
                 <option value="pcm">🇳🇬 Naija Pidgin</option>
                 <option value="ha">🇳🇬 Hausa</option>
@@ -28,118 +30,151 @@
                 <option value="ig">🇳🇬 Igbo</option>
                 <option value="sw">🇹🇿 Kiswahili</option>
                 <option value="ar">🇸🇦 العربية</option>
+                <option value="es">🇪🇸 Español</option>
                 <option value="fr">🇫🇷 Français</option>
+                <option value="pt">🇵🇹 Português</option>
+                <option value="de">🇩🇪 Deutsch</option>
+                <option value="zh-CN">🇨🇳 中文</option>
+                <option value="ma">🇪🇹 አማርኛ</option>
+                <option value="hi">🇮🇳 हिन्दी</option>
+                <option value="id">🇮🇩 Bahasa</option>
             </select>
         </div>
 
         <header class="mb-10">
-            <h1 class="text-4xl md:text-5xl font-bold tracking-tighter text-white mb-3">How to Use VocalWitness</h1>
-            <p class="text-xl text-zinc-400">Simple steps to seal and share what you witnessed.</p>
+            <h1 class="text-4xl md:text-5xl font-bold tracking-tighter text-white mb-3" data-i18n="howToUseMainTitle">How to Use VocalWitness</h1>
+            <p class="text-xl text-zinc-400" data-i18n="howToUseSubtitle">A complete guide to speaking out, sealing evidence, and verifying the public record.</p>
         </header>
 
         <!-- Quick intro -->
         <section class="glass rounded-3xl p-8 mb-8">
-            <p class="text-zinc-200 leading-relaxed">
-                VocalWitness is a public square for sealed citizen reports. 
-                Anyone can speak. Once a report is sealed, the media and core record are protected from ordinary editing or hard deletion.
+            <p class="text-zinc-200 leading-relaxed" data-i18n="howToUseIntro">
+                VocalWitness is a privacy-first public square for citizen reporting. Anyone can share what they witnessed or join live discussions. Once a report is published, its media and cryptographic seal are protected against secret edits or hard deletion.
             </p>
             <div class="mt-5 flex flex-wrap gap-2 text-xs">
-                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400">Client-side SHA-256</span>
-                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">30-minute text window</span>
-                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">Soft-hide only</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400" data-i18n="badgeClientSha256">Client-side SHA-256</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400" data-i18n="badgeTextWindow">30-minute text window</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400" data-i18n="badgeSoftHideOnly">Soft-hide only</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-purple-400" data-i18n="badgeExifScrubbed">EXIF metadata removed</span>
             </div>
         </section>
 
-        <!-- Step 1 -->
+        <!-- Section 1: Understanding the Two Channels -->
         <section class="glass rounded-3xl p-8 mb-6">
-            <h2 class="text-2xl font-bold text-emerald-400 mb-4">1. Post a Citizen Report (Public Square)</h2>
-            <ol class="space-y-3 text-zinc-300 list-decimal list-inside leading-relaxed">
-                <li>Go to the Public Square on the home page.</li>
-                <li>Write what you saw or experienced (max 3,000 characters).</li>
-                <li>Optionally add a photo, short video, or live voice recording.</li>
-                <li>Choose whether to post as yourself or anonymously (if available).</li>
-                <li>Tap <strong class="text-white">Publish Report</strong>.</li>
-            </ol>
-            <div class="mt-6 p-4 rounded-2xl bg-zinc-900/60 border border-zinc-700 text-sm text-zinc-400">
-                <strong class="text-zinc-200">What happens next:</strong><br>
-                • Media is cleaned and hashed on your device.<br>
-                • The report is sealed and added to the public record.<br>
-                • You can edit the <strong>text only</strong> for 30 minutes.<br>
-                • After 30 minutes you can only soft-hide the report. Media and seal cannot be changed.
+            <h2 class="text-2xl font-bold text-emerald-400 mb-4" data-i18n="howStep1Title">1. Understand the Two Channels</h2>
+            <p class="text-zinc-300 mb-4" data-i18n="howStep1Intro">VocalWitness separates open community discussion from high-integrity first-hand reporting so readers know what kind of record they are viewing:</p>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-700">
+                    <h3 class="font-bold text-white mb-1" data-i18n="howCitizenTalkCardTitle">🗣️ Citizen Talk (Public Square)</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed" data-i18n="howCitizenTalkCardDesc">Open to all signed-in citizens for everyday reports, community updates, questions, and civic discussion. Every post is still hashed and sealed.</p>
+                </div>
+                <div class="p-4 rounded-2xl bg-zinc-900/60 border border-emerald-500/30">
+                    <h3 class="font-bold text-emerald-400 mb-1" data-i18n="howWitnessVoiceCardTitle">🛡️ Witness Voice (Higher Integrity)</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed" data-i18n="howWitnessVoiceCardDesc">Reserved for direct, first-hand observations and verifiable evidence. Media is fingerprinted on your device before upload for stronger verification.</p>
+                </div>
             </div>
         </section>
 
-        <!-- Step 2 -->
+        <!-- Section 2: Post a Citizen Report -->
         <section class="glass rounded-3xl p-8 mb-6">
-            <h2 class="text-2xl font-bold text-emerald-400 mb-4">2. Post a higher-integrity Witness Voice report</h2>
-            <p class="text-zinc-300 mb-4">Use <a href="/witness-voice" class="text-emerald-400 hover:underline">Witness Voice</a> when you want stronger integrity for first-hand observations.</p>
+            <h2 class="text-2xl font-bold text-emerald-400 mb-4" data-i18n="howStep2Title">2. Publish a Sealed Report</h2>
             <ol class="space-y-3 text-zinc-300 list-decimal list-inside leading-relaxed">
-                <li>Open the Witness Voice page.</li>
-                <li>Record your voice or write your observation.</li>
-                <li>Optionally attach photo or video.</li>
-                <li>The system hashes the final media on your device before upload.</li>
-                <li>Publish once. The report is sealed.</li>
+                <li data-i18n="howStep2Item1">Sign in with Google, GitHub, or X (no government ID or passport is ever collected).</li>
+                <li data-i18n="howStep2Item2">Open the composer in the Public Square and choose Citizen Report or Field Note (if posting in a professional capacity like Researcher, NGO, or Educator).</li>
+                <li data-i18n="howStep2Item3">Write what you saw or experienced clearly, and add an optional short headline.</li>
+                <li data-i18n="howStep2Item4">Attach Live Voice, a Photo, a short raw Video, or an Audio file if you have supporting evidence.</li>
+                <li data-i18n="howStep2Item5">Choose whether to post publicly or restrict visibility to your Trusted Circle, then tap Publish Report.</li>
+            </ol>
+            <div class="mt-6 p-4 rounded-2xl bg-zinc-900/60 border border-zinc-700 text-sm text-zinc-400 space-y-1.5">
+                <p class="font-semibold text-zinc-200" data-i18n="howWhatHappensNextHeading">What happens when you publish:</p>
+                <p data-i18n="howWhatHappens1">• Location (GPS) and camera metadata are automatically stripped in your browser.</p>
+                <p data-i18n="howWhatHappens2">• A SHA-256 digital fingerprint is created and sealed into the public record.</p>
+                <p data-i18n="howWhatHappens3">• You have 30 minutes to fix typos in the text only. Media and hashes can never be altered.</p>
+                <p data-i18n="howWhatHappens4">• After 30 minutes, you can soft-hide a report from the main feed, but the sealed record cannot be secretly erased.</p>
+            </div>
+        </section>
+
+        <!-- Section 3: Witness Voice & Live Recording -->
+        <section class="glass rounded-3xl p-8 mb-6">
+            <h2 class="text-2xl font-bold text-emerald-400 mb-4" data-i18n="howStep3Title">3. Record Live Voice &amp; Witness Voice Reports</h2>
+            <p class="text-zinc-300 mb-4" data-i18n="howStep3Intro">Use Witness Voice when you are directly witnessing an event and want the strongest level of integrity.</p>
+            <ol class="space-y-3 text-zinc-300 list-decimal list-inside leading-relaxed">
+                <li data-i18n="howStep3Item1">Switch to the Witness tab or select Witness Voice as your destination channel.</li>
+                <li data-i18n="howStep3Item2">Tap Live Voice to record directly on the spot—live audio carries stronger weight as first-hand evidence than uploaded files.</li>
+                <li data-i18n="howStep3Item3">Attach unedited photos or short raw video clips (AI-generated or heavily edited videos are strictly prohibited).</li>
+                <li data-i18n="howStep3Item4">Review your preview and publish once to lock the cryptographic seal.</li>
             </ol>
         </section>
 
-        <!-- Step 3 -->
+        <!-- Section 4: Download & Share Evidence Packs -->
         <section class="glass rounded-3xl p-8 mb-6">
-            <h2 class="text-2xl font-bold text-emerald-400 mb-4">3. Download and share an Evidence Pack</h2>
+            <h2 class="text-2xl font-bold text-emerald-400 mb-4" data-i18n="howStep4Title">4. Download &amp; Share Your Evidence Pack</h2>
             <ol class="space-y-3 text-zinc-300 list-decimal list-inside leading-relaxed">
-                <li>After publishing, click <strong class="text-white">Download Evidence Pack</strong>.</li>
-                <li>You receive a JSON file with text hash, media hashes, pack core hash, and verification instructions.</li>
-                <li>Share the link or the JSON file with journalists, NGOs, or anyone who needs to verify.</li>
+                <li data-i18n="howStep4Item1">Right after publishing (or from any sealed report), click Download Evidence Pack.</li>
+                <li data-i18n="howStep4Item2">Save the JSON file—it contains your report ID, timestamp, text hash, media hashes, and verification instructions.</li>
+                <li data-i18n="howStep4Item3">Share the report link or Evidence Pack JSON with journalists, human rights groups, researchers, or your community.</li>
             </ol>
-            <p class="mt-4 text-sm text-zinc-400">Anyone can verify without an account.</p>
+            <p class="mt-4 text-sm text-zinc-400" data-i18n="howStep4Note">No account is required to inspect or verify an Evidence Pack.</p>
         </section>
 
-        <!-- Step 4 -->
+        <!-- Section 5: How Anyone Can Verify a Report -->
         <section class="glass rounded-3xl p-8 mb-6">
-            <h2 class="text-2xl font-bold text-emerald-400 mb-4">4. How anyone can verify a report</h2>
+            <h2 class="text-2xl font-bold text-emerald-400 mb-4" data-i18n="howStep5Title">5. Verify Any Report or Media File</h2>
             <div class="space-y-4 text-zinc-300">
                 <div>
-                    <h3 class="font-semibold text-white mb-1">Online (easiest)</h3>
-                    <p>Open the shared link or go to the <a href="/verify" class="text-emerald-400 hover:underline">Verify</a> page. Paste the report ID + hash, or drop the Evidence Pack JSON. You can also drop the original media file to check the hash.</p>
+                    <h3 class="font-semibold text-white mb-1" data-i18n="howVerifyOnlineTitle">Online Verification (Easiest)</h3>
+                    <p data-i18n="howVerifyOnlineDesc">Open the shared report link or visit the Evidence Verifier page. You can check a Testimony or Credential ID against the ledger, scan a media file for Content Credentials (C2PA), or paste an Evidence Pack JSON to confirm nothing was altered.</p>
                 </div>
                 <div>
-                    <h3 class="font-semibold text-white mb-1">Offline</h3>
-                    <p>Download the media and the Evidence Pack. Compute the SHA-256 of the media file on your computer and compare it with the hash inside the pack. Do the same for the text body.</p>
+                    <h3 class="font-semibold text-white mb-1" data-i18n="howVerifyOfflineTitle">Offline Verification</h3>
+                    <p data-i18n="howVerifyOfflineDesc">Compute the SHA-256 hash of the original media file or text on any computer and compare it against the hash inside the Evidence Pack. Identical hashes prove the file has not changed by a single bit since sealing.</p>
                 </div>
             </div>
         </section>
 
-        <!-- Extra tips -->
+        <!-- Section 6: Live Arena, My Circle & Trust Levels -->
+        <section class="glass rounded-3xl p-8 mb-6">
+            <h2 class="text-2xl font-bold text-emerald-400 mb-4" data-i18n="howStep6Title">6. Live Arena, My Circle &amp; Trust Tiers</h2>
+            <ul class="space-y-3 text-zinc-300 list-disc list-inside leading-relaxed">
+                <li data-i18n="howStep6Item1">Live Arena: Join or host real-time audio rooms for breaking local events, traffic, weather, or civic updates, filtered by Near Me, My Circle, or Higher Trust.</li>
+                <li data-i18n="howStep6Item2">My Circle: Follow reliable reporters and build a Trusted Circle so you can share sensitive updates only with people you trust.</li>
+                <li data-i18n="howStep6Item3">Verification Tiers: Everyone starts as a Citizen. Complete a temporary anti-spam phone check (never stored publicly) to unlock Citizen Circle, or complete Higher Trust verification for Witness Circle features.</li>
+                <li data-i18n="howStep6Item4">Groups &amp; Corroboration: Join topic or community groups and corroborate reports you independently witnessed to strengthen public context.</li>
+            </ul>
+        </section>
+
+        <!-- Section 7: Privacy, Data Saver & Quick Exit -->
         <section class="glass rounded-3xl p-8 mb-10">
-            <h2 class="text-2xl font-bold text-emerald-400 mb-4">Useful tips</h2>
-            <ul class="space-y-3 text-zinc-300 list-disc list-inside">
-                <li>Turn on <strong>Data Saver</strong> if you are on a slow or expensive connection.</li>
-                <li>Speak clearly when recording live voice — it carries stronger evidence weight.</li>
-                <li>Only submit first-hand observations on higher-integrity channels.</li>
-                <li>Keep your Evidence Packs. They are your permanent verification files.</li>
+            <h2 class="text-2xl font-bold text-emerald-400 mb-4" data-i18n="howStep7Title">7. Safety, Data Saver &amp; Quick Controls</h2>
+            <ul class="space-y-3 text-zinc-300 list-disc list-inside leading-relaxed">
+                <li data-i18n="howStep7Item1">Privacy Shield: Keep Privacy Shield enabled in Edit Profile to hide your real name and region from public view.</li>
+                <li data-i18n="howStep7Item2">Data Saver Mode: Toggle Data Saver in the top menu or footer to reduce bandwidth and mobile data usage on slow connections.</li>
+                <li data-i18n="howStep7Item3">Emergency Clear: In Security &amp; Account settings, use Emergency Clear This Device to instantly wipe local browser data on your phone or computer while keeping your sealed reports safe on the record.</li>
+                <li data-i18n="howStep7Item4">Keep Your Evidence Packs: Store downloaded JSON packs in a safe folder or cloud backup as permanent, independent proof.</li>
             </ul>
         </section>
 
         <!-- Cross links -->
         <section class="glass rounded-3xl p-6 mb-10 text-center">
-            <p class="text-zinc-400 mb-4">Need more detail?</p>
+            <p class="text-zinc-400 mb-4" data-i18n="needMoreDetailPrompt">Need more detail?</p>
             <div class="flex flex-wrap justify-center gap-4 text-sm">
-                <a href="/faq" class="text-emerald-400 hover:underline font-medium">FAQ</a>
-                <a href="/about" class="text-emerald-400 hover:underline font-medium">About</a>
-                <a href="/verify" class="text-emerald-400 hover:underline font-medium">Verify</a>
-                <a href="/journalist-verify" class="text-emerald-400 hover:underline font-medium">Journalist Guide</a>
-                <a href="/safety" class="text-emerald-400 hover:underline font-medium">Safety</a>
-                <a href="/privacy" class="text-emerald-400 hover:underline font-medium">Privacy</a>
+                <a href="/faq" class="text-emerald-400 hover:underline font-medium" data-i18n="faqLink">FAQ</a>
+                <a href="/about" class="text-emerald-400 hover:underline font-medium" data-i18n="aboutMenu">About</a>
+                <a href="/verify" class="text-emerald-400 hover:underline font-medium" data-i18n="verifyEvidenceCta">Verify Evidence</a>
+                <a href="/journalist-verify" class="text-emerald-400 hover:underline font-medium" data-i18n="journalistGuideMenu">Journalist Guide</a>
+                <a href="/safety" class="text-emerald-400 hover:underline font-medium" data-i18n="safetyRightsLink">Safety &amp; Rights</a>
+                <a href="/privacy" class="text-emerald-400 hover:underline font-medium" data-i18n="privacyMenu">Privacy</a>
             </div>
         </section>
 
         <!-- Footer -->
         <div class="flex flex-wrap justify-center gap-4 text-sm text-zinc-400 mb-10">
-            <a href="/faq" class="hover:text-emerald-400">FAQ</a>
-            <a href="/about" class="hover:text-emerald-400">About</a>
-            <a href="/transparency" class="hover:text-emerald-400">Transparency</a>
-            <a href="/safety" class="hover:text-emerald-400">Safety</a>
-            <a href="/privacy" class="hover:text-emerald-400">Privacy</a>
-            <a href="/terms" class="hover:text-emerald-400">Terms</a>
+            <a href="/faq" class="hover:text-emerald-400" data-i18n="faqLink">FAQ</a>
+            <a href="/about" class="hover:text-emerald-400" data-i18n="aboutMenu">About</a>
+            <a href="/transparency" class="hover:text-emerald-400" data-i18n="transparencyMenu">Transparency</a>
+            <a href="/safety" class="hover:text-emerald-400" data-i18n="safetyRightsLink">Safety &amp; Rights</a>
+            <a href="/privacy" class="hover:text-emerald-400" data-i18n="privacyMenu">Privacy</a>
+            <a href="/terms" class="hover:text-emerald-400" data-i18n="termsMenu">Terms</a>
         </div>
 
     </div>
