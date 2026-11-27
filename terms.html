@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Terms of Service • VocalWitness</title>
+  <title data-i18n="termsPageTitle">Terms of Service • VocalWitness</title>
   <link rel="stylesheet" href="./style.css">
   <style>
     body { background-color: #0a0f1c; color: white; font-family: 'Inter', system-ui, sans-serif; }
@@ -18,112 +18,166 @@
     <div class="flex items-center justify-between mb-10 glass rounded-3xl p-4">
       <div class="flex items-center gap-3">
         <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back to home">⬅️</a>
-        <h1 class="text-2xl font-bold tracking-tight">VocalWitness</h1>
+        <h1 class="text-2xl font-bold tracking-tight" data-i18n="appTitle">VocalWitness</h1>
       </div>
       <div class="flex items-center gap-3">
-        <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
+        <select id="languageSelector" aria-label="Select language" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
             <option value="en">🇬🇧 English</option>
+            <option value="pcm">🇳🇬 Naija Pidgin</option>
+            <option value="ha">🇳🇬 Hausa</option>
+            <option value="yo">🇳🇬 Yorùbá</option>
+            <option value="ig">🇳🇬 Igbo</option>
+            <option value="sw">🇹🇿 Kiswahili</option>
             <option value="ar">🇸🇦 العربية</option>
             <option value="es">🇪🇸 Español</option>
             <option value="fr">🇫🇷 Français</option>
-            <option value="sw">🇹🇿 Kiswahili</option>
+            <option value="pt">🇵🇹 Português</option>
+            <option value="de">🇩🇪 Deutsch</option>
+            <option value="zh-CN">🇨🇳 中文</option>
+            <option value="ma">🇪🇹 አማርኛ</option>
+            <option value="hi">🇮🇳 हिन्दी</option>
+            <option value="id">🇮🇩 Bahasa</option>
         </select>
       </div>
     </div>
 
     <div class="flex items-center gap-4 mb-6">
-      <div class="w-12 h-12 bg-emerald-500/20 rounded-3xl flex items-center justify-center text-4xl">📜</div>
-      <h1 class="text-4xl font-bold tracking-tight">Terms of Service</h1>
+      <div class="w-12 h-12 bg-emerald-500/20 rounded-3xl flex items-center justify-center text-4xl" aria-hidden="true">📜</div>
+      <h1 class="text-4xl font-bold tracking-tight" data-i18n="termsTitle">Terms of Service</h1>
     </div>
 
-    <p class="text-zinc-400 mb-10">Last updated: October 16, 2026</p>
+    <p class="text-zinc-400 mb-10" data-i18n="termsLastUpdated">Last updated: October 16, 2026</p>
 
     <!-- Friendly Intro -->
     <div class="glass rounded-3xl p-8 mb-10 space-y-4">
-      <p class="text-emerald-300 leading-relaxed text-lg">
+      <p class="text-emerald-300 leading-relaxed text-lg" data-i18n="termsIntro">
         Welcome to VocalWitness — a public square where people can share real reports and evidence with strong protection.  
         By using the platform you agree to these simple rules.
       </p>
       <div class="pt-2 flex flex-wrap items-center gap-3 text-xs text-zinc-300">
-        <span class="text-zinc-400 font-medium">Protected by:</span>
-        <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400">Google Cloud / Firebase</span>
-        <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">Cloudflare Edge Shield</span>
-        <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">Web Crypto & Optional ZK Verification</span>
+        <span class="text-zinc-400 font-medium" data-i18n="termsSecuredBy">Protected by:</span>
+        <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400" data-i18n="aboutBadgeFirebase">Google Cloud / Firebase</span>
+        <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400" data-i18n="termsBadgeEdge">Cloudflare Edge Shield</span>
+        <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400" data-i18n="termsBadgeCryptoZk">Web Crypto &amp; Optional ZK Verification</span>
       </div>
     </div>
 
     <div class="space-y-12 text-zinc-300">
       
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">1. Acceptance of These Terms</h2>
-        <p>By creating an account, posting, or using VocalWitness, you agree to these Terms and our <a href="/privacy" class="text-emerald-400 hover:underline">Privacy Policy</a>. If you do not agree, please do not use the platform.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection1Title">1. Acceptance of These Terms</h2>
+        <p>
+          <span data-i18n="termsSec1Part1">By creating an account, posting, or using VocalWitness, you agree to these Terms and our</span>
+          <a href="/privacy" class="text-emerald-400 hover:underline" data-i18n="privacyTitle">Privacy Policy</a>.
+          <span data-i18n="termsSec1Part2">If you do not agree, please do not use the platform.</span>
+        </p>
       </div>
 
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">2. Our Role – A Public Square Infrastructure</h2>
-        <p>VocalWitness provides a structured interface for public reporting. We offer tools to publish reports and manage community interaction, operating on cloud infrastructure (Firebase) with moderation capabilities managed by operators and platform systems. We do not act as an editorial publisher of user content.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSec2Heading">2. Our Role – A Public Square Infrastructure</h2>
+        <p data-i18n="termsSec2Body">VocalWitness provides a structured interface for public reporting. We offer tools to publish reports and manage community interaction, operating on cloud infrastructure (Firebase) with moderation capabilities managed by operators and platform systems. We do not act as an editorial publisher of user content.</p>
       </div>
 
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">3. Verification Levels (How Trust Works)</h2>
-        <p class="mb-3">To keep the square safe from bots and spam, we use tiered verification levels:</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection3Title">3. Verification Levels (How Trust Works)</h2>
+        <p class="mb-3" data-i18n="termsSec3Intro">To keep the square safe from bots and spam, we use tiered verification levels:</p>
         <ul class="list-disc pl-6 space-y-3 text-zinc-400">
-          <li><strong class="text-emerald-400">Citizen Talk</strong> — Open to everyone who signs up for basic public discussion.</li>
-          <li><strong class="text-emerald-400">Citizen Circle</strong> — Unlocked with a phone verification workflow to help prevent spam and bot accounts.</li>
-          <li><strong class="text-emerald-400">Witness Voice / Higher Trust</strong> — Advanced tiers incorporating client-side media hashing, metadata processing, and optional zero-knowledge proofs.</li>
+          <li>
+            <strong class="text-emerald-400" data-i18n="citizenTalk">Open Talk</strong>
+            <span>—</span>
+            <span data-i18n="termsSec3Tier1Desc">Open to everyone who signs up for basic public discussion.</span>
+          </li>
+          <li>
+            <strong class="text-emerald-400" data-i18n="termsSec3Tier2Label">Citizen Circle</strong>
+            <span>—</span>
+            <span data-i18n="termsSec3Tier2Desc">Unlocked with a phone verification workflow to help prevent spam and bot accounts.</span>
+          </li>
+          <li>
+            <strong class="text-emerald-400" data-i18n="termsSec3Tier3Label">Witness Voice / Higher Trust</strong>
+            <span>—</span>
+            <span data-i18n="termsSec3Tier3Desc">Advanced tiers incorporating client-side media hashing, metadata processing, and optional zero-knowledge proofs.</span>
+          </li>
         </ul>
-        <p class="mt-3 text-sm text-zinc-500">Trust tiers and reputation are never for sale.</p>
+        <p class="mt-3 text-sm text-zinc-500" data-i18n="termsSec3Note">Trust tiers and reputation are never for sale.</p>
       </div>
 
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">4. Your Rights and Responsibilities</h2>
-        <p class="mb-4 text-zinc-400">You stay in control of your voice. Here are the clear rules:</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection4Title">4. Your Rights and Responsibilities</h2>
+        <p class="mb-4 text-zinc-400" data-i18n="termsSection4Intro">You stay in control of your voice. Here are the clear rules:</p>
         <ul class="space-y-4">
-          <li class="flex gap-3"><span class="text-emerald-400">✅</span> <span><strong>Your Choice:</strong> You decide what content to publish within the public square.</span></li>
-          <li class="flex gap-3"><span class="text-emerald-400">✅</span> <span><strong>Be Honest:</strong> Only post reports and evidence you genuinely believe are accurate.</span></li>
-          <li class="flex gap-3"><span class="text-red-400">❌</span> <span><strong>No Doxxing or Harassment:</strong> Do not share other people’s private details. Targeted harassment is strictly prohibited.</span></li>
-          <li class="flex gap-3"><span class="text-red-400">❌</span> <span><strong>No Harmful Content:</strong> Creating deceptive or malicious media to harm others is forbidden.</span></li>
+          <li class="flex gap-3">
+            <span class="text-emerald-400" aria-hidden="true">✅</span>
+            <span>
+              <strong data-i18n="termsSec4Rule1Title">Your Choice:</strong>
+              <span data-i18n="termsSec4Rule1Desc">You decide what content to publish within the public square.</span>
+            </span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-emerald-400" aria-hidden="true">✅</span>
+            <span>
+              <strong data-i18n="termsSec4Rule2Title">Be Honest:</strong>
+              <span data-i18n="termsSec4Rule2Desc">Only post reports and evidence you genuinely believe are accurate.</span>
+            </span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-red-400" aria-hidden="true">❌</span>
+            <span>
+              <strong data-i18n="termsSec4Rule3Title">No Doxxing or Harassment:</strong>
+              <span data-i18n="termsSec4Rule3Desc">Do not share other people’s private details. Targeted harassment is strictly prohibited.</span>
+            </span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-red-400" aria-hidden="true">❌</span>
+            <span>
+              <strong data-i18n="termsSec4Rule4Title">No Harmful Content:</strong>
+              <span data-i18n="termsSec4Rule4Desc">Creating deceptive or malicious media to harm others is forbidden.</span>
+            </span>
+          </li>
         </ul>
       </div>
 
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">5. Content Ownership & Visibility</h2>
-        <p>You retain ownership of the content you post. By publishing, you grant VocalWitness the necessary license to store, process, and display your contributions across feeds and ledgers. Sealed reports are designed so ordinary users cannot quietly edit or delete them. Operators retain the ability to moderate for safety and legal compliance.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSec5Heading">5. Content Ownership &amp; Visibility</h2>
+        <p data-i18n="termsSec5Body">You retain ownership of the content you post. By publishing, you grant VocalWitness the necessary license to store, process, and display your contributions across feeds and ledgers. Sealed reports are designed so ordinary users cannot quietly edit or delete them. Operators retain the ability to moderate for safety and legal compliance.</p>
       </div>
 
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">6. Technology and Hosting</h2>
-        <p>The platform relies on trusted cloud infrastructure (including Google Firebase and Cloudflare) to deliver secure hosting and database services. The platform is provided on an “as is” and “as available” basis.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSec6Heading">6. Technology and Hosting</h2>
+        <p data-i18n="termsSec6Body">The platform relies on trusted cloud infrastructure (including Google Firebase and Cloudflare) to deliver secure hosting and database services. The platform is provided on an “as is” and “as available” basis.</p>
       </div>
 
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">7. Support, Credentials and Contributions</h2>
-        <p>The platform can be supported through voluntary contributions. An optional Independent Citizen Press Credential (Standard free / Official paid) is available for professionals who need a formal document. Financial support or purchase of a credential does <strong>not</strong> grant special administrative control, ownership, higher truth rank, or exemption from platform rules.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSec7Heading">7. Support, Credentials and Contributions</h2>
+        <p>
+          <span data-i18n="termsSec7Part1">The platform can be supported through voluntary contributions. An optional Independent Citizen Press Credential (Standard free / Official paid) is available for professionals who need a formal document. Financial support or purchase of a credential does</span>
+          <strong data-i18n="termsSec7Not">not</strong>
+          <span data-i18n="termsSec7Part2">grant special administrative control, ownership, higher truth rank, or exemption from platform rules.</span>
+        </p>
       </div>
 
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">8. Limitation of Liability</h2>
-        <p>To the fullest extent permitted by applicable law, VocalWitness and its operators are not liable for indirect, incidental, or consequential damages arising from your use of the platform or content posted by community members.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection8Title">8. Limitation of Liability</h2>
+        <p data-i18n="termsSection8Text">To the fullest extent permitted by applicable law, VocalWitness and its operators are not liable for indirect, incidental, or consequential damages arising from your use of the platform or content posted by community members.</p>
       </div>
 
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">9. User Accountability</h2>
-        <p>You are solely responsible for the content you publish. If you encounter content that violates these terms, please use the platform's reporting channels for review by moderators.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSec9Heading">9. User Accountability</h2>
+        <p data-i18n="termsSec9Body">You are solely responsible for the content you publish. If you encounter content that violates these terms, please use the platform's reporting channels for review by moderators.</p>
       </div>
 
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">10. Intellectual Property</h2>
-        <p>All rights in the VocalWitness platform, including software code, design, interface elements, branding, logos, and repository structures, remain the exclusive property of VocalWitness. Unauthorized copying, reverse-engineering, or commercial exploitation is prohibited.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection10Title">10. Intellectual Property</h2>
+        <p data-i18n="termsSection10Text">All rights in the VocalWitness platform, including software code, design, interface elements, branding, logos, and repository structures, remain the exclusive property of VocalWitness. Unauthorized copying, reverse-engineering, or commercial exploitation is prohibited.</p>
       </div>
 
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">11. Indemnification</h2>
-        <p>You agree to defend, indemnify, and hold harmless VocalWitness and its operators from any claims, liabilities, or expenses arising from your violation of these Terms or your use of the platform.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSec11Heading">11. Indemnification</h2>
+        <p data-i18n="termsSec11Body">You agree to defend, indemnify, and hold harmless VocalWitness and its operators from any claims, liabilities, or expenses arising from your violation of these Terms or your use of the platform.</p>
       </div>
 
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">12. Changes to These Terms</h2>
-        <p>We may update these Terms from time to time. The “Last updated” date at the top will change when we do. Continued use of the platform after changes constitutes acceptance of the revised Terms.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSec12Heading">12. Changes to These Terms</h2>
+        <p data-i18n="termsSec12Body">We may update these Terms from time to time. The “Last updated” date at the top will change when we do. Continued use of the platform after changes constitutes acceptance of the revised Terms.</p>
       </div>
     </div>
 
@@ -137,25 +191,25 @@
               <span class="text-emerald-400">Vocal</span><span class="text-white">Witness</span>
             </span>
           </div>
-          <p class="mt-2 text-sm text-zinc-400">Truth • Evidence • Zero-Knowledge</p>
+          <p class="mt-2 text-sm text-zinc-400" data-i18n="brandTaglineDesktop">Truth • Evidence • Sealed</p>
         </div>
         <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-zinc-400 mb-6">
-          <a href="/about" class="hover:text-emerald-400 transition">About</a>
-          <a href="/safety" class="hover:text-emerald-400 transition">Safety</a>
-          <a href="/privacy" class="hover:text-emerald-400 transition">Privacy</a>
-          <a href="/terms" class="hover:text-emerald-400 transition">Terms</a>
-          <a href="/transparency" class="hover:text-emerald-400 transition">Transparency</a>
-          <a href="/verify" class="hover:text-emerald-400 transition">Verify</a>
+          <a href="/about" class="hover:text-emerald-400 transition" data-i18n="aboutMenu">About</a>
+          <a href="/safety" class="hover:text-emerald-400 transition" data-i18n="safetyRightsLink">Safety &amp; Rights</a>
+          <a href="/privacy" class="hover:text-emerald-400 transition" data-i18n="privacyMenu">Privacy</a>
+          <a href="/terms" class="hover:text-emerald-400 transition" data-i18n="termsMenu">Terms</a>
+          <a href="/transparency" class="hover:text-emerald-400 transition" data-i18n="transparencyMenu">Transparency</a>
+          <a href="/verify" class="hover:text-emerald-400 transition" data-i18n="verifyEvidenceCta">Verify Evidence</a>
         </div>
-        <p class="text-xs text-zinc-500">© 2026 VocalWitness • Citizen Reporting • Real Evidence</p>
-        <p class="mt-1 text-[11px] text-zinc-600 max-w-md mx-auto leading-relaxed">
-          Application-level integrity • Client-side hashing • The public record is designed to remain sealed
+        <p class="text-xs text-zinc-500" data-i18n="footerCopyright">© 2026 VocalWitness • Citizen Reporting • Sealed Evidence</p>
+        <p class="mt-1 text-[11px] text-zinc-600 max-w-md mx-auto leading-relaxed" data-i18n="footerIntegrityNote">
+          Application-level integrity. Client-side hashing. Zero-knowledge options. The public record is designed to remain sealed.
         </p>
       </div>
     </footer>
 
     <div class="mt-10 text-center">
-      <a href="index.html" class="text-emerald-400 hover:underline">← Back to Public Square</a>
+      <a href="index.html" class="text-emerald-400 hover:underline" data-i18n="backToSquareText">Back to Square</a>
     </div>
 
   </div>
