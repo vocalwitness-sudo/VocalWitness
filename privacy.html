@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Privacy Policy • VocalWitness</title>
+    <title data-i18n="privacyPageTitle">Privacy Policy • VocalWitness</title>
     <link rel="stylesheet" href="./style.css">
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: #e4e4e7; }
@@ -18,38 +18,48 @@
         <div class="flex items-center justify-between mb-10 glass rounded-3xl p-4">
             <div class="flex items-center gap-3">
                 <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back">⬅️</a>
-                <h1 class="text-2xl font-bold tracking-tight text-white">VocalWitness</h1>
+                <h1 class="text-2xl font-bold tracking-tight text-white" data-i18n="appTitle">VocalWitness</h1>
             </div>
             <div class="flex items-center gap-2">
-                <button id="panicButton" class="text-white text-xs font-bold px-3 py-2 rounded-2xl bg-red-600/90 hover:bg-red-500 transition flex items-center gap-1.5" title="Clear local data and exit">
+                <button type="button" id="panicButton" data-i18n="panicExit" data-i18n-title="panicExitTooltip" class="text-white text-xs font-bold px-3 py-2 rounded-2xl bg-red-600/90 hover:bg-red-500 transition flex items-center gap-1.5" title="Clear local data and exit">
                     🚨 Quick Exit
                 </button>
-                <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                <select id="languageSelector" aria-label="Select language" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
                     <option value="en">🇬🇧 English</option>
+                    <option value="pcm">🇳🇬 Naija Pidgin</option>
+                    <option value="ha">🇳🇬 Hausa</option>
+                    <option value="yo">🇳🇬 Yorùbá</option>
+                    <option value="ig">🇳🇬 Igbo</option>
+                    <option value="sw">🇹🇿 Kiswahili</option>
                     <option value="ar">🇸🇦 العربية</option>
                     <option value="es">🇪🇸 Español</option>
                     <option value="fr">🇫🇷 Français</option>
-                    <option value="sw">🇹🇿 Kiswahili</option>
+                    <option value="pt">🇵🇹 Português</option>
+                    <option value="de">🇩🇪 Deutsch</option>
+                    <option value="zh-CN">🇨🇳 中文</option>
+                    <option value="ma">🇪🇹 አማርኛ</option>
+                    <option value="hi">🇮🇳 हिन्दी</option>
+                    <option value="id">🇮🇩 Bahasa</option>
                 </select>
             </div>
         </div>
 
         <div class="flex items-center gap-4 mb-6">
-            <div class="w-12 h-12 bg-emerald-500/20 rounded-3xl flex items-center justify-center text-4xl">🔒</div>
-            <h1 class="text-4xl font-bold tracking-tight text-white">Privacy Policy</h1>
+            <div class="w-12 h-12 bg-emerald-500/20 rounded-3xl flex items-center justify-center text-4xl" aria-hidden="true">🔒</div>
+            <h1 class="text-4xl font-bold tracking-tight text-white" data-i18n="privacyTitle">Privacy Policy</h1>
         </div>
 
-        <p class="text-zinc-400 mb-10">Last updated: October 16, 2026</p>
+        <p class="text-zinc-400 mb-10" data-i18n="privacyLastUpdated">Last updated: October 16, 2026</p>
 
         <!-- Intro -->
         <div class="glass rounded-3xl p-8 mb-10 space-y-4 border border-emerald-500/30">
-            <p class="text-zinc-200 leading-relaxed">
+            <p class="text-zinc-200 leading-relaxed" data-i18n="privacyIntro">
                 VocalWitness is built with privacy as a core design principle. We collect only what is necessary to operate a public square for sealed citizen reports, and we give you clear control over what is visible.
             </p>
             <div class="flex flex-wrap gap-2 text-xs">
-                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400">Data Minimization</span>
-                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">Client-Side EXIF Scrubbing</span>
-                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">Cloudflare Edge</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400" data-i18n="privacyBadgeMinimization">Data Minimization</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400" data-i18n="privacyBadgeExif">Client-Side EXIF Scrubbing</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400" data-i18n="privacyBadgeEdge">Cloudflare Edge</span>
             </div>
         </div>
 
@@ -57,95 +67,111 @@
 
             <!-- 1 -->
             <section>
-                <h2 class="text-2xl font-semibold text-white mb-4">1. What We Collect</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec1Heading">1. What We Collect</h2>
                 <div class="glass rounded-3xl p-6 space-y-4 text-sm">
-                    <p>We process the following categories of information:</p>
+                    <p data-i18n="privacySec1Intro">We process the following categories of information:</p>
                     <ul class="space-y-3 list-disc pl-5 text-zinc-400">
-                        <li><strong class="text-zinc-200">Account data</strong> — email (via Google or other sign-in), optional display name, username, and profile photo you choose to upload.</li>
-                        <li><strong class="text-zinc-200">Phone number</strong> — only if you complete phone verification (Citizen Circle). Used solely for anti-spam and is not written onto the public sealed ledger as your identity.</li>
-                        <li><strong class="text-zinc-200">Content you publish</strong> — text, photos, voice notes, and videos you choose to seal and post. Media can be hashed on your device before upload.</li>
-                        <li><strong class="text-zinc-200">Technical data</strong> — basic operational logs needed for security, abuse prevention, and service reliability (handled via Firebase and Cloudflare).</li>
+                        <li>
+                            <strong class="text-zinc-200" data-i18n="privacyCollectAccountTitle">Account data</strong>
+                            <span>—</span>
+                            <span data-i18n="privacyCollectAccountDesc">email (via Google or other sign-in), optional display name, username, and profile photo you choose to upload.</span>
+                        </li>
+                        <li>
+                            <strong class="text-zinc-200" data-i18n="privacyCollectPhoneTitle">Phone number</strong>
+                            <span>—</span>
+                            <span data-i18n="privacyCollectPhoneDesc">only if you complete phone verification (Citizen Circle). Used solely for anti-spam and is not written onto the public sealed ledger as your identity.</span>
+                        </li>
+                        <li>
+                            <strong class="text-zinc-200" data-i18n="privacyCollectContentTitle">Content you publish</strong>
+                            <span>—</span>
+                            <span data-i18n="privacyCollectContentDesc">text, photos, voice notes, and videos you choose to seal and post. Media can be hashed on your device before upload.</span>
+                        </li>
+                        <li>
+                            <strong class="text-zinc-200" data-i18n="privacyCollectTechTitle">Technical data</strong>
+                            <span>—</span>
+                            <span data-i18n="privacyCollectTechDesc">basic operational logs needed for security, abuse prevention, and service reliability (handled via Firebase and Cloudflare).</span>
+                        </li>
                     </ul>
-                    <p class="text-zinc-500 text-xs mt-2">We do not sell personal data. We do not use advertising trackers on sealed testimony.</p>
+                    <p class="text-zinc-500 text-xs mt-2" data-i18n="privacySec1Footer">We do not sell personal data. We do not use advertising trackers on sealed testimony.</p>
                 </div>
             </section>
 
             <!-- 2 -->
             <section>
-                <h2 class="text-2xl font-semibold text-white mb-4">2. How We Use Information</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec2Heading">2. How We Use Information</h2>
                 <div class="glass rounded-3xl p-6 space-y-3 text-sm text-zinc-400">
-                    <p>• To operate the public square, store sealed reports, and enable verification tools.</p>
-                    <p>• To prevent spam, bots, and abuse (including phone verification for higher tiers).</p>
-                    <p>• To provide optional features such as the Independent Citizen Press Credential.</p>
-                    <p>• To respond to legal requests when required by applicable law.</p>
-                    <p class="pt-2 text-zinc-300">We never use payment for a Press Credential or voluntary support to change your trust rank or voting power.</p>
+                    <p data-i18n="privacyUse1">• To operate the public square, store sealed reports, and enable verification tools.</p>
+                    <p data-i18n="privacyUse2">• To prevent spam, bots, and abuse (including phone verification for higher tiers).</p>
+                    <p data-i18n="privacyUse3">• To provide optional features such as the Independent Citizen Press Credential.</p>
+                    <p data-i18n="privacyUse4">• To respond to legal requests when required by applicable law.</p>
+                    <p class="pt-2 text-zinc-300" data-i18n="privacyUse5">We never use payment for a Press Credential or voluntary support to change your trust rank or voting power.</p>
                 </div>
             </section>
 
             <!-- 3 -->
             <section>
-                <h2 class="text-2xl font-semibold text-white mb-4">3. Privacy by Design Features</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec3Heading">3. Privacy by Design Features</h2>
                 <div class="grid sm:grid-cols-2 gap-4">
                     <div class="glass rounded-2xl p-5">
-                        <div class="text-2xl mb-2">🖼️</div>
-                        <h3 class="font-semibold text-white mb-1">Client-Side EXIF Scrubbing</h3>
-                        <p class="text-sm text-zinc-400">Location and device metadata can be stripped in the browser before media is uploaded when privacy mode is active.</p>
+                        <div class="text-2xl mb-2" aria-hidden="true">🖼️</div>
+                        <h3 class="font-semibold text-white mb-1" data-i18n="privacyFeat1Title">Client-Side EXIF Scrubbing</h3>
+                        <p class="text-sm text-zinc-400" data-i18n="privacyFeat1Desc">Location and device metadata can be stripped in the browser before media is uploaded when privacy mode is active.</p>
                     </div>
                     <div class="glass rounded-2xl p-5">
-                        <div class="text-2xl mb-2">🛡️</div>
-                        <h3 class="font-semibold text-white mb-1">Privacy Shield</h3>
-                        <p class="text-sm text-zinc-400">You can hide your real name and location from public profile views while still participating.</p>
+                        <div class="text-2xl mb-2" aria-hidden="true">🛡️</div>
+                        <h3 class="font-semibold text-white mb-1" data-i18n="privacyShieldTitle">Privacy Shield</h3>
+                        <p class="text-sm text-zinc-400" data-i18n="privacyFeat2Desc">You can hide your real name and location from public profile views while still participating.</p>
                     </div>
                     <div class="glass rounded-2xl p-5">
-                        <div class="text-2xl mb-2">🔐</div>
-                        <h3 class="font-semibold text-white mb-1">Hash Sealing</h3>
-                        <p class="text-sm text-zinc-400">Media and text can be fingerprinted with SHA-256 on your device so others can verify integrity without trusting us blindly.</p>
+                        <div class="text-2xl mb-2" aria-hidden="true">🔐</div>
+                        <h3 class="font-semibold text-white mb-1" data-i18n="privacyFeat3Title">Hash Sealing</h3>
+                        <p class="text-sm text-zinc-400" data-i18n="privacyFeat3Desc">Media and text can be fingerprinted with SHA-256 on your device so others can verify integrity without trusting us blindly.</p>
                     </div>
                     <div class="glass rounded-2xl p-5">
-                        <div class="text-2xl mb-2">🚨</div>
-                        <h3 class="font-semibold text-white mb-1">Quick Exit</h3>
-                        <p class="text-sm text-zinc-400">Instantly clears local browser storage on this device and redirects away from the site.</p>
+                        <div class="text-2xl mb-2" aria-hidden="true">🚨</div>
+                        <h3 class="font-semibold text-white mb-1" data-i18n="panicExit">Quick Exit</h3>
+                        <p class="text-sm text-zinc-400" data-i18n="privacyFeat4Desc">Instantly clears local browser storage on this device and redirects away from the site.</p>
                     </div>
                 </div>
             </section>
 
             <!-- 4 -->
             <section>
-                <h2 class="text-2xl font-semibold text-white mb-4">4. Data Sharing & Storage</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec4Heading">4. Data Sharing &amp; Storage</h2>
                 <div class="glass rounded-3xl p-6 text-sm text-zinc-400 space-y-3">
-                    <p>Data is stored on Google Firebase and protected at the edge by Cloudflare. Operators retain administrative access necessary for moderation, security, and legal compliance.</p>
-                    <p>Sealed public reports are designed to remain part of the permanent public record. Account-level data (email, phone verification status, etc.) is not published on the sealed ledger as your identity.</p>
-                    <p>We do not sell your data to third parties for advertising.</p>
+                    <p data-i18n="privacyStorage1">Data is stored on Google Firebase and protected at the edge by Cloudflare. Operators retain administrative access necessary for moderation, security, and legal compliance.</p>
+                    <p data-i18n="privacyStorage2">Sealed public reports are designed to remain part of the permanent public record. Account-level data (email, phone verification status, etc.) is not published on the sealed ledger as your identity.</p>
+                    <p data-i18n="privacyStorage3">We do not sell your data to third parties for advertising.</p>
                 </div>
             </section>
 
             <!-- 5 -->
             <section>
-                <h2 class="text-2xl font-semibold text-white mb-4">5. Your Choices & Rights</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec5Heading">5. Your Choices &amp; Rights</h2>
                 <div class="glass rounded-3xl p-6 text-sm text-zinc-400 space-y-2">
-                    <p>• You control what you publish and whether to enable Privacy Shield.</p>
-                    <p>• You can request account-related changes or deletion subject to legal and operational limits (sealed public records cannot be quietly erased by ordinary users).</p>
-                    <p>• You can clear local data on any device using Quick Exit.</p>
-                    <p>• For questions about your data, use the contact / support options on the main site.</p>
+                    <p data-i18n="privacyRights1">• You control what you publish and whether to enable Privacy Shield.</p>
+                    <p data-i18n="privacyRights2">• You can request account-related changes or deletion subject to legal and operational limits (sealed public records cannot be quietly erased by ordinary users).</p>
+                    <p data-i18n="privacyRights3">• You can clear local data on any device using Quick Exit.</p>
+                    <p data-i18n="privacyRights4">• For questions about your data, use the contact / support options on the main site.</p>
                 </div>
             </section>
 
             <!-- 6 -->
             <section>
-                <h2 class="text-2xl font-semibold text-white mb-4">6. Children</h2>
-                <p class="text-sm text-zinc-400">VocalWitness is not directed at children under 13 (or the applicable age in your jurisdiction). We do not knowingly collect personal information from children.</p>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec6Heading">6. Children</h2>
+                <p class="text-sm text-zinc-400" data-i18n="privacySec6Body">VocalWitness is not directed at children under 13 (or the applicable age in your jurisdiction). We do not knowingly collect personal information from children.</p>
             </section>
 
             <!-- 7 -->
             <section>
-                <h2 class="text-2xl font-semibold text-white mb-4">7. Changes to This Policy</h2>
-                <p class="text-sm text-zinc-400">We may update this Privacy Policy from time to time. The “Last updated” date at the top will change when we do. Continued use of the platform after changes constitutes acceptance of the revised policy.</p>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec7Heading">7. Changes to This Policy</h2>
+                <p class="text-sm text-zinc-400" data-i18n="privacySec7Body">We may update this Privacy Policy from time to time. The “Last updated” date at the top will change when we do. Continued use of the platform after changes constitutes acceptance of the revised policy.</p>
             </section>
 
             <!-- 8 -->
             <section>
-                <h2 class="text-2xl font-semibold text-white mb-4">8. Contact</h2>
-                <p class="text-sm text-zinc-400">For privacy-related questions, use the Support options available on the main VocalWitness site or the contact methods listed in the repository / about page.</p>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec8Heading">8. Contact</h2>
+                <p class="text-sm text-zinc-400" data-i18n="privacySec8Body">For privacy-related questions, use the Support options available on the main VocalWitness site or the contact methods listed in the repository / about page.</p>
             </section>
         </div>
 
@@ -159,29 +185,29 @@
                             <span class="text-emerald-400">Vocal</span><span class="text-white">Witness</span>
                         </span>
                     </div>
-                    <p class="mt-2 text-sm text-zinc-400">Truth • Evidence • Zero-Knowledge</p>
+                    <p class="mt-2 text-sm text-zinc-400" data-i18n="brandTaglineDesktop">Truth • Evidence • Sealed</p>
                 </div>
                 <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-zinc-400 mb-6">
-                    <a href="/about" class="hover:text-emerald-400 transition">About</a>
-                    <a href="/safety" class="hover:text-emerald-400 transition">Safety</a>
-                    <a href="/privacy" class="hover:text-emerald-400 transition">Privacy</a>
-                    <a href="/terms" class="hover:text-emerald-400 transition">Terms</a>
-                    <a href="/transparency" class="hover:text-emerald-400 transition">Transparency</a>
-                    <a href="/verify" class="hover:text-emerald-400 transition">Verify</a>
+                    <a href="/about" class="hover:text-emerald-400 transition" data-i18n="aboutMenu">About</a>
+                    <a href="/safety" class="hover:text-emerald-400 transition" data-i18n="safetyRightsLink">Safety &amp; Rights</a>
+                    <a href="/privacy" class="hover:text-emerald-400 transition" data-i18n="privacyMenu">Privacy</a>
+                    <a href="/terms" class="hover:text-emerald-400 transition" data-i18n="termsMenu">Terms</a>
+                    <a href="/transparency" class="hover:text-emerald-400 transition" data-i18n="transparencyMenu">Transparency</a>
+                    <a href="/verify" class="hover:text-emerald-400 transition" data-i18n="verifyEvidenceCta">Verify Evidence</a>
                 </div>
-                <p class="text-xs text-zinc-500">© 2026 VocalWitness • Citizen Reporting • Real Evidence</p>
+                <p class="text-xs text-zinc-500" data-i18n="footerCopyright">© 2026 VocalWitness • Citizen Reporting • Sealed Evidence</p>
             </div>
         </footer>
     </div>
-    <section class="glass rounded-3xl p-6 mb-10 text-center">
-  <p class="text-zinc-400 mb-4">Need help getting started?</p>
-  <div class="flex flex-wrap justify-center gap-4 text-sm">
-    <a href="/how-to-use" class="text-emerald-400 hover:underline font-medium">How to Use</a>
-    <a href="/faq" class="text-emerald-400 hover:underline font-medium">FAQ</a>
-    <a href="/verify" class="text-emerald-400 hover:underline font-medium">Verify Evidence</a>
-    <a href="/journalist-verify" class="text-emerald-400 hover:underline font-medium">Journalist Guide</a>
-  </div>
-</section>
+    <section class="glass rounded-3xl p-6 mb-10 text-center max-w-3xl mx-auto">
+        <p class="text-zinc-400 mb-4" data-i18n="aboutGettingStartedPrompt">Need help getting started?</p>
+        <div class="flex flex-wrap justify-center gap-4 text-sm">
+            <a href="/how-to-use" class="text-emerald-400 hover:underline font-medium" data-i18n="howToUseLink">How to Use</a>
+            <a href="/faq" class="text-emerald-400 hover:underline font-medium" data-i18n="faqLink">FAQ</a>
+            <a href="/verify" class="text-emerald-400 hover:underline font-medium" data-i18n="verifyEvidenceCta">Verify Evidence</a>
+            <a href="/journalist-verify" class="text-emerald-400 hover:underline font-medium" data-i18n="journalistGuideMenu">Journalist Guide</a>
+        </div>
+    </section>
 
     <script>
         document.getElementById('panicButton')?.addEventListener('click', () => {
