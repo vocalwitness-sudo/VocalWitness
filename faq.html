@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en-NG">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FAQ • VocalWitness</title>
+    <title data-i18n="faqPageTitle">FAQ • VocalWitness</title>
     <link rel="stylesheet" href="./style.css">
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: #e4e4e7; }
@@ -18,9 +18,11 @@
         <div class="flex items-center justify-between mb-10 glass rounded-3xl p-4">
             <div class="flex items-center gap-3">
                 <a href="/" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back">⬅️</a>
-                <h1 class="text-2xl font-bold tracking-tight text-white">VocalWitness</h1>
+                <h1 class="text-2xl font-bold tracking-tight text-white">
+                    <span class="text-emerald-400">Vocal</span><span>Witness</span>
+                </h1>
             </div>
-            <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
+            <select id="languageSelector" aria-label="Select language" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
                 <option value="en">🇬🇧 English</option>
                 <option value="pcm">🇳🇬 Naija Pidgin</option>
                 <option value="ha">🇳🇬 Hausa</option>
@@ -28,21 +30,28 @@
                 <option value="ig">🇳🇬 Igbo</option>
                 <option value="sw">🇹🇿 Kiswahili</option>
                 <option value="ar">🇸🇦 العربية</option>
+                <option value="es">🇪🇸 Español</option>
                 <option value="fr">🇫🇷 Français</option>
+                <option value="pt">🇵🇹 Português</option>
+                <option value="de">🇩🇪 Deutsch</option>
+                <option value="zh-CN">🇨🇳 中文</option>
+                <option value="ma">🇪🇹 አማርኛ</option>
+                <option value="hi">🇮🇳 हिन्दी</option>
+                <option value="id">🇮🇩 Bahasa</option>
             </select>
         </div>
 
         <header class="mb-10">
-            <h1 class="text-4xl md:text-5xl font-bold tracking-tighter text-white mb-3">Frequently Asked Questions</h1>
-            <p class="text-xl text-zinc-400">Clear answers about sealing, privacy, and verification.</p>
+            <h1 class="text-4xl md:text-5xl font-bold tracking-tighter text-white mb-3" data-i18n="faqMainTitle">Frequently Asked Questions</h1>
+            <p class="text-xl text-zinc-400" data-i18n="faqSubtitle">Clear answers about sealing, privacy, and verification.</p>
         </header>
 
         <!-- FAQ items -->
         <div class="space-y-6">
 
             <section class="glass rounded-3xl p-7">
-                <h2 class="text-xl font-bold text-white mb-3">What is VocalWitness?</h2>
-                <p class="text-zinc-300 leading-relaxed">
+                <h2 class="text-xl font-bold text-white mb-3" data-i18n="faqQ1Title">What is VocalWitness?</h2>
+                <p class="text-zinc-300 leading-relaxed" data-i18n="faqQ1Body">
                     A privacy-first public square where anyone can publish sealed citizen reports. 
                     Once sealed, ordinary users (including the author) cannot change the media, hashes, or core record. 
                     Text can only be corrected for 30 minutes. After that only soft-hide is allowed.
@@ -50,49 +59,48 @@
             </section>
 
             <section class="glass rounded-3xl p-7">
-                <h2 class="text-xl font-bold text-white mb-3">What does “sealed” mean?</h2>
+                <h2 class="text-xl font-bold text-white mb-3" data-i18n="faqQ2Title">What does “sealed” mean?</h2>
                 <p class="text-zinc-300 leading-relaxed">
-                    Media is cleaned and hashed on your device with SHA-256. The final uploaded bytes receive a digital fingerprint. 
-                    Strict server rules protect the seal so ordinary users cannot break it. 
-                    <strong class="text-zinc-100">Sealed means the bits are protected. It does not mean the event is proven true.</strong>
+                    <span data-i18n="faqQ2Body">Media is cleaned and hashed on your device with SHA-256. The final uploaded bytes receive a digital fingerprint. Strict server rules protect the seal so ordinary users cannot break it.</span>
+                    <strong class="text-zinc-100" data-i18n="faqQ2Strong">Sealed means the bits are protected. It does not mean the event is proven true.</strong>
                 </p>
             </section>
 
             <section class="glass rounded-3xl p-7">
-                <h2 class="text-xl font-bold text-white mb-3">Can I edit or delete my report later?</h2>
-                <p class="text-zinc-300 leading-relaxed">
+                <h2 class="text-xl font-bold text-white mb-3" data-i18n="faqQ3Title">Can I edit or delete my report later?</h2>
+                <p class="text-zinc-300 leading-relaxed" data-i18n="faqQ3Body">
                     Text is editable for 30 minutes only. After that you can soft-hide the report (it disappears from normal feeds but stays in the sealed record). 
                     Hard delete of sealed evidence is not available to authors. This keeps the record verifiable.
                 </p>
             </section>
 
             <section class="glass rounded-3xl p-7">
-                <h2 class="text-xl font-bold text-white mb-3">Does the hash prove that the event really happened?</h2>
+                <h2 class="text-xl font-bold text-white mb-3" data-i18n="faqQ4Title">Does the hash prove that the event really happened?</h2>
                 <p class="text-zinc-300 leading-relaxed">
-                    No. Hashes and Evidence Packs only prove that the digital file has not been changed after it was sealed. 
-                    They do not prove that the real-world event occurred. <strong class="text-zinc-100">Integrity ≠ truth.</strong>
+                    <span data-i18n="faqQ4Body">No. Hashes and Evidence Packs only prove that the digital file has not been changed after it was sealed. They do not prove that the real-world event occurred.</span>
+                    <strong class="text-zinc-100" data-i18n="faqQ4Strong">Integrity ≠ truth.</strong>
                 </p>
             </section>
 
             <section class="glass rounded-3xl p-7">
-                <h2 class="text-xl font-bold text-white mb-3">Is this a blockchain?</h2>
-                <p class="text-zinc-300 leading-relaxed">
+                <h2 class="text-xl font-bold text-white mb-3" data-i18n="faqQ5Title">Is this a blockchain?</h2>
+                <p class="text-zinc-300 leading-relaxed" data-i18n="faqQ5Body">
                     No. VocalWitness uses application-level sealing (client hashing + strict rules) plus optional daily public timestamping of the ledger root via OpenTimestamps. 
                     It is not a public blockchain.
                 </p>
             </section>
 
             <section class="glass rounded-3xl p-7">
-                <h2 class="text-xl font-bold text-white mb-3">What is the difference between Public Square and Witness Voice?</h2>
+                <h2 class="text-xl font-bold text-white mb-3" data-i18n="faqQ6Title">What is the difference between Public Square and Witness Voice?</h2>
                 <p class="text-zinc-300 leading-relaxed">
-                    <strong class="text-white">Public Square</strong> — open citizen reporting. Anyone can post.<br>
-                    <strong class="text-white">Witness Voice</strong> — higher-integrity channel for first-hand observations. Media and text are hashed on-device with stronger sealing expectations.
+                    <strong class="text-white" data-i18n="publicSquareTab">Public Square</strong> — <span data-i18n="faqQ6PublicSquareDesc">open citizen reporting. Anyone can post.</span><br>
+                    <strong class="text-white" data-i18n="witnessVoiceTitle">Witness Voice</strong> — <span data-i18n="faqQ6WitnessVoiceDesc">higher-integrity channel for first-hand observations. Media and text are hashed on-device with stronger sealing expectations.</span>
                 </p>
             </section>
 
             <section class="glass rounded-3xl p-7">
-                <h2 class="text-xl font-bold text-white mb-3">What is Phone Verification / Citizen Circle / Witness Circle?</h2>
-                <p class="text-zinc-300 leading-relaxed">
+                <h2 class="text-xl font-bold text-white mb-3" data-i18n="faqQ7Title">What is Phone Verification / Citizen Circle / Witness Circle?</h2>
+                <p class="text-zinc-300 leading-relaxed" data-i18n="faqQ7Body">
                     Phone verification raises your trust level (Citizen Circle) and helps reduce spam. 
                     Witness Circle (Higher Trust) is earned through platform checks and optional zero-knowledge membership proof. 
                     These tiers are never for sale.
@@ -100,26 +108,34 @@
             </section>
 
             <section class="glass rounded-3xl p-7">
-                <h2 class="text-xl font-bold text-white mb-3">Is my phone number made public?</h2>
-                <p class="text-zinc-300 leading-relaxed">
+                <h2 class="text-xl font-bold text-white mb-3" data-i18n="faqQ8Title">Is my phone number made public?</h2>
+                <p class="text-zinc-300 leading-relaxed" data-i18n="faqQ8Body">
                     No. Phone numbers are used only for anti-spam and trust scoring. They are not written onto the public sealed ledger as your identity.
                 </p>
             </section>
 
             <section class="glass rounded-3xl p-7">
-                <h2 class="text-xl font-bold text-white mb-3">How do journalists or NGOs verify evidence?</h2>
+                <h2 class="text-xl font-bold text-white mb-3" data-i18n="faqQ9Title">How do journalists or NGOs verify evidence?</h2>
                 <p class="text-zinc-300 leading-relaxed">
-                    Use the <a href="/verify" class="text-emerald-400 hover:underline">Verify</a> page or download the Evidence Pack. 
-                    Full instructions are in the <a href="/journalist-verify" class="text-emerald-400 hover:underline">Journalist Verification Guide</a>.
+                    <span data-i18n="faqQ9Part1">Use the</span>
+                    <a href="/verify" class="text-emerald-400 hover:underline" data-i18n="verifyEvidenceCta">Verify Evidence</a>
+                    <span data-i18n="faqQ9Part2">page or download the Evidence Pack. Full instructions are in the</span>
+                    <a href="/journalist-verify" class="text-emerald-400 hover:underline" data-i18n="journalistGuideMenu">Journalist Guide</a>.
                 </p>
             </section>
 
             <section class="glass rounded-3xl p-7">
-                <h2 class="text-xl font-bold text-white mb-3">Still have questions?</h2>
+                <h2 class="text-xl font-bold text-white mb-3" data-i18n="faqQ10Title">Still have questions?</h2>
                 <p class="text-zinc-300 leading-relaxed">
-                    See the step-by-step <a href="/how-to-use" class="text-emerald-400 hover:underline">How to Use</a> guide, 
-                    the <a href="/about" class="text-emerald-400 hover:underline">About</a> page, 
-                    or the <a href="/safety" class="text-emerald-400 hover:underline">Safety</a> and <a href="/privacy" class="text-emerald-400 hover:underline">Privacy</a> pages.
+                    <span data-i18n="faqQ10Part1">See the step-by-step</span>
+                    <a href="/how-to-use" class="text-emerald-400 hover:underline" data-i18n="howToUseLink">How to Use</a>
+                    <span data-i18n="faqQ10Part2">guide, the</span>
+                    <a href="/about" class="text-emerald-400 hover:underline" data-i18n="aboutMenu">About</a>
+                    <span data-i18n="faqQ10Part3">page, or the</span>
+                    <a href="/safety" class="text-emerald-400 hover:underline" data-i18n="safetyRightsLink">Safety &amp; Rights</a>
+                    <span data-i18n="andWord">and</span>
+                    <a href="/privacy" class="text-emerald-400 hover:underline" data-i18n="privacyMenu">Privacy</a>
+                    <span data-i18n="faqQ10Part4">pages.</span>
                 </p>
             </section>
 
@@ -127,26 +143,26 @@
 
         <!-- Cross links -->
         <section class="glass rounded-3xl p-6 mt-10 mb-10 text-center">
-            <p class="text-zinc-400 mb-4">Continue exploring</p>
+            <p class="text-zinc-400 mb-4" data-i18n="continueExploringPrompt">Continue exploring</p>
             <div class="flex flex-wrap justify-center gap-4 text-sm">
-                <a href="/how-to-use" class="text-emerald-400 hover:underline font-medium">How to Use</a>
-                <a href="/about" class="text-emerald-400 hover:underline font-medium">About</a>
-                <a href="/verify" class="text-emerald-400 hover:underline font-medium">Verify</a>
-                <a href="/journalist-verify" class="text-emerald-400 hover:underline font-medium">Journalist Guide</a>
-                <a href="/transparency" class="text-emerald-400 hover:underline font-medium">Transparency</a>
-                <a href="/safety" class="text-emerald-400 hover:underline font-medium">Safety</a>
-                <a href="/privacy" class="text-emerald-400 hover:underline font-medium">Privacy</a>
+                <a href="/how-to-use" class="text-emerald-400 hover:underline font-medium" data-i18n="howToUseLink">How to Use</a>
+                <a href="/about" class="text-emerald-400 hover:underline font-medium" data-i18n="aboutMenu">About</a>
+                <a href="/verify" class="text-emerald-400 hover:underline font-medium" data-i18n="verifyEvidenceCta">Verify Evidence</a>
+                <a href="/journalist-verify" class="text-emerald-400 hover:underline font-medium" data-i18n="journalistGuideMenu">Journalist Guide</a>
+                <a href="/transparency" class="text-emerald-400 hover:underline font-medium" data-i18n="transparencyMenu">Transparency</a>
+                <a href="/safety" class="text-emerald-400 hover:underline font-medium" data-i18n="safetyRightsLink">Safety &amp; Rights</a>
+                <a href="/privacy" class="text-emerald-400 hover:underline font-medium" data-i18n="privacyMenu">Privacy</a>
             </div>
         </section>
 
         <!-- Footer -->
         <div class="flex flex-wrap justify-center gap-4 text-sm text-zinc-400 mb-10">
-            <a href="/how-to-use" class="hover:text-emerald-400">How to Use</a>
-            <a href="/about" class="hover:text-emerald-400">About</a>
-            <a href="/transparency" class="hover:text-emerald-400">Transparency</a>
-            <a href="/safety" class="hover:text-emerald-400">Safety</a>
-            <a href="/privacy" class="hover:text-emerald-400">Privacy</a>
-            <a href="/terms" class="hover:text-emerald-400">Terms</a>
+            <a href="/how-to-use" class="hover:text-emerald-400" data-i18n="howToUseLink">How to Use</a>
+            <a href="/about" class="hover:text-emerald-400" data-i18n="aboutMenu">About</a>
+            <a href="/transparency" class="hover:text-emerald-400" data-i18n="transparencyMenu">Transparency</a>
+            <a href="/safety" class="hover:text-emerald-400" data-i18n="safetyRightsLink">Safety &amp; Rights</a>
+            <a href="/privacy" class="hover:text-emerald-400" data-i18n="privacyMenu">Privacy</a>
+            <a href="/terms" class="hover:text-emerald-400" data-i18n="termsMenu">Terms</a>
         </div>
 
     </div>
